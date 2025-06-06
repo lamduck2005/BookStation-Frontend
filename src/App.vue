@@ -1,7 +1,7 @@
 <script setup></script>
 
 <template>
-  <h1>BookStation</h1>
+  <RouterView />
 </template>
 
 <style scoped></style>
