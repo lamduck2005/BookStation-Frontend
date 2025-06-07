@@ -1,7 +1,5 @@
 import Test from "@/components/Test.vue";
 import { createRouter, createWebHistory } from "vue-router";
-import HomeView from "../views/HomeView.vue"; // added import
-import AboutView from "../views/AboutView.vue";
 import AdminLayout from "../views/admin/AdminLayout.vue";
 import User from "@/views/admin/views-admin/User.vue";
 import Product from "@/views/admin/views-admin/Product.vue";
@@ -21,11 +19,6 @@ const router = createRouter({
       path: "/",
       name: "home",
       component: Test,
-    },
-    {
-      path: "/about",
-      name: "about",
-      component: AboutView,
     },
     // Admin routes
     {
