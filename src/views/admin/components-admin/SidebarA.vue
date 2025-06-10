@@ -29,6 +29,13 @@
           <span>Dashboard</span>
         </router-link>
       </li>
+      <!-- 2 -->
+      <li class="sidebar-item">
+        <router-link to="/admin/order" class="sidebar-link">
+          <i class="bxr bx-box" style="color: #ffffff"></i>
+          <span>Order</span>
+        </router-link>
+      </li>
       <!-- 3 -->
       <li class="sidebar-item">
         <a href="#" class="sidebar-link has-dropdown">
@@ -41,7 +48,7 @@
               >User</router-link
             >
             <router-link to="/admin/product" class="sidebar-link"
-              >Product</router-link
+              >Book</router-link
             >
             <router-link to="/admin/author" class="sidebar-link"
               >Author</router-link
@@ -57,6 +64,15 @@
             >
             <router-link to="/admin/voucher" class="sidebar-link"
               >Voucher</router-link
+            >
+            <router-link to="/admin/supplier" class="sidebar-link"
+              >Supplier</router-link
+            >
+            <router-link to="/admin/rank" class="sidebar-link"
+              >Rank</router-link
+            >
+            <router-link to="/admin/point" class="sidebar-link"
+              >Point</router-link
             >
           </li>
         </ul>
