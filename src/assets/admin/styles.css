@@ -36,7 +36,7 @@ li {
   width: 90px;
   min-width: 90px;
   transition: all 0.35s ease-in-out;
-  background-color: #0b0b0b;
+  background-color: #111111;
   height: 100vh;
   position: sticky;
   top: 0;
@@ -97,7 +97,7 @@ a.sidebar-link {
 }
 
 .sidebar-link i {
-  font-size: 1.625rem;
+  font-size: 1.775rem;
   margin-right: 0.75rem;
 }
 
@@ -117,9 +117,13 @@ a.sidebar-link {
   will-change: opacity, max-height;
 }
 
+.sidebar-dropdown .sidebar-item {
+  font-size: 0.965rem;
+}
+
 #sidebar.expand .sidebar-item .has-dropdown.active + .sidebar-dropdown {
   display: block;
-  max-height: 35em;
+  max-height: 55em;
   transition: all 200ms linear;
   opacity: 1;
 }
