@@ -166,6 +166,25 @@
 }
 .add-cart-btn {
   margin-right: 8px;
+  border: 2px solid #d32f2f;
+  color: #d32f2f;
+  background: #fff;
+  transition: background 0.2s, color 0.2s;
+}
+.add-cart-btn:hover {
+  background: #d32f2f;
+  color: #fff;
+}
+
+.buy-now-btn {
+  background: #d32f2f;
+  color: #fff;
+  border: 2px solid #d32f2f;
+  transition: background 0.2s, color 0.2s;
+}
+.buy-now-btn:hover {
+  background: #fff;
+  color: #d32f2f;
 }
 .description-box {
   background: #fff;
