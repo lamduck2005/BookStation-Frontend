@@ -95,3 +95,124 @@
 
   <!-- Main Sidebar Begins End  -->
 </template>
+
+<style>
+#sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 90px;
+  min-width: 90px;
+  transition: all 0.35s ease-in-out;
+  background-color: #111111;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+}
+#sidebar.expand {
+  width: 300px;
+  min-width: 300px;
+}
+.sidebar-widget {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid #606164;
+}
+.toggle-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  color: #fff;
+  border-radius: 0.425rem;
+  font-size: 28px;
+  background-color: #323c55;
+  border: none;
+}
+#sidebar:not(.expand) .sidebar-logo,
+#sidebar:not(.expand) a.sidebar-link span {
+  display: none;
+}
+.sidebar-logo a {
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: -115px;
+}
+.sidebar-nav {
+  padding: 0;
+  flex: 1 1 auto;
+}
+a.sidebar-link {
+  padding: 1.025rem 1.625rem;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  white-space: nowrap;
+  border-left: 3px solid transparent;
+}
+.sidebar-link i {
+  font-size: 1.775rem;
+  margin-right: 0.75rem;
+}
+.sidebar-item {
+  position: relative;
+  margin: 5px 0;
+}
+.sidebar-item .sidebar-dropdown {
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  padding: 0;
+  width: 100%;
+  transition: opacity 200ms linear, max-height 200ms linear;
+  will-change: opacity, max-height;
+}
+.sidebar-dropdown .sidebar-item {
+  font-size: 0.965rem;
+}
+#sidebar.expand .sidebar-item .has-dropdown.active + .sidebar-dropdown {
+  display: block;
+  max-height: 55em;
+  transition: all 200ms linear;
+  opacity: 1;
+}
+#sidebar.expand .sidebar-link.has-dropdown::after {
+  content: "";
+  display: inline-block;
+  padding: 2px;
+  position: absolute;
+  right: 1.5rem;
+  top: 1.4rem;
+  transform: rotate(45deg);
+  transition: all 0.2s ease-out;
+  border: solid;
+  border-width: 0 0.075rem 0.075rem 0;
+}
+#sidebar.expand .sidebar-link.has-dropdown.active::after {
+  transform: rotate(-135deg);
+  transition: all 0.2s ease-out;
+}
+.sidebar-dropdown a.sidebar-link {
+  position: relative;
+  overflow: hidden;
+}
+.sidebar-dropdown a.sidebar-link::after {
+  content: "";
+  position: absolute;
+  left: 1.2rem;
+  bottom: 0.2rem;
+  width: 0;
+  height: 3px;
+  background-color: #bb1b30;
+  transition: width 0.3s ease;
+}
+.sidebar-dropdown a.sidebar-link:hover::after {
+  width: 50%;
+}
+</style>

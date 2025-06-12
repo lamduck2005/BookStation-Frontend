@@ -512,7 +512,7 @@ form {
 .input-field:focus {
   outline: none;
 }
-
+/* 
 .btn {
   background-color: #ebebeb;
   border: none;
@@ -522,7 +522,7 @@ form {
   display: flex;
   align-items: center;
   justify-content: center;
-}
+} */
 
 @media (max-width: 767px) {
   form {
