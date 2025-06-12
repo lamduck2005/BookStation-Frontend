@@ -111,31 +111,32 @@
             </td>
             <td>{{ voucher.createdBy }}</td>
             <td class="action-cell">
-              <a
-                class="btn btn-primary tooltip-custom"
-                data-tooltip="Chi tiết"
-                @click="showDetail(voucher)"
-              >
-                <i class="bi bi-info-circle fs-6"></i>
-              </a>
-            </td>
-            <td class="action-cell">
-              <a
-                class="btn btn-success tooltip-custom"
-                data-tooltip="Cập nhật"
-                @click="openEditVoucher(voucher)"
-              >
-                <i class="bi bi-pencil fs-6"></i>
-              </a>
-            </td>
-            <td class="action-cell">
-              <a
-                class="btn btn-danger tooltip-custom"
-                data-tooltip="Xóa"
-                @click="deleteVoucher(voucher)"
-              >
-                <i class="bi bi-trash fs-6"></i>
-              </a>
+              <div class="d-flex justify-content-center gap-2">
+                <button
+                  class="btn btn-light btn-sm p-1 tooltip-custom"
+                  data-tooltip="Chi tiết"
+                  @click="showDetail(voucher)"
+                  style="min-width: 32px"
+                >
+                  <i class="bi bi-info-circle fs-6"></i>
+                </button>
+                <button
+                  class="btn btn-light btn-sm p-1 tooltip-custom"
+                  data-tooltip="Cập nhật"
+                  @click="openEditVoucher(voucher)"
+                  style="min-width: 32px"
+                >
+                  <i class="bi bi-pencil fs-6"></i>
+                </button>
+                <button
+                  class="btn btn-light btn-sm p-1 tooltip-custom"
+                  data-tooltip="Xóa"
+                  @click="deleteVoucher(voucher)"
+                  style="min-width: 32px"
+                >
+                  <i class="bi bi-trash fs-6 text-danger"></i>
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>

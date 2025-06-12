@@ -41,11 +41,11 @@
       </div>
       <div class="col-md-2 d-flex align-items-end">
         <button
-          class="btn btn-outline-secondary btn-sm w-30"style="margin-left: 20px;"
+          class="btn btn-outline-secondary btn-sm w-30"
+          style="margin-left: 20px"
           @click="resetFilter"
         >
-        <i class="bi bi-arrow-clockwise"></i> 
-
+          <i class="bi bi-arrow-clockwise"></i>
         </button>
       </div>
     </div>
@@ -57,7 +57,7 @@
   >
     <button @click="openAddSupplier" class="custom-add-btn">
       <i class="bi bi-plus-circle me-2"></i>
-      <strong style=" font-weight: normal;">Thêm nhà cung cấp mới</strong>
+      <strong style="font-weight: normal">Thêm nhà cung cấp mới</strong>
     </button>
   </div>
 
@@ -71,7 +71,6 @@
             <th>Người đại diện</th>
             <th>Số điện thoại</th>
             <th>Email</th>
-            <th>Địa chỉ</th>
             <th>Trạng thái</th>
             <th>Người tạo</th>
             <th colspan="3">Actions</th>
@@ -84,7 +83,6 @@
             <td>{{ supplier.contactName }}</td>
             <td>{{ supplier.phone }}</td>
             <td>{{ supplier.email }}</td>
-            <td>{{ supplier.address }}</td>
             <td class="status-cell align-middle">
               <div class="d-flex align-items-center gap-2">
                 <label class="switch m-0">
@@ -115,31 +113,32 @@
             </td>
             <td>{{ supplier.createdBy }}</td>
             <td class="action-cell">
-              <a
-                class="btn btn-primary tooltip-custom"
-                data-tooltip="Chi tiết"
-                @click="showDetail(supplier)"
-              >
-                <i class="bi bi-info-circle fs-6"></i>
-              </a>
-            </td>
-            <td class="action-cell">
-              <a
-                class="btn btn-success tooltip-custom"
-                data-tooltip="Cập nhật"
-                @click="openEditSupplier(supplier)"
-              >
-                <i class="bi bi-pencil fs-6"></i>
-              </a>
-            </td>
-            <td class="action-cell">
-              <a
-                class="btn btn-danger tooltip-custom"
-                data-tooltip="Xóa"
-                @click="deleteSupplier(supplier)"
-              >
-                <i class="bi bi-trash fs-6"></i>
-              </a>
+              <div class="d-flex justify-content-center gap-2">
+                <button
+                  class="btn btn-light btn-sm p-1 tooltip-custom"
+                  data-tooltip="Chi tiết"
+                  @click="showDetail(supplier)"
+                  style="min-width: 32px"
+                >
+                  <i class="bi bi-info-circle fs-6"></i>
+                </button>
+                <button
+                  class="btn btn-light btn-sm p-1 tooltip-custom"
+                  data-tooltip="Cập nhật"
+                  @click="openEditSupplier(supplier)"
+                  style="min-width: 32px"
+                >
+                  <i class="bi bi-pencil fs-6"></i>
+                </button>
+                <button
+                  class="btn btn-light btn-sm p-1 tooltip-custom"
+                  data-tooltip="Xóa"
+                  @click="deleteSupplier(supplier)"
+                  style="min-width: 32px"
+                >
+                  <i class="bi bi-trash fs-6 text-danger"></i>
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>
