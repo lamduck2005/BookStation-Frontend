@@ -83,7 +83,7 @@ const router = createRouter({
           path: "flash-sale/:id/items",
           name: "flash-sale-item",
           component: Flash_Sale_Item,
-          props: true
+          props: true,
         },
         {
           path: "category",
