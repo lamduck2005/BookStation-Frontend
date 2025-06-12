@@ -1,7 +1,13 @@
-<script setup></script>
+<script setup>
+import { RouterView } from 'vue-router';
+</script>
 
 <template>
   <Router-view />
 </template>
 
-<style scoped></style>
+<style scoped>
+body {
+    background: #bdacac !important;
+}
+</style>
