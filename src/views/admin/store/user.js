@@ -7,3 +7,6 @@ export const mutations = {
     state.data = data;
   },
 };
+
+
+
