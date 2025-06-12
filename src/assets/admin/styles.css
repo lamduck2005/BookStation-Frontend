@@ -482,7 +482,7 @@ form {
   margin: 0;
   padding: 0;
 }
-
+/* 
 form {
   display: flex;
   justify-content: flex-end;
@@ -511,9 +511,9 @@ form {
 
 .input-field:focus {
   outline: none;
-}
+} */
 
-.btn {
+/* .btn {
   background-color: #ebebeb;
   border: none;
   padding: 0 1.2rem;
@@ -522,9 +522,9 @@ form {
   display: flex;
   align-items: center;
   justify-content: center;
-}
+} */
 
-@media (max-width: 767px) {
+/* @media (max-width: 767px) {
   form {
     justify-content: center;
   }
@@ -534,13 +534,13 @@ form {
     max-width: none;
     margin: 0 auto;
   }
-}
+} */
 
 @media (min-width: 768px) {
-  form {
+  /* form {
     display: block;
     margin-left: auto;
-  }
+  } */
 
   .social-icons {
     display: flex;
