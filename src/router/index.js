@@ -15,6 +15,7 @@ import Order from "@/views/admin/views-admin/Order.vue";
 import Supplier from "@/views/admin/views-admin/Supplier.vue";
 import Rank from "@/views/admin/views-admin/Rank.vue";
 import Point from "@/views/admin/views-admin/Point.vue";
+import Flash_Sale_Item from "@/views/admin/views-admin/flash-sale-item/Flash_Sale_Item.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -77,6 +78,12 @@ const router = createRouter({
           path: "flash-sale",
           name: "flash-sale",
           component: Flash_Sale,
+        },
+        {
+          path: "flash-sale/:id/items",
+          name: "flash-sale-item",
+          component: Flash_Sale_Item,
+          props: true
         },
         {
           path: "category",
