@@ -1,7 +1,7 @@
 <template>
   <button
     class="btn btn-sm btn-outline-primary me-1"
-    style="border-color: #28a745; background-color: #d4edda;"
+    style="border-color: #28a745; background-color: #d4edda; padding: 0.25rem 0.5rem !important; font-size: 0.875rem !important;"
     @click="$emit('click')"
   >
     <img

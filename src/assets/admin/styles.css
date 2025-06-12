@@ -393,7 +393,7 @@ form {
   color: #fff;
   border-radius: 0.275rem;
 }
-
+                                                                                      
 .badge-text {
   font-size: 0.7rem;
   font-weight: 700;
@@ -513,7 +513,8 @@ form {
   outline: none;
 }
 
-.btn {
+/* Chỉ áp dụng cho search button, không ảnh hưởng đến Bootstrap buttons */
+form .btn {
   background-color: #ebebeb;
   border: none;
   padding: 0 1.2rem;
