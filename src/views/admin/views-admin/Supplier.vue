@@ -162,6 +162,7 @@
 
 <script>
 import Pagination from "@/components/Common/Pagination.vue";
+import { showToast } from '@/utils/swalHelper';
 import Swal from "sweetalert2";
 export default {
   components: {
@@ -254,7 +255,8 @@ export default {
     toggleStatus(supplier) {
       supplier.status =
         supplier.status === "Hoạt động" ? "Không hoạt động" : "Hoạt động";
-      Swal.fire("Thành công!", "Đã thay đổi trạng thái.", "success");
+      // Swal.fire("Thành công!", "Đã thay đổi trạng thái.", "success");
+      showToast('success', 'Đã thay đổi trạng thái.')
     },
     async openAddSupplier() {
       const { value: formValues } = await Swal.fire({
@@ -358,7 +360,7 @@ export default {
         };
 
         this.listSupplier.push(newSupplier);
-        Swal.fire("Thành công!", "Đã thêm nhà cung cấp mới.", "success");
+        showToast('success', 'Đã thêm thành công.')
       }
     },
     async openEditSupplier(supplier) {
@@ -458,7 +460,7 @@ export default {
           updatedAt: new Date().toISOString(),
           updatedBy: "admin",
         });
-        Swal.fire("Thành công!", "Đã cập nhật nhà cung cấp.", "success");
+        showToast('success', 'Đã cập nhật thành công.')
       }
     },
     deleteSupplier(supplier) {
@@ -474,7 +476,7 @@ export default {
           this.listSupplier = this.listSupplier.filter(
             (s) => s.id !== supplier.id
           );
-          Swal.fire("Đã xóa!", "Nhà cung cấp đã được xóa.", "success");
+          showToast('success', 'Đã xóa thành công.')
         }
       });
     },

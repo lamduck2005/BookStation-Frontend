@@ -160,6 +160,7 @@
 
 <script>
 import Pagination from "@/components/Common/Pagination.vue";
+import { showToast } from '@/utils/swalHelper';
 import Swal from "sweetalert2";
 export default {
   components: {
@@ -407,7 +408,7 @@ export default {
           createdBy: "admin",
           updatedBy: "admin",
         });
-        Swal.fire("Thành công!", "Đã thêm voucher mới.", "success");
+        showToast('success', 'Đã thêm thành công.')
       }
     },
     async openEditVoucher(voucher) {
@@ -564,7 +565,7 @@ export default {
           updatedAt: new Date().toISOString().slice(0, 19).replace("T", " "),
           updatedBy: "admin",
         });
-        Swal.fire("Thành công!", "Đã cập nhật voucher.", "success");
+        showToast('success', 'Đã cập nhật thành công.')
       }
     },
     deleteVoucher(voucher) {
@@ -580,7 +581,7 @@ export default {
           this.listVoucher = this.listVoucher.filter(
             (v) => v.id !== voucher.id
           );
-          Swal.fire("Đã xóa!", "Voucher đã được xóa.", "success");
+          showToast('success', 'Đã xóa thành công.')
         }
       });
     },
@@ -588,9 +589,9 @@ export default {
       voucher.status =
         voucher.status === "Hoạt động" ? "Không hoạt động" : "Hoạt động";
       // Nếu muốn thông báo:
-      // this.$nextTick(() => {
-      //   Swal.fire("Thành công!", "Đã thay đổi trạng thái voucher.", "success");
-      // });
+      this.$nextTick(() => {
+        showToast('success', 'Đã thay đổi trạng thái thành công.')
+      });
     },
     prevPage() {
       if (this.pageNumber > 1) this.pageNumber--;
