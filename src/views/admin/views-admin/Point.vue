@@ -10,25 +10,33 @@
       <div class="d-flex align-items-center mb-3 p-2 m-0 rounded-top" style="background-color: #ecae9e;">
         <i class="bi bi-funnel-fill me-2 text-dark"></i>
         <h5>Bộ lọc</h5>
-      </div>
-      <div class="row g-3 m-2 mt-0 p-0">
-        <div class="col-md-6">
+      </div>      <div class="row g-3 m-2 mt-0 p-0">
+        <div class="col-md-3">
           <label class="form-label">Tìm kiếm:</label>
-          <input type="text" class="form-control" placeholder="Nhập mã đơn hàng, email" v-model="searchQuery" />
+          <input type="text" class="form-control" placeholder="Nhập mã đơn hàng, email" v-model="searchQuery" @input="handleSearchInput" />
         </div>
-        <div class="col-md-6">
+        <div class="col-md-3">
           <label class="form-label">Trạng thái</label>
-          <select class="form-select" v-model="selectedStatus">
+          <select class="form-select" v-model="selectedStatus" @change="handleFilterChange">
             <option value="">Tất cả trạng thái</option>
             <option value="1">Hoạt động</option>
             <option value="0">Không hoạt động</option>
           </select>
         </div>
-      </div>
-    </div>
-
-    <!-- Nút thêm mới -->
-    <div class="d-flex justify-content-end mb-3">
+        <div class="col-md-3">
+          <label class="form-label">Điểm sử dụng</label>
+          <input type="number" class="form-control" placeholder="Nhập điểm sử dụng" v-model="pointSpentFilter" @input="handlePointSpentInput" min="0" />
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button class="btn btn-outline-secondary w-100" @click="clearFilters">
+            <i class="bi bi-x-circle me-1"></i>Xóa bộ lọc
+          </button>
+        </div>
+      </div>    </div>    <!-- Nút thêm mới -->
+    <div class="d-flex justify-content-end mb-3 gap-2">
+      <button class="btn btn-outline-info btn-sm py-2" @click="reloadPage" :disabled="loading">
+        <i class="bi bi-arrow-repeat me-1"></i> Làm mới dữ liệu
+      </button>
       <button class="btn btn-primary btn-sm py-2" @click="openAddModal"
         style="background-color: #33304e; border-color: #33304e;">
         <i class="bi bi-plus-circle me-1"></i> Thêm mới
@@ -39,38 +47,61 @@
     <div class="bg-white p-3 rounded shadow-sm pt-0 ps-0 pe-0">
       <div class="d-flex align-items-center mb-3 p-2 m-0 rounded-top" style="background-color: #ecae9e;">
         <strong>Lịch sử Point</strong>
-      </div>
+      </div>      <div class="p-3">
+        <!-- Loading state -->
+        <div v-if="loading" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Đang tải...</span>
+          </div>
+          <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+        </div>
 
-      <div class="p-3">
-        <table class="table align-middle">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>email</th>
-              <th>mã đơn hàng</th>
-              <th>số điểm nhận</th>
-              <th>chi tiêu tối thiểu</th>
-              <th>điểm sử dụng</th>
-              <th>mô tả</th>
-              <th style="width: 100px;">Chức năng</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(point, index) in points" :key="point.id">
-              <td>{{ index + 1 }}</td>
-              <td>{{ point.email }}</td>
-              <td>{{ point.orderId }}</td>
-              <td>{{ point.pointReceived }}</td>
-              <td>{{ point.minSpend.toLocaleString() }} VND</td>
-              <td>{{ point.pointUsed }}</td>
-              <td>{{ point.description }}</td>
-              <td style="width: 100px;" class="d-flex gap-1">
-                <EditButton @click="openEditModal(point, index)" />
-                <DeleteButton @click="handleDeletePoint(index)" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <!-- Error state -->
+        <div v-else-if="error" class="alert alert-danger" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          {{ error }}
+          <button class="btn btn-sm btn-outline-danger ms-2" @click="loadPointHistory">
+            Thử lại
+          </button>
+        </div>
+
+        <!-- Data table -->
+        <div v-else>
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>email</th>
+                <th>mã đơn hàng</th>
+                <th>số điểm nhận</th>
+                <th>chi tiêu tối thiểu</th>
+                <th>điểm sử dụng</th>
+                <th>mô tả</th>
+                <th style="width: 100px;">Chức năng</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="points.length === 0">
+                <td colspan="8" class="text-center py-4 text-muted">
+                  <i class="bi bi-inbox me-2"></i>
+                  Không có dữ liệu
+                </td>
+              </tr>              <tr v-for="(point, index) in points" :key="point.id">
+                <td>{{ (currentPage * pageSize) + index + 1 }}</td>
+                <td>{{ point.email || 'N/A' }}</td>
+                <td>{{ point.orderCode || 'N/A' }}</td>
+                <td>{{ point.pointEarned || 0 }}</td>
+                <td>{{ point.minSpent ? Number(point.minSpent).toLocaleString() + ' VND' : 'N/A' }}</td>
+                <td>{{ point.pointSpent || 0 }}</td>
+                <td>{{ point.description || 'N/A' }}</td>
+                <td style="width: 100px;" class="d-flex gap-1">
+                  <EditButton @click="openEditModal(point, index)" />
+                  <DeleteButton @click="handleDeletePoint(index)" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
         <!-- Pagination -->
         <Pagination :page-number="currentPage" :total-pages="totalPages" :is-last-page="isLastPage"
@@ -134,14 +165,19 @@
   </div>
 </template>
 <script setup>
-import EditButton from '@/components/Common/EditButton.vue';
-import Pagination from '@/components/Common/Pagination.vue';
-import DeleteButton from '@/components/Common/DeleteButton.vue';
+import EditButton from '@/components/common/EditButton.vue';
+import Pagination from '@/components/common/Pagination.vue';
+import DeleteButton from '@/components/common/DeleteButton.vue';
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Modal } from 'bootstrap';
+import { getPointHistory } from '@/services/admin/point.js';
 
 const searchQuery = ref('');
 const selectedStatus = ref('');
+const pointSpentFilter = ref('');
+
+// Debounce timer để tránh gọi API quá nhiều lần
+let searchTimeout = null;
 
 // New/Edit rank form data
 const newRank = ref({
@@ -178,54 +214,57 @@ const itemsPerPageOptions = ref([5, 10, 25, 50]);
 // Computed property for last page check
 const isLastPage = ref(false);
 
-// Fake data for testing
-const points = ref([
-  {
-    id: 1,
-    email: 'user1@example.com',
-    orderId: 'ORD001',
-    pointReceived: 100,
-    minSpend: 500000,
-    pointUsed: 20,
-    description: 'Tích điểm khi mua sách'
-  },
-  {
-    id: 2,
-    email: 'user2@example.com',
-    orderId: 'ORD002',
-    pointReceived: 200,
-    minSpend: 1000000,
-    pointUsed: 50,
-    description: 'Tích điểm khi mua combo'
-  },
-  {
-    id: 3,
-    email: 'user3@example.com',
-    orderId: 'ORD003',
-    pointReceived: 150,
-    minSpend: 750000,
-    pointUsed: 0,
-    description: 'Tích điểm khi mua sách'
-  },
-  {
-    id: 4,
-    email: 'user4@example.com',
-    orderId: 'ORD004',
-    pointReceived: 300,
-    minSpend: 2000000,
-    pointUsed: 100,
-    description: 'Khuyến mãi đặc biệt'
-  },
-  {
-    id: 5,
-    email: 'user5@example.com',
-    orderId: 'ORD005',
-    pointReceived: 50,
-    minSpend: 250000,
-    pointUsed: 10,
-    description: 'Tích điểm khi mua sách'
+// API data for points
+const points = ref([]);
+const loading = ref(false);
+const error = ref(null);
+
+// Hàm load dữ liệu từ API với filter
+const loadPointHistory = async (page = 0, size = pageSize.value) => {
+  try {
+    loading.value = true;
+    error.value = null;
+    
+    // Tạo object filters từ các input
+    const filters = {};
+    
+    // Xử lý search query - có thể là orderCode hoặc email
+    if (searchQuery.value.trim()) {
+      // Kiểm tra xem có phải email không
+      if (searchQuery.value.includes('@')) {
+        filters.email = searchQuery.value.trim();
+      } else {
+        filters.orderCode = searchQuery.value.trim();
+      }
+    }
+    
+    if (selectedStatus.value !== '') {
+      filters.status = selectedStatus.value;
+    }
+    
+    if (pointSpentFilter.value !== '') {
+      filters.pointSpent = pointSpentFilter.value;
+    }
+    
+    const response = await getPointHistory(page, size, filters);
+    
+    if (response.status === 200 && response.data) {
+      points.value = response.data.content || [];
+      
+      // Cập nhật thông tin pagination
+      currentPage.value = response.data.page;
+      pageSize.value = response.data.size;
+      totalElements.value = response.data.totalElements;
+      totalPages.value = response.data.totalPages;
+      isLastPage.value = response.data.last;
+    }
+  } catch (err) {
+    error.value = 'Không thể tải dữ liệu lịch sử point';
+    console.error('Error loading point history:', err);
+  } finally {
+    loading.value = false;
   }
-]);
+};
 
 // Đảm bảo modal không bị kẹt backdrop hoặc tối màn hình:
 // Luôn dùng Modal.getOrCreateInstance để tránh tạo nhiều instance và lỗi backdrop
@@ -248,7 +287,16 @@ const openAddModal = () => {
 const openEditModal = (point, index) => {
   isEditMode.value = true;
   editIndex.value = index;
-  newPoint.value = { ...point };
+  // Cập nhật để khớp với cấu trúc dữ liệu mới từ API
+  newPoint.value = {
+    id: point.id,
+    email: point.email || '',
+    orderId: point.orderCode || '',
+    pointReceived: point.pointEarned || 0,
+    minSpend: point.minSpent || 0,
+    pointUsed: point.pointSpent || 0,
+    description: point.description || ''
+  };
   const modalElement = document.getElementById('addRankModal');
   const modal = Modal.getOrCreateInstance(modalElement);
   modal.show();
@@ -317,9 +365,14 @@ const handleSubmitPoint = () => {
   modal.hide();
 };
 
-const handleDeletePoint = (index) => {
+const handleDeletePoint = async (index) => {
   if (confirm('Bạn có chắc muốn xóa dòng này?')) {
+    // Tạm thời xóa từ mảng local, trong thực tế nên gọi API delete
     points.value.splice(index, 1);
+    // TODO: Gọi API delete point theo ID
+    // await deletePoint(pointId);
+    // Sau đó reload dữ liệu
+    // await loadPointHistory();
   }
 };
 
@@ -336,24 +389,19 @@ const handleStatusChange = (rank, newStatus) => {
 // Pagination functions
 const handlePrev = () => {
   if (currentPage.value > 0) {
-    currentPage.value--;
-    // Gọi API để load dữ liệu trang trước
-    console.log(`Loading page ${currentPage.value}`);
+    loadPointHistory(currentPage.value - 1, pageSize.value);
   }
 };
 
 const handleNext = () => {
   if (!isLastPage.value) {
-    currentPage.value++;
-    // Gọi API để load dữ liệu trang sau
-    console.log(`Loading page ${currentPage.value}`);
+    loadPointHistory(currentPage.value + 1, pageSize.value);
   }
 };
 
 const handlePageSizeChange = (newSize) => {
   pageSize.value = newSize;
-  currentPage.value = 0;
-  console.log(`Page size changed to ${newSize}`);
+  loadPointHistory(0, newSize); // Reset về trang đầu khi thay đổi page size
 };
 
 const resetRankModal = () => {
@@ -372,6 +420,9 @@ const resetRankModal = () => {
 let modalElement = null;
 
 onMounted(() => {
+  // Load dữ liệu khi component được mount
+  loadPointHistory();
+  
   modalElement = document.getElementById('addRankModal');
   if (modalElement) {
     modalElement.addEventListener('hidden.bs.modal', resetRankModal); // <-- Reset state khi modal đóng
@@ -382,7 +433,49 @@ onUnmounted(() => {
   if (modalElement) {
     modalElement.removeEventListener('hidden.bs.modal', resetRankModal);
   }
+  // Clear timeout khi component bị destroy
+  if (searchTimeout) {
+    clearTimeout(searchTimeout);
+  }
 });
+
+// Hàm xử lý thay đổi filter select (gọi API ngay lập tức)
+const handleFilterChange = () => {
+  currentPage.value = 0; // Reset về trang đầu
+  loadPointHistory(0, pageSize.value);
+};
+
+// Hàm xử lý input search với debounce
+const handleSearchInput = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 0; // Reset về trang đầu
+    loadPointHistory(0, pageSize.value);
+  }, 500); // Debounce 500ms
+};
+
+// Hàm xử lý input điểm sử dụng với debounce
+const handlePointSpentInput = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 0; // Reset về trang đầu
+    loadPointHistory(0, pageSize.value);
+  }, 500); // Debounce 500ms
+};
+
+// Hàm xóa tất cả filter
+const clearFilters = () => {
+  searchQuery.value = '';
+  selectedStatus.value = '';
+  pointSpentFilter.value = '';
+  currentPage.value = 0;
+  loadPointHistory(0, pageSize.value);
+};
+
+// Hàm reload lại trang
+const reloadPage = () => {
+  window.location.reload();
+};
 </script>
 
 <style scoped>

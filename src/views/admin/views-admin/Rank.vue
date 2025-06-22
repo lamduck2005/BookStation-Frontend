@@ -160,9 +160,9 @@
   </div>
 </template>
 <script setup>
-import EditButton from '@/components/Common/EditButton.vue';
-import ToggleStatus from '@/components/Common/ToggleStatus.vue';
-import Pagination from '@/components/Common/Pagination.vue';
+import EditButton from '@/components/common/EditButton.vue';
+import ToggleStatus from '@/components/common/ToggleStatus.vue';
+import Pagination from '@/components/common/Pagination.vue';
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Modal } from 'bootstrap';
 import { getRanks } from '@/services/admin/rank';

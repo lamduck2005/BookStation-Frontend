@@ -8,6 +8,7 @@ const client = axios.create({
   },
 });
 
+// Thêm interceptor để tự động thêm token (nếu có)vào header của mỗi request 
 client.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
