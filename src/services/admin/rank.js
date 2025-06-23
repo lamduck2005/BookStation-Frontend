@@ -1,6 +1,12 @@
-// Gọi API lấy danh sách rank không dùng axios cấu hình sẵn
+import client from '../../utils/axios.js';
+
+// Gọi API lấy danh sách rank sử dụng axios đã cấu hình
 export const getRanks = async () => {
-  const response = await fetch('http://localhost:8080/api/ranks');
-  if (!response.ok) throw new Error('Lỗi khi lấy danh sách rank');
-  return await response.json();
+  try {
+    const response = await client.get('/api/ranks');
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách rank:', error);
+    throw error;
+  }
 };

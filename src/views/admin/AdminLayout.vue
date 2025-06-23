@@ -5,13 +5,13 @@
       <SidebarA />
       <div class="main">
         <!-- Main Navigation Section Begins  -->
-        <NavA />
+        <!-- <NavA /> -->
         <!-- Main Navigation Section Ends  -->
         <div class="router">
           <router-view />
         </div>
         <!-- Main Footer Section Begins  -->
-        <FooterA />
+        <!-- <FooterA /> -->
         <!-- Main Footer Section Ends  -->
       </div>
     </div>

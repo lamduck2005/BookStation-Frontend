@@ -91,7 +91,7 @@
                 <td>{{ point.email || 'N/A' }}</td>
                 <td>{{ point.orderCode || 'N/A' }}</td>
                 <td>{{ point.pointEarned || 0 }}</td>
-                <td>{{ point.minSpent ? Number(point.minSpent).toLocaleString() + ' VND' : 'N/A' }}</td>
+                <td>{{ point.minSpent !== null && point.minSpent !== undefined ? Number(point.minSpent).toLocaleString() + ' VND' : 'N/A' }}</td>
                 <td>{{ point.pointSpent || 0 }}</td>
                 <td>{{ point.description || 'N/A' }}</td>
                 <td style="width: 100px;" class="d-flex gap-1">
@@ -110,55 +110,49 @@
       </div>
 
     </div>
-  </div> <!-- Add/Edit Point Modal -->
-  <div class="modal fade" id="addRankModal" tabindex="-1" aria-labelledby="addRankModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header" style="background-color: #ecae9e;">
-          <h5 class="modal-title" id="addRankModalLabel">
-            <i class="bi me-2 bi-plus-circle"></i>
-            {{ isEditMode ? 'Sửa Point' : 'Thêm Point' }}
-          </h5><button type="button" class="custom-close-btn" data-bs-dismiss="modal" aria-label="Close">
-            <img src="https://cdn-icons-png.flaticon.com/128/694/694604.png" alt="Close" />
-          </button>
-        </div>
-        <div class="modal-body">
-          <form @submit.prevent="handleSubmitPoint">
-            <div class="row g-3">
-              <div class="col-12">
-                <label class="form-label">Email <span class="text-danger">*</span></label>
-                <input type="email" class="form-control" v-model="newPoint.email" required />
+
+    <!-- Modal Thêm/Sửa Point -->
+    <div class="modal fade" id="addRankModal" tabindex="-1" aria-labelledby="addRankModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addRankModalLabel">{{ isEditMode ? 'Chỉnh sửa Point' : 'Thêm mới Point' }}</h5>
+            <button type="button" class="custom-close-btn" @click="closeModal">
+              <img src="/src/assets/img/user-plus.png" alt="Đóng" />
+            </button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="handleSubmitPoint">
+              <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" v-model="newPoint.email" required placeholder="Nhập email" />
               </div>
-              <div class="col-12">
-                <label class="form-label">Mã đơn hàng <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" v-model="newPoint.orderId" required placeholder="Nhập mã đơn hàng" />
+              <div class="mb-3">
+                <label class="form-label">ID đơn hàng</label>
+                <input type="text" class="form-control" v-model="newPoint.orderId" placeholder="Nhập ID đơn hàng" />
               </div>
-              <div class="col-12">
+              <div class="mb-3">
                 <label class="form-label">Số điểm nhận</label>
-                <input type="number" class="form-control" v-model="newPoint.pointReceived" min="0" />
+                <input type="number" class="form-control" v-model="newPoint.pointReceived" min="0" required placeholder="Nhập số điểm nhận" />
               </div>
-              <div class="col-12">
+              <div class="mb-3">
                 <label class="form-label">Chi tiêu tối thiểu (VND)</label>
-                <input type="number" class="form-control" v-model="newPoint.minSpend" min="0" />
+                <input type="number" class="form-control" v-model="newPoint.minSpend" min="0" required placeholder="Nhập chi tiêu tối thiểu" />
               </div>
-              <div class="col-12">
+              <div class="mb-3">
                 <label class="form-label">Điểm sử dụng</label>
-                <input type="number" class="form-control" v-model="newPoint.pointUsed" min="0" />
+                <input type="number" class="form-control" v-model="newPoint.pointUsed" min="0" required placeholder="Nhập điểm sử dụng" />
               </div>
-              <div class="col-12">
+              <div class="mb-3">
                 <label class="form-label">Mô tả</label>
-                <input type="text" class="form-control" v-model="newPoint.description" />
+                <textarea class="form-control" v-model="newPoint.description" rows="2" placeholder="Nhập mô tả"></textarea>
               </div>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            Hủy
-          </button> <button type="button" class="btn btn-primary" @click="handleSubmitPoint"
-            style="background-color: #33304e; border-color: #33304e;">
-            {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }}
-          </button>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="closeModal">Đóng</button>
+            <button type="button" class="btn btn-primary" @click="handleSubmitPoint">Lưu</button>
+          </div>
         </div>
       </div>
     </div>
@@ -170,7 +164,8 @@ import Pagination from '@/components/common/Pagination.vue';
 import DeleteButton from '@/components/common/DeleteButton.vue';
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Modal } from 'bootstrap';
-import { getPointHistory } from '@/services/admin/point.js';
+import { getPointHistory, createPoint, getOrderIdByOrderCode, updatePoint } from '@/services/admin/point.js';
+import { showToast } from '@/utils/swalHelper.js';
 
 const searchQuery = ref('');
 const selectedStatus = ref('');
@@ -247,13 +242,11 @@ const loadPointHistory = async (page = 0, size = pageSize.value) => {
     }
     
     const response = await getPointHistory(page, size, filters);
-    
     if (response.status === 200 && response.data) {
       points.value = response.data.content || [];
-      
-      // Cập nhật thông tin pagination
-      currentPage.value = response.data.page;
-      pageSize.value = response.data.size;
+      // Cập nhật thông tin pagination từ backend
+      currentPage.value = response.data.pageNumber;
+      pageSize.value = response.data.pageSize;
       totalElements.value = response.data.totalElements;
       totalPages.value = response.data.totalPages;
       isLastPage.value = response.data.last;
@@ -284,14 +277,21 @@ const openAddModal = () => {
   modal.show();
 };
 
-const openEditModal = (point, index) => {
+const openEditModal = async (point, index) => {
   isEditMode.value = true;
   editIndex.value = index;
-  // Cập nhật để khớp với cấu trúc dữ liệu mới từ API
+  let orderId = '';
+  if (point.orderCode) {
+    try {
+      orderId = await getOrderIdByOrderCode(point.orderCode);
+    } catch (e) {
+      orderId = '';
+    }
+  }
   newPoint.value = {
     id: point.id,
     email: point.email || '',
-    orderId: point.orderCode || '',
+    orderId: orderId || '',
     pointReceived: point.pointEarned || 0,
     minSpend: point.minSpent || 0,
     pointUsed: point.pointSpent || 0,
@@ -338,31 +338,35 @@ const handleSubmitRank = () => {
   modal.hide();
 };
 
-const handleSubmitPoint = () => {
-  if (!newPoint.value.email || !newPoint.value.orderId) {
-    alert('Vui lòng nhập đầy đủ email và id đơn hàng!');
+const handleSubmitPoint = async () => {
+  if (!newPoint.value.email) {
+    alert('Vui lòng nhập đầy đủ email!');
     return;
   }
-  if (isEditMode.value && editIndex.value !== null) {
-    points.value[editIndex.value] = {
-      ...newPoint.value,
-      pointReceived: Number(newPoint.value.pointReceived),
-      minSpend: Number(newPoint.value.minSpend),
-      pointUsed: Number(newPoint.value.pointUsed)
+  try {
+    const payload = {
+      email: newPoint.value.email,
+      orderId: newPoint.value.orderId,
+      pointEarned: newPoint.value.pointReceived,
+      minSpent: newPoint.value.minSpend,
+      pointSpent: newPoint.value.pointUsed,
+      description: newPoint.value.description,
+      status: 1
     };
-  } else {
-    const newId = points.value.length ? Math.max(...points.value.map(p => p.id)) + 1 : 1;
-    points.value.push({
-      ...newPoint.value,
-      id: newId,
-      pointReceived: Number(newPoint.value.pointReceived),
-      minSpend: Number(newPoint.value.minSpend),
-      pointUsed: Number(newPoint.value.pointUsed)
-    });
+    if (isEditMode.value && newPoint.value.id) {
+      await updatePoint(newPoint.value.id, payload);
+      showToast('success', 'Cập nhật point thành công!');
+    } else {
+      await createPoint(payload);
+      showToast('success', 'Thêm point thành công!');
+    }
+    await loadPointHistory(currentPage.value, pageSize.value);
+    const modalElement = document.getElementById('addRankModal');
+    const modal = Modal.getOrCreateInstance(modalElement);
+    modal.hide();
+  } catch (error) {
+    showToast('error', isEditMode.value ? 'Cập nhật point thất bại!' : 'Thêm point thất bại!');
   }
-  const modalElement = document.getElementById('addRankModal');
-  const modal = Modal.getOrCreateInstance(modalElement);
-  modal.hide();
 };
 
 const handleDeletePoint = async (index) => {
@@ -392,13 +396,11 @@ const handlePrev = () => {
     loadPointHistory(currentPage.value - 1, pageSize.value);
   }
 };
-
 const handleNext = () => {
   if (!isLastPage.value) {
     loadPointHistory(currentPage.value + 1, pageSize.value);
   }
 };
-
 const handlePageSizeChange = (newSize) => {
   pageSize.value = newSize;
   loadPointHistory(0, newSize); // Reset về trang đầu khi thay đổi page size
@@ -485,7 +487,7 @@ const reloadPage = () => {
 }
 
 .modal-dialog {
-  max-width: 450px !important;
+  max-width: 600px !important;
 }
 
 .modal-content {
@@ -522,4 +524,12 @@ const reloadPage = () => {
   width: 30px;
   height: 30px;
 }
+
+.modal-body {
+  min-height: 320px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+
 </style>
