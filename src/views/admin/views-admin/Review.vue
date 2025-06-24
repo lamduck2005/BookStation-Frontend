@@ -1,119 +1,35 @@
 <template>
-  <div style="padding: 32px;">
+  <div class="p-4">
     <div class="mb-3">
       <h6 class="text-muted">
         Quản lý / <strong>Đánh giá sách</strong>
       </h6>
     </div>
 
+    <!-- Bộ lọc có collapse -->
     <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">
-      <div class="d-flex align-items-center mb-3 text-bg-secondary p-2 m-0 rounded-top" id="">
+      <div class="d-flex align-items-center mb-3 bg-secondary bg-opacity-10 p-2 py-3 m-0 rounded-top">
         <i class="bi bi-funnel-fill me-2 text-dark"></i>
-        <h5>Bộ lọc</h5>
+        <h5 class="mb-0 flex-grow-1">Bộ lọc</h5>
+        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="true" aria-controls="filterCollapse">
+          <span class="bi" :class="filterCollapsed ? 'bi-chevron-down' : 'bi-chevron-up'"></span>
+        </button>
       </div>
-      <div class="row g-3 m-2 mt-0 p-0">
-        <div class="col-md-6">
-          <label class="form-label">Tên sách:</label>
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Nhập tên sách"
-            v-model="searchQuery"
-          />
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Trạng thái</label>
-          <select class="form-select" v-model="selectedStatus">
-            <option value="">Tất cả</option>
-            <option value="active">Hiển thị</option>
-            <option value="hidden">Bị ẩn</option>
-            <option value="pending">Chờ xác nhận</option>
-            <option value="edited">Đã chỉnh sửa</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <div class="d-flex align-items-center justify-content-between mt-5 mb-3">
-      <h2 class="table-title m-0">Danh sách đánh giá sách</h2>
-    </div>
-    <div class="dashboard-container">
-      <div class="dashboard-table">
-        <table id="main-table" class="display">
-          <thead>
-            <tr class="text-center">
-              <th>ID</th>
-              <th>Tên sách</th>
-              <th>Người đánh giá</th>
-              <th>Rating</th>
-              <th>Bình luận</th>
-              <th>Ngày đánh giá</th>
-              <th>Trạng thái</th>
-              <th>Chức năng</th>
-            </tr>
-          </thead>
-          <tbody class="text-center">
-            <tr v-for="(review, index) in filteredList" :key="index">
-              <td>{{ review.review_id }}</td>
-              <td>{{ getBookName(review.book_id) }}</td>
-              <td>{{ getUserName(review.user_id) }}</td>
-              <td>{{ review.rating }}</td>
-              <td>{{ review.comment }}</td>
-              <td>{{ formatDateTime(review.review_date) }}</td>
-              <td>
-                <span :class="statusClass(review.status)">
-                  {{ statusText(review.status) }}
-                </span>
-              </td>
-              <td class="action-cell">
-                <a class="btn btn-custom tooltip-custom" data-tooltip="Chi tiết" @click="viewReviewDetail(review)">
-                  <i class="bi bi-info-circle fs-5"></i>
-                </a>
-                <a class="btn btn-custom tooltip-custom" data-tooltip="Cập nhật" @click="editReview(review)">
-                  <i class="bi bi-pencil fs-5"></i>
-                </a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Modal Popup for Edit Review -->
-    <div class="modal-overlay" v-if="showModal" @click="closeModalOnOutsideClick">
-      <div class="modal-container" @click.stop>
-        <div class="modal-header">
-          <h5>{{ isEditMode ? 'Cập nhật đánh giá' : 'Chi tiết đánh giá' }}</h5>
-          <i class="bi bi-x-lg close-icon" @click="closeModal"></i>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">ID</label>
-            <input type="text" class="form-control" v-model="newReview.review_id" readonly>
+      <div class="collapse show" id="filterCollapse">
+        <div class="row g-3 m-2 mt-0 p-0">
+          <div class="col-md-6">
+            <label class="form-label">Tên sách:</label>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Nhập tên sách"
+              v-model="searchQuery"
+            />
           </div>
-          <div class="mb-3">
-            <label class="form-label">Tên sách</label>
-            <input type="text" class="form-control" :value="getBookName(newReview.book_id)" readonly>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Người đánh giá</label>
-            <input type="text" class="form-control" :value="getUserName(newReview.user_id)" readonly>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Rating</label>
-            <input type="number" class="form-control" v-model="newReview.rating" :readonly="!isEditMode">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Bình luận</label>
-            <textarea class="form-control" v-model="newReview.comment" :readonly="!isEditMode"></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Ngày đánh giá</label>
-            <input type="text" class="form-control" v-model="newReview.review_date" readonly>
-          </div>
-          <div class="mb-3">
+          <div class="col-md-6">
             <label class="form-label">Trạng thái</label>
-            <select class="form-select" v-model="newReview.status" :disabled="!isEditMode">
+            <select class="form-select" v-model="selectedStatus">
+              <option value="">Tất cả</option>
               <option value="active">Hiển thị</option>
               <option value="hidden">Bị ẩn</option>
               <option value="pending">Chờ xác nhận</option>
@@ -121,68 +37,133 @@
             </select>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" @click="closeModal">Đóng</button>
-          <button v-if="isEditMode" type="button" class="btn btn-primary" @click="saveReview">Cập nhật</button>
+      </div>
+    </div>
+
+    <div class="card">
+  <div class="card-header">
+    Featured
+  </div>
+  <div class="card-body">
+    <h5 class="card-title">Special title treatment</h5>
+    <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+    <a href="#" class="btn btn-primary">Go somewhere</a>
+  </div>
+</div>
+
+    <div class="d-flex align-items-center justify-content-between mt-5 mb-3">
+      <h2 class="fw-bold text-danger m-0">Danh sách đánh giá sách</h2>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-striped table-hover align-middle text-center">
+        <thead class="table-secondary">
+          <tr>
+            <th>ID</th>
+            <th>Tên sách</th>
+            <th>Người đánh giá</th>
+            <th>Rating</th>
+            <th>Bình luận</th>
+            <th>Ngày đánh giá</th>
+            <th>Trạng thái</th>
+            <th>Chức năng</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(review, index) in filteredList" :key="index">
+            <td>{{ review.review_id }}</td>
+            <td>{{ getBookName(review.book_id) }}</td>
+            <td>{{ getUserName(review.user_id) }}</td>
+            <td>{{ review.rating }}</td>
+            <td>{{ review.comment }}</td>
+            <td>{{ formatDateTime(review.review_date) }}</td>
+            <td>
+              <span :class="statusClass(review.status)">
+                {{ statusText(review.status) }}
+              </span>
+            </td>
+            <td>
+              <button class="btn btn-outline-info btn-sm me-1" title="Chi tiết" @click="viewReviewDetail(review)">
+                <i class="bi bi-info-circle fs-5"></i>
+              </button>
+              <button class="btn btn-outline-primary btn-sm" title="Cập nhật" @click="editReview(review)">
+                <i class="bi bi-pencil fs-5"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Modal Popup for Edit Review -->
+    <div class="modal fade show d-block" tabindex="-1" v-if="showModal" style="background: rgba(0,0,0,0.5);" @click.self="closeModal">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ isEditMode ? 'Cập nhật đánh giá' : 'Chi tiết đánh giá' }}</h5>
+            <button type="button" class="btn-close" @click="closeModal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">ID</label>
+              <input type="text" class="form-control" v-model="newReview.review_id" readonly>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Tên sách</label>
+              <input type="text" class="form-control" :value="getBookName(newReview.book_id)" readonly>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Người đánh giá</label>
+              <input type="text" class="form-control" :value="getUserName(newReview.user_id)" readonly>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Rating</label>
+              <input type="number" class="form-control" v-model="newReview.rating" :readonly="!isEditMode">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Bình luận</label>
+              <textarea class="form-control" v-model="newReview.comment" :readonly="!isEditMode"></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Ngày đánh giá</label>
+              <input type="text" class="form-control" v-model="newReview.review_date" readonly>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Trạng thái</label>
+              <select class="form-select" v-model="newReview.status" :disabled="!isEditMode">
+                <option value="active">Hiển thị</option>
+                <option value="hidden">Bị ẩn</option>
+                <option value="pending">Chờ xác nhận</option>
+                <option value="edited">Đã chỉnh sửa</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="closeModal">Đóng</button>
+            <button v-if="isEditMode" type="button" class="btn btn-primary" @click="saveReview">Cập nhật</button>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Modal Chi Tiết Review -->
-    <div class="modal-overlay" v-if="showDetailModal" @click="closeDetailModalOnOutsideClick">
-      <div class="modal-detail modal-detail-wide" @click.stop>
-        <div class="modal-header">
-          <h5>Chi tiết đánh giá</h5>
-          <i class="bi bi-x-lg close-icon" @click="showDetailModal = false"></i>
-        </div>
-        <div class="modal-body-detail modal-body-detail-grid">
-          <div class="detail-field">
-            <label class="form-label">ID</label>
-            <input type="text" class="form-control" :value="newReview.review_id" readonly>
+    <div class="modal fade show d-block" tabindex="-1" v-if="showDetailModal" style="background: rgba(0,0,0,0.5);" @click.self="showDetailModal = false">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Chi tiết đánh giá</h5>
+            <button type="button" class="btn-close" @click="showDetailModal = false"></button>
           </div>
-          <div class="detail-field">
-            <label class="form-label">Tên sách</label>
-            <input type="text" class="form-control" :value="getBookName(newReview.book_id)" readonly>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6" v-for="(field, idx) in detailFields" :key="idx">
+                <label class="form-label">{{ field.label }}</label>
+                <input type="text" class="form-control" :value="field.value" readonly>
+              </div>
+            </div>
           </div>
-          <div class="detail-field">
-            <label class="form-label">Người đánh giá</label>
-            <input type="text" class="form-control" :value="getUserName(newReview.user_id)" readonly>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="showDetailModal = false">Đóng</button>
           </div>
-          <div class="detail-field">
-            <label class="form-label">Rating</label>
-            <input type="text" class="form-control" :value="newReview.rating" readonly>
-          </div>
-          <div class="detail-field">
-            <label class="form-label">Bình luận</label>
-            <input type="text" class="form-control" :value="newReview.comment" readonly>
-          </div>
-          <div class="detail-field">
-            <label class="form-label">Ngày đánh giá</label>
-            <input type="text" class="form-control" :value="newReview.review_date" readonly>
-          </div>
-          <div class="detail-field">
-            <label class="form-label">Trạng thái</label>
-            <input type="text" class="form-control" :value="statusText(newReview.status)" readonly>
-          </div>
-          <div class="detail-field">
-            <label class="form-label">Ngày tạo</label>
-            <input type="text" class="form-control" :value="newReview.created_at" readonly>
-          </div>
-          <div class="detail-field">
-            <label class="form-label">Ngày cập nhật</label>
-            <input type="text" class="form-control" :value="newReview.updated_at" readonly>
-          </div>
-          <div class="detail-field">
-            <label class="form-label">Người tạo</label>
-            <input type="text" class="form-control" :value="newReview.created_by" readonly>
-          </div>
-          <div class="detail-field">
-            <label class="form-label">Người cập nhật</label>
-            <input type="text" class="form-control" :value="newReview.updated_by" readonly>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" @click="showDetailModal = false">Đóng</button>
         </div>
       </div>
     </div>
@@ -190,7 +171,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { showToast } from '@/utils/swalHelper';
 
 // Dữ liệu mẫu cho sách và user
@@ -361,131 +342,46 @@ const statusText = (status) => {
 
 const statusClass = (status) => {
   switch (status) {
-    case 'active': return 'badge bg-success-subtle text-success';
-    case 'hidden': return 'badge bg-secondary-subtle text-secondary';
-    case 'pending': return 'badge bg-warning-subtle text-warning';
-    case 'edited': return 'badge bg-info-subtle text-info';
+    case 'active': return 'badge bg-success';
+    case 'hidden': return 'badge bg-secondary';
+    case 'pending': return 'badge bg-warning text-dark';
+    case 'edited': return 'badge bg-info text-dark';
     default: return 'badge bg-secondary';
   }
 };
+
+// Thêm computed cho detailFields để render các trường chi tiết review
+const detailFields = computed(() => [
+  { label: 'ID', value: newReview.value.review_id },
+  { label: 'Tên sách', value: getBookName(newReview.value.book_id) },
+  { label: 'Người đánh giá', value: getUserName(newReview.value.user_id) },
+  { label: 'Rating', value: newReview.value.rating },
+  { label: 'Bình luận', value: newReview.value.comment },
+  { label: 'Ngày đánh giá', value: newReview.value.review_date },
+  { label: 'Trạng thái', value: statusText(newReview.value.status) },
+  { label: 'Ngày tạo', value: newReview.value.created_at },
+  { label: 'Ngày cập nhật', value: newReview.value.updated_at },
+  { label: 'Người tạo', value: newReview.value.created_by },
+  { label: 'Người cập nhật', value: newReview.value.updated_by },
+]);
+
+// Thêm biến để theo dõi trạng thái collapse
+const filterCollapsed = ref(false);
+
+onMounted(() => {
+  // Lắng nghe sự kiện collapse của Bootstrap để cập nhật icon
+  const collapseEl = document.getElementById('filterCollapse');
+  if (collapseEl) {
+    collapseEl.addEventListener('hide.bs.collapse', () => {
+      filterCollapsed.value = true;
+    });
+    collapseEl.addEventListener('show.bs.collapse', () => {
+      filterCollapsed.value = false;
+    });
+  }
+});
 </script>
 
 <style>
-/* ... giữ nguyên style từ Flash_Sale.vue ... */
-.custom-add-btn {
-  background-color: #196f3d;
-  color: #fff;
-  font-weight: bold;
-  border: none;
-  height: 50px;
-  padding: 0 20px;
-  border-radius: 6px;
-  transition: background-color 0.3s ease;
-}
-
-.custom-add-btn:hover {
-  background-color: #2ecc71;
-  color: white;
-}
-
-.action-cell {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  justify-content: center;
-  margin-right: 0;
-}
-
-.table-title {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #ff2727;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-container {
-  background-color: white;
-  border-radius: 8px;
-  width: 500px;
-  max-width: 90%;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  border-bottom: 1px solid #e9ecef;
-}
-
-.modal-header h5 {
-  margin: 0;
-  font-weight: bold;
-}
-
-.close-icon {
-  cursor: pointer;
-  width: 16px;
-  height: 16px;
-}
-
-.modal-body {
-  padding: 1rem;
-}
-
-.modal-footer {
-  padding: 1rem;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  border-top: 1px solid #e9ecef;
-}
-
-.required::after {
-  content: "*";
-  color: red;
-  margin-left: 4px;
-}
-
-.modal-detail {
-  background-color: white;
-  border-radius: 8px;
-  width: 700px;
-  max-width: 98vw;
-  max-height: 90vh;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  overflow-y: auto;
-}
-.modal-body-detail {
-  padding: 1.5rem;
-  max-height: 65vh;
-  overflow-y: auto;
-}
-
-.modal-detail-wide {
-  width: 900px;
-}
-.modal-body-detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px 32px;
-  padding: 2rem;
-}
-.detail-field {
-  display: flex;
-  flex-direction: column;
-}
+/* Chỉ giữ lại style nếu Bootstrap không đáp ứng được, còn lại xóa hết */
 </style>

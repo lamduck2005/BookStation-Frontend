@@ -63,14 +63,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
-const isSidebarClosed = ref(false)
+const props = defineProps({
+  isSidebarClosed: Boolean
+})
+const emit = defineEmits(['toggleSidebar'])
 const openSubMenuIndex = ref(null)
 
 function toggleSidebar() {
-  isSidebarClosed.value = !isSidebarClosed.value
-  openSubMenuIndex.value = null // Đóng tất cả submenu khi thu gọn sidebar
+  emit('toggleSidebar', !props.isSidebarClosed)
+  openSubMenuIndex.value = null
 }
 
 function toggleSubMenu(idx) {
@@ -78,7 +81,7 @@ function toggleSubMenu(idx) {
     openSubMenuIndex.value = null
   } else {
     openSubMenuIndex.value = idx
-    isSidebarClosed.value = false // Mở sidebar nếu đang đóng
+    if (props.isSidebarClosed) emit('toggleSidebar', false)
   }
 }
 </script>

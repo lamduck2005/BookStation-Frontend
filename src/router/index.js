@@ -16,6 +16,7 @@ import Supplier from "@/views/admin/views-admin/Supplier.vue";
 import Rank from "@/views/admin/views-admin/Rank.vue";
 import Point from "@/views/admin/views-admin/Point.vue";
 import Flash_Sale_Item from "@/views/admin/views-admin/flash-sale-item/Flash_Sale_Item.vue";
+import AdminLayoutTest from "@/views/admin/AdminLayoutTest.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -23,7 +24,7 @@ const router = createRouter({
     {
       path: "/",
       name: "home",
-      component: Test,
+      component: AdminLayoutTest,
     },
     // Admin routes
     {
