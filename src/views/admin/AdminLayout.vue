@@ -20,7 +20,7 @@
 import { ref } from 'vue'
 import FooterA from "./components-admin/FooterA.vue";
 import NavA from "./components-admin/NavA.vue";
-import SidebarA from "./components-admin/SidebarA.vue";
+import SidebarA from "./components-admin/Sidebar.vue";
 
 const isSidebarClosed = ref(false)
 function handleSidebarToggle(val) {
@@ -45,7 +45,7 @@ function handleSidebarToggle(val) {
   margin-left: 0px;
 }
 .router {
-  padding: 0.1rem;
+  padding: 0.1rem 1rem;
   min-height: calc(100vh - 60px);
 }
 </style>
