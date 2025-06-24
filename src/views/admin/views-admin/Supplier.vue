@@ -1,13 +1,17 @@
 <template>
+  <div class="mb-3 mt-3">
+    <h6 class="text-muted">Quản lý / <strong>Nhà cung cấp</strong></h6>
+  </div>
   <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">
     <div
-      class="d-flex align-items-center mb-3 text-bg-secondary p-2 m-0 rounded-top"
+      class="d-flex align-items-center mb-3 p-2 m-0 rounded-top"
+      style="background-color: #ecae9e"
     >
       <i class="bi bi-funnel-fill me-2 text-dark"></i>
       <h5 class="mb-0">Bộ lọc</h5>
     </div>
     <div class="row g-3 m-2 mt-0 p-0 align-items-end">
-      <div class="col-md-4">
+      <div class="col-md-6">
         <label class="form-label mb-1">Tìm kiếm</label>
         <input
           type="text"
@@ -17,7 +21,7 @@
           @input="onFilterChange"
         />
       </div>
-      <div class="col-md-3">
+      <div class="col-md-6">
         <label class="form-label mb-1">Trạng thái</label>
         <select
           class="form-select form-select-sm"
@@ -29,43 +33,31 @@
           <option value="Không hoạt động">Không hoạt động</option>
         </select>
       </div>
-      <div class="col-md-3">
-        <label class="form-label mb-1">Số điện thoại</label>
-        <input
-          type="text"
-          class="form-control form-control-sm"
-          placeholder="Nhập SĐT"
-          v-model="phoneFilter"
-          @input="onFilterChange"
-        />
-      </div>
-      <div class="col-md-2 d-flex align-items-end">
-        <button
-          class="btn btn-outline-secondary btn-sm w-30"
-          style="margin-left: 20px"
-          @click="resetFilter"
-        >
-          <i class="bi bi-arrow-clockwise"></i>
-        </button>
-      </div>
     </div>
   </div>
 
-  <div
-    class="d-flex justify-content-end mb-3"
-    style="margin-top: 10px; margin-right: 20px"
-  >
-    <button @click="openAddSupplier" class="custom-add-btn">
-      <i class="bi bi-plus-circle me-2"></i>
-      <strong style="font-weight: normal">Thêm nhà cung cấp mới</strong>
+  <div class="d-flex justify-content-end mb-3">
+    <button
+      @click="openAddSupplier"
+      class="btn btn-primary btn-sm py-2"
+      style="background-color: #33304e; border-color: #33304e"
+    >
+      <i class="bi bi-plus-circle me-1"></i>
+      Thêm nhà cung cấp mới
     </button>
   </div>
 
-  <div class="dashboard-container">
-    <div class="dashboard-table">
-      <table id="main-table" class="display">
+  <div class="bg-white p-3 rounded shadow-sm pt-0 ps-0 pe-0">
+    <div
+      class="d-flex align-items-center mb-3 p-2 m-0 rounded-top"
+      style="background-color: #ecae9e"
+    >
+      <strong>Danh sách nhà cung cấp</strong>
+    </div>
+    <div class="p-3">
+      <table class="table align-middle text-center">
         <thead>
-          <tr class="text-center">
+          <tr>
             <th>STT</th>
             <th>Tên nhà cung cấp</th>
             <th>Người đại diện</th>
@@ -76,15 +68,17 @@
             <th colspan="3">Actions</th>
           </tr>
         </thead>
-        <tbody class="text-center">
+        <tbody>
           <tr v-for="(supplier, index) in pagedSuppliers" :key="supplier.id">
-            <td>{{ (pageNumber - 1) * pageSize + index + 1 }}</td>
+            <td>{{ currentPage * pageSize + index + 1 }}</td>
             <td>{{ supplier.supplierName }}</td>
             <td>{{ supplier.contactName }}</td>
             <td>{{ supplier.phone }}</td>
             <td>{{ supplier.email }}</td>
             <td class="status-cell align-middle">
-              <div class="d-flex align-items-center gap-2">
+              <div
+                class="d-flex align-items-center gap-2 justify-content-center"
+              >
                 <label class="switch m-0">
                   <input
                     type="checkbox"
@@ -103,8 +97,9 @@
                   style="
                     font-weight: 700;
                     min-width: 130px;
-                    padding-top: 5%;
+                    padding-top: 3%;
                     height: 30px;
+                    font-size: 13px;
                   "
                 >
                   {{ supplier.status }}
@@ -112,99 +107,228 @@
               </div>
             </td>
             <td>{{ supplier.createdBy }}</td>
-            <td class="action-cell">
-              <div class="d-flex justify-content-center gap-2">
+            <td >
+             
                 <button
-                  class="btn btn-light btn-sm p-1 tooltip-custom"
+                 
                   data-tooltip="Chi tiết"
                   @click="showDetail(supplier)"
-                  style="min-width: 32px"
+                  style="min-width: 32px; margin-right: 5px"
                 >
                   <i class="bi bi-info-circle fs-6"></i>
                 </button>
                 <button
-                  class="btn btn-light btn-sm p-1 tooltip-custom"
+               
                   data-tooltip="Cập nhật"
                   @click="openEditSupplier(supplier)"
-                  style="min-width: 32px"
+                  style="min-width: 32px; margin-right: 5px"
                 >
                   <i class="bi bi-pencil fs-6"></i>
                 </button>
                 <button
-                  class="btn btn-light btn-sm p-1 tooltip-custom"
+                 
                   data-tooltip="Xóa"
                   @click="deleteSupplier(supplier)"
-                  style="min-width: 32px"
+                  style="min-width: 32px; margin-right: 5px"
                 >
                   <i class="bi bi-trash fs-6 text-danger"></i>
                 </button>
-              </div>
+             
             </td>
           </tr>
         </tbody>
       </table>
+      
       <!-- Pagination -->
       <Pagination
-        :page-number="pageNumber"
+        :page-number="currentPage"
         :total-pages="totalPages"
         :is-last-page="isLastPage"
         :page-size="pageSize"
         :items-per-page-options="itemsPerPageOptions"
         :total-elements="totalElements"
-        @prev="prevPage"
-        @next="nextPage"
-        @update:pageSize="(val) => (pageSize = val)"
+        @prev="handlePrev"
+        @next="handleNext"
+        @update:pageSize="handlePageSizeChange"
       />
-      <!-- Pagination -->
+
+    </div>
+  </div>
+
+  <!-- Modal Thêm/Cập nhật nhà cung cấp -->
+  <div
+    class="modal fade"
+    id="addSupplierModal"
+    tabindex="-1"
+    aria-labelledby="addSupplierModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header" style="background-color: #ecae9e">
+          <h5 class="modal-title" id="addSupplierModalLabel">
+            <i class="bi me-2 bi-plus-circle"></i>
+            {{ isEditMode ? "Cập nhật nhà cung cấp" : "Thêm nhà cung cấp mới" }}
+          </h5>
+          <button
+            type="button"
+            class="custom-close-btn"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          >
+            <img
+              src="https://cdn-icons-png.flaticon.com/128/694/694604.png"
+              alt="Close"
+            />
+          </button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="submitSupplierForm">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">
+                  Tên nhà cung cấp <span class="text-danger">*</span>
+                </label>
+                <input
+                  v-model="supplierForm.supplierName"
+                  class="form-control form-control-sm"
+                  placeholder="Nhập tên nhà cung cấp"
+                  required
+                />
+              </div>
+              <div class="col-12">
+                <label class="form-label">
+                  Người đại diện <span class="text-danger">*</span>
+                </label>
+                <input
+                  v-model="supplierForm.contactName"
+                  class="form-control form-control-sm"
+                  placeholder="Nhập tên người đại diện"
+                  required
+                />
+              </div>
+              <div class="col-12">
+                <label class="form-label">
+                  Số điện thoại <span class="text-danger">*</span>
+                </label>
+                <input
+                  v-model="supplierForm.phone"
+                  class="form-control form-control-sm"
+                  placeholder="Nhập số điện thoại"
+                  required
+                />
+              </div>
+              <div class="col-12">
+                <label class="form-label">
+                  Email <span class="text-danger">*</span>
+                </label>
+                <input
+                  v-model="supplierForm.email"
+                  class="form-control form-control-sm"
+                  placeholder="Nhập email"
+                  required
+                />
+              </div>
+              <div class="col-12">
+                <label class="form-label">
+                  Địa chỉ <span class="text-danger">*</span>
+                </label>
+                <input
+                  v-model="supplierForm.address"
+                  class="form-control form-control-sm"
+                  placeholder="Nhập địa chỉ"
+                  required
+                />
+              </div>
+            </div>
+            <div v-if="formError" class="alert alert-danger py-1 mt-3">
+              {{ formError }}
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Hủy
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            @click="submitSupplierForm"
+            style="background-color: #33304e; border-color: #33304e"
+          >
+            {{ isEditMode ? "Cập nhật" : "Thêm mới" }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import Pagination from "@/components/Common/Pagination.vue";
-import { showToast } from '@/utils/swalHelper';
+import { showToast } from "@/utils/swalHelper";
 import Swal from "sweetalert2";
+import { Modal } from "bootstrap";
+import { ref, computed, watch } from "vue";
+
 export default {
   components: {
     Pagination,
   },
-  data() {
-    return {
-      listSupplier: [
-        {
-          id: 1,
-          supplierName: "Nhà cung cấp A",
-          contactName: "Nguyễn Văn A",
-          phone: "0123456789",
-          email: "NXXA@gmail.com",
-          address: "123 Đường ABC, Quận 1, TP.HCM",
-          status: "Hoạt động",
-          createdAt: "2023-10-01 10:00:00",
-          updatedAt: "2023-10-01 10:00:00",
-          createdBy: "admin",
-          updatedBy: "admin",
-        },
-      ],
-      // Thêm các biến phân trang
-      pageNumber: 1,
-      pageSize: 10,
-      totalElements: 1,
-      totalPages: 1,
-      isLastPage: false,
-      itemsPerPageOptions: [2, 5, 10, 20, 50],
-      // Bộ lọc
-      searchQuery: "",
-      statusFilter: "",
-      phoneFilter: "",
-    };
-  },
-  computed: {
-    pagedSuppliers() {
-      let filtered = this.listSupplier;
+  setup() {
+    // Phân trang
+    const currentPage = ref(0); // Bắt đầu từ 0
+    const pageSize = ref(10);
+    const totalElements = ref(0);
+    const totalPages = ref(1);
+    const isLastPage = computed(() => currentPage.value >= totalPages.value - 1);
+    const itemsPerPageOptions = ref([5, 10, 25, 50]);
+
+    // Dữ liệu nhà cung cấp
+    const listSupplier = ref([
+      {
+        id: 1,
+        supplierName: "Nhà cung cấp A",
+        contactName: "Nguyễn Văn A",
+        phone: "0123456789",
+        email: "NXXA@gmail.com",
+        address: "123 Đường ABC, Quận 1, TP.HCM",
+        status: "Hoạt động",
+        createdAt: "2023-10-01 10:00:00",
+        updatedAt: "2023-10-01 10:00:00",
+        createdBy: "admin",
+        updatedBy: "admin",
+      },
+    ]);
+
+    // Bộ lọc
+    const searchQuery = ref("");
+    const statusFilter = ref("");
+    const phoneFilter = ref("");
+
+    // Modal & form
+    const isEditMode = ref(false);
+    const supplierForm = ref({
+      supplierName: "",
+      contactName: "",
+      phone: "",
+      email: "",
+      address: "",
+    });
+    const editingSupplier = ref(null);
+    const formError = ref("");
+
+    // Lọc và phân trang
+    const pagedSuppliers = computed(() => {
+      let filtered = listSupplier.value;
 
       // Lọc theo searchQuery (tên, đại diện, email)
-      if (this.searchQuery) {
-        const q = this.searchQuery.toLowerCase();
+      if (searchQuery.value) {
+        const q = searchQuery.value.toLowerCase();
         filtered = filtered.filter(
           (s) =>
             s.supplierName.toLowerCase().includes(q) ||
@@ -213,257 +337,138 @@ export default {
         );
       }
       // Lọc theo trạng thái
-      if (this.statusFilter) {
-        filtered = filtered.filter((s) => s.status === this.statusFilter);
+      if (statusFilter.value) {
+        filtered = filtered.filter((s) => s.status === statusFilter.value);
       }
       // Lọc theo SĐT
-      if (this.phoneFilter) {
-        filtered = filtered.filter((s) => s.phone.includes(this.phoneFilter));
+      if (phoneFilter.value) {
+        filtered = filtered.filter((s) => s.phone.includes(phoneFilter.value));
       }
 
-      this.totalElements = filtered.length;
-      this.totalPages = Math.max(1, Math.ceil(filtered.length / this.pageSize));
-      this.isLastPage = this.pageNumber >= this.totalPages;
+      totalElements.value = filtered.length;
+      totalPages.value = Math.max(
+        1,
+        Math.ceil(filtered.length / pageSize.value)
+      );
 
-      const start = (this.pageNumber - 1) * this.pageSize;
-      return filtered.slice(start, start + this.pageSize);
-    },
-  },
-  watch: {
-    pageSize() {
-      this.pageNumber = 1;
-    },
-  },
-  methods: {
-    onFilterChange() {
-      this.pageNumber = 1;
-    },
-    resetFilter() {
-      this.searchQuery = "";
-      this.statusFilter = "";
-      this.phoneFilter = "";
-      this.pageNumber = 1;
-    },
-    isValidEmail(email) {
+      // Reset currentPage nếu vượt quá totalPages
+      if (currentPage.value > totalPages.value - 1)
+        currentPage.value = totalPages.value - 1;
+
+      const start = currentPage.value * pageSize.value;
+      return filtered.slice(start, start + pageSize.value);
+    });
+
+    // Watchers
+    watch([pageSize, searchQuery, statusFilter, phoneFilter], () => {
+      currentPage.value = 0;
+    });
+
+    // Methods
+    function onFilterChange() {
+      currentPage.value = 0;
+    }
+    function resetFilter() {
+      searchQuery.value = "";
+      statusFilter.value = "";
+      phoneFilter.value = "";
+      currentPage.value = 0;
+    }
+    function isValidEmail(email) {
       const regex = /^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$/;
       return regex.test(email);
-    },
-    isValidPhone(phone) {
+    }
+    function isValidPhone(phone) {
       const regex = /^0\d{9}$/;
       return regex.test(phone);
-    },
-    toggleStatus(supplier) {
+    }
+    function toggleStatus(supplier) {
       supplier.status =
         supplier.status === "Hoạt động" ? "Không hoạt động" : "Hoạt động";
-      // Swal.fire("Thành công!", "Đã thay đổi trạng thái.", "success");
-      showToast('success', 'Đã thay đổi trạng thái.')
-    },
-    async openAddSupplier() {
-      const { value: formValues } = await Swal.fire({
-        title: "Thêm nhà cung cấp mới",
-        html: `
-      <style>
-    .custom-swal-input {
-      width: 100%;
-      padding: 8px 12px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-sizing: border-box;
-      font-size: 14px;
-      transition: border-color 0.3s, box-shadow 0.3s;
+      showToast("success", "Đã thay đổi trạng thái.");
     }
-    .custom-swal-input:focus {
-      border-color: #3b82f6;
-      outline: none;
-      box-shadow: 0 0 5px rgba(59, 130, 246, 0.4);
+    function openAddSupplier() {
+      isEditMode.value = false;
+      formError.value = "";
+      supplierForm.value = {
+        supplierName: "",
+        contactName: "",
+        phone: "",
+        email: "",
+        address: "",
+      };
+      const modalElement = document.getElementById("addSupplierModal");
+      const modal = Modal.getOrCreateInstance(modalElement);
+      modal.show();
     }
-    .swal2-popup label {
-      font-weight: 600;
-      margin-bottom: 5px;
-      display: block;
-      font-size: 14px;
+    function openEditSupplier(supplier) {
+      isEditMode.value = true;
+      formError.value = "";
+      editingSupplier.value = supplier;
+      supplierForm.value = {
+        supplierName: supplier.supplierName,
+        contactName: supplier.contactName,
+        phone: supplier.phone,
+        email: supplier.email,
+        address: supplier.address,
+      };
+      const modalElement = document.getElementById("addSupplierModal");
+      const modal = Modal.getOrCreateInstance(modalElement);
+      modal.show();
     }
-    .required-star {
-      color: red;
-      margin-left: 3px;
+    function closeSupplierModal() {
+      editingSupplier.value = null;
+      formError.value = "";
     }
-  </style>
-      <div style="text-align: left; font-size: 14px;">
-        <div style="margin-bottom: 12px;">
-          <label for="swal-supplierName">Tên nhà cung cấp:<span class="required-star">*</span></label>
-          <input id="swal-supplierName" class="custom-swal-input" placeholder="Nhập tên nhà cung cấp">
-        </div>
-        <div style="margin-bottom: 12px;">
-          <label for="swal-contactName">Người đại diện:<span class="required-star">*</span></label>
-          <input id="swal-contactName" class="custom-swal-input" placeholder="Nhập tên người đại diện">
-        </div>
-        <div style="margin-bottom: 12px;">
-          <label for="swal-phone">Số điện thoại:<span class="required-star">*</span></label>
-          <input id="swal-phone" class="custom-swal-input" placeholder="Nhập số điện thoại">
-        </div>
-        <div style="margin-bottom: 12px;">
-          <label for="swal-email">Email:<span class="required-star">*</span></label>
-          <input id="swal-email" class="custom-swal-input" placeholder="Nhập email">
-        </div>
-        <div style="margin-bottom: 12px;">
-          <label for="swal-address">Địa chỉ:<span class="required-star">*</span></label>
-          <input id="swal-address" class="custom-swal-input" placeholder="Nhập địa chỉ">
-        </div>
-      </div>
-    `,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonText: "Thêm",
-        cancelButtonText: "Hủy",
-        preConfirm: () => {
-          const supplierName = document
-            .getElementById("swal-supplierName")
-            .value.trim();
-          const contactName = document
-            .getElementById("swal-contactName")
-            .value.trim();
-          const phone = document.getElementById("swal-phone").value.trim();
-          const email = document.getElementById("swal-email").value.trim();
-          const address = document.getElementById("swal-address").value.trim();
-
-          if (!supplierName || !contactName || !phone || !email || !address) {
-            Swal.showValidationMessage(
-              "Vui lòng điền đầy đủ thông tin bắt buộc (*)"
-            );
-            return false;
-          }
-          if (!this.isValidEmail(email)) {
-            Swal.showValidationMessage("Email không hợp lệ");
-            return false;
-          }
-          if (!this.isValidPhone(phone)) {
-            Swal.showValidationMessage(
-              "Số điện thoại không hợp lệ (phải bắt đầu bằng 0 và có 10 số)"
-            );
-            return false;
-          }
-
-          return { supplierName, contactName, phone, email, address };
-        },
-      });
-
-      if (formValues) {
-        const newSupplier = {
-          id: Date.now(), // hoặc logic tạo id khác
-          ...formValues,
+    function submitSupplierForm() {
+      const { supplierName, contactName, phone, email, address } =
+        supplierForm.value;
+      if (!supplierName || !contactName || !phone || !email || !address) {
+        formError.value = "Vui lòng điền đầy đủ thông tin bắt buộc (*)";
+        return;
+      }
+      if (!isValidEmail(email)) {
+        formError.value = "Email không hợp lệ";
+        return;
+      }
+      if (!isValidPhone(phone)) {
+        formError.value =
+          "Số điện thoại không hợp lệ (phải bắt đầu bằng 0 và có 10 số)";
+        return;
+      }
+      if (isEditMode.value && editingSupplier.value) {
+        Object.assign(editingSupplier.value, {
+          supplierName,
+          contactName,
+          phone,
+          email,
+          address,
+          updatedAt: new Date().toISOString(),
+          updatedBy: "admin",
+        });
+        showToast("success", "Đã cập nhật thành công.");
+      } else {
+        listSupplier.value.push({
+          id: Date.now(),
+          supplierName,
+          contactName,
+          phone,
+          email,
+          address,
           status: "Hoạt động",
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           createdBy: "admin",
           updatedBy: "admin",
-        };
-
-        this.listSupplier.push(newSupplier);
-        showToast('success', 'Đã thêm thành công.')
-      }
-    },
-    async openEditSupplier(supplier) {
-      const { value: formValues } = await Swal.fire({
-        title: "Cập nhật nhà cung cấp",
-        html: `
-
-            <style>
-    .custom-swal-input {
-      width: 100%;
-      padding: 8px 12px;
-      margin-top: 5px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-sizing: border-box;
-      font-size: 14px;
-      transition: border-color 0.3s, box-shadow 0.3s;
-    }
-    .custom-swal-input:focus {
-      border-color: #3b82f6;
-      outline: none;
-      box-shadow: 0 0 5px rgba(59, 130, 246, 0.4);
-    }
-    .swal2-popup label {
-      font-weight: 600;
-      margin-bottom: 5px;
-      display: block;
-      font-size: 14px;
-    }
-    .required-star {
-      color: red;
-      margin-left: 3px;
-    }
-  </style>
-          <div style="text-align: left; font-size: 14px;">
-            <div style="margin-bottom: 12px;">
-              <label for="swal-supplierName">Tên nhà cung cấp:<span class="required-star">*</span></label>
-              <input id="swal-supplierName" class="custom-swal-input" value="${supplier.supplierName}">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label for="swal-contactName">Người đại diện:<span class="required-star">*</span></label>
-              <input id="swal-contactName" class="custom-swal-input" value="${supplier.contactName}">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label for="swal-phone">Số điện thoại:<span class="required-star">*</span></label>
-              <input id="swal-phone" class="custom-swal-input" value="${supplier.phone}">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label for="swal-email">Email:<span class="required-star">*</span></label>
-              <input id="swal-email" class="custom-swal-input" value="${supplier.email}">
-            </div>
-            <div style="margin-bottom: 12px;">
-              <label for="swal-address">Địa chỉ:<span class="required-star">*</span></label>
-              <input id="swal-address" class="custom-swal-input" value="${supplier.address}">
-            </div>
-          </div>
-        `,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonText: "Lưu",
-        cancelButtonText: "Hủy",
-        preConfirm: () => {
-          const supplierName = document
-            .getElementById("swal-supplierName")
-            .value.trim();
-          const contactName = document
-            .getElementById("swal-contactName")
-            .value.trim();
-          const phone = document.getElementById("swal-phone").value.trim();
-          const email = document.getElementById("swal-email").value.trim();
-          const address = document.getElementById("swal-address").value.trim();
-
-          if (!supplierName || !contactName || !phone || !email || !address) {
-            Swal.showValidationMessage(
-              "Vui lòng điền đầy đủ thông tin bắt buộc (*)"
-            );
-            return false;
-          }
-          if (!this.isValidEmail(email)) {
-            Swal.showValidationMessage("Email không hợp lệ");
-            return false;
-          }
-          if (!this.isValidPhone(phone)) {
-            Swal.showValidationMessage(
-              "Số điện thoại không hợp lệ (phải bắt đầu bằng 0 và có 10 số)"
-            );
-            return false;
-          }
-
-          return { supplierName, contactName, phone, email, address };
-        },
-      });
-
-      if (formValues) {
-        Object.assign(supplier, {
-          ...formValues,
-          updatedAt: new Date().toISOString(),
-          updatedBy: "admin",
         });
-        showToast('success', 'Đã cập nhật thành công.')
+        showToast("success", "Đã thêm thành công.");
       }
-    },
-    deleteSupplier(supplier) {
+      // Đóng modal bằng Bootstrap JS
+      const modalElement = document.getElementById("addSupplierModal");
+      const modal = Modal.getOrCreateInstance(modalElement);
+      modal.hide();
+    }
+    function deleteSupplier(supplier) {
       Swal.fire({
         title: `Xác nhận xóa nhà cung cấp?`,
         text: `Bạn có chắc chắn muốn xóa nhà cung cấp \"${supplier.supplierName}\"?`,
@@ -473,15 +478,14 @@ export default {
         cancelButtonText: "Hủy",
       }).then((result) => {
         if (result.isConfirmed) {
-          this.listSupplier = this.listSupplier.filter(
+          listSupplier.value = listSupplier.value.filter(
             (s) => s.id !== supplier.id
           );
-          showToast('success', 'Đã xóa thành công.')
+          showToast("success", "Đã xóa thành công.");
         }
       });
-    },
-
-    formatDateTime(dateStr) {
+    }
+    function formatDateTime(dateStr) {
       const date = new Date(dateStr);
       return date.toLocaleString("vi-VN", {
         hour12: false,
@@ -492,9 +496,8 @@ export default {
         minute: "2-digit",
         second: "2-digit",
       });
-    },
-
-    showDetail(supplier) {
+    }
+    function showDetail(supplier) {
       Swal.fire({
         title: `<strong>Chi tiết nhà cung cấp</strong>`,
         html: `
@@ -506,62 +509,123 @@ export default {
         <p><strong>Địa chỉ:</strong> ${supplier.address}</p>
         <p><strong>Trạng thái:</strong> ${supplier.status}</p>
         <p><strong>Người tạo:</strong> ${supplier.createdBy}</p>
-        <p><strong>Ngày tạo:</strong> ${this.formatDateTime(
-          supplier.createdAt
-        )}</p>
+        <p><strong>Ngày tạo:</strong> ${formatDateTime(supplier.createdAt)}</p>
         <p><strong>Người cập nhật:</strong> ${supplier.updatedBy}</p>
-        <p><strong>Ngày cập nhật:</strong> ${this.formatDateTime(
+        <p><strong>Ngày cập nhật:</strong> ${formatDateTime(
           supplier.updatedAt
         )}</p>
       </div>
     `,
         confirmButtonText: "Đóng",
       });
-    },
-    prevPage() {
-      if (this.pageNumber > 1) this.pageNumber--;
-    },
-    nextPage() {
-      if (this.pageNumber < this.totalPages) this.pageNumber++;
-    },
+    }
+    function handlePrev() {
+      if (currentPage.value > 0) currentPage.value--;
+    }
+    function handleNext() {
+      if (currentPage.value < totalPages.value - 1) currentPage.value++;
+    }
+    function handlePageSizeChange(newSize) {
+      pageSize.value = newSize;
+      currentPage.value = 0;
+    }
+
+    return {
+      // Phân trang
+      currentPage,
+      pageSize,
+      totalPages,
+      totalElements,
+      isLastPage,
+      itemsPerPageOptions,
+      // Dữ liệu
+      listSupplier,
+      pagedSuppliers,
+      // Bộ lọc
+      searchQuery,
+      statusFilter,
+      phoneFilter,
+      onFilterChange,
+      resetFilter,
+      // Modal & form
+      isEditMode,
+      supplierForm,
+      editingSupplier,
+      formError,
+      openAddSupplier,
+      openEditSupplier,
+      closeSupplierModal,
+      submitSupplierForm,
+      deleteSupplier,
+      toggleStatus,
+      showDetail,
+      // Phân trang
+      handlePrev,
+      handleNext,
+      handlePageSizeChange,
+    };
   },
 };
 </script>
 
-<style>
-.custom-add-btn {
-  background-color: #196f3d;
-  color: #fff;
-  font-weight: bold;
+<style scoped>
+.table th,
+.table td {
+  vertical-align: middle;
+}
+
+.modal-dialog {
+  max-width: 450px !important;
+}
+
+.modal-content {
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   border: none;
-  height: 50px;
-  padding: 0 20px;
-  border-radius: 6px;
-  transition: background-color 0.3s ease;
 }
 
-.custom-add-btn:hover {
-  background-color: #2ecc71;
-  color: white;
+.modal-header {
+  border-bottom: 2px solid #ecae9e;
+  border-radius: 15px 15px 0 0;
+  padding: 0.8rem 1.2rem;
+  position: relative;
+  background-color: #ecae9e !important;
 }
 
-.action-cell {
-  margin-right: -10px;
+.modal-title {
+  font-weight: 600;
+  color: #2c2c54;
+  font-size: 1.1rem;
 }
 
+.custom-close-btn {
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  cursor: pointer;
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.custom-close-btn img {
+  width: 30px;
+  height: 30px;
+}
+
+/* Switch toggle cho trạng thái */
 .switch {
   position: relative;
   display: inline-block;
   width: 40px;
   height: 20px;
 }
-
 .switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
-
 .slider {
   position: absolute;
   cursor: pointer;
@@ -573,7 +637,6 @@ export default {
   transition: 0.4s;
   border-radius: 34px;
 }
-
 .slider:before {
   position: absolute;
   content: "";
@@ -585,20 +648,18 @@ export default {
   transition: 0.4s;
   border-radius: 50%;
 }
-
 input:checked + .slider {
   background-color: #28a745;
 }
-
 input:checked + .slider:before {
   transform: translateX(20px);
 }
 
+/* Tooltip giống Review */
 .tooltip-custom {
   position: relative;
   cursor: pointer;
 }
-
 .tooltip-custom::after {
   content: attr(data-tooltip);
   position: absolute;
@@ -616,7 +677,6 @@ input:checked + .slider:before {
   transition: opacity 0.2s ease, transform 0.2s ease;
   z-index: 100;
 }
-
 .tooltip-custom::before {
   content: "";
   position: absolute;
@@ -628,24 +688,9 @@ input:checked + .slider:before {
   opacity: 0;
   transition: opacity 0.2s ease;
 }
-
 .tooltip-custom:hover::after,
 .tooltip-custom:hover::before {
   opacity: 1;
   transform: translateX(-50%) translateY(-2px);
-}
-
-th {
-  font-weight: 700 !important;
-  font-size: 14px !important;
-  letter-spacing: 0.01em;
-  padding-top: 7px !important;
-  padding-bottom: 7px !important;
-  background: #e41414;
-}
-
-td {
-  font-size: 15px !important;
-  vertical-align: middle !important;
 }
 </style>
