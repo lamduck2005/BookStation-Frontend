@@ -77,7 +77,7 @@
         <div class="modal-content">
           <div class="modal-header" style="background-color: #ecae9e;">
             <h5 class="modal-title">
-              <i class="bi me-2 bi-plus-circle"></i> Thêm người dùng vào rank
+              <i class="bi me-2 bi-plus-circle"></i> Thêm rank cho người dùng
             </h5>
             <button type="button" class="custom-close-btn" @click="closeAddUserModal" style="background: transparent; border: none; box-shadow: none; outline: none;">
               <img src="https://cdn-icons-png.flaticon.com/128/1828/1828666.png" alt="Close" style="width: 24px; height: 24px;" />
@@ -233,32 +233,27 @@ async function handleAddUserToRank() {
 }
 
 async function handleUserRankStatusChange(user) {
+  const oldStatus = user.status; // Lưu trạng thái cũ trước khi đổi
+  user.status = oldStatus === 1 ? 0 : 1; // Đảo trạng thái trên UI ngay khi click toggle
   try {
-    await toggleUserRankStatus(user.id);
-    if (typeof window !== 'undefined' && window.Swal) {
-      window.Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'success',
-        title: 'Đổi trạng thái thành công!',
-        showConfirmButton: false,
-        timer: 1500,
-        timerProgressBar: true
-      });
+    const res = await toggleUserRankStatus(user.id); // Gọi API đổi trạng thái trên backend
+    // Nếu backend trả về message và status thì show toast theo kết quả
+    if (res && res.status && res.message) {
+      showToast(
+        res.status === 200 ? 'success' : 'error',
+        res.message,
+        2000
+      );
+    } else {
+      showToast('success', 'Đổi trạng thái thành công!', 1500);
     }
-    fetchUserRanks();
+    fetchUserRanks(); // Refresh lại danh sách cho chắc chắn
   } catch (e) {
-    if (typeof window !== 'undefined' && window.Swal) {
-      window.Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'error',
-        title: 'Đổi trạng thái thất bại!',
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true
-      });
-    }
+    user.status = oldStatus; // Nếu lỗi, trả lại trạng thái cũ để toggle không bị sai màu/trạng thái
+    // Hiển thị thông báo lỗi chi tiết từ backend
+    const status = e?.response?.status || e?.status || 'Lỗi';
+    const message = e?.response?.data?.message || e?.message || 'Đổi trạng thái thất bại!';
+    showToast('error', `Lỗi ${status}: ${message}`, 3000);
   }
 }
 </script>
