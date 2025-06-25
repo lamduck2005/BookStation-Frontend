@@ -12,15 +12,12 @@
     "axios": "^1.9.0",
     "bootstrap": "^5.3.6",
     "bootstrap-icons": "^1.13.1",
-    "bootstrap-vue": "^2.23.1",
-    "bootstrap-vue-next": "^0.29.3",
     "deepmerge": "^4.3.1",
     "sass": "^1.89.1",
     "sass-loader": "^16.0.5",
     "sweetalert2": "^11.22.0",
     "vue": "^3.5.13",
-    "vue-router": "^4.5.0",
-    "vue-sweetalert": "^0.1.18"
+    "vue-router": "^4.5.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.3",

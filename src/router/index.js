@@ -4,7 +4,7 @@ import User from "@/views/admin/views-admin/User.vue";
 import Product from "@/views/admin/views-admin/Product.vue";
 import Author from "@/views/admin/views-admin/Author.vue";
 import Review from "@/views/admin/views-admin/Review.vue";
-import Flash_Sale from "@/views/admin/views-admin/Flash_Sale.vue";
+import Flash_Sale from "@/views/admin/views-admin/FlashSale.vue";
 import Category from "@/views/admin/views-admin/Category.vue";
 import Voucher from "@/views/admin/views-admin/Voucher.vue";
 import Dashboard from "@/views/admin/set-up/Dashboard.vue";
@@ -14,9 +14,9 @@ import Order from "@/views/admin/views-admin/Order.vue";
 import Supplier from "@/views/admin/views-admin/Supplier.vue";
 import Rank from "@/views/admin/views-admin/Rank.vue";
 import Point from "@/views/admin/views-admin/Point.vue";
-import Flash_Sale_Item from "@/views/admin/views-admin/flash-sale-item/Flash_Sale_Item.vue";
-import AdminLayoutTest from "@/views/admin/AdminLayoutTest.vue";
+import Flash_Sale_Item from "@/views/admin/views-admin/FlashSaleDetail.vue";
 import RankDetail from "@/views/admin/views-admin/RankDetail.vue";
+import Template from "@/views/admin/views-admin/Template.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -24,7 +24,7 @@ const router = createRouter({
     {
       path: "/",
       name: "home",
-      component: AdminLayoutTest,
+      component: AdminLayout,
     },
     // Admin routes
     {
@@ -72,17 +72,17 @@ const router = createRouter({
         },
         {
           path: "review",
-          name: "review",
+          name: "Đánh giá",
           component: Review,
         },
         {
           path: "flash-sale",
-          name: "flash-sale",
+          name: "Flash Sale",
           component: Flash_Sale,
         },
         {
-          path: "flash-sale/:id/items",
-          name: "flash-sale-item",
+          path: "flash-sale/:id",
+          name: "Chi tiết Flash Sale",
           component: Flash_Sale_Item,
           props: true,
         },
@@ -116,6 +116,11 @@ const router = createRouter({
           path: "point",
           name: "point",
           component: Point,
+        },
+        {
+          path: "template",
+          name: "template",
+          component: Template,
         },
       ],
       // End - Admin routes

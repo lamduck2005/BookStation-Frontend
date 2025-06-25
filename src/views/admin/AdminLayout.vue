@@ -3,9 +3,8 @@
     <div class="dashboard-container">
       <SidebarA :isSidebarClosed="isSidebarClosed" @toggleSidebar="handleSidebarToggle" />
       <div class="main" :class="{ 'sidebar-closed': isSidebarClosed }">
-        <!-- Main Navigation Section Begins  -->
-        <!-- <NavA /> -->
-        <!-- Main Navigation Section Ends  -->
+        <NavA />
+        <CustomBreadcrumb/>
         <div class="router">
           <router-view />
         </div>
@@ -19,8 +18,10 @@
 <script setup>
 import { ref } from 'vue'
 import FooterA from "./components-admin/FooterA.vue";
-import NavA from "./components-admin/NavA.vue";
+import NavA from "./components-admin/NavigationBar.vue";
 import SidebarA from "./components-admin/Sidebar.vue";
+import Breadcrumb from './components-admin/CustomBreadcrumb.vue';
+import CustomBreadcrumb from './components-admin/CustomBreadcrumb.vue';
 
 const isSidebarClosed = ref(false)
 function handleSidebarToggle(val) {
