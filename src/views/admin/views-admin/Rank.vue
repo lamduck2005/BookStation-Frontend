@@ -14,7 +14,7 @@
       <div class="row g-3 m-2 mt-0 p-0">
         <div class="col-md-6">
           <label class="form-label">Tìm kiếm:</label>
-          <input type="text" class="form-control" placeholder="Nhập  tên rank , email" v-model="searchQuery" />
+          <input type="text" class="form-control" placeholder="Nhập tên rank" v-model="searchQuery" />
         </div>
         <div class="col-md-6">
           <label class="form-label">Trạng thái</label>
@@ -29,10 +29,7 @@
 
     <!-- Nút thêm mới -->
     <div class="d-flex justify-content-end mb-3">
-      <button class="btn btn-primary btn-sm py-2" @click="openAddModal"
-        style="background-color: #33304e; border-color: #33304e;">
-        <i class="bi bi-plus-circle me-1"></i> Thêm mới
-      </button>
+      <AddButton @click="openAddModal" />
     </div>
 
     <!-- Danh sách Rank -->
@@ -49,7 +46,6 @@
               <th>Tên rank</th>
               <th>Chi tiêu tối thiểu</th>
               <th>Hệ số điểm</th>
-              <th>Email người dùng</th>
               <th style="width: 200px;">Trạng thái</th>
               <th style="width: 100px;">Chức năng</th>
             </tr>
@@ -57,10 +53,13 @@
           <tbody>
             <tr v-for="(rank, index) in ranks" :key="rank.id">
               <td>{{ index + 1 }}</td>
-              <td>{{ rank.name }}</td>
-              <td>{{ rank.minSpend.toLocaleString() }} VND</td>
-              <td>{{ rank.pointMultiplier }}x</td>
-              <td>{{ rank.email }}</td>
+              <td>
+                <router-link :to="{ name: 'rank-detail', params: { id: rank.id }, query: { name: rank.name } }" style="color: #007bff; text-decoration: underline; cursor: pointer;">
+                  {{ rank.name }}
+                </router-link>
+              </td>
+              <td>{{ rank.minSpend !== undefined && rank.minSpend !== null && rank.minSpend !== '-' ? rank.minSpend.toLocaleString() + ' VND' : '-' }}</td>
+              <td>{{ rank.pointMultiplier !== undefined && rank.pointMultiplier !== null && rank.pointMultiplier !== '-' ? rank.pointMultiplier + 'x' : '-' }}</td>
               <td style="width: 200px;">
                 <ToggleStatus :id="rank.id" v-model="rank.status" :true-value="1" :false-value="0"
                   active-text="Hoạt động" inactive-text="Không hoạt động" @change="handleStatusChange(rank, $event)" />
@@ -94,25 +93,12 @@
         <div class="modal-body">
           <form @submit.prevent="handleSubmitRank">
             <div class="row g-3">
-              <!-- Tên rank (enum) -->
+              <!-- Tên rank (input text) -->
               <div class="col-12">
                 <label for="rankName" class="form-label">
                   Tên rank <span class="text-danger">*</span>
                 </label>
-                <select class="form-select" id="rankName" v-model="newRank.name" required>
-                  <option value="Gold">Gold</option>
-                  <option value="Silver">Silver</option>
-                  <option value="Diamond">Diamond</option>
-                </select>
-              </div>
-
-              <!-- Email người dùng -->
-              <div class="col-12">
-                <label for="rankEmail" class="form-label">
-                  Email người dùng <span class="text-danger">*</span>
-                </label>
-                <input type="email" class="form-control" id="rankEmail" placeholder="Nhập email người dùng" v-model="newRank.email"
-                  required />
+                <input type="text" class="form-control" id="rankName" placeholder="Nhập tên rank" v-model="newRank.name" required />
               </div>
 
               <!-- Trạng thái -->
@@ -163,9 +149,11 @@
 import EditButton from '@/components/common/EditButton.vue';
 import ToggleStatus from '@/components/common/ToggleStatus.vue';
 import Pagination from '@/components/common/Pagination.vue';
+import AddButton from '@/components/common/AddButton.vue';
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Modal } from 'bootstrap';
-import { getRanks } from '@/services/admin/rank';
+import { getRanks, toggleRankStatus, createRank } from '@/services/admin/rank';
+import Swal from 'sweetalert2';
 
 const searchQuery = ref('');
 const selectedStatus = ref('');
@@ -175,7 +163,6 @@ const newRank = ref({
   id: '',
   name: '',
   type: 'GOLD',
-  email: '',
   status: '1',
   minSpend: 0,
   pointMultiplier: 1
@@ -196,52 +183,41 @@ const itemsPerPageOptions = ref([5, 10, 25, 50]);
 const isLastPage = ref(false);
 
 // Fake data for testing
-const ranks = ref([
-  {
-    id: 1,
-    name: 'Gold',
-    type: 'GOLD',
-    minSpend: 1000000,
-    pointMultiplier: 2,
-    email: 'gold@example.com',
-    status: 1
-  },
-  {
-    id: 2,
-    name: 'Silver',
-    type: 'SILVER',
-    minSpend: 500000,
-    pointMultiplier: 1.5,
-    email: 'silver@example.com',
-    status: 1
-  },
-  {
-    id: 3,
-    name: 'Diamond',
-    type: 'DIAMOND',
-    minSpend: 2000000,
-    pointMultiplier: 3,
-    email: 'diamond@example.com',
-    status: 1
-  }
-]);
+const ranks = ref([]);
 
 const fetchRanks = async () => {
   try {
-    const response = await getRanks();
-    // response.data là mảng rank, cần map lại cho đúng cấu trúc bảng
-    ranks.value = response.data.map(item => ({
+    const params = {
+      page: currentPage.value,
+      size: pageSize.value,
+    };
+    if (searchQuery.value) params.name = searchQuery.value;
+    if (selectedStatus.value !== '') params.status = selectedStatus.value;
+    const response = await getRanks(params);
+    const data = response.data ? response.data : response;
+    ranks.value = data.content.map(item => ({
       id: item.id,
-      name: item.rankName,
-      minSpend: item.minSpent,
-      pointMultiplier: item.pointMultiplier,
-      email: item.user?.email || '',
-      status: item.status === null ? 1 : item.status // Nếu status null thì mặc định là 1 (hoạt động)
+      name: item.name,
+      minSpend: item.minSpent ?? '-', // Đúng trường mới
+      pointMultiplier: item.pointMultiplier ?? '-',
+      email: item.email ?? '',
+      status: item.status === null ? 1 : item.status
     }));
+    totalPages.value = data.totalPages ?? 1;
+    totalElements.value = data.totalElements ?? ranks.value.length;
+    currentPage.value = data.page ?? currentPage.value;
+    pageSize.value = data.size ?? pageSize.value;
+    isLastPage.value = currentPage.value >= totalPages.value - 1;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách rank:', error);
   }
 };
+
+// Watchers để gọi fetchRanks khi thay đổi filter hoặc phân trang
+import { watch } from 'vue';
+watch([searchQuery, selectedStatus, pageSize, currentPage], () => {
+  fetchRanks();
+});
 
 // Đảm bảo modal không bị kẹt backdrop hoặc tối màn hình:
 // Luôn dùng Modal.getOrCreateInstance để tránh tạo nhiều instance và lỗi backdrop
@@ -251,7 +227,6 @@ const openAddModal = () => {
     id: '',
     name: '',
     type: 'GOLD',
-    email: '',
     status: '1',
     minSpend: 0,
     pointMultiplier: 1
@@ -275,10 +250,18 @@ const openEditModal = (rank, index) => {
   modal.show();
 };
 
-const handleSubmitRank = () => {
+const handleSubmitRank = async () => {
   // Validate form
-  if (!newRank.value.id || !newRank.value.name || !newRank.value.email || !newRank.value.type) {
-    alert('Vui lòng điền đầy đủ các trường bắt buộc!');
+  if (!newRank.value.name || newRank.value.minSpend === null || newRank.value.minSpend === undefined || newRank.value.pointMultiplier === null || newRank.value.pointMultiplier === undefined) {
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'error',
+      title: 'Vui lòng điền đầy đủ các trường bắt buộc!',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+    });
     return;
   }
 
@@ -293,23 +276,44 @@ const handleSubmitRank = () => {
     };
     console.log('Rank updated:', newRank.value);
   } else {
-    // Add new rank only
-    const newId = Math.max(...ranks.value.map(r => r.id)) + 1;
-    ranks.value.push({
-      id: newId,
-      name: newRank.value.name,
-      type: newRank.value.type,
-      minSpend: Number(newRank.value.minSpend),
+    // Thêm mới rank
+    const payload = {
+      rankName: newRank.value.name,
+      minSpent: Number(newRank.value.minSpend),
       pointMultiplier: Number(newRank.value.pointMultiplier),
-      email: newRank.value.email,
       status: Number(newRank.value.status)
-    });
-    console.log('New rank added:', newRank.value);
+    };
+    try {
+      await createRank(payload);
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Thêm rank thành công!',
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true
+      });
+      await fetchRanks();
+    } catch (error) {
+      let status = error?.response?.status || error?.response?.data?.status || 'Lỗi';
+      let message = error?.response?.data?.message || 'Thêm rank thất bại!';
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: `Lỗi ${status}`,
+        text: message,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
+    }
   }
 
   // Close modal after submit
   const modalElement = document.getElementById('addRankModal');
-  const modal = Modal.getOrCreateInstance(modalElement); // <-- Sử dụng getOrCreateInstance
+  const modal = Modal.getOrCreateInstance(modalElement);
   modal.hide();
 };
 
@@ -319,31 +323,49 @@ const closeModal = () => {
   modal.hide();
 };
 
-const handleStatusChange = (rank, newStatus) => {
-  console.log(`Rank ${rank.name} status changed to: ${newStatus}`);
+const handleStatusChange = async (rank, newStatus) => {
+  try {
+    await toggleRankStatus(rank.id);
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'Đổi trạng thái thành công!',
+      showConfirmButton: false,
+      timer: 1500,
+      timerProgressBar: true
+    });
+    await fetchRanks();
+  } catch (error) {
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'error',
+      title: 'Đổi trạng thái thất bại!',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+    });
+    console.error('Lỗi khi đổi trạng thái rank:', error);
+  }
 };
 
 // Pagination functions
 const handlePrev = () => {
   if (currentPage.value > 0) {
     currentPage.value--;
-    // Gọi API để load dữ liệu trang trước
-    console.log(`Loading page ${currentPage.value}`);
   }
 };
 
 const handleNext = () => {
   if (!isLastPage.value) {
     currentPage.value++;
-    // Gọi API để load dữ liệu trang sau
-    console.log(`Loading page ${currentPage.value}`);
   }
 };
 
 const handlePageSizeChange = (newSize) => {
   pageSize.value = newSize;
   currentPage.value = 0;
-  console.log(`Page size changed to ${newSize}`);
 };
 
 const resetRankModal = () => {
@@ -353,7 +375,6 @@ const resetRankModal = () => {
     id: '',
     name: '',
     type: 'GOLD',
-    email: '',
     status: '1',
     minSpend: 0,
     pointMultiplier: 1

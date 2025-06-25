@@ -1,4 +1,3 @@
-import Test from "@/components/Test.vue";
 import { createRouter, createWebHistory } from "vue-router";
 import AdminLayout from "../views/admin/AdminLayout.vue";
 import User from "@/views/admin/views-admin/User.vue";
@@ -17,6 +16,7 @@ import Rank from "@/views/admin/views-admin/Rank.vue";
 import Point from "@/views/admin/views-admin/Point.vue";
 import Flash_Sale_Item from "@/views/admin/views-admin/flash-sale-item/Flash_Sale_Item.vue";
 import AdminLayoutTest from "@/views/admin/AdminLayoutTest.vue";
+import RankDetail from "@/views/admin/views-admin/RankDetail.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -105,6 +105,12 @@ const router = createRouter({
           path: "rank",
           name: "rank",
           component: Rank,
+        },
+        {
+          path: "rank/:id",
+          name: "rank-detail",
+          component: RankDetail,
+          props: true,
         },
         {
           path: "point",
