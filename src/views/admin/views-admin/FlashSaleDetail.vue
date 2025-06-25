@@ -46,7 +46,7 @@
     <!-- Bảng -->
     <div class="bg-white p-3 rounded shadow-sm pt-0 ps-0 pe-0">
       <div class="d-flex align-items-center mb-3 p-2 m-0 rounded-top" style="background-color: #ecae9e;">
-        <strong>Danh sách đánh giá</strong>
+        <strong>Danh sách sản phẩm trong chương trình giảm giá (Flash Sale Item)</strong>
       </div>
       <div class="p-3">
         <!-- Loading state -->
@@ -72,36 +72,45 @@
             <thead>
               <tr>
                 <th>#</th>
-                <th>Người đánh giá</th>
-                <th>Sản phẩm</th>
-                <th>Nội dung</th>
-                <th>Điểm đánh giá</th>
-                <th>Ngày đánh giá</th>
+                <th>Tên sản phẩm</th>
+                <th>Giá bán</th>
+                <th>% giảm giá</th>
+                <th>Giá sau giảm giá</th>
+                <th>Số lượng</th>
+                <th>Số lượng đã bán</th>
+                <th>Số lượng còn lại</th> 
                 <th>Trạng thái</th>
                 <th>Chức năng</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="templateData.length === 0">
-                <td colspan="8" class="text-center py-4 text-muted">
+              <tr v-if="flashSales.length === 0">
+                <td colspan="10" class="text-center py-4 text-muted">
                   <i class="bi bi-inbox me-2"></i>
                   Không có dữ liệu
                 </td>
               </tr>
-              <tr v-for="(item, index) in templateData" :key="item.id">
+              <tr v-for="(item, index) in flashSales" :key="item.id">
                 <td>{{ (currentPage * pageSize) + index + 1 }}</td>
-                <td>{{ item.col1 }}</td>
-                <td>{{ item.col2 }}</td>
-                <td>{{ item.col3 }}</td>
-                <td>{{ item.col4 }}</td>
-                <td>{{ item.col6 }}</td>
+                <td>
+                  <router-link :to="`/admin/flash-sale/${item.id}`">
+                    {{ item.name }}
+                  </router-link>
+                </td>
+                <td>{{ formatDateTime(item.startTime) }}</td>
+                <td>{{ formatDateTime(item.endTime) }}</td>
+                <td>{{ formatDateTime(item.createdAt) }}</td>
+                <td>{{ formatDateTime(item.updatedAt) }}</td>
+                <td></td>
+                <td>Chưa có dữ liệu</td>
                 <td style="width: 200px;">
                   <ToggleStatus :id="item.id" v-model="item.status" :true-value="1" :false-value="0"
-                    active-text="Hoạt động" inactive-text="Không hoạt động" @change="handleStatusChange()" />
+                    active-text="Hoạt động" inactive-text="Không hoạt động"
+                    @change="handleStatusChange(item, item.status)" />
                 </td>
                 <td>
-                  <EditButton @click="openEditForm" />
-                  <DeleteButton @click="handleDeleteFunction" />
+                  <EditButton @click="openEditForm(item)" />
+                  <DeleteButton @click="handleDeleteFunction(item)" />
                 </td>
               </tr>
             </tbody>
@@ -110,7 +119,7 @@
 
         <!-- Pagination -->
         <Pagination :page-number="currentPage" :total-pages="totalPages" :is-last-page="isLastPage"
-          :page-size="pageSize" :items-per-page-options="itemsPerPageOptions" :total-elements="templateData.length"
+          :page-size="pageSize" :items-per-page-options="itemsPerPageOptions" :total-elements="totalElements"
           @prev="handlePrev" @next="handleNext" @update:pageSize="handlePageSizeChange" />
       </div>
 
@@ -130,8 +139,24 @@
           <div class="modal-body">
             <form @submit.prevent="handleSubmitForm">
               <div class="mb-3">
-                <label class="form-label">Cột dữ liệu</label>
-                <input type="text" class="form-control" required placeholder="Nhập dữ liệu" />
+                <label class="form-label">Tên chương trình <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" v-model="formData.name" required
+                  placeholder="Nhập tên flash sale" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Thời gian bắt đầu <span class="text-danger">*</span></label>
+                <input type="datetime-local" class="form-control" v-model="formData.startTime" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Thời gian kết thúc <span class="text-danger">*</span></label>
+                <input type="datetime-local" class="form-control" v-model="formData.endTime" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Trạng thái</label>
+                <select class="form-select" v-model="formData.status">
+                  <option value="1">Hoạt động</option>
+                  <option value="0">Không hoạt động</option>
+                </select>
               </div>
             </form>
           </div>
@@ -152,18 +177,20 @@ import { ref, onMounted } from 'vue';
 import { Modal } from 'bootstrap';
 import { showToast } from '@/utils/swalHelper.js';
 import ToggleStatus from '@/components/common/ToggleStatus.vue';
+import { addFlashSale, getAllFlashSale, updateFlashSale } from '@/services/admin/flashSale';
+import { datetimeLocalToTimestamp, timestampToDatetimeLocal } from '@/utils/utils.js';
 
 const searchQuery = ref('');
 const selectedStatus = ref('');
 
-// Dữ liệu mẫu
-const templateData = ref([]);
+// Dữ liệu flash sale thực tế
+const flashSales = ref([]);
 
 // Pagination state
 const currentPage = ref(0);
 const pageSize = ref(5);
 const totalPages = ref(1);
-const totalElements = ref(5);
+const totalElements = ref(0);
 const itemsPerPageOptions = ref([5, 10, 25, 50]);
 
 // Computed property for last page check
@@ -173,21 +200,38 @@ const isLastPage = ref(false);
 const loading = ref(false);
 const error = ref(null);
 
-const filteredData = ref([]);
-
 const isEditMode = ref(false);
+
+// Form data object
+const formData = ref({
+  id: '',
+  name: '',
+  startTime: '',
+  endTime: '',
+  status: 1
+});
+
+// Định dạng ngày giờ
+function formatDateTime(timestamp) {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  return date.toLocaleString('vi-VN', { hour12: false });
+}
 
 // bộ lọc
 const searchWithFilter = () => {
+  // TODO: Gọi lại API với searchQuery và selectedStatus
   showToast('info', 'Chức năng tìm kiếm!');
 };
 const clearFilters = () => {
-  showToast('info', 'Chức năng xoá bộ lọc!');
+  searchQuery.value = '';
+  selectedStatus.value = '';
+  getDataFromApi(0, pageSize.value);
 };
 
 //reload
 const reloadPage = () => {
-  showToast('info', 'Chức năng làm mới dữ liệu!');
+  getDataFromApi(currentPage.value, pageSize.value);
 };
 
 //trạng thái
@@ -198,9 +242,7 @@ const handleStatusChange = (item, newStatus) => {
 // thêm sửa
 const openAddForm = async () => {
   isEditMode.value = false;
-  //todo
-
-
+  resetFormData();
   const modalElement = document.getElementById('formModal');
   if (modalElement) {
     const modal = Modal.getOrCreateInstance(modalElement);
@@ -208,12 +250,16 @@ const openAddForm = async () => {
   }
 };
 
-const openEditForm = async () => {
+const openEditForm = async (item) => {
   isEditMode.value = true;
-  //todo
-
-
-
+  // Set dữ liệu vào form
+  formData.value = {
+    id: item.id,
+    name: item.name,
+    startTime: timestampToDatetimeLocal(item.startTime),
+    endTime: timestampToDatetimeLocal(item.endTime),
+    status: item.status
+  };
   const modalElement = document.getElementById('formModal');
   if (modalElement) {
     const modal = Modal.getOrCreateInstance(modalElement);
@@ -221,12 +267,60 @@ const openEditForm = async () => {
   }
 };
 
+
+const validateForm = () => {
+  if (!formData.value.name || !formData.value.startTime || !formData.value.endTime) {
+    showToast('error', 'Vui lòng điền đầy đủ thông tin!');
+    return false;
+  }
+
+  // Kiểm tra thời gian kết thúc phải lớn hơn thời gian bắt đầu
+  const startTime = datetimeLocalToTimestamp(formData.value.startTime);
+  const endTime = datetimeLocalToTimestamp(formData.value.endTime);
+
+  if (endTime <= startTime) {
+    showToast('error', 'Thời gian kết thúc phải lớn hơn thời gian bắt đầu!');
+    return false;
+  }
+
+  return true;
+}
 const handleSubmitForm = async () => {
-  showToast('success', 'Thêm mới mẫu thành công!');
+  try {
+    if (!validateForm()) {
+      return;
+    }
+
+    // Chuyển đổi datetime-local thành timestamp milliseconds
+    const submitData = {
+      name: formData.value.name,
+      startTime: datetimeLocalToTimestamp(formData.value.startTime),
+      endTime: datetimeLocalToTimestamp(formData.value.endTime),
+      status: parseInt(formData.value.status)
+    };
+
+    if (!isEditMode.value) {
+      const res = await addFlashSale(submitData);
+      showToast('success', res.data.message || 'Thêm mới thành công!');
+      closeModal();
+      // Reload lại dữ liệu sau khi thêm thành công
+      await getDataFromApi(currentPage.value, pageSize.value);
+    } else {
+      const res = await updateFlashSale(formData.value.id, submitData);
+      showToast('success', res.data.message || 'Cập nhật thành công!');
+      closeModal();
+      // Reload lại dữ liệu sau khi thêm thành công
+      await getDataFromApi(currentPage.value, pageSize.value);
+      showToast('success', 'Cập nhật thành công!');
+    }
+  } catch (error) {
+    showToast('error', error.response?.data?.message || 'Có lỗi xảy ra!');
+    console.log(error);
+  }
 };
 
-const handleDeleteFunction = async (index) => {
-  showToast('warning', 'Chức năng xoá mẫu!');
+const handleDeleteFunction = async (item) => {
+  showToast('warning', 'Chức năng xoá!');
 };
 
 const closeModal = () => {
@@ -254,19 +348,53 @@ const handlePageSizeChange = (newSize) => {
 };
 
 const resetFormData = () => {
-  isEditMode.value = false;
-  //todo
+  formData.value = {
+    name: '',
+    startTime: '',
+    endTime: '',
+    status: 1
+  };
 };
 
+// Format datetime for input datetime-local
+function formatDateTimeForInput(timestamp) {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  return date.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:MM
+}
 
 //load dữ liệu
 const getDataFromApi = async (page, size) => {
-  //todo
+  loading.value = true;
+  error.value = null;
+  try {
+    const res = await getAllFlashSale(page, size);
+    const resData = res.data.data;
+    console.log("🚀 ~ getDataFromApi ~ res:", res)
+
+    if (res && res.status === 200 && resData) {
+      flashSales.value = resData.content;
+      currentPage.value = resData.pageNumber;
+      pageSize.value = resData.pageSize;
+      totalElements.value = resData.totalElements;
+      totalPages.value = resData.totalPages;
+      isLastPage.value = resData.last;
+    } else {
+      flashSales.value = [];
+      totalElements.value = 0;
+      totalPages.value = 1;
+      isLastPage.value = true;
+    }
+  } catch (err) {
+    error.value = 'Lỗi khi tải dữ liệu!';
+    flashSales.value = [];
+  } finally {
+    loading.value = false;
+  }
 }
 
-
-onMounted(() => {
-  //todo
+onMounted(async () => {
+  // await getDataFromApi(currentPage.value, pageSize.value);
 });
 
 </script>
