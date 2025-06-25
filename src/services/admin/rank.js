@@ -11,16 +11,6 @@ export const getRanks = async (params = {}) => {
   }
 };
 
-// Toggle status API
-export const toggleRankStatus = async (id) => {
-  try {
-    const response = await client.patch(`/api/ranks/${id}/toggle-status`);
-    return response.data;
-  } catch (error) {
-    console.error('Lỗi khi đổi trạng thái rank:', error);
-    throw error;
-  }
-};
 
 // Thêm mới rank
 export const createRank = async (payload) => {
