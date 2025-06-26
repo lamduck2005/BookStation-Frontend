@@ -17,9 +17,19 @@ export const getAllCategories = async () => {
     throw error;
   }
 };
+export const getAllParentCategories  = async () => {
+  try {
+    const { data } = await apiClient.get("/categories/parentcategories");
+    return data;
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw error;
+  }
+};
 
 export const addCategory = async (category) => {
   try {
+    console.log("Payload sent to BE:", category); 
     const { data } = await apiClient.post("/categories", category);
     return data;
   } catch (error) {
