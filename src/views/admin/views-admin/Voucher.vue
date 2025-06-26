@@ -68,75 +68,47 @@
               <th>Phần trăm giảm</th>
               <th>Ngày bắt đầu</th>
               <th>Ngày kết thúc</th>
-             
               <th>Trạng thái</th>
               <th>Người tạo</th>
               <th colspan="3">Chức năng</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(voucher, index) in pagedVouchers" :key="voucher.id">
+            <tr
+              v-for="(voucher, index) in listVoucher"
+              :key="voucher.id"
+              @click="showDetail(voucher)"
+              class="cursor-pointer"
+            >
               <td>{{ currentPage * pageSize + index + 1 }}</td>
               <td>{{ voucher.code }}</td>
-              <td>{{ voucher.discountPercentage }}</td>
+              <td>{{ voucher.discountPercentage }}%</td>
               <td>{{ voucher.start_time }}</td>
               <td>{{ voucher.end_time }}</td>
-             
-              <td>
-                <div
-                  class="d-flex align-items-center justify-content-center gap-2"
-                >
-                  <label class="switch m-0" style="transform: scale(0.85)">
-                    <input
-                      type="checkbox"
-                      :checked="voucher.status === 'Hoạt động'"
-                      @change="toggleStatus(voucher)"
-                    />
-                    <span class="slider round"></span>
-                  </label>
-                  <span
-                    class="badge"
-                    :class="
-                      voucher.status === 'Hoạt động'
-                        ? 'bg-success-subtle text-success'
-                        : 'bg-secondary-subtle text-secondary'
-                    "
-                    style="
-                      font-weight: 700;
-                      width: 130px;
-                      min-width: 110px;
-                      font-size: 13px;
-                      display: inline-block;
-                      text-align: center;
-                    "
-                  >
-                    {{ voucher.status }}
-                  </span>
-                </div>
+              <td style="width: 200px">
+                <ToggleStatus
+                  :id="voucher.id"
+                  v-model="voucher.status"
+                  :true-value="1"
+                  :false-value="0"
+                  active-text="Hoạt động"
+                  inactive-text="Không hoạt động"
+                  @change="toggleStatus(voucher, $event)"
+                  @click.stop
+                />
               </td>
               <td>{{ voucher.createdBy }}</td>
               <td>
-                <button
-                  data-tooltip="Chi tiết"
-                  @click="showDetail(voucher)"
-                  style="min-width: 32px; margin-right: 5px"
-                >
-                  <i class="bi bi-info-circle fs-6"></i>
-                </button>
-                <button
-                  data-tooltip="Cập nhật"
-                  @click="openEditVoucher(voucher)"
-                  style="min-width: 32px; margin-right: 5px"
-                >
-                  <i class="bi bi-pencil fs-6"></i>
-                </button>
-                <button
-                  data-tooltip="Xóa"
-                  @click="deleteVoucher(voucher)"
-                  style="min-width: 32px; margin-right: 5px"
-                >
-                  <i class="bi bi-trash fs-6 text-danger"></i>
-                </button>
+                <div @click.stop>
+                  <EditButton
+                    :tooltip="'Cập nhật voucher ' + voucher.code"
+                    @click="openEditVoucher(voucher)"
+                  />
+                  <!-- <DeleteButton
+                    :tooltip="'Xóa voucher ' + voucher.code"
+                    @click="deleteVoucher(voucher)"
+                  /> -->
+                </div>
               </td>
             </tr>
           </tbody>
@@ -156,137 +128,181 @@
       </div>
     </div>
 
-    <!-- Modal Thêm/Cập nhật voucher -->
+
+    <!-- Modal chi tiết voucher -->
     <div
-      class="modal fade"
-      id="addVoucherModal"
+      v-if="showDetailModal"
+      class="modal fade show"
+      style="display: block; background: rgba(0, 0, 0, 0.3)"
       tabindex="-1"
-      aria-labelledby="addVoucherModalLabel"
-      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Chi tiết voucher</h5>
+          
+          </div>
+          <div class="modal-body" v-if="selectedVoucher">
+            <p><strong>Mã voucher:</strong> {{ selectedVoucher.code }}</p>
+            <p>
+              <strong>Phần trăm giảm:</strong>
+              {{ selectedVoucher.discountPercentage }}%
+            </p>
+            <p>
+              <strong>Ngày bắt đầu:</strong> {{ selectedVoucher.start_time }}
+            </p>
+            <p>
+              <strong>Ngày kết thúc:</strong> {{ selectedVoucher.end_time }}
+            </p>
+            <p>
+              <strong>Giá trị đơn tối thiểu:</strong>
+              {{ selectedVoucher.minOrderValue?.toLocaleString() }} đ
+            </p>
+            <p>
+              <strong>Giá trị giảm tối đa:</strong>
+              {{ selectedVoucher.maxDiscountValue?.toLocaleString() }} đ
+            </p>
+            <p><strong>Trạng thái:</strong> {{ selectedVoucher.status == 1 ?'Hoạt động':'Không hoạt động' }}</p>
+            <p><strong>Người tạo:</strong> {{ selectedVoucher.createdBy }}</p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" @click="closeDetailModal">
+              Đóng
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Thêm/Cập nhật Voucher -->
+    <div
+      class="modal fade show"
+      tabindex="-1"
+      style="display: block; background: rgba(0, 0, 0, 0.3)"
+      v-if="showFormModal"
     >
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header" style="background-color: #ecae9e">
-            <h5 class="modal-title" id="addVoucherModalLabel">
-              <i class="bi me-2 bi-plus-circle"></i>
-              {{ isEditMode ? "Cập nhật voucher" : "Thêm voucher mới" }}
+            <h5 class="modal-title">
+              {{ isEdit ? "Cập nhật voucher" : "Thêm voucher mới" }}
             </h5>
-            <button
+            <!-- <button
               type="button"
               class="custom-close-btn"
-              data-bs-dismiss="modal"
-              aria-label="Close"
+              @click="closeFormModal"
             >
-              <img
-                src="https://cdn-icons-png.flaticon.com/128/694/694604.png"
-                alt="Close"
-              />
-            </button>
+              <span aria-hidden="true">&times;</span>
+            </button> -->
           </div>
           <div class="modal-body">
-            <form @submit.prevent="submitVoucherForm">
-              <div class="row g-3">
-                <div class="col-12">
-                  <label class="form-label"
-                    >Mã voucher <span class="text-danger">*</span></label
-                  >
-                  <input
-                    v-model="voucherForm.code"
-                    class="form-control"
-                    placeholder="Nhập mã voucher (3-20 ký tự)"
-                    type="text"
-                    minlength="3"
-                    maxlength="20"
-                    required
-                  />
-                </div>
-                <div class="col-12">
-                  <label class="form-label"
-                    >Phần trăm giảm (%)
-                    <span class="text-danger">*</span></label
-                  >
-                  <input
-                    v-model="voucherForm.discountPercentage"
-                    class="form-control"
-                    type="number"
-                    min="1"
-                    max="100"
-                    placeholder="Nhập phần trăm giảm (1-100)"
-                    required
-                  />
-                </div>
-                <div class="col-12">
-                  <label class="form-label"
-                    >Ngày bắt đầu <span class="text-danger">*</span></label
-                  >
-                  <input
-                    v-model="voucherForm.start_time"
-                    class="form-control"
-                    type="datetime-local"
-                    placeholder="Chọn ngày bắt đầu"
-                    required
-                  />
-                </div>
-                <div class="col-12">
-                  <label class="form-label"
-                    >Ngày kết thúc <span class="text-danger">*</span></label
-                  >
-                  <input
-                    v-model="voucherForm.end_time"
-                    class="form-control"
-                    type="datetime-local"
-                    placeholder="Chọn ngày kết thúc"
-                    required
-                  />
-                </div>
-                <div class="col-12">
-                  <label class="form-label"
-                    >Đơn tối thiểu <span class="text-danger">*</span></label
-                  >
-                  <input
-                    v-model="voucherForm.minOrderValue"
-                    class="form-control"
-                    type="number"
-                    min="0"
-                    placeholder="Nhập đơn tối thiểu (0 trở lên)"
-                    required
-                  />
-                </div>
-                <div class="col-12">
-                  <label class="form-label"
-                    >Giảm tối đa <span class="text-danger">*</span></label
-                  >
-                  <input
-                    v-model="voucherForm.maxDiscountValue"
-                    class="form-control"
-                    type="number"
-                    min="0"
-                    placeholder="Nhập giảm tối đa (0 trở lên)"
-                    required
-                  />
-                </div>
+            <form @submit.prevent="submitVoucher">
+              <div class="mb-2">
+                <label class="form-label">
+                  Mã voucher <span style="color: red">*</span>
+                </label>
+                <input
+                  v-model="formVoucher.code"
+                  class="form-control"
+                  placeholder="Nhập mã voucher, ví dụ: SUMMER25"
+                />
+               
               </div>
-              <div v-if="formError" class="alert alert-danger py-1 mt-3">
-                {{ formError }}
+              <div class="mb-2">
+                <label class="form-label">
+                  Phần trăm giảm (%) <span style="color: red">*</span>
+                </label>
+                <input
+                  v-model="formVoucher.discountPercentage"
+                  type="number"
+                  min="1"
+                  max="100"
+                  class="form-control"
+                  placeholder="Nhập số từ 1 đến 100"
+                />
+               
+              </div>
+              <div class="mb-2">
+                <label class="form-label">
+                  Ngày bắt đầu <span style="color: red">*</span>
+                </label>
+                <input
+                  v-model="formVoucher.startTime"
+                  type="datetime-local"
+                  class="form-control"
+                  placeholder="Chọn ngày bắt đầu"
+                />
+               
+              </div>
+              <div class="mb-2">
+                <label class="form-label">
+                  Ngày kết thúc <span style="color: red">*</span>
+                </label>
+                <input
+                  v-model="formVoucher.endTime"
+                  type="datetime-local"
+                  class="form-control"
+                  placeholder="Chọn ngày kết thúc"
+                />
+              
+              </div>
+              <div class="mb-2">
+                <label class="form-label">
+                  Giá trị đơn tối thiểu <span style="color: red">*</span>
+                </label>
+                <input
+                  v-model="formVoucher.minOrderValue"
+                  type="number"
+                  min="0"
+                  class="form-control"
+                  placeholder="Nhập số tiền tối thiểu, ví dụ: 200000"
+                />
+               
+              </div>
+              <div class="mb-2">
+                <label class="form-label">
+                  Giá trị giảm tối đa <span style="color: red">*</span>
+                </label>
+                <input
+                  v-model="formVoucher.maxDiscountValue"
+                  type="number"
+                  min="0"
+                  class="form-control"
+                  placeholder="Nhập số tiền tối đa được giảm, ví dụ: 50000"
+                />
+             
+              </div>
+              <!-- <div class="mb-2">
+                <label class="form-label">
+                  Trạng thái <span style="color: red">*</span>
+                </label>
+                <select v-model="formVoucher.status" class="form-select">
+                  <option :value="1">Hoạt động</option>
+                  <option :value="0">Không hoạt động</option>
+                </select>
+              
+              </div> -->
+              <!-- <div class="mb-2">
+                <label class="form-label">Người tạo</label>
+                <input
+                  v-model="formVoucher.createdBy"
+                  class="form-control"
+                  required
+                />
+              </div> -->
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  @click="closeFormModal"
+                >
+                  Hủy
+                </button>
+                <button type="submit" class="btn btn-primary">
+                  {{ isEdit ? "Cập nhật" : "Thêm mới" }}
+                </button>
               </div>
             </form>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Hủy
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              @click="submitVoucherForm"
-              style="background-color: #33304e; border-color: #33304e"
-            >
-              {{ isEditMode ? "Cập nhật" : "Thêm mới" }}
-            </button>
           </div>
         </div>
       </div>
@@ -295,19 +311,31 @@
 </template>
 
 <script>
+import EditButton from "@/components/common/EditButton.vue";
+import DeleteButton from "@/components/common/DeleteButton.vue";
+import ToggleStatus from "@/components/common/ToggleStatus.vue";
 import Pagination from "@/components/Common/Pagination.vue";
 import { showToast } from "@/utils/swalHelper";
-import Swal from "sweetalert2";
 import { Modal } from "bootstrap";
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
+import {
+  getVouchers,
+  createVouchers,
+  updateVouchers,
+  deleteVouchers,
+  upStatusVouchers,
+} from "@/services/admin/voucher";
 
 export default {
   components: {
     Pagination,
+    EditButton,
+    DeleteButton,
+    ToggleStatus,
+    showToast,
   },
   setup() {
-    // Phân trang
-    const currentPage = ref(0); // Bắt đầu từ 0
+    const currentPage = ref(0);
     const pageSize = ref(10);
     const totalElements = ref(0);
     const totalPages = ref(1);
@@ -316,307 +344,298 @@ export default {
     );
     const itemsPerPageOptions = ref([5, 10, 20, 50]);
 
-    // Dữ liệu voucher
-    const listVoucher = ref([
-      {
-        id: 1,
-        code: "DG-001",
-        discountPercentage: "10%",
-        start_time: "2023-10-01 00:00",
-        end_time: "2023-10-31 23:59",
-        minOrderValue: "100000",
-        maxDiscountValue: "50000",
-        status: "Hoạt động",
-        createdAt: "2023-10-01 10:00",
-        updatedAt: "2023-10-01 10:00",
-        createdBy: "admin",
-        updatedBy: "admin",
-      },
-    ]);
+    const listVoucher = ref([]);
 
-    // Bộ lọc
     const searchQuery = ref("");
     const statusFilter = ref("");
-    const createdByFilter = ref("");
-
-    // Modal & form
-    const isEditMode = ref(false);
-    const voucherForm = ref({
+    const showDetailModal = ref(false);
+    const selectedVoucher = ref(null);
+    const showFormModal = ref(false);
+    const isEdit = ref(false);
+    const formVoucher = ref({
+      id: null,
       code: "",
       discountPercentage: "",
-      start_time: "",
-      end_time: "",
+      startTime: "",
+      endTime: "",
       minOrderValue: "",
       maxDiscountValue: "",
-    });
-    const editingVoucher = ref(null);
-    const formError = ref("");
-
-    // Lọc và phân trang
-    const pagedVouchers = computed(() => {
-      let filtered = listVoucher.value;
-
-      // Lọc theo searchQuery (mã voucher, trạng thái, người tạo)
-      if (searchQuery.value) {
-        const q = searchQuery.value.toLowerCase();
-        filtered = filtered.filter(
-          (v) =>
-            v.code.toLowerCase().includes(q) ||
-            v.status.toLowerCase().includes(q) ||
-            v.createdBy.toLowerCase().includes(q)
-        );
-      }
-      // Lọc theo trạng thái
-      if (statusFilter.value) {
-        filtered = filtered.filter((v) => v.status === statusFilter.value);
-      }
-      // Lọc theo người tạo
-      if (createdByFilter.value) {
-        filtered = filtered.filter((v) =>
-          v.createdBy
-            .toLowerCase()
-            .includes(createdByFilter.value.toLowerCase())
-        );
-      }
-
-      totalElements.value = filtered.length;
-      totalPages.value = Math.max(
-        1,
-        Math.ceil(filtered.length / pageSize.value)
-      );
-
-      // Reset currentPage nếu vượt quá totalPages
-      if (currentPage.value > totalPages.value - 1)
-        currentPage.value = totalPages.value - 1;
-
-      const start = currentPage.value * pageSize.value;
-      return filtered.slice(start, start + pageSize.value);
+      status: 1,
+      createdBy: "",
     });
 
-    // Watchers
-    watch([pageSize, searchQuery, statusFilter, createdByFilter], () => {
-      currentPage.value = 0;
+    onMounted(() => {
+      fetchVouchers();
     });
 
-    // Methods
+    async function fetchVouchers() {
+      try {
+        const res = await getVouchers({
+          page: currentPage.value,
+          size: pageSize.value,
+          code: searchQuery.value || null,
+          status:
+            statusFilter.value === ""
+              ? null
+              : statusFilter.value === "Hoạt động"
+              ? 1
+              : 0,
+        });
+
+        listVoucher.value = res.content.map((v) => ({
+          id: v.id,
+          code: v.code,
+          discountPercentage: v.discountPercentage,
+          start_time: formatDate(v.startTime),
+          end_time: formatDate(v.endTime),
+          startTime: v.startTime, // giữ lại trường gốc
+          endTime: v.endTime, // giữ lại trường gốc
+          minOrderValue: v.minOrderValue,
+          maxDiscountValue: v.maxDiscountValue,
+          status: v.status,
+          createdBy: v.createdBy,
+        }));
+
+        totalElements.value = res.totalElements;
+        totalPages.value = res.totalPages;
+      } catch (error) {
+        console.error("Lỗi khi tải voucher:", error);
+      }
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return "";
+      const date = new Date(dateStr);
+      return date.toLocaleString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+
+    watch([currentPage, pageSize], () => {
+      fetchVouchers();
+    });
+
     function onFilterChange() {
       currentPage.value = 0;
+      fetchVouchers();
     }
-    function resetFilter() {
-      searchQuery.value = "";
-      statusFilter.value = "";
-      createdByFilter.value = "";
-      currentPage.value = 0;
-    }
-    function openAddVoucher() {
-      isEditMode.value = false;
-      formError.value = "";
-      voucherForm.value = {
-        code: "",
-        discountPercentage: "",
-        start_time: "",
-        end_time: "",
-        minOrderValue: "",
-        maxDiscountValue: "",
-      };
-      const modalElement = document.getElementById("addVoucherModal");
-      const modal = Modal.getOrCreateInstance(modalElement);
-      modal.show();
-    }
-    function openEditVoucher(voucher) {
-      isEditMode.value = true;
-      formError.value = "";
-      editingVoucher.value = voucher;
-      voucherForm.value = {
-        code: voucher.code,
-        discountPercentage: voucher.discountPercentage.replace("%", ""),
-        start_time: voucher.start_time.replace(" ", "T"),
-        end_time: voucher.end_time.replace(" ", "T"),
-        minOrderValue: voucher.minOrderValue,
-        maxDiscountValue: voucher.maxDiscountValue,
-      };
-      const modalElement = document.getElementById("addVoucherModal");
-      const modal = Modal.getOrCreateInstance(modalElement);
-      modal.show();
-    }
-    function submitVoucherForm() {
-      const {
-        code,
-        discountPercentage,
-        start_time,
-        end_time,
-        minOrderValue,
-        maxDiscountValue,
-      } = voucherForm.value;
 
-      // Validate
-      if (!code || code.length < 3 || code.length > 20) {
-        formError.value = "Mã voucher phải từ 3-20 ký tự!";
-        return;
-      }
-      if (
-        !discountPercentage ||
-        isNaN(Number(discountPercentage)) ||
-        Number(discountPercentage) <= 0 ||
-        Number(discountPercentage) > 100
-      ) {
-        formError.value = "Phần trăm giảm phải là số từ 1 đến 100!";
-        return;
-      }
-      if (!start_time) {
-        formError.value = "Vui lòng chọn ngày bắt đầu!";
-        return;
-      }
-      if (!end_time) {
-        formError.value = "Vui lòng chọn ngày kết thúc!";
-        return;
-      }
-      if (new Date(start_time) >= new Date(end_time)) {
-        formError.value = "Ngày kết thúc phải sau ngày bắt đầu!";
-        return;
-      }
-      if (
-        !minOrderValue ||
-        isNaN(Number(minOrderValue)) ||
-        Number(minOrderValue) < 0
-      ) {
-        formError.value = "Đơn tối thiểu phải là số không âm!";
-        return;
-      }
-      if (
-        !maxDiscountValue ||
-        isNaN(Number(maxDiscountValue)) ||
-        Number(maxDiscountValue) < 0
-      ) {
-        formError.value = "Giảm tối đa phải là số không âm!";
-        return;
-      }
-      if (Number(maxDiscountValue) > Number(minOrderValue)) {
-        formError.value = "Giảm tối đa không được lớn hơn đơn tối thiểu!";
-        return;
-      }
-
-      if (isEditMode.value && editingVoucher.value) {
-        Object.assign(editingVoucher.value, {
-          code,
-          discountPercentage: discountPercentage + "%",
-          start_time: start_time.replace("T", " "),
-          end_time: end_time.replace("T", " "),
-          minOrderValue,
-          maxDiscountValue,
-          updatedAt: new Date().toISOString().slice(0, 19).replace("T", " "),
-          updatedBy: "admin",
-        });
-        showToast("success", "Cập nhật voucher thành công.");
-      } else {
-        const now = new Date().toISOString().slice(0, 19).replace("T", " ");
-        listVoucher.value.push({
-          id: Date.now(),
-          code,
-          discountPercentage: discountPercentage + "%",
-          start_time: start_time.replace("T", " "),
-          end_time: end_time.replace("T", " "),
-          minOrderValue,
-          maxDiscountValue,
-          status: "Hoạt động",
-          createdAt: now,
-          updatedAt: now,
-          createdBy: "admin",
-          updatedBy: "admin",
-        });
-        showToast("success", "Thêm voucher thành công.");
-      }
-      // Đóng modal bằng Bootstrap JS
-      const modalElement = document.getElementById("addVoucherModal");
-      const modal = Modal.getOrCreateInstance(modalElement);
-      modal.hide();
-    }
-    function deleteVoucher(voucher) {
-      Swal.fire({
-        title: `Xác nhận xóa voucher?`,
-        text: `Bạn có chắc chắn muốn xóa voucher "${voucher.code}"?`,
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Xóa",
-        cancelButtonText: "Hủy",
-      }).then((result) => {
-        if (result.isConfirmed) {
-          listVoucher.value = listVoucher.value.filter(
-            (v) => v.id !== voucher.id
-          );
-          showToast("success", "Đã xóa thành công.");
-        }
-      });
-    }
-    function toggleStatus(voucher) {
-      voucher.status =
-        voucher.status === "Hoạt động" ? "Không hoạt động" : "Hoạt động";
-      showToast("success", "Đã thay đổi trạng thái thành công.");
-    }
-    function showDetail(voucher) {
-      Swal.fire({
-        title: `<strong>Chi tiết voucher</strong>`,
-        html: `
-          <div style="text-align: left; font-size: 14px;">
-            <p><strong>Mã voucher:</strong> ${voucher.code}</p>
-            <p><strong>Phần trăm giảm:</strong> ${voucher.discountPercentage}</p>
-            <p><strong>Ngày bắt đầu:</strong> ${voucher.start_time}</p>
-            <p><strong>Ngày kết thúc:</strong> ${voucher.end_time}</p>
-            <p><strong>Đơn tối thiểu:</strong> ${voucher.minOrderValue}</p>
-            <p><strong>Giảm tối đa:</strong> ${voucher.maxDiscountValue}</p>
-            <p><strong>Trạng thái:</strong> ${voucher.status}</p>
-            <p><strong>Người tạo:</strong> ${voucher.createdBy}</p>
-            <p><strong>Ngày tạo:</strong> ${voucher.createdAt}</p>
-            <p><strong>Người cập nhật:</strong> ${voucher.updatedBy}</p>
-            <p><strong>Ngày cập nhật:</strong> ${voucher.updatedAt}</p>
-          </div>
-        `,
-        confirmButtonText: "Đóng",
-      });
-    }
     function prevPage() {
       if (currentPage.value > 0) currentPage.value--;
     }
+
     function nextPage() {
       if (currentPage.value < totalPages.value - 1) currentPage.value++;
     }
+
     function handlePageSizeChange(newSize) {
       pageSize.value = newSize;
       currentPage.value = 0;
     }
 
+    // Dummy handlers for buttons (implement logic as needed)
+    function showDetail(voucher) {
+      selectedVoucher.value = voucher;
+      showDetailModal.value = true;
+    }
+    function closeDetailModal() {
+      showDetailModal.value = false;
+      selectedVoucher.value = null;
+    }
+    function openAddVoucher() {
+      isEdit.value = false;
+      formVoucher.value = {
+        id: null,
+        code: "",
+        discountPercentage: "",
+        startTime: "",
+        endTime: "",
+        minOrderValue: "",
+        maxDiscountValue: "",
+        status: 1,
+        createdBy: "admin",
+      };
+      showFormModal.value = true;
+    }
+    // Thêm mới hoặc cập nhật voucher
+    async function submitVoucher() {
+      // Validate rỗng
+      if (
+        !formVoucher.value.code ||
+        !formVoucher.value.discountPercentage ||
+        !formVoucher.value.startTime ||
+        !formVoucher.value.endTime ||
+        formVoucher.value.minOrderValue === "" ||
+        formVoucher.value.maxDiscountValue === "" ||
+        formVoucher.value.status === "" ||
+        !formVoucher.value.createdBy
+      ) {
+        showToast("error", "Vui lòng nhập đầy đủ thông tin!");
+        return;
+      }
+
+      // Validate số
+      if (
+        isNaN(formVoucher.value.discountPercentage) ||
+        formVoucher.value.discountPercentage < 1 ||
+        formVoucher.value.discountPercentage > 100
+      ) {
+        showToast("error", "Phần trăm giảm phải từ 1 đến 100!");
+        return;
+      }
+      if (
+        isNaN(formVoucher.value.minOrderValue) ||
+        formVoucher.value.minOrderValue < 0
+      ) {
+        showToast("error", "Giá trị đơn tối thiểu phải >= 0!");
+        return;
+      }
+      if (
+        isNaN(formVoucher.value.maxDiscountValue) ||
+        formVoucher.value.maxDiscountValue < 0
+      ) {
+        showToast("error", "Giá trị giảm tối đa phải >= 0!");
+        return;
+      }
+      if (
+        Number(formVoucher.value.maxDiscountValue) >
+        Number(formVoucher.value.minOrderValue)
+      ) {
+        showToast(
+          "error",
+          "Giá trị giảm tối đa không được lớn hơn giá trị đơn tối thiểu!"
+        );
+        return;
+      }
+
+      // Validate ngày
+      const start = new Date(formVoucher.value.startTime);
+      const end = new Date(formVoucher.value.endTime);
+      if (end <= start) {
+        showToast("error", "Ngày kết thúc phải sau ngày bắt đầu!");
+        return;
+      }
+
+      // Chuyển đổi ngày về ISO 8601
+      const toISOString = (val) => (val ? new Date(val).toISOString() : null);
+
+      const payload = {
+        ...formVoucher.value,
+        discountPercentage: Number(formVoucher.value.discountPercentage),
+        minOrderValue: Number(formVoucher.value.minOrderValue),
+        maxDiscountValue: Number(formVoucher.value.maxDiscountValue),
+        status: Number(formVoucher.value.status),
+        startTime: toISOString(formVoucher.value.startTime),
+        endTime: toISOString(formVoucher.value.endTime),
+      };
+
+      try {
+        if (isEdit.value) {
+          await updateVouchers(payload);
+          showToast("success", "Cập nhật voucher thành công!");
+        } else {
+          await createVouchers(payload);
+          showToast("success", "Thêm voucher thành công!");
+        }
+        closeFormModal();
+        fetchVouchers();
+      } catch (error) {
+        showToast("error", "Có lỗi xảy ra!");
+      }
+    }
+
+    // Xóa voucher
+    async function deleteVoucher(voucher) {
+      if (
+        confirm(
+          `Bạn có chắc chắn muốn xóa voucher "${voucher.code}"? Hành động này không thể hoàn tác!`
+        )
+      ) {
+        try {
+          await deleteVouchers(voucher.id);
+          showToast("success", "Xóa voucher thành công!");
+          fetchVouchers();
+        } catch (error) {
+          showToast("error", "Xóa voucher thất bại!");
+        }
+      }
+    }
+
+    // Đổi trạng thái voucher
+    async function toggleStatus(voucher, newStatus) {
+      try {
+        await upStatusVouchers(
+          voucher.id,
+          newStatus,
+          voucher.createdBy || "admin"
+        );
+        showToast("success", "Cập nhật trạng thái thành công!");
+        fetchVouchers();
+      } catch (error) {
+        showToast("error", "Cập nhật trạng thái thất bại!");
+      }
+    }
+
+    // Khi click Sửa voucher
+    function openEditVoucher(voucher) {
+      isEdit.value = true;
+
+      function toInputDate(val) {
+        if (!val) return "";
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return "";
+        return d.toISOString().slice(0, 16);
+      }
+
+      formVoucher.value = {
+        id: voucher.id,
+        code: voucher.code,
+        discountPercentage: voucher.discountPercentage,
+        startTime: toInputDate(voucher.startTime), // lấy trường gốc
+        endTime: toInputDate(voucher.endTime), // lấy trường gốc
+        minOrderValue: voucher.minOrderValue,
+        maxDiscountValue: voucher.maxDiscountValue,
+        status: voucher.status,
+        createdBy: voucher.createdBy || "admin",
+      };
+      showFormModal.value = true;
+    }
+    function closeFormModal() {
+      showFormModal.value = false;
+    }
     return {
-      // Phân trang
       currentPage,
       pageSize,
       totalPages,
       totalElements,
       isLastPage,
       itemsPerPageOptions,
-      // Dữ liệu
       listVoucher,
-      pagedVouchers,
-      // Bộ lọc
       searchQuery,
       statusFilter,
-      createdByFilter,
       onFilterChange,
-      resetFilter,
-      // Modal & form
-      isEditMode,
-      voucherForm,
-      editingVoucher,
-      formError,
-      openAddVoucher,
-      openEditVoucher,
-      submitVoucherForm,
-      deleteVoucher,
-      toggleStatus,
-      showDetail,
-      // Phân trang
       prevPage,
       nextPage,
       handlePageSizeChange,
+      showDetail,
+      closeDetailModal,
+      openAddVoucher,
+      openEditVoucher,
+      deleteVoucher,
+      toggleStatus,
+      showDetailModal,
+      selectedVoucher,
+      showFormModal,
+      isEdit,
+      formVoucher,
+      openAddVoucher,
+      openEditVoucher,
+      closeFormModal,
+      submitVoucher,
     };
   },
 };
