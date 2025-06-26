@@ -19,7 +19,5 @@
         </ul>
       </div>
     </div>
-
   </footer>
 </template>
-}
