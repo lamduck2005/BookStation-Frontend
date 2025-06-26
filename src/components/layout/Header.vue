@@ -42,10 +42,7 @@
                     <!-- Right side icons -->
                     <div class="col-auto d-flex align-items-center gap-3 px-3" style="height: 60px;">
                         <!-- Notifications -->
-                        <div class="d-flex flex-column align-items-center text-decoration-none text-dark">
-                            <i class="bi bi-bell fs-5"></i>
-                            <small class="text-muted" style="font-size: 11px;">Thông Báo</small>
-                        </div>
+                        <NotificationComponent mode="dropdown" />
 
                         <!-- Cart -->
                         <div class="d-flex flex-column align-items-center text-decoration-none text-dark position-relative">
@@ -113,7 +110,7 @@
 </template>
 
 <script setup>
-// Component logic có thể thêm ở đây nếu cần
+import NotificationComponent from '@/components/common/NotificationComponent.vue'
 </script>
 
 <style scoped>

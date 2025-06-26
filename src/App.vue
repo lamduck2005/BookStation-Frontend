@@ -1,11 +1,13 @@
 <script setup>
 import { RouterView } from 'vue-router';
 import HomePage from './views/client/HomePage.vue';
+import NotificationDropdown from './components/common/NotificationDropdown.vue';
+import NotificationsPage from './views/client/NotificationsPage.vue';
+import DemoPage from './views/client/DemoPage.vue';
 </script>
 
 <template>
-  <!-- <RouterView /> -->
-  <HomePage />
+  <RouterView />
 </template>
 
 <style>

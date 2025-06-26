@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
 import AdminLayout from "../views/admin/AdminLayout.vue";
+import HomePage from "@/views/client/HomePage.vue";
+import NotificationsPage from "@/views/client/NotificationsPage.vue";
+import DemoPage from "@/views/client/DemoPage.vue";
 import User from "@/views/admin/views-admin/User.vue";
 import Product from "@/views/admin/views-admin/Product.vue";
 import Author from "@/views/admin/views-admin/Author.vue";
@@ -24,7 +27,17 @@ const router = createRouter({
     {
       path: "/",
       name: "home",
-      component: AdminLayout,
+      component: HomePage,
+    },
+    {
+      path: "/notifications",
+      name: "notifications",
+      component: NotificationsPage,
+    },
+    {
+      path: "/demo",
+      name: "demo",
+      component: DemoPage,
     },
     // Admin routes
     {
