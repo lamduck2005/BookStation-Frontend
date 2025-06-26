@@ -1,0 +1,189 @@
+<template>
+    <div class="product-card h-100">
+        <div class="card border-0 shadow-sm h-100">
+            <!-- Badge container -->
+            <div class="position-relative">
+                <!-- Sale badge -->
+                <span v-if="product.discount" class="badge bg-danger position-absolute top-0 start-0 m-2 z-index-1 sale-badge">
+                    {{ product.saleLabel || 'Xu hướng' }}
+                </span>
+                
+                <!-- Product image -->
+                <div class="product-image-container">
+                    <img 
+                        :src="product.image || 'https://via.placeholder.com/200x250?text=Book+Cover'" 
+                        :alt="product.name" 
+                        class="card-img-top product-image"
+                    >
+                </div>
+            </div>
+            
+            <!-- Card body -->
+            <div class="card-body p-2 d-flex flex-column">
+                <!-- Product category/type -->
+                <div class="product-category mb-1">
+                    <span class="badge" :class="getCategoryBadgeClass(product.category)">
+                        {{ product.categoryLabel || 'Mới' }}
+                    </span>
+                </div>
+                
+                <!-- Product name -->
+                <h6 class="card-title product-name mb-2">
+                    {{ product.name || 'Silver Spoon: Tập 1 - 15 (Hộp 1...)' }}
+                </h6>
+                
+                <!-- Price section -->
+                <div class="price-section mt-auto mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="current-price fw-bold text-danger fs-6">
+                            {{ formatPrice(product.currentPrice || 690000) }}
+                        </span>
+                        <span v-if="product.originalPrice" class="original-price text-muted text-decoration-line-through small">
+                            {{ formatPrice(product.originalPrice) }}
+                        </span>
+                        <span v-if="product.discount" class="discount-badge badge bg-danger small">
+                            -{{ product.discount }}%
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Sales info -->
+                <div class="sales-info">
+                    <div class="progress mb-1" style="height: 6px;">
+                        <div 
+                            class="progress-bar bg-danger" 
+                            role="progressbar" 
+                            :style="{ width: getSalesProgress(product.sold, product.total) + '%' }"
+                        ></div>
+                    </div>
+                    <small class="text-muted" style="font-size: 0.8rem;">
+                        Đã bán {{ product.sold || 155 }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+
+// Props
+const props = defineProps({
+    product: {
+        type: Object,
+        default: () => ({})
+    }
+})
+
+// Methods
+const formatPrice = (price) => {
+    return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+        minimumFractionDigits: 0
+    }).format(price).replace('₫', 'đ')
+}
+
+const getCategoryBadgeClass = (category) => {
+    const categoryClasses = {
+        'xu-huong': 'bg-warning text-dark',
+        'moi': 'bg-success',
+        'hot': 'bg-danger',
+        'bestseller': 'bg-primary'
+    }
+    return categoryClasses[category] || 'bg-warning text-dark'
+}
+
+const getSalesProgress = (sold, total) => {
+    if (!total) return Math.min((sold || 0) / 200 * 100, 100)
+    return (sold / total) * 100
+}
+</script>
+
+<style scoped>
+.product-card {
+    transition: all 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+}
+
+.product-card:hover .card {
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+}
+
+.product-image-container {
+    height: 180px;
+    overflow: hidden;
+    position: relative;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.product-card:hover .product-image {
+    transform: scale(1.05);
+}
+
+.sale-badge {
+    z-index: 2;
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
+}
+
+.product-name {
+    font-size: 0.9rem;
+    line-height: 1.3;
+    height: 36px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+    word-break: break-word;
+}
+
+.current-price {
+    font-size: 1.1rem;
+}
+
+.original-price {
+    font-size: 0.8rem;
+}
+
+.discount-badge {
+    font-size: 0.75rem;
+}
+
+.product-category .badge {
+    font-size: 0.7rem;
+}
+
+.z-index-1 {
+    z-index: 1;
+}
+
+@media (max-width: 576px) {
+    .product-image-container {
+        height: 150px;
+    }
+    
+    .product-name {
+        font-size: 0.75rem;
+    }
+    
+    .current-price {
+        font-size: 0.9rem;
+    }
+    
+    .card-body {
+        padding: 0.75rem !important;
+    }
+}
+</style>
