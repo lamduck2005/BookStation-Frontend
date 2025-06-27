@@ -20,6 +20,12 @@ import Point from "@/views/admin/views-admin/Point.vue";
 import Flash_Sale_Item from "@/views/admin/views-admin/FlashSaleDetail.vue";
 import RankDetail from "@/views/admin/views-admin/RankDetail.vue";
 import Template from "@/views/admin/views-admin/Template.vue";
+import Event from "@/views/admin/views-admin/Event.vue";
+import EventCategory from "@/views/admin/views-admin/EventCategory.vue";
+import EventGift from "@/views/admin/views-admin/EventGift.vue";
+import EventParticipant from "@/views/admin/views-admin/EventParticipant.vue";
+import EventGiftClaim from "@/views/admin/views-admin/EventGiftClaim.vue";
+import EventHistory from "@/views/admin/views-admin/EventHistory.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -134,6 +140,36 @@ const router = createRouter({
           path: "template",
           name: "template",
           component: Template,
+        },
+        {
+          path: "event",
+          name: "event",
+          component: Event,
+        },
+        {
+          path: "event-category",
+          name: "event-category",
+          component: EventCategory,
+        },
+        {
+          path: "event-gift",
+          name: "event-gift",
+          component: EventGift,
+        },
+        {
+          path: "event-participant",
+          name: "event-participant",
+          component: EventParticipant,
+        },
+        {
+          path: "event-gift-claim",
+          name: "event-gift-claim",
+          component: EventGiftClaim,
+        },
+        {
+          path: "event-history",
+          name: "event-history",
+          component: EventHistory,
         },
       ],
       // End - Admin routes

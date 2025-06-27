@@ -43,6 +43,12 @@
             <li><router-link to="/admin/supplier"><i class="bi bi-truck"></i> Supplier</router-link></li>
             <li><router-link to="/admin/rank"><i class="bi bi-star"></i> Rank</router-link></li>
             <li><router-link to="/admin/point"><i class="bi bi-coin"></i> Point</router-link></li>
+            <li><router-link to="/admin/event"><i class="bi bi-calendar-event"></i> Event</router-link></li>
+            <li><router-link to="/admin/event-category"><i class="bi bi-calendar2-range"></i> Event Category</router-link></li>
+            <li><router-link to="/admin/event-gift"><i class="bi bi-gift"></i> Event Gift</router-link></li>
+            <li><router-link to="/admin/event-participant"><i class="bi bi-people-fill"></i> Event Participant</router-link></li>
+            <li><router-link to="/admin/event-gift-claim"><i class="bi bi-hand-thumbs-up"></i> Event Gift Claim</router-link></li>
+            <li><router-link to="/admin/event-history"><i class="bi bi-clock-history"></i> Event History</router-link></li>
           </div>
         </ul>
       </li>
