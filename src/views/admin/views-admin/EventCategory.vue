@@ -52,6 +52,7 @@
               <th>STT</th>
               <th>Tên danh mục</th>
               <th>Mô tả</th>
+              <th>Icon</th>
               <th>Trạng thái</th>
               <th>Ngày tạo</th>
               <th>Thao tác</th>
@@ -64,7 +65,13 @@
                 <strong>{{ category.name }}</strong>
               </td>
               <td>
-                <div class="text-muted">{{ category.description }}</div>
+                <div class="text-muted">{{ category.description || 'Không có mô tả' }}</div>
+              </td>
+              <td>
+                <div v-if="category.iconUrl" class="text-center">
+                  <img :src="category.iconUrl" alt="Icon" class="category-icon" />
+                </div>
+                <div v-else class="text-muted small">Không có icon</div>
               </td>
               <td>
                 <StatusLabel 
@@ -79,7 +86,6 @@
               <td>
                 <div class="d-flex gap-2">
                   <EditButton @click="openEditModal(category, index)" />
-                  <DeleteButton @click="confirmDeleteCategory(category.id)" />
                 </div>
               </td>
             </tr>
@@ -123,6 +129,7 @@
                 class="form-control" 
                 v-model="newCategory.name"
                 placeholder="Nhập tên danh mục event"
+                required
               />
             </div>
             
@@ -130,15 +137,25 @@
               <label class="form-label">Mô tả</label>
               <textarea 
                 class="form-control" 
-                rows="4"
+                rows="3"
                 v-model="newCategory.description"
                 placeholder="Nhập mô tả danh mục event"
               ></textarea>
             </div>
 
             <div class="mb-3">
+              <label class="form-label">URL Icon</label>
+              <input 
+                type="url" 
+                class="form-control" 
+                v-model="newCategory.iconUrl"
+                placeholder="Nhập URL icon (tùy chọn)"
+              />
+            </div>
+
+            <div class="mb-3">
               <label class="form-label">Trạng thái <span class="text-danger">*</span></label>
-              <select class="form-select" v-model="newCategory.status">
+              <select class="form-select" v-model="newCategory.status" required>
                 <option value="">Chọn trạng thái</option>
                 <option value="1">Hoạt động</option>
                 <option value="0">Không hoạt động</option>
@@ -161,13 +178,12 @@
 
 <script setup>
 import EditButton from '@/components/common/EditButton.vue';
-import DeleteButton from '@/components/common/DeleteButton.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import AddButton from '@/components/common/AddButton.vue';
 import StatusLabel from '@/components/common/StatusLabel.vue';
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { Modal } from 'bootstrap';
-import { getEventCategories, createEventCategory, updateEventCategory, deleteEventCategory } from '@/services/admin/eventCategory';
+import { getEventCategories, createEventCategory, updateEventCategory } from '@/services/admin/eventCategory';
 import Swal from 'sweetalert2';
 
 const searchQuery = ref('');
@@ -178,6 +194,7 @@ const newCategory = ref({
   id: '',
   name: '',
   description: '',
+  iconUrl: '',
   status: '1'
 });
 
@@ -202,17 +219,21 @@ const fetchCategories = async () => {
       page: currentPage.value,
       size: pageSize.value,
     };
-    if (searchQuery.value) params.name = searchQuery.value;
-    if (selectedStatus.value !== '') params.isActive = selectedStatus.value;
+    if (searchQuery.value) params.categoryName = searchQuery.value;
+    if (selectedStatus.value !== '') params.isActive = selectedStatus.value === 'true';
     
+    console.log('Fetching categories with params:', params);
     const response = await getEventCategories(params);
+    console.log('Response from backend:', response);
+    
     const data = response.data ? response.data : response;
     
     categories.value = data.content.map(item => ({
       id: item.id,
-      name: item.name,
-      description: item.description,
-      status: item.status,
+      name: item.categoryName || item.name,
+      description: item.description || '',
+      iconUrl: item.iconUrl || '',
+      status: item.isActive !== undefined ? (item.isActive ? 1 : 0) : (item.status || 0),
       createdAt: item.createdAt,
       updatedAt: item.updatedAt
     }));
@@ -222,6 +243,8 @@ const fetchCategories = async () => {
     currentPage.value = data.pageNumber ?? currentPage.value;
     pageSize.value = data.pageSize ?? pageSize.value;
     isLastPage.value = data.last ?? (currentPage.value >= totalPages.value - 1);
+    
+    console.log('Processed categories:', categories.value);
   } catch (error) {
     console.error('Lỗi khi lấy danh sách event categories:', error);
     Swal.fire({
@@ -229,8 +252,9 @@ const fetchCategories = async () => {
       position: 'top-end',
       icon: 'error',
       title: 'Lỗi khi tải danh sách danh mục event!',
+      text: error?.response?.data?.message || 'Không thể kết nối đến server',
       showConfirmButton: false,
-      timer: 2000,
+      timer: 3000,
       timerProgressBar: true
     });
   }
@@ -261,6 +285,7 @@ const openAddModal = () => {
     id: '',
     name: '',
     description: '',
+    iconUrl: '',
     status: '1'
   };
   const modalElement = document.getElementById('addCategoryModal');
@@ -273,6 +298,7 @@ const openEditModal = (category, index) => {
   editIndex.value = index;
   newCategory.value = {
     ...category,
+    iconUrl: category.iconUrl || '',
     status: String(category.status)
   };
   const modalElement = document.getElementById('addCategoryModal');
@@ -289,7 +315,7 @@ const handleSubmitCategory = async () => {
       icon: 'error',
       title: 'Tên danh mục không được để trống!',
       showConfirmButton: false,
-      timer: 2000,
+      timer: 3000,
       timerProgressBar: true
     });
     return;
@@ -302,7 +328,7 @@ const handleSubmitCategory = async () => {
       icon: 'error',
       title: 'Vui lòng chọn trạng thái!',
       showConfirmButton: false,
-      timer: 2000,
+      timer: 3000,
       timerProgressBar: true
     });
     return;
@@ -310,10 +336,13 @@ const handleSubmitCategory = async () => {
 
   try {
     const payload = {
-      name: newCategory.value.name,
-      description: newCategory.value.description,
+      name: newCategory.value.name.trim(),
+      description: newCategory.value.description?.trim() || '',
+      iconUrl: newCategory.value.iconUrl?.trim() || '',
       status: Number(newCategory.value.status)
     };
+
+    console.log('Frontend payload:', payload);
 
     if (isEditMode.value) {
       await updateEventCategory(newCategory.value.id, payload);
@@ -323,7 +352,7 @@ const handleSubmitCategory = async () => {
         icon: 'success',
         title: 'Cập nhật danh mục event thành công!',
         showConfirmButton: false,
-        timer: 1500,
+        timer: 2000,
         timerProgressBar: true
       });
     } else {
@@ -334,7 +363,7 @@ const handleSubmitCategory = async () => {
         icon: 'success',
         title: 'Thêm danh mục event thành công!',
         showConfirmButton: false,
-        timer: 1500,
+        timer: 2000,
         timerProgressBar: true
       });
     }
@@ -342,58 +371,33 @@ const handleSubmitCategory = async () => {
     await fetchCategories();
     closeModal();
   } catch (error) {
-    let status = error?.response?.status || error?.response?.data?.status || 'Lỗi';
-    let message = error?.response?.data?.message || 'Thao tác thất bại!';
+    console.error('Error in handleSubmitCategory:', error);
+    
+    let errorTitle = 'Thao tác thất bại!';
+    let errorMessage = '';
+    
+    if (error?.response?.status) {
+      errorTitle = `Lỗi ${error.response.status}`;
+    }
+    
+    if (error?.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error?.message) {
+      errorMessage = error.message;
+    } else {
+      errorMessage = isEditMode.value ? 'Cập nhật danh mục thất bại!' : 'Thêm danh mục thất bại!';
+    }
+
     Swal.fire({
       toast: true,
       position: 'top-end',
       icon: 'error',
-      title: `Lỗi ${status}`,
-      text: message,
+      title: errorTitle,
+      text: errorMessage,
       showConfirmButton: false,
-      timer: 3000,
+      timer: 4000,
       timerProgressBar: true
     });
-  }
-};
-
-const confirmDeleteCategory = async (id) => {
-  const result = await Swal.fire({
-    title: 'Xác nhận xóa',
-    text: 'Bạn có chắc chắn muốn xóa danh mục event này?',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Xóa',
-    cancelButtonText: 'Hủy'
-  });
-
-  if (result.isConfirmed) {
-    try {
-      await deleteEventCategory(id);
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'success',
-        title: 'Xóa danh mục event thành công!',
-        showConfirmButton: false,
-        timer: 1500,
-        timerProgressBar: true
-      });
-      await fetchCategories();
-    } catch (error) {
-      let message = error?.response?.data?.message || 'Xóa danh mục event thất bại!';
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'error',
-        title: message,
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
-      });
-    }
   }
 };
 
@@ -428,6 +432,7 @@ const resetCategoryModal = () => {
     id: '',
     name: '',
     description: '',
+    iconUrl: '',
     status: '1'
   };
 };
@@ -525,5 +530,17 @@ onUnmounted(() => {
 
 .text-danger {
   color: #dc3545 !important;
+}
+
+.category-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+.category-icon:error {
+  display: none;
 }
 </style>

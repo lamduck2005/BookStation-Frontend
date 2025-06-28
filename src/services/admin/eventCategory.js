@@ -14,7 +14,17 @@ export const getEventCategories = async (params = {}) => {
 // Tạo event category mới
 export const createEventCategory = async (categoryData) => {
   try {
-    const response = await client.post('/api/event-categories', categoryData);
+    // Chuyển đổi dữ liệu để khớp với API backend
+    const payload = {
+      categoryName: categoryData.name || categoryData.categoryName,
+      description: categoryData.description || '',
+      iconUrl: categoryData.iconUrl || '',
+      isActive: categoryData.isActive !== undefined ? categoryData.isActive : 
+                (categoryData.status !== undefined ? Boolean(Number(categoryData.status)) : true)
+    };
+    
+    console.log('Sending payload to backend:', payload);
+    const response = await client.post('/api/event-categories', payload);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi tạo event category:', error);
@@ -25,7 +35,17 @@ export const createEventCategory = async (categoryData) => {
 // Cập nhật event category
 export const updateEventCategory = async (id, categoryData) => {
   try {
-    const response = await client.put(`/api/event-categories/${id}`, categoryData);
+    // Chuyển đổi dữ liệu để khớp với API backend
+    const payload = {
+      categoryName: categoryData.name || categoryData.categoryName,
+      description: categoryData.description || '',
+      iconUrl: categoryData.iconUrl || '',
+      isActive: categoryData.isActive !== undefined ? categoryData.isActive : 
+                (categoryData.status !== undefined ? Boolean(Number(categoryData.status)) : true)
+    };
+    
+    console.log('Sending update payload to backend:', payload);
+    const response = await client.put(`/api/event-categories/${id}`, payload);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi cập nhật event category:', error);

@@ -11,6 +11,39 @@ export const getEvents = async (params = {}) => {
   }
 };
 
+// Lấy danh sách event types
+export const getEventTypes = async () => {
+  try {
+    const response = await client.get('/api/events/event-types');
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách event types:', error);
+    throw error;
+  }
+};
+
+// Lấy danh sách event categories dropdown
+export const getEventCategoriesDropdown = async () => {
+  try {
+    const response = await client.get('/api/event-categories/dropdown');
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách event categories dropdown:', error);
+    throw error;
+  }
+};
+
+// Lấy danh sách event statuses
+export const getEventStatuses = async () => {
+  try {
+    const response = await client.get('/api/events/event-statuses');
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách event statuses:', error);
+    throw error;
+  }
+};
+
 // Tạo event mới
 export const createEvent = async (eventData) => {
   try {

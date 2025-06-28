@@ -14,32 +14,75 @@
         <h5>Bộ lọc</h5>
       </div>
       <div class="row g-3 m-2 mt-0 p-0">
-        <div class="col-md-4">
+        <div class="col-md-3">
           <label class="form-label">Tìm kiếm:</label>
           <input 
             type="text" 
             class="form-control" 
             placeholder="Nhập tên event" 
             v-model="searchQuery" 
+            @input="debouncedSearch"
+            @keyup.enter="applyFilters"
+          />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Loại sự kiện</label>
+          <select class="form-select" v-model="selectedEventType" @change="applyFilters">
+            <option value="">Tất cả loại sự kiện</option>
+            <option v-for="type in eventTypes" :key="type.value" :value="type.value">
+              {{ type.displayName }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Danh mục</label>
+          <select class="form-select" v-model="selectedCategory" @change="applyFilters">
+            <option value="">Tất cả danh mục</option>
+            <option v-for="category in eventCategories" :key="category.id" :value="category.id">
+              {{ category.name }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Trạng thái</label>
+          <select class="form-select" v-model="selectedStatus" @change="applyFilters">
+            <option value="">Tất cả trạng thái</option>
+            <option v-for="status in eventStatuses" :key="status.value" :value="status.value">
+              {{ status.displayName }}
+            </option>
+          </select>
+        </div>
+      </div>
+      <div class="row g-3 m-2 mt-2 p-0">
+        <div class="col-md-4">
+          <label class="form-label">Từ ngày:</label>
+          <input 
+            type="date" 
+            class="form-control" 
+            v-model="startDateFilter" 
+            @change="applyFilters"
+            placeholder="Chọn ngày bắt đầu"
           />
         </div>
         <div class="col-md-4">
-          <label class="form-label">Danh mục</label>
-          <select class="form-select" v-model="selectedCategory">
-            <option value="">Tất cả danh mục</option>
-            <option value="1">Workshop</option>
-            <option value="2">Gặp gỡ tác giả</option>
-            <option value="3">Thử thách đọc sách</option>
-          </select>
+          <label class="form-label">Đến ngày:</label>
+          <input 
+            type="date" 
+            class="form-control" 
+            v-model="endDateFilter" 
+            @change="applyFilters"
+            placeholder="Chọn ngày kết thúc"
+          />
         </div>
-        <div class="col-md-4">
-          <label class="form-label">Trạng thái</label>
-          <select class="form-select" v-model="selectedStatus">
-            <option value="">Tất cả trạng thái</option>
-            <option value="1">Sắp diễn ra</option>
-            <option value="2">Đang diễn ra</option>
-            <option value="3">Đã kết thúc</option>
-          </select>
+        <div class="col-md-4 d-flex align-items-end">
+          <button type="button" class="btn btn-secondary me-2" @click="clearFilters">
+            <i class="bi bi-arrow-clockwise me-1"></i>
+            Xóa bộ lọc
+          </button>
+          <button type="button" class="btn btn-primary" @click="applyFilters">
+            <i class="bi bi-search me-1"></i>
+            Tìm kiếm
+          </button>
         </div>
       </div>
     </div>
@@ -56,26 +99,47 @@
       </div>
 
       <div class="p-3">
-        <table class="table align-middle">
-          <thead>
-            <tr>
-              <th>STT</th>
-              <th>Tên Event</th>
-              <th>Danh mục</th>
-              <th>Thời gian</th>
-              <th>Người tham gia</th>
-              <th>Trạng thái</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th style="min-width: 50px;">STT</th>
+                <th style="min-width: 100px;">Ảnh</th>
+                <th style="min-width: 200px;">Tên Event</th>
+                <th style="min-width: 120px;">Loại sự kiện</th>
+                <th style="min-width: 120px;">Danh mục</th>
+                <th style="min-width: 150px;">Thời gian</th>
+                <th style="min-width: 100px;">Người tham gia</th>
+                <th style="min-width: 100px;">Trạng thái</th>
+                <th style="min-width: 120px;">Thao tác</th>
+              </tr>
+            </thead>
           <tbody>
             <tr v-for="(event, index) in events" :key="event.id">
               <td>{{ (currentPage * pageSize) + index + 1 }}</td>
+              <td>
+                <div class="event-image-container">
+                  <img 
+                    v-if="event.imageUrl" 
+                    :src="event.imageUrl" 
+                    :alt="event.name"
+                    class="event-image"
+                    @error="handleImageError"
+                  />
+                  <div v-else class="no-image-placeholder">
+                    <i class="bi bi-image text-muted"></i>
+                    <small class="text-muted">Không có ảnh</small>
+                  </div>
+                </div>
+              </td>
               <td>
                 <div>
                   <strong>{{ event.name }}</strong>
                   <div class="text-muted small">{{ event.description }}</div>
                 </div>
+              </td>
+              <td>
+                <span class="badge bg-info">{{ event.eventTypeName }}</span>
               </td>
               <td>{{ event.categoryName }}</td>
               <td>
@@ -106,6 +170,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
 
         <!-- Pagination -->
         <Pagination 
@@ -143,17 +208,38 @@
                 <input 
                   type="text" 
                   class="form-control" 
-                  v-model="newEvent.name"
+                  v-model="newEvent.eventName"
                   placeholder="Nhập tên event"
                 />
               </div>
               <div class="col-md-6 mb-3">
+                <label class="form-label">Loại sự kiện <span class="text-danger">*</span></label>
+                <select class="form-select" v-model="newEvent.eventType">
+                  <option value="">Chọn loại sự kiện</option>
+                  <option v-for="type in eventTypes" :key="type.value" :value="type.value">
+                    {{ type.displayName }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
                 <label class="form-label">Danh mục <span class="text-danger">*</span></label>
-                <select class="form-select" v-model="newEvent.categoryId">
+                <select class="form-select" v-model="newEvent.eventCategoryId">
                   <option value="">Chọn danh mục</option>
-                  <option value="1">Workshop</option>
-                  <option value="2">Gặp gỡ tác giả</option>
-                  <option value="3">Thử thách đọc sách</option>
+                  <option v-for="category in eventCategories" :key="category.id" :value="category.id">
+                    {{ category.name }}
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Trạng thái <span class="text-danger">*</span></label>
+                <select class="form-select" v-model="newEvent.status">
+                  <option value="">Chọn trạng thái</option>
+                  <option v-for="status in eventStatuses" :key="status.value" :value="status.value">
+                    {{ status.displayName }}
+                  </option>
                 </select>
               </div>
             </div>
@@ -199,25 +285,44 @@
                 />
               </div>
               <div class="col-md-6 mb-3">
-                <label class="form-label">Phí tham gia</label>
+                <label class="form-label">Hình ảnh URL</label>
                 <input 
-                  type="number" 
+                  type="text" 
                   class="form-control" 
-                  v-model="newEvent.entryFee"
-                  min="0"
-                  placeholder="Nhập phí tham gia (VNĐ)"
+                  v-model="newEvent.imageUrl"
+                  placeholder="Nhập URL hình ảnh"
                 />
               </div>
             </div>
 
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Địa điểm</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  v-model="newEvent.location"
+                  placeholder="Nhập địa điểm tổ chức"
+                />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Loại hình</label>
+                <select class="form-select" v-model="newEvent.isOnline">
+                  <option value="">Chọn loại hình</option>
+                  <option :value="true">Online</option>
+                  <option :value="false">Offline</option>
+                </select>
+              </div>
+            </div>
+
             <div class="mb-3">
-              <label class="form-label">Trạng thái <span class="text-danger">*</span></label>
-              <select class="form-select" v-model="newEvent.status">
-                <option value="">Chọn trạng thái</option>
-                <option value="1">Sắp diễn ra</option>
-                <option value="2">Đang diễn ra</option>
-                <option value="3">Đã kết thúc</option>
-              </select>
+              <label class="form-label">Quy định</label>
+              <textarea 
+                class="form-control" 
+                rows="3"
+                v-model="newEvent.rules"
+                placeholder="Nhập quy định của sự kiện"
+              ></textarea>
             </div>
           </form>
         </div>
@@ -242,25 +347,37 @@ import AddButton from '@/components/common/AddButton.vue';
 import StatusLabel from '@/components/common/StatusLabel.vue';
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { Modal } from 'bootstrap';
-import { getEvents, createEvent, updateEvent, deleteEvent } from '@/services/admin/event';
+import { getEvents, createEvent, updateEvent, deleteEvent, getEventTypes, getEventCategoriesDropdown, getEventStatuses } from '@/services/admin/event';
 import Swal from 'sweetalert2';
 
 const searchQuery = ref('');
 const selectedCategory = ref('');
 const selectedStatus = ref('');
+const selectedEventType = ref('');
+const startDateFilter = ref('');
+const endDateFilter = ref('');
 
 // New/Edit event form data
 const newEvent = ref({
   id: '',
-  name: '',
+  eventName: '',
   description: '',
-  categoryId: '',
+  eventType: '',
+  eventCategoryId: '',
+  status: 'DRAFT',
   startDate: '',
   endDate: '',
   maxParticipants: 100,
-  entryFee: 0,
-  status: '1'
+  imageUrl: '',
+  location: '',
+  rules: '',
+  isOnline: false
 });
+
+// Data for dropdowns
+const eventTypes = ref([]);
+const eventCategories = ref([]);
+const eventStatuses = ref([]);
 
 // Track edit mode and index
 const isEditMode = ref(false);
@@ -283,17 +400,32 @@ const fetchEvents = async () => {
       page: currentPage.value,
       size: pageSize.value,
     };
+    
+    // Thêm các filter parameters
     if (searchQuery.value) params.name = searchQuery.value;
     if (selectedCategory.value !== '') params.categoryId = selectedCategory.value;
     if (selectedStatus.value !== '') params.status = selectedStatus.value;
+    if (selectedEventType.value !== '') params.eventType = selectedEventType.value;
+    if (startDateFilter.value) {
+      params.startDate = new Date(startDateFilter.value).getTime();
+    }
+    if (endDateFilter.value) {
+      params.endDate = new Date(endDateFilter.value + 'T23:59:59').getTime();
+    }
+    
+    console.log('Calling API with params:', params);
     
     const response = await getEvents(params);
     const data = response.data ? response.data : response;
+    
+    console.log('API response:', data);
     
     events.value = data.content.map(item => ({
       id: item.id,
       name: item.name,
       description: item.description,
+      eventType: item.eventType,
+      eventTypeName: item.eventTypeName,
       categoryId: item.categoryId,
       categoryName: item.categoryName,
       startDate: item.startDate,
@@ -301,6 +433,7 @@ const fetchEvents = async () => {
       maxParticipants: item.maxParticipants,
       currentParticipants: item.currentParticipants,
       entryFee: item.entryFee,
+      imageUrl: item.imageUrl,
       status: item.status
     }));
     
@@ -323,8 +456,39 @@ const fetchEvents = async () => {
   }
 };
 
-// Watch filters and pagination
-watch([searchQuery, selectedCategory, selectedStatus, pageSize, currentPage], () => {
+// Load event types and categories
+const loadDropdownData = async () => {
+  try {
+    const [typesResponse, categoriesResponse, statusesResponse] = await Promise.all([
+      getEventTypes(),
+      getEventCategoriesDropdown(),
+      getEventStatuses()
+    ]);
+    
+    eventTypes.value = typesResponse.data || [];
+    eventCategories.value = categoriesResponse.data || [];
+    eventStatuses.value = statusesResponse.data || [];
+  } catch (error) {
+    console.error('Lỗi khi tải dữ liệu dropdown:', error);
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'error',
+      title: 'Lỗi khi tải dữ liệu dropdown!',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+    });
+  }
+};
+
+// Watch filters and pagination - chỉ watch pageSize và currentPage
+watch([pageSize], () => {
+  currentPage.value = 0; // Reset to first page when changing page size
+  fetchEvents();
+});
+
+watch([currentPage], () => {
   fetchEvents();
 });
 
@@ -343,19 +507,24 @@ const formatDate = (timestamp) => {
 
 // Status functions
 const getStatusText = (status) => {
+  // Backend trả về number, cần map thành text
   switch (status) {
-    case 1: return 'Sắp diễn ra';
+    case 0: return 'Bản nháp';
+    case 1: return 'Đã công bố';
     case 2: return 'Đang diễn ra';
     case 3: return 'Đã kết thúc';
+    case 4: return 'Đã hủy';
     default: return 'Không xác định';
   }
 };
 
 const getStatusClass = (status) => {
   switch (status) {
-    case 1: return 'status-pending';
+    case 0: return 'status-draft';
+    case 1: return 'status-published';
     case 2: return 'status-active';
     case 3: return 'status-inactive';
+    case 4: return 'status-cancelled';
     default: return 'status-inactive';
   }
 };
@@ -365,14 +534,18 @@ const openAddModal = () => {
   isEditMode.value = false;
   newEvent.value = {
     id: '',
-    name: '',
+    eventName: '',
     description: '',
-    categoryId: '',
+    eventType: '',
+    eventCategoryId: '',
+    status: 'DRAFT',
     startDate: '',
     endDate: '',
     maxParticipants: 100,
-    entryFee: 0,
-    status: '1'
+    imageUrl: '',
+    location: '',
+    rules: '',
+    isOnline: false
   };
   const modalElement = document.getElementById('addEventModal');
   const modal = Modal.getOrCreateInstance(modalElement);
@@ -383,11 +556,19 @@ const openEditModal = (event, index) => {
   isEditMode.value = true;
   editIndex.value = index;
   newEvent.value = {
-    ...event,
-    categoryId: String(event.categoryId),
-    status: String(event.status),
+    id: event.id,
+    eventName: event.name,
+    description: event.description,
+    eventType: event.eventType,
+    eventCategoryId: event.categoryId,
+    status: event.status,
     startDate: event.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : '',
-    endDate: event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : ''
+    endDate: event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : '',
+    maxParticipants: event.maxParticipants,
+    imageUrl: event.imageUrl || '',
+    location: event.location || '',
+    rules: event.rules || '',
+    isOnline: event.isOnline
   };
   const modalElement = document.getElementById('addEventModal');
   const modal = Modal.getOrCreateInstance(modalElement);
@@ -396,7 +577,7 @@ const openEditModal = (event, index) => {
 
 const handleSubmitEvent = async () => {
   // Validate form
-  if (!newEvent.value.name || newEvent.value.name.trim() === '') {
+  if (!newEvent.value.eventName || newEvent.value.eventName.trim() === '') {
     Swal.fire({
       toast: true,
       position: 'top-end',
@@ -409,7 +590,20 @@ const handleSubmitEvent = async () => {
     return;
   }
 
-  if (!newEvent.value.categoryId) {
+  if (!newEvent.value.eventType) {
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'error',
+      title: 'Vui lòng chọn loại sự kiện!',
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+    });
+    return;
+  }
+
+  if (!newEvent.value.eventCategoryId) {
     Swal.fire({
       toast: true,
       position: 'top-end',
@@ -450,14 +644,18 @@ const handleSubmitEvent = async () => {
 
   try {
     const payload = {
-      name: newEvent.value.name,
+      eventName: newEvent.value.eventName,
       description: newEvent.value.description,
-      categoryId: Number(newEvent.value.categoryId),
+      eventType: newEvent.value.eventType,
+      eventCategoryId: Number(newEvent.value.eventCategoryId),
+      status: newEvent.value.status,
       startDate: new Date(newEvent.value.startDate).getTime(),
       endDate: new Date(newEvent.value.endDate).getTime(),
       maxParticipants: Number(newEvent.value.maxParticipants),
-      entryFee: newEvent.value.entryFee ? Number(newEvent.value.entryFee) : null,
-      status: Number(newEvent.value.status)
+      imageUrl: newEvent.value.imageUrl,
+      location: newEvent.value.location,
+      rules: newEvent.value.rules,
+      isOnline: Boolean(newEvent.value.isOnline)
     };
 
     if (isEditMode.value) {
@@ -487,8 +685,10 @@ const handleSubmitEvent = async () => {
     await fetchEvents();
     closeModal();
   } catch (error) {
-    let status = error?.response?.status || error?.response?.data?.status || 'Lỗi';
+    console.error('Error creating/updating event:', error);
+    let status = error?.response?.status || 'Lỗi';
     let message = error?.response?.data?.message || 'Thao tác thất bại!';
+    
     Swal.fire({
       toast: true,
       position: 'top-end',
@@ -496,7 +696,7 @@ const handleSubmitEvent = async () => {
       title: `Lỗi ${status}`,
       text: message,
       showConfirmButton: false,
-      timer: 3000,
+      timer: 5000,
       timerProgressBar: true
     });
   }
@@ -528,14 +728,18 @@ const confirmDeleteEvent = async (id) => {
       });
       await fetchEvents();
     } catch (error) {
+      console.error('Error deleting event:', error);
+      let status = error?.response?.status || 'Lỗi';
       let message = error?.response?.data?.message || 'Xóa event thất bại!';
+      
       Swal.fire({
         toast: true,
         position: 'top-end',
         icon: 'error',
-        title: message,
+        title: `Lỗi ${status}`,
+        text: message,
         showConfirmButton: false,
-        timer: 3000,
+        timer: 5000,
         timerProgressBar: true
       });
     }
@@ -546,6 +750,42 @@ const closeModal = () => {
   const modalElement = document.getElementById('addEventModal');
   const modal = Modal.getOrCreateInstance(modalElement);
   modal.hide();
+};
+
+// Filter functions
+const applyFilters = () => {
+  console.log('Applying filters:', {
+    searchQuery: searchQuery.value,
+    selectedCategory: selectedCategory.value,
+    selectedStatus: selectedStatus.value,
+    selectedEventType: selectedEventType.value,
+    startDateFilter: startDateFilter.value,
+    endDateFilter: endDateFilter.value
+  });
+  currentPage.value = 0; // Reset to first page when applying filters
+  fetchEvents();
+};
+
+const clearFilters = () => {
+  searchQuery.value = '';
+  selectedCategory.value = '';
+  selectedStatus.value = '';
+  selectedEventType.value = '';
+  startDateFilter.value = '';
+  endDateFilter.value = '';
+  currentPage.value = 0;
+  fetchEvents();
+};
+
+// Debounce function for search input
+let searchTimeout = null;
+const debouncedSearch = () => {
+  if (searchTimeout) {
+    clearTimeout(searchTimeout);
+  }
+  searchTimeout = setTimeout(() => {
+    applyFilters();
+  }, 500); // Wait 500ms after user stops typing
 };
 
 // Pagination functions
@@ -571,14 +811,18 @@ const resetEventModal = () => {
   editIndex.value = null;
   newEvent.value = {
     id: '',
-    name: '',
+    eventName: '',
     description: '',
-    categoryId: '',
+    eventType: '',
+    eventCategoryId: '',
+    status: 'DRAFT',
     startDate: '',
     endDate: '',
     maxParticipants: 100,
-    entryFee: 0,
-    status: '1'
+    imageUrl: '',
+    location: '',
+    rules: '',
+    isOnline: false
   };
 };
 
@@ -589,6 +833,7 @@ onMounted(() => {
   if (modalElement) {
     modalElement.addEventListener('hidden.bs.modal', resetEventModal);
   }
+  loadDropdownData();
   fetchEvents();
 });
 
@@ -597,6 +842,18 @@ onUnmounted(() => {
     modalElement.removeEventListener('hidden.bs.modal', resetEventModal);
   }
 });
+
+// Handle image error
+const handleImageError = (event) => {
+  event.target.style.display = 'none';
+  const container = event.target.parentElement;
+  container.innerHTML = `
+    <div class="no-image-placeholder">
+      <i class="bi bi-exclamation-triangle text-warning"></i>
+      <small class="text-muted">Lỗi tải ảnh</small>
+    </div>
+  `;
+};
 </script>
 
 <style scoped>
@@ -670,6 +927,36 @@ onUnmounted(() => {
   border: 1px solid #f5c6cb;
 }
 
+.status-draft {
+  background: #e2e3e5;
+  color: #495057;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 4px 16px;
+  font-size: 0.9rem;
+  border: 1px solid #d6d8db;
+}
+
+.status-published {
+  background: #d1ecf1;
+  color: #0c5460;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 4px 16px;
+  font-size: 0.9rem;
+  border: 1px solid #bee5eb;
+}
+
+.status-cancelled {
+  background: #f8d7da;
+  color: #721c24;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 4px 16px;
+  font-size: 0.9rem;
+  border: 1px solid #f5c6cb;
+}
+
 .text-muted {
   color: #6c757d !important;
 }
@@ -685,5 +972,56 @@ onUnmounted(() => {
 
 .text-danger {
   color: #dc3545 !important;
+}
+
+.badge {
+  font-size: 0.8rem;
+  padding: 0.35em 0.65em;
+}
+
+.bg-info {
+  background-color: #0dcaf0 !important;
+  color: #000 !important;
+}
+
+.event-image-container {
+  width: 80px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f8f9fa;
+}
+
+.event-image {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.no-image-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8px;
+  color: #6c757d;
+}
+
+.no-image-placeholder i {
+  font-size: 1.2rem;
+  margin-bottom: 4px;
+}
+
+.no-image-placeholder small {
+  font-size: 0.7rem;
+  line-height: 1.2;
 }
 </style>
