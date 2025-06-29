@@ -157,7 +157,7 @@
               <td>
                 <StatusLabel 
                   :status="event.status" 
-                  :statusText="getStatusText(event.status)"
+                  :statusText="event.statusName || getStatusText(event.status)"
                   :statusClass="getStatusClass(event.status)"
                 />
               </td>
@@ -296,6 +296,20 @@
                   placeholder="Nhập số người tối đa"
                 />
               </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Phí tham gia (VNĐ)</label>
+                <input 
+                  type="number" 
+                  class="form-control" 
+                  v-model="newEvent.entryFee"
+                  min="0"
+                  placeholder="Nhập phí tham gia (để trống nếu miễn phí)"
+                />
+                <small class="text-muted">Để trống hoặc 0 nếu sự kiện miễn phí</small>
+              </div>
+            </div>
+
+            <div class="row">
               <div class="col-12 mb-3">
                 <MultiImageUpload
                   v-model="newEvent.imageUrls"
@@ -377,10 +391,11 @@ const newEvent = ref({
   description: '',
   eventType: '',
   eventCategoryId: '',
-  status: 'DRAFT',
+  status: 'DRAFT', // Status mặc định là 'DRAFT' theo backend
   startDate: '',
   endDate: '',
   maxParticipants: 100,
+  entryFee: null, // Field mới từ backend
   imageUrls: [], // Array URLs từ server (tối đa 5 ảnh)
   location: '',
   rules: '',
@@ -445,10 +460,16 @@ const fetchEvents = async () => {
       endDate: item.endDate,
       maxParticipants: item.maxParticipants,
       currentParticipants: item.currentParticipants,
-      entryFee: item.entryFee,
-      imageUrl: Array.isArray(item.imageUrls) && item.imageUrls.length > 0 ? item.imageUrls[0] : '', // Ảnh đầu tiên để hiển thị
+      entryFee: item.entryFee, // Field mới từ backend
+      imageUrl: Array.isArray(item.imageUrls) && item.imageUrls.length > 0 ? item.imageUrls[0] : item.imageUrl || '', // Ưu tiên imageUrls[0], fallback imageUrl
       imageUrls: item.imageUrls || [], // Array đầy đủ để edit
-      status: item.status
+      status: item.status,
+      statusName: item.statusName, // Field mới từ backend
+      location: item.location,
+      isOnline: item.isOnline,
+      rules: item.rules,
+      createdAt: item.createdAt, // Field mới từ backend
+      updatedAt: item.updatedAt // Field mới từ backend
     }));
     
     totalPages.value = data.totalPages ?? 1;
@@ -481,9 +502,49 @@ const loadDropdownData = async () => {
     
     eventTypes.value = typesResponse.data || [];
     eventCategories.value = categoriesResponse.data || [];
-    eventStatuses.value = statusesResponse.data || [];
+    
+    // Đảm bảo eventStatuses có format đúng với backend
+    const statusesData = statusesResponse.data || [];
+    
+    // Backend giờ trả về status dạng string, sử dụng trực tiếp
+    if (statusesData.length > 0 && statusesData[0].hasOwnProperty('value')) {
+      eventStatuses.value = statusesData;
+    } else {
+      // Fallback với data mặc định
+      eventStatuses.value = [
+        { value: 'DRAFT', displayName: "Bản nháp" },
+        { value: 'PUBLISHED', displayName: "Đã công bố" },
+        { value: 'ONGOING', displayName: "Đang diễn ra" },
+        { value: 'COMPLETED', displayName: "Đã kết thúc" },
+        { value: 'CANCELLED', displayName: "Đã hủy" }
+      ];
+    }
+
+    // Debug: Log eventStatuses để kiểm tra
+    console.log('=== DEBUG: Event Statuses after loading ===');
+    console.log('statusesData from API:', statusesData);
+    console.log('eventStatuses.value final:', eventStatuses.value);
+    eventStatuses.value.forEach(status => {
+      console.log(`Status: ${status.value} - ${status.displayName}`);
+    });
+    
+    console.log('=== DEBUG: Loaded dropdown data ===');
+    console.log('eventStatuses.value:', eventStatuses.value);
   } catch (error) {
     console.error('Lỗi khi tải dữ liệu dropdown:', error);
+    
+    // Fallback với data mặc định
+    eventStatuses.value = [
+      { value: 'DRAFT', displayName: "Bản nháp" },
+      { value: 'PUBLISHED', displayName: "Đã công bố" },
+      { value: 'ONGOING', displayName: "Đang diễn ra" },
+      { value: 'COMPLETED', displayName: "Đã kết thúc" },
+      { value: 'CANCELLED', displayName: "Đã hủy" }
+    ];
+
+    console.log('=== DEBUG: Using fallback event statuses ===');
+    console.log('eventStatuses.value fallback:', eventStatuses.value);
+    
     Swal.fire({
       toast: true,
       position: 'top-end',
@@ -521,24 +582,24 @@ const formatDate = (timestamp) => {
 
 // Status functions
 const getStatusText = (status) => {
-  // Backend trả về number, cần map thành text
+  // Backend giờ trả về string, cần map thành text
   switch (status) {
-    case 0: return 'Bản nháp';
-    case 1: return 'Đã công bố';
-    case 2: return 'Đang diễn ra';
-    case 3: return 'Đã kết thúc';
-    case 4: return 'Đã hủy';
+    case 'DRAFT': return 'Bản nháp';
+    case 'PUBLISHED': return 'Đã công bố';
+    case 'ONGOING': return 'Đang diễn ra';
+    case 'COMPLETED': return 'Đã kết thúc';
+    case 'CANCELLED': return 'Đã hủy';
     default: return 'Không xác định';
   }
 };
 
 const getStatusClass = (status) => {
   switch (status) {
-    case 0: return 'status-draft';
-    case 1: return 'status-published';
-    case 2: return 'status-active';
-    case 3: return 'status-inactive';
-    case 4: return 'status-cancelled';
+    case 'DRAFT': return 'status-draft';
+    case 'PUBLISHED': return 'status-published';
+    case 'ONGOING': return 'status-active';
+    case 'COMPLETED': return 'status-inactive';  // "Đã kết thúc" -> inactive
+    case 'CANCELLED': return 'status-cancelled';
     default: return 'status-inactive';
   }
 };
@@ -555,10 +616,11 @@ const openAddModal = () => {
     description: '',
     eventType: '',
     eventCategoryId: '',
-    status: 'DRAFT',
+    status: 'DRAFT', // Status mặc định là 'DRAFT'
     startDate: '',
     endDate: '',
     maxParticipants: 100,
+    entryFee: null, // Để null, user có thể tự điền
     imageUrls: [], // Array rỗng cho upload nhiều ảnh
     location: '',
     rules: '',
@@ -587,19 +649,23 @@ const openEditModal = (event, index) => {
     description: event.description,
     eventType: event.eventType,
     eventCategoryId: event.categoryId,
-    status: event.status,
+    status: event.status, // Giờ đây status đã là string
     startDate: event.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : '',
     endDate: event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : '',
     maxParticipants: event.maxParticipants,
+    entryFee: event.entryFee || null, // Map field mới
     imageUrls: imageUrls, // Array URLs
     location: event.location || '',
     rules: event.rules || '',
     isOnline: event.isOnline
-  };
-  
-  console.log('=== DEBUG: Opening Edit Modal ===');
-  console.log('Original event.imageUrls:', event.imageUrls);
-  console.log('newEvent.value.imageUrls:', newEvent.value.imageUrls);
+  };    console.log('=== DEBUG: Opening Edit Modal ===');
+    console.log('Original event.status:', event.status, typeof event.status);
+    console.log('newEvent.value.status:', newEvent.value.status, typeof newEvent.value.status);
+    console.log('Original event.imageUrls:', event.imageUrls);
+    console.log('newEvent.value.imageUrls:', newEvent.value.imageUrls);
+    console.log('entryFee:', event.entryFee);
+    console.log('eventStatuses.value:', eventStatuses.value);
+    console.log('Status mapping check:', eventStatuses.value.find(s => s.value === event.status));
   
   const modalElement = document.getElementById('addEventModal');
   const modal = Modal.getOrCreateInstance(modalElement);
@@ -686,6 +752,7 @@ const handleSubmitEvent = async () => {
       startDate: new Date(newEvent.value.startDate).getTime(),
       endDate: new Date(newEvent.value.endDate).getTime(),
       maxParticipants: Number(newEvent.value.maxParticipants) || 100,
+      entryFee: newEvent.value.entryFee ? Number(newEvent.value.entryFee) : null, // Field mới từ backend
       imageUrls: imageUrls, // Gửi array URLs
       location: newEvent.value.location?.trim() || '',
       rules: newEvent.value.rules?.trim() || '',
@@ -897,10 +964,11 @@ const resetEventModal = () => {
     description: '',
     eventType: '',
     eventCategoryId: '',
-    status: 'DRAFT',
+    status: 'DRAFT', // Status mặc định là 'DRAFT'
     startDate: '',
     endDate: '',
     maxParticipants: 100,
+    entryFee: null, // Reset field mới
     imageUrls: [], // Reset mảng ảnh rỗng
     location: '',
     rules: '',
@@ -1001,6 +1069,7 @@ const fillFakeData = () => {
   const randomCategoryId = eventCategories.value.length > 0 ? 
     eventCategories.value[Math.floor(Math.random() * eventCategories.value.length)].id : '';
   
+  // Status là string ('DRAFT','PUBLISHED',etc.) theo backend response
   const randomStatus = eventStatuses.value.length > 0 ? 
     eventStatuses.value[Math.floor(Math.random() * eventStatuses.value.length)].value : 'DRAFT';
   
@@ -1014,6 +1083,7 @@ const fillFakeData = () => {
     startDate: startDate.toISOString().slice(0, 16),
     endDate: endDate.toISOString().slice(0, 16),
     maxParticipants: randomMaxParticipants,
+    entryFee: null, // Để null, user có thể tự điền
     imageUrls: [], // Empty array, user can upload images
     location: randomLocation,
     rules: randomRules,

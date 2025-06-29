@@ -143,5 +143,39 @@ const UPLOAD_SERVER_URL = 'http://localhost:3001'; // URL upload server
 - ✅ Địa điểm
 - ✅ Quy định
 - ✅ Online/Offline (30% chance online)
-- ⚠️ Loại sự kiện, Danh mục: Cần chọn thủ công
+- ✅ Loại sự kiện, Danh mục, Trạng thái (random từ dropdown)
+- ⚠️ Phí tham gia: Để null, user tự điền nếu cần
 - ⚠️ Ảnh: Cần upload thủ công
+
+### 12. Lưu ý về Backend Response
+
+Backend trả về response mới với các field:
+- ✅ `entryFee` - Phí tham gia (có thể null)
+- ✅ `statusName` - Tên trạng thái (hiển thị trực tiếp thay vì map từ số)
+- ✅ `status` - Số trạng thái (0=Bản nháp, 1=Đã công bố, 2=Đang diễn ra, 3=Đã kết thúc, 4=Đã hủy)
+- ✅ `createdAt`, `updatedAt` - Timestamp tạo/cập nhật
+- ❌ `registrationDeadline` - Đã bỏ vì không có trong database
+
+### 13. Lỗi đã sửa
+
+- ✅ **Trạng thái không fill**: Đã sửa để dùng `statusName` từ backend
+- ✅ **Trường bị lặp**: Đã xóa trường "Phí tham gia" và "Số người tham gia" bị duplicate
+- ✅ **Status format**: Chuyển từ string 'DRAFT' sang number 0 theo backend
+- ✅ **Dropdown status không hiển thị đúng**: Đảm bảo `status` là số và mapping đúng với dropdown options
+- ✅ **EventStatuses fallback**: Thêm hardcode mapping nếu API không trả về đúng format
+
+### 14. Status Mapping
+
+Backend trả về `status` dạng số:
+```
+0 = "Bản nháp"
+1 = "Đã công bố"  
+2 = "Đang diễn ra"
+3 = "Đã kết thúc"
+4 = "Đã hủy"
+```
+
+Frontend đảm bảo:
+- Dropdown options có `value` là số (0,1,2,3,4)
+- Form binding `v-model="newEvent.status"` với giá trị số
+- Edit modal convert `Number(event.status)` để đảm bảo type đúng
