@@ -47,7 +47,20 @@ export const getEventStatuses = async () => {
 // Tạo event mới
 export const createEvent = async (eventData) => {
   try {
-    const response = await client.post('/api/events', eventData);
+    console.log('=== DEBUG: Sending data to backend ===');
+    console.log('Event data:', eventData);
+    console.log('ImageUrls in payload:', eventData.imageUrls);
+    
+    const response = await client.post('/api/events', eventData, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    console.log('=== DEBUG: Response from backend ===');
+    console.log('Response:', response);
+    console.log('Response data:', response.data);
+    
     return response.data;
   } catch (error) {
     console.error('Lỗi khi tạo event:', error);

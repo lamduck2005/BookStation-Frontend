@@ -201,6 +201,18 @@
           </button>
         </div>
         <div class="modal-body">
+          <!-- Nút Fake Data ở đầu modal body -->
+          <div v-if="!isEditMode" class="mb-3 text-end">
+            <button 
+              type="button" 
+              class="btn btn-outline-warning"
+              @click="fillFakeData"
+              title="Điền dữ liệu mẫu để test nhanh"
+            >
+              🎲 Fake Data (Test)
+            </button>
+          </div>
+          
           <form @submit.prevent="handleSubmitEvent">
             <div class="row">
               <div class="col-md-6 mb-3">
@@ -284,13 +296,13 @@
                   placeholder="Nhập số người tối đa"
                 />
               </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Hình ảnh URL</label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  v-model="newEvent.imageUrl"
-                  placeholder="Nhập URL hình ảnh"
+              <div class="col-12 mb-3">
+                <MultiImageUpload
+                  v-model="newEvent.imageUrls"
+                  label="Hình ảnh Event (Tối đa 5 ảnh)"
+                  :max-files="5"
+                  @upload-success="handleImageUploadSuccess"
+                  @upload-error="handleImageUploadError"
                 />
               </div>
             </div>
@@ -345,6 +357,7 @@ import DeleteButton from '@/components/common/DeleteButton.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import AddButton from '@/components/common/AddButton.vue';
 import StatusLabel from '@/components/common/StatusLabel.vue';
+import MultiImageUpload from '@/components/common/MultiImageUpload.vue';
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { Modal } from 'bootstrap';
 import { getEvents, createEvent, updateEvent, deleteEvent, getEventTypes, getEventCategoriesDropdown, getEventStatuses } from '@/services/admin/event';
@@ -368,7 +381,7 @@ const newEvent = ref({
   startDate: '',
   endDate: '',
   maxParticipants: 100,
-  imageUrl: '',
+  imageUrls: [], // Array URLs từ server (tối đa 5 ảnh)
   location: '',
   rules: '',
   isOnline: false
@@ -433,7 +446,8 @@ const fetchEvents = async () => {
       maxParticipants: item.maxParticipants,
       currentParticipants: item.currentParticipants,
       entryFee: item.entryFee,
-      imageUrl: item.imageUrl,
+      imageUrl: Array.isArray(item.imageUrls) && item.imageUrls.length > 0 ? item.imageUrls[0] : '', // Ảnh đầu tiên để hiển thị
+      imageUrls: item.imageUrls || [], // Array đầy đủ để edit
       status: item.status
     }));
     
@@ -532,6 +546,9 @@ const getStatusClass = (status) => {
 // Modal functions
 const openAddModal = () => {
   isEditMode.value = false;
+  console.log('=== DEBUG: openAddModal called ===');
+  console.log('isEditMode.value:', isEditMode.value);
+  
   newEvent.value = {
     id: '',
     eventName: '',
@@ -542,11 +559,15 @@ const openAddModal = () => {
     startDate: '',
     endDate: '',
     maxParticipants: 100,
-    imageUrl: '',
+    imageUrls: [], // Array rỗng cho upload nhiều ảnh
     location: '',
     rules: '',
     isOnline: false
   };
+  
+  console.log('=== DEBUG: Opening Add Modal ===');
+  console.log('newEvent.value.imageUrls:', newEvent.value.imageUrls);
+  
   const modalElement = document.getElementById('addEventModal');
   const modal = Modal.getOrCreateInstance(modalElement);
   modal.show();
@@ -555,6 +576,11 @@ const openAddModal = () => {
 const openEditModal = (event, index) => {
   isEditMode.value = true;
   editIndex.value = index;
+  
+  // Đảm bảo imageUrls luôn là mảng
+  const imageUrls = Array.isArray(event.imageUrls) ? event.imageUrls : 
+                   event.imageUrls ? [event.imageUrls] : [];
+  
   newEvent.value = {
     id: event.id,
     eventName: event.name,
@@ -565,11 +591,16 @@ const openEditModal = (event, index) => {
     startDate: event.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : '',
     endDate: event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : '',
     maxParticipants: event.maxParticipants,
-    imageUrl: event.imageUrl || '',
+    imageUrls: imageUrls, // Array URLs
     location: event.location || '',
     rules: event.rules || '',
     isOnline: event.isOnline
   };
+  
+  console.log('=== DEBUG: Opening Edit Modal ===');
+  console.log('Original event.imageUrls:', event.imageUrls);
+  console.log('newEvent.value.imageUrls:', newEvent.value.imageUrls);
+  
   const modalElement = document.getElementById('addEventModal');
   const modal = Modal.getOrCreateInstance(modalElement);
   modal.show();
@@ -643,20 +674,28 @@ const handleSubmitEvent = async () => {
   }
 
   try {
+    // Đảm bảo imageUrls là mảng
+    const imageUrls = Array.isArray(newEvent.value.imageUrls) ? newEvent.value.imageUrls : [];
+    
     const payload = {
-      eventName: newEvent.value.eventName,
-      description: newEvent.value.description,
+      eventName: newEvent.value.eventName.trim(),
+      description: newEvent.value.description?.trim() || '',
       eventType: newEvent.value.eventType,
       eventCategoryId: Number(newEvent.value.eventCategoryId),
       status: newEvent.value.status,
       startDate: new Date(newEvent.value.startDate).getTime(),
       endDate: new Date(newEvent.value.endDate).getTime(),
-      maxParticipants: Number(newEvent.value.maxParticipants),
-      imageUrl: newEvent.value.imageUrl,
-      location: newEvent.value.location,
-      rules: newEvent.value.rules,
+      maxParticipants: Number(newEvent.value.maxParticipants) || 100,
+      imageUrls: imageUrls, // Gửi array URLs
+      location: newEvent.value.location?.trim() || '',
+      rules: newEvent.value.rules?.trim() || '',
       isOnline: Boolean(newEvent.value.isOnline)
     };
+
+    console.log('=== DEBUG: Payload gửi lên server ===');
+    console.log('imageUrls array:', imageUrls);
+    console.log('imageUrls length:', imageUrls.length);
+    console.log('Full payload:', payload);
 
     if (isEditMode.value) {
       await updateEvent(newEvent.value.id, payload);
@@ -670,7 +709,10 @@ const handleSubmitEvent = async () => {
         timerProgressBar: true
       });
     } else {
-      await createEvent(payload);
+      const response = await createEvent(payload);
+      console.log('=== DEBUG: Response từ server ===');
+      console.log(response);
+      
       Swal.fire({
         toast: true,
         position: 'top-end',
@@ -686,18 +728,27 @@ const handleSubmitEvent = async () => {
     closeModal();
   } catch (error) {
     console.error('Error creating/updating event:', error);
-    let status = error?.response?.status || 'Lỗi';
-    let message = error?.response?.data?.message || 'Thao tác thất bại!';
+    
+    // Xử lý lỗi chi tiết hơn
+    let title = 'Lỗi không xác định';
+    let message = 'Có lỗi xảy ra khi thực hiện thao tác';
+    
+    if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+      title = 'Lỗi kết nối';
+      message = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+    } else if (error.response) {
+      title = `Lỗi ${error.response.status}`;
+      message = error.response.data?.message || error.response.statusText || 'Lỗi từ server';
+    } else if (error.request) {
+      title = 'Lỗi kết nối';
+      message = 'Server không phản hồi. Vui lòng thử lại sau.';
+    }
     
     Swal.fire({
-      toast: true,
-      position: 'top-end',
       icon: 'error',
-      title: `Lỗi ${status}`,
+      title: title,
       text: message,
-      showConfirmButton: false,
-      timer: 5000,
-      timerProgressBar: true
+      confirmButtonText: 'Đồng ý'
     });
   }
 };
@@ -750,6 +801,37 @@ const closeModal = () => {
   const modalElement = document.getElementById('addEventModal');
   const modal = Modal.getOrCreateInstance(modalElement);
   modal.hide();
+};
+
+// Image upload handlers
+const handleImageUploadSuccess = (imageUrls) => {
+  console.log('=== DEBUG: Images uploaded successfully ===');
+  console.log('imageUrls received:', imageUrls);
+  console.log('newEvent.value.imageUrls after upload:', newEvent.value.imageUrls);
+  
+  Swal.fire({
+    toast: true,
+    position: 'top-end',
+    icon: 'success',
+    title: `Upload ${Array.isArray(imageUrls) ? imageUrls.length : 1} ảnh thành công!`,
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true
+  });
+};
+
+const handleImageUploadError = (error) => {
+  console.error('Image upload error:', error);
+  Swal.fire({
+    toast: true,
+    position: 'top-end',
+    icon: 'error',
+    title: 'Lỗi upload ảnh!',
+    text: error.response?.data?.message || error.message || 'Có lỗi xảy ra khi upload ảnh',
+    showConfirmButton: false,
+    timer: 5000,
+    timerProgressBar: true
+  });
 };
 
 // Filter functions
@@ -819,7 +901,7 @@ const resetEventModal = () => {
     startDate: '',
     endDate: '',
     maxParticipants: 100,
-    imageUrl: '',
+    imageUrls: [], // Reset mảng ảnh rỗng
     location: '',
     rules: '',
     isOnline: false
@@ -853,6 +935,108 @@ const handleImageError = (event) => {
       <small class="text-muted">Lỗi tải ảnh</small>
     </div>
   `;
+};
+
+// Fake data function
+const fillFakeData = () => {
+  console.log('=== DEBUG: fillFakeData called ===');
+  console.log('isEditMode.value:', isEditMode.value);
+  
+  // Generate unique name with timestamp
+  const timestamp = Date.now();
+  const eventNames = [
+    'Sự kiện ra mắt sách mới',
+    'Hội thảo văn học',
+    'Buổi gặp gỡ tác giả',
+    'Triển lãm sách hay',
+    'Workshop viết truyện',
+    'Cuộc thi đọc sách',
+    'Thảo luận nhóm đọc',
+    'Ký tặng sách mới',
+    'Hội chợ sách cũ',
+    'Câu lạc bộ sách'
+  ];
+  
+  const descriptions = [
+    'Một sự kiện thú vị dành cho những người yêu sách và văn học.',
+    'Cơ hội tuyệt vời để gặp gỡ và trao đổi với các tác giả nổi tiếng.',
+    'Khám phá những cuốn sách hay và chia sẻ kinh nghiệm đọc sách.',
+    'Tham gia để trải nghiệm những hoạt động bổ ích về văn học.',
+    'Sự kiện độc đáo mang đến những trải nghiệm mới mẻ cho độc giả.'
+  ];
+  
+  const locations = [
+    'Thư viện Trung tâm TP.HCM',
+    'Nhà văn hóa Thanh niên',
+    'Trung tâm Hội nghị Quốc gia',
+    'Trường Đại học Khoa học Xã hội và Nhân văn',
+    'Không gian văn hóa Đông Tây',
+    'Bookstore Café Downtown',
+    'Trung tâm Sách Fahasa'
+  ];
+  
+  const rules = [
+    'Vui lòng đến đúng giờ. Mang theo giấy tờ tùy thân. Không mang đồ ăn vào sự kiện.',
+    'Cần đăng ký trước khi tham gia. Trang phục lịch sự. Tắt điện thoại trong buổi thảo luận.',
+    'Độ tuổi từ 16 trở lên. Mang theo sách để chia sẻ. Không chụp ảnh khi chưa được phép.',
+    'Số lượng có hạn, đăng ký sớm. Có phần quà cho người tham gia. Không hút thuốc trong khu vực sự kiện.'
+  ];
+  
+  // Generate random dates (next 7-30 days)
+  const now = new Date();
+  const startDate = new Date(now.getTime() + (Math.random() * 7 + 1) * 24 * 60 * 60 * 1000);
+  const endDate = new Date(startDate.getTime() + (Math.random() * 3 + 2) * 60 * 60 * 1000);
+  
+  // Pick random values
+  const randomEventName = eventNames[Math.floor(Math.random() * eventNames.length)];
+  const randomDescription = descriptions[Math.floor(Math.random() * descriptions.length)];
+  const randomLocation = locations[Math.floor(Math.random() * locations.length)];
+  const randomRules = rules[Math.floor(Math.random() * rules.length)];
+  const randomMaxParticipants = [50, 100, 150, 200, 300][Math.floor(Math.random() * 5)];
+  
+  // Random select from dropdown data
+  const randomEventType = eventTypes.value.length > 0 ? 
+    eventTypes.value[Math.floor(Math.random() * eventTypes.value.length)].value : 'WORKSHOP';
+  
+  const randomCategoryId = eventCategories.value.length > 0 ? 
+    eventCategories.value[Math.floor(Math.random() * eventCategories.value.length)].id : '';
+  
+  const randomStatus = eventStatuses.value.length > 0 ? 
+    eventStatuses.value[Math.floor(Math.random() * eventStatuses.value.length)].value : 'DRAFT';
+  
+  newEvent.value = {
+    id: '',
+    eventName: `${randomEventName} #${timestamp.toString().slice(-4)}`,
+    description: randomDescription,
+    eventType: randomEventType, // Random từ dropdown
+    eventCategoryId: randomCategoryId, // Random từ dropdown
+    status: randomStatus, // Random từ dropdown
+    startDate: startDate.toISOString().slice(0, 16),
+    endDate: endDate.toISOString().slice(0, 16),
+    maxParticipants: randomMaxParticipants,
+    imageUrls: [], // Empty array, user can upload images
+    location: randomLocation,
+    rules: randomRules,
+    isOnline: Math.random() > 0.7 // 30% chance of being online
+  };
+  
+  // Show success message
+  Swal.fire({
+    toast: true,
+    position: 'top-end',
+    icon: 'success',
+    title: 'Đã điền dữ liệu mẫu hoàn chỉnh!',
+    text: 'Tất cả trường đã được điền, chỉ cần thêm ảnh và submit',
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true
+  });
+  
+  console.log('=== DEBUG: Fake data filled ===');
+  console.log('Generated event:', newEvent.value);
+  console.log('Random eventType:', randomEventType);
+  console.log('Random categoryId:', randomCategoryId);
+  console.log('Random status:', randomStatus);
 };
 </script>
 
