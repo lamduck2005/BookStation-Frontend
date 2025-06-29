@@ -20,6 +20,7 @@ import Point from "@/views/admin/views-admin/Point.vue";
 import Flash_Sale_Item from "@/views/admin/views-admin/FlashSaleDetail.vue";
 import RankDetail from "@/views/admin/views-admin/RankDetail.vue";
 import Template from "@/views/admin/views-admin/Template.vue";
+import LoginPage from "@/views/LoginPage.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -28,6 +29,11 @@ const router = createRouter({
       path: "/",
       name: "home",
       component: HomePage,
+    },
+    {
+      path: "/login",
+      name: "login",
+      component: LoginPage,
     },
     {
       path: "/notifications",
