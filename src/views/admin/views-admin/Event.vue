@@ -164,7 +164,6 @@
               <td>
                 <div class="d-flex gap-2">
                   <EditButton @click="openEditModal(event, index)" />
-                  <DeleteButton @click="confirmDeleteEvent(event.id)" />
                 </div>
               </td>
             </tr>
@@ -190,22 +189,23 @@
 
   <!-- Add/Edit Event Modal -->
   <div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header" style="background-color: #ecae9e;">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content enhanced-modal">
+        <div class="modal-header gradient-header">
           <h5 class="modal-title" id="addEventModalLabel">
+            <i class="bi bi-calendar-event me-2"></i>
             {{ isEditMode ? 'Sửa Event' : 'Thêm Event' }}
           </h5>
           <button type="button" class="custom-close-btn" data-bs-dismiss="modal" aria-label="Close">
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body enhanced-body">
           <!-- Nút Fake Data ở đầu modal body -->
           <div v-if="!isEditMode" class="mb-3 text-end">
             <button 
               type="button" 
-              class="btn btn-outline-warning"
+              class="btn btn-outline-warning btn-sm rounded-pill fake-data-btn"
               @click="fillFakeData"
               title="Điền dữ liệu mẫu để test nhanh"
             >
@@ -214,149 +214,154 @@
           </div>
           
           <form @submit.prevent="handleSubmitEvent">
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Tên Event <span class="text-danger">*</span></label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  v-model="newEvent.eventName"
-                  placeholder="Nhập tên event"
-                />
+            <!-- Section 1: Thông tin cơ bản -->
+            <div class="form-section">
+              <div class="section-header">
+                <i class="bi bi-info-circle section-icon"></i>
+                <h6 class="section-title">Thông tin cơ bản</h6>
               </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Loại sự kiện <span class="text-danger">*</span></label>
-                <select class="form-select" v-model="newEvent.eventType">
-                  <option value="">Chọn loại sự kiện</option>
-                  <option v-for="type in eventTypes" :key="type.value" :value="type.value">
-                    {{ type.displayName }}
-                  </option>
-                </select>
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <label class="form-label enhanced-label">Tên Event <span class="text-danger">*</span></label>
+                  <input 
+                    type="text" 
+                    class="form-control enhanced-input" 
+                    v-model="newEvent.eventName"
+                    placeholder="Nhập tên event"
+                  />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label enhanced-label">Loại sự kiện <span class="text-danger">*</span></label>
+                  <select class="form-select enhanced-input" v-model="newEvent.eventType">
+                    <option value="">Chọn loại sự kiện</option>
+                    <option v-for="type in eventTypes" :key="type.value" :value="type.value">
+                      {{ type.displayName }}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label enhanced-label">Danh mục <span class="text-danger">*</span></label>
+                  <select class="form-select enhanced-input" v-model="newEvent.eventCategoryId">
+                    <option value="">Chọn danh mục</option>
+                    <option v-for="category in eventCategories" :key="category.id" :value="category.id">
+                      {{ category.name }}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label enhanced-label">Trạng thái <span class="text-danger">*</span></label>
+                  <select class="form-select enhanced-input" v-model="newEvent.status">
+                    <option value="">Chọn trạng thái</option>
+                    <option v-for="status in eventStatuses" :key="status.value" :value="status.value">
+                      {{ status.displayName }}
+                    </option>
+                  </select>
+                </div>
               </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Danh mục <span class="text-danger">*</span></label>
-                <select class="form-select" v-model="newEvent.eventCategoryId">
-                  <option value="">Chọn danh mục</option>
-                  <option v-for="category in eventCategories" :key="category.id" :value="category.id">
-                    {{ category.name }}
-                  </option>
-                </select>
+              <div class="row g-3 mt-2">
+                <div class="col-md-4">
+                  <label class="form-label enhanced-label">Loại hình</label>
+                  <select class="form-select enhanced-input" v-model="newEvent.isOnline">
+                    <option value="">Chọn loại hình</option>
+                    <option :value="true">Online</option>
+                    <option :value="false">Offline</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label enhanced-label">Địa điểm</label>
+                  <input 
+                    type="text" 
+                    class="form-control enhanced-input" 
+                    v-model="newEvent.location"
+                    placeholder="Nhập địa điểm tổ chức"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label enhanced-label">Số người tối đa</label>
+                  <input 
+                    type="number" 
+                    class="form-control enhanced-input" 
+                    v-model="newEvent.maxParticipants"
+                    min="1"
+                    placeholder="Số người tối đa"
+                  />
+                </div>
               </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Trạng thái <span class="text-danger">*</span></label>
-                <select class="form-select" v-model="newEvent.status">
-                  <option value="">Chọn trạng thái</option>
-                  <option v-for="status in eventStatuses" :key="status.value" :value="status.value">
-                    {{ status.displayName }}
-                  </option>
-                </select>
-              </div>
-            </div>
-            
-            <div class="mb-3">
-              <label class="form-label">Mô tả</label>
-              <textarea 
-                class="form-control" 
-                rows="3"
-                v-model="newEvent.description"
-                placeholder="Nhập mô tả event"
-              ></textarea>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Ngày bắt đầu <span class="text-danger">*</span></label>
-                <input 
-                  type="datetime-local" 
-                  class="form-control" 
-                  v-model="newEvent.startDate"
-                />
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Ngày kết thúc <span class="text-danger">*</span></label>
-                <input 
-                  type="datetime-local" 
-                  class="form-control" 
-                  v-model="newEvent.endDate"
-                />
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Số người tham gia tối đa</label>
-                <input 
-                  type="number" 
-                  class="form-control" 
-                  v-model="newEvent.maxParticipants"
-                  min="1"
-                  placeholder="Nhập số người tối đa"
-                />
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Phí tham gia (VNĐ)</label>
-                <input 
-                  type="number" 
-                  class="form-control" 
-                  v-model="newEvent.entryFee"
-                  min="0"
-                  placeholder="Nhập phí tham gia (để trống nếu miễn phí)"
-                />
-                <small class="text-muted">Để trống hoặc 0 nếu sự kiện miễn phí</small>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-12 mb-3">
-                <MultiImageUpload
-                  v-model="newEvent.imageUrls"
-                  label="Hình ảnh Event (Tối đa 5 ảnh)"
-                  :max-files="5"
-                  @upload-success="handleImageUploadSuccess"
-                  @upload-error="handleImageUploadError"
-                />
+              <div class="row g-3 mt-2">
+                <div class="col-md-6">
+                  <label class="form-label enhanced-label">Mô tả</label>
+                  <textarea 
+                    class="form-control enhanced-input" 
+                    rows="2"
+                    v-model="newEvent.description"
+                    placeholder="Nhập mô tả event"
+                  ></textarea>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label enhanced-label">Quy định</label>
+                  <textarea 
+                    class="form-control enhanced-input" 
+                    rows="2"
+                    v-model="newEvent.rules"
+                    placeholder="Nhập quy định của sự kiện"
+                  ></textarea>
+                </div>
               </div>
             </div>
 
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Địa điểm</label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  v-model="newEvent.location"
-                  placeholder="Nhập địa điểm tổ chức"
-                />
+            <!-- Section 2: Thời gian -->
+            <div class="form-section">
+              <div class="section-header">
+                <i class="bi bi-clock section-icon"></i>
+                <h6 class="section-title">Thời gian</h6>
               </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Loại hình</label>
-                <select class="form-select" v-model="newEvent.isOnline">
-                  <option value="">Chọn loại hình</option>
-                  <option :value="true">Online</option>
-                  <option :value="false">Offline</option>
-                </select>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label enhanced-label">Ngày bắt đầu <span class="text-danger">*</span></label>
+                  <input 
+                    type="datetime-local" 
+                    class="form-control enhanced-input" 
+                    v-model="newEvent.startDate"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label enhanced-label">Ngày kết thúc <span class="text-danger">*</span></label>
+                  <input 
+                    type="datetime-local" 
+                    class="form-control enhanced-input" 
+                    v-model="newEvent.endDate"
+                  />
+                </div>
               </div>
             </div>
 
-            <div class="mb-3">
-              <label class="form-label">Quy định</label>
-              <textarea 
-                class="form-control" 
-                rows="3"
-                v-model="newEvent.rules"
-                placeholder="Nhập quy định của sự kiện"
-              ></textarea>
+            <!-- Section 3: Hình ảnh -->
+            <div class="form-section">
+              <div class="section-header">
+                <i class="bi bi-images section-icon"></i>
+                <h6 class="section-title">Hình ảnh Event</h6>
+              </div>
+              <div class="row">
+                <div class="col-12">
+                  <MultiImageUpload
+                    v-model="newEvent.imageUrls"
+                    label="Hình ảnh Event (Tối đa 5 ảnh)"
+                    :max-files="5"
+                    @upload-success="handleImageUploadSuccess"
+                    @upload-error="handleImageUploadError"
+                  />
+                </div>
+              </div>
             </div>
           </form>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <div class="modal-footer enhanced-footer">
+          <button type="button" class="btn btn-secondary btn-cancel" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i>
             Hủy
           </button>
-          <button type="button" class="btn btn-primary" @click="handleSubmitEvent">
+          <button type="button" class="btn btn-primary btn-submit" @click="handleSubmitEvent">
+            <i class="bi bi-check-circle me-1"></i>
             {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }}
           </button>
         </div>
@@ -367,14 +372,13 @@
 
 <script setup>
 import EditButton from '@/components/common/EditButton.vue';
-import DeleteButton from '@/components/common/DeleteButton.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import AddButton from '@/components/common/AddButton.vue';
 import StatusLabel from '@/components/common/StatusLabel.vue';
 import MultiImageUpload from '@/components/common/MultiImageUpload.vue';
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { Modal } from 'bootstrap';
-import { getEvents, createEvent, updateEvent, deleteEvent, getEventTypes, getEventCategoriesDropdown, getEventStatuses } from '@/services/admin/event';
+import { getEvents, createEvent, updateEvent, getEventTypes, getEventCategoriesDropdown, getEventStatuses } from '@/services/admin/event';
 import Swal from 'sweetalert2';
 
 const searchQuery = ref('');
@@ -395,7 +399,6 @@ const newEvent = ref({
   startDate: '',
   endDate: '',
   maxParticipants: 100,
-  entryFee: null, // Field mới từ backend
   imageUrls: [], // Array URLs từ server (tối đa 5 ảnh)
   location: '',
   rules: '',
@@ -460,7 +463,6 @@ const fetchEvents = async () => {
       endDate: item.endDate,
       maxParticipants: item.maxParticipants,
       currentParticipants: item.currentParticipants,
-      entryFee: item.entryFee, // Field mới từ backend
       imageUrl: Array.isArray(item.imageUrls) && item.imageUrls.length > 0 ? item.imageUrls[0] : item.imageUrl || '', // Ưu tiên imageUrls[0], fallback imageUrl
       imageUrls: item.imageUrls || [], // Array đầy đủ để edit
       status: item.status,
@@ -620,7 +622,6 @@ const openAddModal = () => {
     startDate: '',
     endDate: '',
     maxParticipants: 100,
-    entryFee: null, // Để null, user có thể tự điền
     imageUrls: [], // Array rỗng cho upload nhiều ảnh
     location: '',
     rules: '',
@@ -653,7 +654,6 @@ const openEditModal = (event, index) => {
     startDate: event.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : '',
     endDate: event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : '',
     maxParticipants: event.maxParticipants,
-    entryFee: event.entryFee || null, // Map field mới
     imageUrls: imageUrls, // Array URLs
     location: event.location || '',
     rules: event.rules || '',
@@ -663,7 +663,6 @@ const openEditModal = (event, index) => {
     console.log('newEvent.value.status:', newEvent.value.status, typeof newEvent.value.status);
     console.log('Original event.imageUrls:', event.imageUrls);
     console.log('newEvent.value.imageUrls:', newEvent.value.imageUrls);
-    console.log('entryFee:', event.entryFee);
     console.log('eventStatuses.value:', eventStatuses.value);
     console.log('Status mapping check:', eventStatuses.value.find(s => s.value === event.status));
   
@@ -752,7 +751,6 @@ const handleSubmitEvent = async () => {
       startDate: new Date(newEvent.value.startDate).getTime(),
       endDate: new Date(newEvent.value.endDate).getTime(),
       maxParticipants: Number(newEvent.value.maxParticipants) || 100,
-      entryFee: newEvent.value.entryFee ? Number(newEvent.value.entryFee) : null, // Field mới từ backend
       imageUrls: imageUrls, // Gửi array URLs
       location: newEvent.value.location?.trim() || '',
       rules: newEvent.value.rules?.trim() || '',
@@ -817,50 +815,6 @@ const handleSubmitEvent = async () => {
       text: message,
       confirmButtonText: 'Đồng ý'
     });
-  }
-};
-
-const confirmDeleteEvent = async (id) => {
-  const result = await Swal.fire({
-    title: 'Xác nhận xóa',
-    text: 'Bạn có chắc chắn muốn xóa event này?',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Xóa',
-    cancelButtonText: 'Hủy'
-  });
-
-  if (result.isConfirmed) {
-    try {
-      await deleteEvent(id);
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'success',
-        title: 'Xóa event thành công!',
-        showConfirmButton: false,
-        timer: 1500,
-        timerProgressBar: true
-      });
-      await fetchEvents();
-    } catch (error) {
-      console.error('Error deleting event:', error);
-      let status = error?.response?.status || 'Lỗi';
-      let message = error?.response?.data?.message || 'Xóa event thất bại!';
-      
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'error',
-        title: `Lỗi ${status}`,
-        text: message,
-        showConfirmButton: false,
-        timer: 5000,
-        timerProgressBar: true
-      });
-    }
   }
 };
 
@@ -968,7 +922,6 @@ const resetEventModal = () => {
     startDate: '',
     endDate: '',
     maxParticipants: 100,
-    entryFee: null, // Reset field mới
     imageUrls: [], // Reset mảng ảnh rỗng
     location: '',
     rules: '',
@@ -1083,7 +1036,6 @@ const fillFakeData = () => {
     startDate: startDate.toISOString().slice(0, 16),
     endDate: endDate.toISOString().slice(0, 16),
     maxParticipants: randomMaxParticipants,
-    entryFee: null, // Để null, user có thể tự điền
     imageUrls: [], // Empty array, user can upload images
     location: randomLocation,
     rules: randomRules,
@@ -1116,41 +1068,258 @@ const fillFakeData = () => {
   vertical-align: middle;
 }
 
-.modal-dialog {
-  max-width: 700px !important;
+/* Enhanced Modal Styles */
+.modal-lg {
+  max-width: 900px !important;
 }
 
-.modal-content {
+.modal-dialog-scrollable {
+  max-height: 90vh;
+}
+
+.modal-dialog-scrollable .modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.enhanced-modal {
   border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   border: none;
+  overflow: hidden;
 }
 
-.modal-header {
-  border-bottom: 2px solid #ecae9e;
+.gradient-header {
+  background: linear-gradient(135deg, #ecae9e 0%, #d49489 100%);
+  border-bottom: none;
   border-radius: 15px 15px 0 0;
-  padding: 0.8rem 1.2rem;
+  padding: 1rem 1.25rem;
   position: relative;
+}
+
+.gradient-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+  background-size: 300% 100%;
+  animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 .modal-title {
   font-weight: 600;
   color: #2c2c54;
   font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.enhanced-body {
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.enhanced-footer {
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  padding: 0.875rem 1.25rem;
+  border-radius: 0 0 15px 15px;
+}
+
+/* Form Section Styles */
+.form-section {
+  margin-bottom: 1.75rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid #ecae9e;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.form-section:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.form-section:nth-child(1) {
+  border-left-color: #ecae9e;
+}
+
+.form-section:nth-child(2) {
+  border-left-color: #4ecdc4;
+}
+
+.form-section:nth-child(3) {
+  border-left-color: #45b7d1;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f1f3f4;
+  position: relative;
+}
+
+.section-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, #ecae9e, #4ecdc4);
+  border-radius: 1px;
+}
+
+.section-icon {
+  font-size: 1rem;
+  color: #ecae9e;
+  margin-right: 0.5rem;
+  padding: 0.4rem;
+  background: rgba(236, 174, 158, 0.1);
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-title {
+  margin: 0;
+  font-weight: 600;
+  color: #2c2c54;
+  font-size: 0.95rem;
+}
+
+/* Enhanced Form Controls */
+.enhanced-label {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: #495057;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+}
+
+.enhanced-label .text-danger {
+  margin-left: 0.25rem;
+}
+
+.enhanced-input {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  background: #ffffff;
+}
+
+.enhanced-input:focus {
+  border-color: #ecae9e;
+  box-shadow: 0 0 0 0.15rem rgba(236, 174, 158, 0.25);
+  background: #ffffff;
+}
+
+.enhanced-input:hover {
+  border-color: #d49489;
+}
+
+/* Button Styles */
+.fake-data-btn {
+  background: linear-gradient(135deg, #feca57 0%, #ff9f43 100%);
+  border: none;
+  color: #2c2c54;
+  font-weight: 600;
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(254, 202, 87, 0.3);
+}
+
+.fake-data-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(254, 202, 87, 0.4);
+  background: linear-gradient(135deg, #ff9f43 0%, #feca57 100%);
+  color: #2c2c54;
+}
+
+.btn-submit {
+  background: linear-gradient(135deg, #ecae9e 0%, #d49489 100%);
+  border: none;
+  border-radius: 20px;
+  padding: 0.6rem 1.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 12px rgba(236, 174, 158, 0.3);
+}
+
+.btn-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(236, 174, 158, 0.4);
+  background: linear-gradient(135deg, #d49489 0%, #c08579 100%);
+}
+
+.btn-cancel {
+  border: 1px solid #6c757d;
+  border-radius: 20px;
+  padding: 0.6rem 1.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  background: transparent;
+  color: #6c757d;
+}
+
+.btn-cancel:hover {
+  background: #6c757d;
+  color: white;
+  transform: translateY(-1px);
 }
 
 .custom-close-btn {
-  background: none;
+  background: rgba(255, 255, 255, 0.2);
   border: none;
-  padding: 0.5rem;
+  padding: 0.6rem;
   cursor: pointer;
   position: absolute;
-  right: 1rem;
+  right: 1.25rem;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 1.2rem;
+  font-size: 1rem;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2c2c54;
+  transition: all 0.3s ease;
 }
 
+.custom-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-50%) scale(1.1);
+}
+
+/* Existing Status Styles */
 .status-active {
   background: #d4edda;
   color: #218838;
@@ -1219,11 +1388,6 @@ const fillFakeData = () => {
   font-size: 0.875em;
 }
 
-.form-label {
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-
 .text-danger {
   color: #dc3545 !important;
 }
@@ -1277,5 +1441,100 @@ const fillFakeData = () => {
 .no-image-placeholder small {
   font-size: 0.7rem;
   line-height: 1.2;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .modal-lg {
+    max-width: 85% !important;
+  }
+}
+
+@media (max-width: 992px) {
+  .enhanced-modal {
+    margin: 1rem;
+  }
+  
+  .enhanced-body {
+    padding: 1rem;
+  }
+  
+  .form-section {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .modal-lg {
+    max-width: 90% !important;
+  }
+  
+  .col-md-3 {
+    margin-bottom: 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .enhanced-modal {
+    margin: 0.5rem;
+  }
+  
+  .enhanced-body {
+    padding: 0.75rem;
+  }
+  
+  .form-section {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .modal-lg {
+    max-width: 95% !important;
+  }
+  
+  .modal-dialog-scrollable .modal-body {
+    max-height: 75vh;
+  }
+}
+
+/* Modal positioning fix */
+.modal-dialog {
+  margin: 1rem auto;
+  display: flex;
+  align-items: flex-start;
+  min-height: calc(100vh - 2rem);
+}
+
+@media (min-height: 600px) {
+  .modal-dialog {
+    align-items: center;
+  }
+}
+
+/* Animation for form sections */
+.form-section {
+  animation: slideInUp 0.4s ease-out;
+}
+
+.form-section:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.form-section:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.form-section:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
