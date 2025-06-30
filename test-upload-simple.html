@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Upload Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .upload-area { border: 2px dashed #ccc; padding: 20px; text-align: center; margin: 20px 0; }
+        .result { margin: 20px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .image-preview { max-width: 200px; margin: 10px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Upload to Backend API</h1>
+        <p>Test upload directly to Backend API at <strong>http://localhost:8080</strong></p>
+        
+        <div class="upload-area">
+            <input type="file" id="imageInput" accept="image/*" multiple>
+            <br><br>
+            <button onclick="testSingleUpload()">Test Single Upload</button>
+            <button onclick="testMultipleUpload()">Test Multiple Upload</button>
+            <button onclick="testBackendConnection()">Test Backend Connection</button>
+        </div>
+        
+        <div id="result"></div>
+        <div id="images"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        
+        async function testBackendConnection() {
+            const resultDiv = document.getElementById('result');
+            try {
+                resultDiv.innerHTML = '<p>Testing backend connection...</p>';
+                const response = await fetch(`${API_BASE}/events`);
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        <h3>✅ Backend Connection Success!</h3>
+                        <p>Status: ${response.status}</p>
+                        <p>Events found: ${data.data?.content?.length || 0}</p>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Backend Connection Failed!</h3>
+                        <p>Error: ${error.message}</p>
+                        <p>Make sure Backend is running on port 8080</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function testSingleUpload() {
+            const files = document.getElementById('imageInput').files;
+            if (files.length === 0) {
+                alert('Please select at least one file');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('result');
+            const imagesDiv = document.getElementById('images');
+            
+            try {
+                resultDiv.innerHTML = '<p>Uploading single image...</p>';
+                
+                const formData = new FormData();
+                formData.append('image', files[0]);
+                
+                const response = await fetch(`${API_BASE}/upload/event-image`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h3>✅ Single Upload Success!</h3>
+                            <p>URL: <a href="${data.url}" target="_blank">${data.url}</a></p>
+                            <p>Message: ${data.message}</p>
+                        </div>
+                    `;
+                    
+                    imagesDiv.innerHTML += `
+                        <img src="${data.url}" alt="Uploaded" class="image-preview">
+                    `;
+                } else {
+                    throw new Error(data.error || data.message || 'Upload failed');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Single Upload Failed!</h3>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+                console.error('Upload error:', error);
+            }
+        }
+        
+        async function testMultipleUpload() {
+            const files = document.getElementById('imageInput').files;
+            if (files.length === 0) {
+                alert('Please select at least one file');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('result');
+            const imagesDiv = document.getElementById('images');
+            
+            try {
+                resultDiv.innerHTML = '<p>Uploading multiple images...</p>';
+                
+                const formData = new FormData();
+                for (let i = 0; i < Math.min(files.length, 5); i++) {
+                    formData.append('images', files[i]);
+                }
+                
+                const response = await fetch(`${API_BASE}/upload/event-images`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h3>✅ Multiple Upload Success!</h3>
+                            <p>Uploaded ${data.urls.length} images</p>
+                            <p>Message: ${data.message}</p>
+                        </div>
+                    `;
+                    
+                    data.urls.forEach(url => {
+                        imagesDiv.innerHTML += `
+                            <img src="${url}" alt="Uploaded" class="image-preview">
+                        `;
+                    });
+                } else {
+                    throw new Error(data.error || data.message || 'Upload failed');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Multiple Upload Failed!</h3>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+                console.error('Upload error:', error);
+            }
+        }
+        
+        // Auto test backend connection on load
+        window.onload = () => {
+            testBackendConnection();
+        };
+    </script>
+</body>
+</html>

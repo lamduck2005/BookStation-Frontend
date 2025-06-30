@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Upload Test - Backend Integration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .upload-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px dashed #ddd;
+            border-radius: 5px;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        input[type="file"] {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+        }
+        .uploaded-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .uploaded-images img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 2px solid #ddd;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🚀 Final Upload Test - Backend Integration</h1>
+        <p><strong>Backend API:</strong> http://localhost:8080</p>
+        <p><strong>Parameter Names:</strong> "image" for single, "images" for multiple</p>
+        
+        <div class="upload-section">
+            <h3>📸 Single Image Upload Test</h3>
+            <input type="file" id="singleFile" accept="image/*">
+            <button onclick="uploadSingle()">Upload Single Image</button>
+            <div id="singleResult" class="result" style="display: none;"></div>
+            <div id="singleImages" class="uploaded-images"></div>
+        </div>
+
+        <div class="upload-section">
+            <h3>📷 Multiple Images Upload Test</h3>
+            <input type="file" id="multipleFiles" accept="image/*" multiple>
+            <button onclick="uploadMultiple()">Upload Multiple Images</button>
+            <div id="multipleResult" class="result" style="display: none;"></div>
+            <div id="multipleImages" class="uploaded-images"></div>
+        </div>
+
+        <div class="upload-section">
+            <h3>🗑️ Delete Image Test</h3>
+            <input type="text" id="deleteUrl" placeholder="Enter image URL to delete" style="width: 70%;">
+            <button onclick="deleteImage()">Delete Image</button>
+            <div id="deleteResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="upload-section">
+            <h3>📊 Backend Status Check</h3>
+            <button onclick="checkBackend()">Check Backend Status</button>
+            <div id="backendResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="upload-section">
+            <h3>📋 Test Log</h3>
+            <pre id="testLog">Ready to test...\n</pre>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logElement = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            console.log(message);
+        }
+
+        async function checkBackend() {
+            log('🔍 Checking backend status...');
+            const resultDiv = document.getElementById('backendResult');
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/events');
+                const data = await response.json();
+                
+                resultDiv.className = 'result success';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <strong>✅ Backend is running!</strong><br>
+                    Status: ${response.status}<br>
+                    Events API working: ${data.status === 200 ? 'Yes' : 'No'}
+                `;
+                log('✅ Backend is running and accessible');
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <strong>❌ Backend connection failed!</strong><br>
+                    Error: ${error.message}<br>
+                    Make sure backend is running on port 8080
+                `;
+                log(`❌ Backend check failed: ${error.message}`);
+            }
+        }
+
+        async function uploadSingle() {
+            const fileInput = document.getElementById('singleFile');
+            const resultDiv = document.getElementById('singleResult');
+            const imagesDiv = document.getElementById('singleImages');
+            
+            if (!fileInput.files[0]) {
+                alert('Please select a file first!');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            log(`📤 Uploading single image: ${file.name} (${file.size} bytes)`);
+            
+            const formData = new FormData();
+            formData.append('image', file); // ← Correct parameter name
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/upload/event-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ Upload successful!</strong><br>
+                        URL: <a href="${data.url}" target="_blank">${data.url}</a><br>
+                        Message: ${data.message || 'Upload completed'}
+                    `;
+                    
+                    // Show uploaded image
+                    const img = document.createElement('img');
+                    img.src = data.url;
+                    img.alt = 'Uploaded image';
+                    imagesDiv.appendChild(img);
+                    
+                    log(`✅ Single upload successful: ${data.url}`);
+                    
+                    // Auto-fill delete URL for testing
+                    document.getElementById('deleteUrl').value = data.url;
+                } else {
+                    throw new Error(data.error || 'Upload failed');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ Upload failed!</strong><br>
+                    Error: ${error.message}
+                `;
+                log(`❌ Single upload failed: ${error.message}`);
+            }
+            
+            resultDiv.style.display = 'block';
+        }
+
+        async function uploadMultiple() {
+            const fileInput = document.getElementById('multipleFiles');
+            const resultDiv = document.getElementById('multipleResult');
+            const imagesDiv = document.getElementById('multipleImages');
+            
+            if (!fileInput.files.length) {
+                alert('Please select files first!');
+                return;
+            }
+
+            const files = Array.from(fileInput.files);
+            log(`📤 Uploading ${files.length} images: ${files.map(f => f.name).join(', ')}`);
+            
+            const formData = new FormData();
+            files.forEach(file => {
+                formData.append('images', file); // ← Correct parameter name
+            });
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/upload/event-images', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ Upload successful!</strong><br>
+                        Uploaded ${data.urls.length} images<br>
+                        Message: ${data.message || 'Upload completed'}
+                    `;
+                    
+                    // Show uploaded images
+                    data.urls.forEach(url => {
+                        const img = document.createElement('img');
+                        img.src = url;
+                        img.alt = 'Uploaded image';
+                        imagesDiv.appendChild(img);
+                    });
+                    
+                    log(`✅ Multiple upload successful: ${data.urls.length} images`);
+                    
+                    // Auto-fill delete URL with first image for testing
+                    if (data.urls.length > 0) {
+                        document.getElementById('deleteUrl').value = data.urls[0];
+                    }
+                } else {
+                    throw new Error(data.error || 'Upload failed');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ Upload failed!</strong><br>
+                    Error: ${error.message}
+                `;
+                log(`❌ Multiple upload failed: ${error.message}`);
+            }
+            
+            resultDiv.style.display = 'block';
+        }
+
+        async function deleteImage() {
+            const urlInput = document.getElementById('deleteUrl');
+            const resultDiv = document.getElementById('deleteResult');
+            
+            if (!urlInput.value.trim()) {
+                alert('Please enter an image URL to delete!');
+                return;
+            }
+
+            const imageUrl = urlInput.value.trim();
+            log(`🗑️ Deleting image: ${imageUrl}`);
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/upload/event-image', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ imageUrl })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ Delete successful!</strong><br>
+                        Message: ${data.message || 'Image deleted'}
+                    `;
+                    log(`✅ Delete successful: ${imageUrl}`);
+                } else {
+                    throw new Error(data.error || 'Delete failed');
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ Delete failed!</strong><br>
+                    Error: ${error.message}
+                `;
+                log(`❌ Delete failed: ${error.message}`);
+            }
+            
+            resultDiv.style.display = 'block';
+        }
+
+        // Auto-check backend on page load
+        window.addEventListener('load', function() {
+            log('🚀 Final Upload Test page loaded');
+            checkBackend();
+        });
+    </script>
+</body>
+</html>

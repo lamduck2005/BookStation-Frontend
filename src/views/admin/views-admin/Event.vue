@@ -343,13 +343,59 @@
               </div>
               <div class="row">
                 <div class="col-12">
-                  <MultiImageUpload
-                    v-model="newEvent.imageUrls"
-                    label="Hình ảnh Event (Tối đa 5 ảnh)"
-                    :max-files="5"
-                    @upload-success="handleImageUploadSuccess"
-                    @upload-error="handleImageUploadError"
-                  />
+                  <!-- Simple File Upload - BYPASS MultiImageUpload if Backend not ready -->
+                  <div class="simple-upload">
+                    <label class="form-label enhanced-label">Hình ảnh Event (Tối đa 5 ảnh)</label>
+                    
+                    <!-- Current Images Display -->
+                    <div v-if="newEvent.imageUrls.length > 0" class="current-images mb-3">
+                      <div class="images-grid">
+                        <div 
+                          v-for="(imageUrl, index) in newEvent.imageUrls" 
+                          :key="index"
+                          class="image-item"
+                        >
+                          <img :src="imageUrl" :alt="`Image ${index + 1}`" class="uploaded-image" />
+                          <button 
+                            type="button" 
+                            class="btn btn-sm btn-danger remove-btn"
+                            @click="removeImage(index)"
+                          >
+                            <i class="bi bi-x"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <!-- File Input -->
+                    <div v-if="newEvent.imageUrls.length < 5" class="upload-area">
+                      <input 
+                        ref="fileInput"
+                        type="file" 
+                        class="form-control"
+                        accept="image/*"
+                        multiple
+                        @change="handleFileUpload"
+                        :disabled="isUploading"
+                      />
+                      <small class="text-muted">
+                        Hỗ trợ: JPG, PNG, GIF, WebP - Tối đa 5MB mỗi ảnh - Hiện có {{ newEvent.imageUrls.length }}/5 ảnh
+                      </small>
+                      
+                      <!-- Upload Progress -->
+                      <div v-if="isUploading" class="mt-2">
+                        <div class="progress">
+                          <div 
+                            class="progress-bar" 
+                            :style="{ width: uploadProgress + '%' }"
+                          >
+                            {{ uploadProgress }}%
+                          </div>
+                        </div>
+                        <small class="text-info">Đang upload...</small>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -824,6 +870,55 @@ const closeModal = () => {
   modal.hide();
 };
 
+// Direct upload function trong Event.vue
+const uploadImagesDirectly = async (files) => {
+  try {
+    console.log('=== DIRECT UPLOAD IN EVENT.VUE ===');
+    console.log('Files to upload:', files);
+    
+    const formData = new FormData();
+    
+    if (files.length === 1) {
+      // Single upload với parameter "image"
+      formData.append('image', files[0]);
+      
+      const response = await fetch('http://localhost:8080/api/upload/event-image', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      console.log('Single upload result:', result);
+      
+      if (response.ok && result.success) {
+        return [result.url];
+      } else {
+        throw new Error(result.error || 'Upload failed');
+      }
+    } else {
+      // Multiple upload với parameter "images"
+      files.forEach(file => formData.append('images', file));
+      
+      const response = await fetch('http://localhost:8080/api/upload/event-images', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      console.log('Multiple upload result:', result);
+      
+      if (response.ok && result.success) {
+        return result.urls;
+      } else {
+        throw new Error(result.error || 'Upload failed');
+      }
+    }
+  } catch (error) {
+    console.error('Direct upload error:', error);
+    throw error;
+  }
+};
+
 // Image upload handlers
 const handleImageUploadSuccess = (imageUrls) => {
   console.log('=== DEBUG: Images uploaded successfully ===');
@@ -853,6 +948,92 @@ const handleImageUploadError = (error) => {
     timer: 5000,
     timerProgressBar: true
   });
+};
+
+// State for simple upload
+const isUploading = ref(false);
+const uploadProgress = ref(0);
+
+// Handle file upload directly
+const handleFileUpload = async (event) => {
+  const files = Array.from(event.target.files);
+  if (files.length === 0) return;
+  
+  // Validate total images
+  const totalImages = newEvent.value.imageUrls.length + files.length;
+  if (totalImages > 5) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Quá nhiều ảnh!',
+      text: `Chỉ được phép tối đa 5 ảnh. Bạn đã có ${newEvent.value.imageUrls.length} ảnh, chỉ có thể thêm ${5 - newEvent.value.imageUrls.length} ảnh nữa.`
+    });
+    return;
+  }
+  
+  // Validate file types and sizes
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) {
+      Swal.fire({
+        icon: 'error',
+        title: 'File không hợp lệ!',
+        text: `${file.name} không phải là file ảnh.`
+      });
+      return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) { // 10MB
+      Swal.fire({
+        icon: 'error',
+        title: 'File quá lớn!',
+        text: `${file.name} vượt quá 10MB.`
+      });
+      return;
+    }
+  }
+  
+  // Upload files
+  isUploading.value = true;
+  uploadProgress.value = 0;
+  
+  try {
+    console.log('=== UPLOADING FILES DIRECTLY ===');
+    console.log('Files:', files);
+    
+    const uploadedUrls = await uploadImagesDirectly(files);
+    
+    // Add to current images
+    newEvent.value.imageUrls.push(...uploadedUrls);
+    
+    // Show success
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: `Upload ${uploadedUrls.length} ảnh thành công!`,
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true
+    });
+    
+    // Clear file input
+    event.target.value = '';
+    
+  } catch (error) {
+    console.error('Upload error:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Lỗi upload!',
+      text: error.message || 'Có lỗi xảy ra khi upload ảnh'
+    });
+  } finally {
+    isUploading.value = false;
+    uploadProgress.value = 0;
+  }
+};
+
+// Remove uploaded image
+const removeImage = (index) => {
+  newEvent.value.imageUrls.splice(index, 1);
 };
 
 // Filter functions

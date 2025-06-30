@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-// Upload server URL
-const UPLOAD_SERVER_URL = 'http://localhost:3001';
+// Backend API URL - sẽ tích hợp upload vào Spring Boot
+const BACKEND_API_URL = 'http://localhost:8080';
 
-// Upload ảnh lên server
+// Upload ảnh lên Backend API (thay vì Upload Server)
 export const uploadEventImage = async (file, onUploadProgress = null) => {
   try {
     const formData = new FormData();
@@ -25,8 +25,8 @@ export const uploadEventImage = async (file, onUploadProgress = null) => {
       };
     }
 
-    // Call upload server directly
-    const response = await axios.post(`${UPLOAD_SERVER_URL}/api/upload/event-image`, formData, config);
+    // Gọi Backend API - KHÔNG CẦN Upload Server riêng
+    const response = await axios.post(`${BACKEND_API_URL}/api/upload/event-image`, formData, config);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi upload ảnh:', error);
@@ -34,10 +34,10 @@ export const uploadEventImage = async (file, onUploadProgress = null) => {
   }
 };
 
-// Upload multiple images - call upload server directly
+// Upload multiple images - gọi Backend API
 export const uploadMultipleEventImages = async (files, onUploadProgress = null) => {
   try {
-    console.log('=== DEBUG: uploadMultipleEventImages to upload server ===');
+    console.log('=== DEBUG: uploadMultipleEventImages to Backend API ===');
     console.log('Files to upload:', files);
     console.log('Number of files:', files.length);
     
@@ -49,7 +49,7 @@ export const uploadMultipleEventImages = async (files, onUploadProgress = null) 
       formData.append('images', files[i]);
     }
     
-    console.log('FormData created, calling upload server directly...');
+    console.log('FormData created, calling Backend API...');
     
     const config = {
       headers: {
@@ -66,10 +66,10 @@ export const uploadMultipleEventImages = async (files, onUploadProgress = null) 
       };
     }
 
-    // Call upload server directly
-    const response = await axios.post(`${UPLOAD_SERVER_URL}/api/upload/event-images`, formData, config);
+    // Gọi Backend API - KHÔNG CẦN Upload Server riêng
+    const response = await axios.post(`${BACKEND_API_URL}/api/upload/event-images`, formData, config);
     
-    console.log('=== DEBUG: Upload response ===');
+    console.log('=== DEBUG: Upload response from Backend ===');
     console.log('Response status:', response.status);
     console.log('Response data:', response.data);
     
@@ -82,11 +82,11 @@ export const uploadMultipleEventImages = async (files, onUploadProgress = null) 
   }
 };
 
-// Xóa ảnh từ server
+// Xóa ảnh từ Backend API
 export const deleteEventImage = async (imageUrl) => {
   try {
-    // Call upload server directly
-    const response = await axios.delete(`${UPLOAD_SERVER_URL}/api/upload/event-image`, {
+    // Gọi Backend API - KHÔNG CẦN Upload Server riêng
+    const response = await axios.delete(`${BACKEND_API_URL}/api/upload/event-image`, {
       data: { imageUrl },
       headers: {
         'Content-Type': 'application/json'

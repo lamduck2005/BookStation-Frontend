@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Upload Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        button { margin: 10px; padding: 15px; cursor: pointer; }
+        .result { margin: 20px 0; padding: 15px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        .image-preview { max-width: 200px; margin: 10px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Quick Upload Test - Backend Ready!</h1>
+        
+        <div>
+            <h3>1. Test Upload Endpoints</h3>
+            <button onclick="testEndpoints()">Test Endpoints</button>
+            <div id="endpointResult"></div>
+        </div>
+        
+        <div>
+            <h3>2. Upload Real Images</h3>
+            <input type="file" id="imageInput" accept="image/*" multiple>
+            <br><br>
+            <button onclick="testSingleUpload()">Test Single Upload</button>
+            <button onclick="testMultipleUpload()">Test Multiple Upload</button>
+            <div id="uploadResult"></div>
+        </div>
+        
+        <div>
+            <h3>3. Test Event Creation with Images</h3>
+            <button onclick="testEventCreation()">Create Event with Images</button>
+            <div id="eventResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:8080';
+        
+        async function testEndpoints() {
+            const result = document.getElementById('endpointResult');
+            result.innerHTML = '<p>Testing endpoints...</p>';
+            
+            const endpoints = [
+                '/api/upload/event-image',
+                '/api/upload/event-images'
+            ];
+            
+            let html = '<h4>Endpoint Test Results:</h4>';
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(`${BACKEND_URL}${endpoint}`, {
+                        method: 'OPTIONS'
+                    });
+                    
+                    html += `
+                        <div class="result success">
+                            <strong>✅ ${endpoint}</strong>: Available (${response.status})
+                            <br>Allowed methods: ${response.headers.get('Allow') || 'Not specified'}
+                        </div>
+                    `;
+                } catch (error) {
+                    html += `
+                        <div class="result error">
+                            <strong>❌ ${endpoint}</strong>: Error - ${error.message}
+                        </div>
+                    `;
+                }
+            }
+            
+            result.innerHTML = html;
+        }
+        
+        async function testSingleUpload() {
+            const fileInput = document.getElementById('imageInput');
+            const result = document.getElementById('uploadResult');
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                result.innerHTML = '<div class="result error">Please select an image file first!</div>';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            console.log('Uploading file:', file.name, 'Type:', file.type, 'Size:', file.size);
+            
+            result.innerHTML = '<p>Uploading single image...</p>';
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', file); // Backend yêu cầu parameter name là 'image'
+                
+                const response = await fetch(`${BACKEND_URL}/api/upload/event-image`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
+                const responseText = await response.text();
+                console.log('Response text:', responseText);
+                
+                let responseData;
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch (e) {
+                    responseData = { rawResponse: responseText };
+                }
+                
+                if (response.ok && responseData.success) {
+                    result.innerHTML = `
+                        <div class="result success">
+                            <h4>✅ Single Upload Success!</h4>
+                            <p><strong>URL:</strong> <a href="${responseData.url}" target="_blank">${responseData.url}</a></p>
+                            <p><strong>Message:</strong> ${responseData.message}</p>
+                            <img src="${responseData.url}" class="image-preview" alt="Uploaded image" />
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="result error">
+                            <h4>❌ Upload Failed</h4>
+                            <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                            <p><strong>Response:</strong></p>
+                            <pre>${JSON.stringify(responseData, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="result error">
+                        <h4>❌ Upload Error</h4>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+                console.error('Upload error:', error);
+            }
+        }
+        
+        async function testMultipleUpload() {
+            const fileInput = document.getElementById('imageInput');
+            const result = document.getElementById('uploadResult');
+            
+            if (!fileInput.files || fileInput.files.length < 2) {
+                result.innerHTML = '<div class="result error">Please select at least 2 image files!</div>';
+                return;
+            }
+            
+            result.innerHTML = '<p>Uploading multiple images...</p>';
+            
+            try {
+                const formData = new FormData();
+                for (let i = 0; i < Math.min(fileInput.files.length, 5); i++) {
+                    formData.append('images', fileInput.files[i]); // Backend yêu cầu parameter name là 'images'
+                }
+                
+                const response = await fetch(`${BACKEND_URL}/api/upload/event-images`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const responseText = await response.text();
+                let responseData;
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch (e) {
+                    responseData = { rawResponse: responseText };
+                }
+                
+                if (response.ok && responseData.success) {
+                    let imagesHtml = '';
+                    responseData.urls.forEach(url => {
+                        imagesHtml += `<img src="${url}" class="image-preview" alt="Uploaded image" />`;
+                    });
+                    
+                    result.innerHTML = `
+                        <div class="result success">
+                            <h4>✅ Multiple Upload Success!</h4>
+                            <p><strong>Uploaded:</strong> ${responseData.urls.length} images</p>
+                            <p><strong>Message:</strong> ${responseData.message}</p>
+                            <div>${imagesHtml}</div>
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="result error">
+                            <h4>❌ Multiple Upload Failed</h4>
+                            <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                            <pre>${JSON.stringify(responseData, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="result error">
+                        <h4>❌ Multiple Upload Error</h4>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+                console.error('Multiple upload error:', error);
+            }
+        }
+        
+        async function testEventCreation() {
+            const fileInput = document.getElementById('imageInput');
+            const result = document.getElementById('eventResult');
+            
+            result.innerHTML = '<p>Testing complete event creation flow...</p>';
+            
+            try {
+                // Step 1: Upload images (if any)
+                let imageUrls = [];
+                if (fileInput.files && fileInput.files.length > 0) {
+                    console.log('Step 1: Uploading images...');
+                    
+                    const formData = new FormData();
+                    if (fileInput.files.length === 1) {
+                        formData.append('image', fileInput.files[0]);
+                        
+                        const uploadResponse = await fetch(`${BACKEND_URL}/api/upload/event-image`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (uploadResponse.ok) {
+                            const uploadData = await uploadResponse.json();
+                            if (uploadData.success) {
+                                imageUrls = [uploadData.url];
+                            }
+                        }
+                    } else {
+                        for (let i = 0; i < Math.min(fileInput.files.length, 5); i++) {
+                            formData.append('images', fileInput.files[i]);
+                        }
+                        
+                        const uploadResponse = await fetch(`${BACKEND_URL}/api/upload/event-images`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (uploadResponse.ok) {
+                            const uploadData = await uploadResponse.json();
+                            if (uploadData.success) {
+                                imageUrls = uploadData.urls;
+                            }
+                        }
+                    }
+                }
+                
+                console.log('Step 1 complete. Image URLs:', imageUrls);
+                
+                // Step 2: Create event with image URLs
+                console.log('Step 2: Creating event...');
+                
+                const eventData = {
+                    eventName: `Test Event ${Date.now()}`,
+                    description: 'This is a test event created with uploaded images',
+                    eventType: 'WORKSHOP',
+                    eventCategoryId: 1,
+                    status: 'DRAFT',
+                    startDate: Date.now() + (24 * 60 * 60 * 1000), // Tomorrow
+                    endDate: Date.now() + (2 * 24 * 60 * 60 * 1000), // Day after tomorrow
+                    maxParticipants: 100,
+                    imageUrls: imageUrls, // Include uploaded images
+                    location: 'Test Location',
+                    rules: 'Test rules',
+                    isOnline: false
+                };
+                
+                console.log('Event payload:', eventData);
+                
+                const eventResponse = await fetch(`${BACKEND_URL}/api/events`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(eventData)
+                });
+                
+                const eventResult = await eventResponse.json();
+                console.log('Event creation result:', eventResult);
+                
+                if (eventResponse.ok) {
+                    let imagesHtml = '';
+                    if (imageUrls.length > 0) {
+                        imageUrls.forEach(url => {
+                            imagesHtml += `<img src="${url}" class="image-preview" alt="Event image" />`;
+                        });
+                    }
+                    
+                    result.innerHTML = `
+                        <div class="result success">
+                            <h4>✅ Event Created Successfully!</h4>
+                            <p><strong>Event ID:</strong> ${eventResult.data?.id || 'Generated'}</p>
+                            <p><strong>Name:</strong> ${eventData.eventName}</p>
+                            <p><strong>Images uploaded:</strong> ${imageUrls.length}</p>
+                            ${imagesHtml ? `<div><strong>Images:</strong><br>${imagesHtml}</div>` : ''}
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <div class="result error">
+                            <h4>❌ Event Creation Failed</h4>
+                            <p><strong>Images uploaded:</strong> ${imageUrls.length} ✅</p>
+                            <p><strong>Event creation error:</strong></p>
+                            <pre>${JSON.stringify(eventResult, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="result error">
+                        <h4>❌ Complete Flow Error</h4>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+                console.error('Complete flow error:', error);
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = () => {
+            testEndpoints();
+        };
+    </script>
+</body>
+</html>

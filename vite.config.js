@@ -15,11 +15,7 @@ export default defineConfig({
     },
   },
   server: {
-    proxy: {
-      '/api/upload': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      }
-    }
+    // Không cần upload middleware - Backend API sẽ xử lý upload
+    port: 5173
   }
 })

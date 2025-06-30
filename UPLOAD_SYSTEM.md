@@ -1,5 +1,13 @@
 # Hệ thống Upload Ảnh BookStation
 
+CÓ, hệ thống này hoàn toàn có thể dùng chung và không xung đột. Chỉ cần:
+
+Thêm endpoints cho từng loại upload
+Generic hóa các function trong service
+Truyền tham số upload-type vào component
+Mỗi module sẽ upload vào thư mục riêng
+
+
 ## Cách hoạt động
 
 ### 1. Kiến trúc hệ thống

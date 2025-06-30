@@ -26,6 +26,7 @@ import EventGift from "@/views/admin/views-admin/EventGift.vue";
 import EventParticipant from "@/views/admin/views-admin/EventParticipant.vue";
 import EventGiftClaim from "@/views/admin/views-admin/EventGiftClaim.vue";
 import EventHistory from "@/views/admin/views-admin/EventHistory.vue";
+import UploadTestPage from "@/views/UploadTestPage.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,6 +45,11 @@ const router = createRouter({
       path: "/demo",
       name: "demo",
       component: DemoPage,
+    },
+    {
+      path: "/upload-test",
+      name: "upload-test",
+      component: UploadTestPage,
     },
     // Admin routes
     {

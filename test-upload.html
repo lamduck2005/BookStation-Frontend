@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Upload to Backend</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        input[type="file"] { margin: 10px 0; }
+        .result { margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 3px; }
+        .image-preview { max-width: 200px; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Upload Integration - Frontend ↔ Backend</h1>
+    
+    <div class="test-section">
+        <h2>📡 1. Test Backend Connection</h2>
+        <button onclick="testBackend()">Test Backend API (port 8080)</button>
+        <div id="backend-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📤 2. Test Single Image Upload</h2>
+        <input type="file" id="single-file" accept="image/*">
+        <button onclick="testSingleUpload()">Upload Single Image</button>
+        <div id="single-result" class="result"></div>
+        <div id="single-preview"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📤 3. Test Multiple Images Upload</h2>
+        <input type="file" id="multiple-files" accept="image/*" multiple>
+        <button onclick="testMultipleUpload()">Upload Multiple Images (Max 5)</button>
+        <div id="multiple-result" class="result"></div>
+        <div id="multiple-preview"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🗑️ 4. Test Delete Image</h2>
+        <input type="text" id="delete-url" placeholder="Enter image URL to delete..." style="width: 400px;">
+        <button onclick="testDeleteImage()">Delete Image</button>
+        <div id="delete-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Test Log</h2>
+        <div id="log" style="background: #000; color: #00ff00; padding: 10px; height: 200px; overflow-y: auto; font-family: monospace;"></div>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <script>
+        const BACKEND_API_URL = 'http://localhost:8080';
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                'info': '#00ff00',
+                'error': '#ff0000', 
+                'success': '#00ffff',
+                'warning': '#ffff00'
+            };
+            
+            logDiv.innerHTML += `<div style="color: ${colors[type]}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        // Test Backend Connection
+        async function testBackend() {
+            const resultDiv = document.getElementById('backend-result');
+            log('Testing backend connection...', 'info');
+            
+            try {
+                const response = await fetch(`${BACKEND_API_URL}/api/events`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `<span class="success">✅ Backend connected successfully!</span><br>
+                                         Status: ${response.status}<br>
+                                         Events found: ${data.data?.content?.length || 0}`;
+                    log('✅ Backend connection successful', 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Backend connection failed: ${error.message}</span>`;
+                log(`❌ Backend connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Test Single Image Upload
+        async function testSingleUpload() {
+            const fileInput = document.getElementById('single-file');
+            const resultDiv = document.getElementById('single-result');
+            const previewDiv = document.getElementById('single-preview');
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<span class="error">❌ Please select a file first</span>';
+                return;
+            }
+
+            const file = fileInput.files[0];
+            log(`Uploading single file: ${file.name} (${(file.size/1024/1024).toFixed(2)}MB)`, 'info');
+            
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch(`${BACKEND_API_URL}/api/upload/event-image`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                log(`Upload response: ${JSON.stringify(data)}`, 'info');
+
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `<span class="success">✅ Upload successful!</span><br>
+                                         URL: <a href="${data.url}" target="_blank">${data.url}</a>`;
+                    
+                    // Show image preview
+                    previewDiv.innerHTML = `<img src="${data.url}" class="image-preview" alt="Uploaded image">`;
+                    
+                    log(`✅ Single upload successful: ${data.url}`, 'success');
+                    
+                    // Auto-fill delete URL for testing
+                    document.getElementById('delete-url').value = data.url;
+                } else {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Upload failed: ${error.message}</span>`;
+                log(`❌ Single upload failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Test Multiple Images Upload  
+        async function testMultipleUpload() {
+            const fileInput = document.getElementById('multiple-files');
+            const resultDiv = document.getElementById('multiple-result');
+            const previewDiv = document.getElementById('multiple-preview');
+            
+            if (!fileInput.files.length) {
+                resultDiv.innerHTML = '<span class="error">❌ Please select files first</span>';
+                return;
+            }
+
+            const files = Array.from(fileInput.files);
+            if (files.length > 5) {
+                resultDiv.innerHTML = '<span class="error">❌ Maximum 5 files allowed</span>';
+                return;
+            }
+
+            log(`Uploading ${files.length} files:`, 'info');
+            files.forEach((file, index) => {
+                log(`  ${index + 1}. ${file.name} (${(file.size/1024/1024).toFixed(2)}MB)`, 'info');
+            });
+            
+            const formData = new FormData();
+            files.forEach(file => formData.append('images', file));
+
+            try {
+                const response = await fetch(`${BACKEND_API_URL}/api/upload/event-images`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                log(`Upload response: ${JSON.stringify(data)}`, 'info');
+
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `<span class="success">✅ Upload successful!</span><br>
+                                         Uploaded ${data.urls.length} images:<br>
+                                         ${data.urls.map((url, i) => `${i+1}. <a href="${url}" target="_blank">${url}</a>`).join('<br>')}`;
+                    
+                    // Show image previews
+                    previewDiv.innerHTML = data.urls.map(url => 
+                        `<img src="${url}" class="image-preview" alt="Uploaded image">`
+                    ).join('');
+                    
+                    log(`✅ Multiple upload successful: ${data.urls.length} files`, 'success');
+                } else {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Upload failed: ${error.message}</span>`;
+                log(`❌ Multiple upload failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Test Delete Image
+        async function testDeleteImage() {
+            const urlInput = document.getElementById('delete-url');
+            const resultDiv = document.getElementById('delete-result');
+            
+            if (!urlInput.value.trim()) {
+                resultDiv.innerHTML = '<span class="error">❌ Please enter an image URL</span>';
+                return;
+            }
+
+            const imageUrl = urlInput.value.trim();
+            log(`Deleting image: ${imageUrl}`, 'info');
+
+            try {
+                const response = await fetch(`${BACKEND_API_URL}/api/upload/event-image`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ imageUrl })
+                });
+
+                const data = await response.json();
+                log(`Delete response: ${JSON.stringify(data)}`, 'info');
+
+                if (response.ok && data.success) {
+                    resultDiv.innerHTML = `<span class="success">✅ Image deleted successfully!</span>`;
+                    log(`✅ Image deleted: ${imageUrl}`, 'success');
+                    urlInput.value = '';
+                } else {
+                    throw new Error(data.error || `HTTP ${response.status}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">❌ Delete failed: ${error.message}</span>`;
+                log(`❌ Delete failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-test on page load
+        window.onload = function() {
+            log('=== Upload Integration Test Page Loaded ===', 'success');
+            log('Backend API URL: ' + BACKEND_API_URL, 'info');
+            log('Frontend URL: http://localhost:5173', 'info');
+            log('Ready to test upload functionality!', 'info');
+            
+            // Auto-test backend connection
+            setTimeout(() => {
+                testBackend();
+            }, 1000);
+        };
+    </script>
+</body>
+</html>
