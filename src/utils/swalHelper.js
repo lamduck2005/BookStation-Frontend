@@ -1,7 +1,7 @@
 import Swal from "sweetalert2";
 import "./swalHelper.css"; // Import file CSS custom
 
-const showToast = (icon, title, timer = 3000) => {
+export const showToast = (icon, title, timer = 3000) => {
   Swal.fire({
     toast: true,
     position: "top-end",
@@ -22,4 +22,31 @@ const showToast = (icon, title, timer = 3000) => {
   });
 };
 
-export { showToast };
+export const showQuickConfirm = (
+  title,
+  text,
+  icon = "question",
+  confirmButtonText = "Đồng ý",
+  cancelButtonText = "Hủy",
+  confirmButtonClass = "btn-primary",
+  cancelButtonClass = "btn-secondary"
+) => {
+  return Swal.fire({
+    title,
+    text,
+    icon,
+    showCancelButton: true,
+    confirmButtonText,
+    cancelButtonText,
+    reverseButtons: true,
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    allowEnterKey: false,
+    customClass: {
+      confirmButton: "btn " + confirmButtonClass ,
+      cancelButton: "btn " + cancelButtonClass + " me-3",
+    },
+    buttonsStyling: false, // Bắt buộc để dùng class custom
+  });
+};
+
