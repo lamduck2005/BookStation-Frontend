@@ -85,7 +85,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { uploadEventImage, validateImage, compressImage } from '@/services/admin/upload';
+import { uploadSingleImage, validateImage, compressImage } from '@/services/common/upload';
 import Swal from 'sweetalert2';
 
 // Props
@@ -118,9 +118,9 @@ const props = defineProps({
     type: Number,
     default: 1200
   },
-  compressionQuality: {
-    type: Number,
-    default: 0.8
+  uploadEndpoint: {
+    type: String,
+    default: 'event-image'
   }
 });
 
@@ -189,7 +189,7 @@ const selectAndUploadFile = async (file) => {
     }
 
     // Upload to server
-    const response = await uploadEventImage(fileToUpload, (progress) => {
+    const response = await uploadSingleImage(fileToUpload, props.uploadEndpoint, (progress) => {
       uploadProgress.value = Math.round(progress);
     });
 

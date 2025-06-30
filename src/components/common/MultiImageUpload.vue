@@ -89,9 +89,7 @@
         >
           <img :src="preview.url" :alt="`Preview ${index + 1}`" class="preview-image" />
           <div class="preview-info">
-            <small class="text-muted">{{ preview.name }}</small>
-            <br>
-            <small class="text-info">Đang upload...</small>
+            <small class="text-info">Uploading...</small>
           </div>
         </div>
       </div>
@@ -101,7 +99,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { uploadMultipleEventImages, validateImage, compressImage } from '@/services/admin/upload';
+import { uploadMultipleImages, validateImage, compressImage } from '@/services/common/upload';
 import Swal from 'sweetalert2';
 
 // Props
@@ -137,6 +135,10 @@ const props = defineProps({
   compressionQuality: {
     type: Number,
     default: 0.8
+  },
+  uploadEndpoint: {
+    type: String,
+    default: 'event-images'
   }
 });
 
@@ -247,7 +249,7 @@ const selectAndUploadFiles = async (files) => {
     }
 
     // Upload tất cả files
-    const response = await uploadMultipleEventImages(filesToUpload, (progress) => {
+    const response = await uploadMultipleImages(filesToUpload, props.uploadEndpoint, (progress) => {
       uploadProgress.value = Math.round(progress);
     });
 
@@ -344,31 +346,40 @@ const formatFileSize = (bytes) => {
 <style scoped>
 .multi-image-upload-component {
   width: 100%;
+  max-width: 100%;
+}
+
+.multi-image-upload-component * {
+  box-sizing: border-box;
 }
 
 .images-grid,
 .preview-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 10px;
   margin-bottom: 15px;
+  max-width: 100%;
 }
 
 .image-item,
 .preview-item {
   position: relative;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
   border: 1px solid #dee2e6;
   background-color: #f8f9fa;
+  width: 80px;
+  height: 80px;
 }
 
 .current-image,
 .preview-image {
-  width: 100%;
-  height: 120px;
+  width: 80px;
+  height: 60px;
   object-fit: cover;
   display: block;
+  border-radius: 4px;
 }
 
 .image-overlay {
@@ -390,9 +401,24 @@ const formatFileSize = (bytes) => {
 }
 
 .preview-info {
-  padding: 8px;
+  padding: 4px;
   background: white;
   border-top: 1px solid #dee2e6;
+  font-size: 0.7rem;
+  text-align: center;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-info small {
+  margin: 0;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 76px;
 }
 
 .upload-dropzone {
@@ -401,7 +427,8 @@ const formatFileSize = (bytes) => {
   background-color: #f8f9fa;
   cursor: pointer;
   transition: all 0.3s ease;
-  min-height: 120px;
+  min-height: 100px;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -424,20 +451,51 @@ const formatFileSize = (bytes) => {
   width: 200px;
 }
 
+/* Đảm bảo ảnh luôn nhỏ gọn như ban đầu */
+.multi-image-upload-component .image-item,
+.multi-image-upload-component .preview-item {
+  width: 80px !important;
+  height: 80px !important;
+  max-width: 80px !important;
+  max-height: 80px !important;
+}
+
+.multi-image-upload-component .current-image,
+.multi-image-upload-component .preview-image {
+  width: 80px !important;
+  height: 60px !important;
+  max-width: 80px !important;
+  max-height: 60px !important;
+  object-fit: cover !important;
+}
+
 @media (max-width: 576px) {
   .images-grid,
   .preview-grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 8px;
+  }
+  
+  .image-item,
+  .preview-item {
+    width: 70px !important;
+    height: 70px !important;
   }
   
   .current-image,
   .preview-image {
-    height: 100px;
+    width: 70px !important;
+    height: 50px !important;
   }
   
   .upload-dropzone {
-    min-height: 100px;
+    min-height: 80px;
+    padding: 2rem;
+  }
+  
+  .preview-info {
+    height: 20px;
+    font-size: 0.65rem;
   }
 }
 </style>
