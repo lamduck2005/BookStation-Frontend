@@ -45,10 +45,19 @@ const stars = [
 ]
 
 const isContainerFlipped = ref(false)
+const isGlowBorderShow = ref(true)
 
 // Hàm toggle form quên mật khẩu
 const showForgotPassword = () => {
     isContainerFlipped.value = !isContainerFlipped.value
+    
+    // Tắt glow border khi flip
+    isGlowBorderShow.value = false
+    
+    // Bật lại glow border sau 3 giây
+    setTimeout(() => {
+        isGlowBorderShow.value = true
+    }, 1000)
 }
 
 // Hàm xử lý đăng nhập
@@ -132,6 +141,46 @@ const handleForgotPassword = (e) => {
 
 <template>
     <div class="login-page">
+        <!-- SVG Filters cho hiệu ứng glow -->
+        <svg width="0" height="0" aria-hidden="true" class="svg-filters">
+            <defs>
+                <filter id="glow-0" x="-.25" y="-.25" width="1.5" height="1.5">
+                    <feComponentTransfer>
+                        <feFuncA type="table" tableValues="0 2 0"></feFuncA>
+                    </feComponentTransfer>
+                    <feGaussianBlur stdDeviation="1.5"></feGaussianBlur>
+                    <feComponentTransfer result="rond">
+                        <feFuncA type="table" tableValues="-1.5 2.5"></feFuncA>
+                    </feComponentTransfer>
+                    <feMorphology operator="dilate" radius="3"></feMorphology>
+                    <feGaussianBlur stdDeviation="6"></feGaussianBlur>
+                    <feBlend in="rond" result="glow"></feBlend>
+                    <feComponentTransfer in="SourceGraphic">
+                        <feFuncA type="table" tableValues="0 0 1"></feFuncA>
+                    </feComponentTransfer>
+                    <feBlend in2="glow"></feBlend>
+                </filter>
+                
+                <filter id="glow-1" x="-.25" y="-.25" width="1.5" height="1.5">
+                    <feComponentTransfer in="SourceGraphic" result="grad">
+                        <feFuncA type="table" tableValues="0 2 0"></feFuncA>
+                    </feComponentTransfer>
+                    <feMorphology operator="dilate" radius="3"></feMorphology>
+                    <feGaussianBlur stdDeviation="6" result="glow"></feGaussianBlur>
+                    <feTurbulence type="fractalNoise" baseFrequency="7.13"></feTurbulence>
+                    <feDisplacementMap in="glow" scale="12" yChannelSelector="R"></feDisplacementMap>
+                    <feComponentTransfer>
+                        <feFuncA type="linear" slope=".8"></feFuncA>
+                    </feComponentTransfer>
+                    <feBlend in="grad" result="out"></feBlend>
+                    <feComponentTransfer in="SourceGraphic">
+                        <feFuncA type="table" tableValues="0 0 1"></feFuncA>
+                    </feComponentTransfer>
+                    <feBlend in2="out"></feBlend>
+                </filter>
+            </defs>
+        </svg>
+
         <div class="stars">
             <div class="star" v-for="(star, idx) in stars" :key="idx" :style="{
                 '--star-tail-length': star.tailLength,
@@ -141,8 +190,8 @@ const handleForgotPassword = (e) => {
             }"></div>
         </div>
 
-        <!-- Container wrapper cho hiệu ứng 3D flip -->
-        <div class="container-wrapper" :class="{ 'flipped': isContainerFlipped }">
+        <!-- Container wrapper cho hiệu ứng 3D flip với glow border -->
+        <div class="container-wrapper" :class="{ 'flipped': isContainerFlipped, 'glow-border': isGlowBorderShow }">
             <!-- Mặt trước: Form đăng nhập/đăng ký -->
             <div class="container container-front">
                 <input type="checkbox" id="flip">
@@ -287,6 +336,13 @@ const handleForgotPassword = (e) => {
 /* Google Font Link */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&display=swap');
 
+/* CSS Custom Property cho animation */
+@property --a {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -303,6 +359,15 @@ const handleForgotPassword = (e) => {
     padding: 30px;
     overflow: hidden;
     position: relative;
+    /* CSS Variables cho glow effect */
+    --b: 6px;
+    --m: 2;
+}
+
+/* SVG Filters */
+.svg-filters {
+    position: fixed;
+    z-index: -1;
 }
 
 /* Hiệu ứng mưa sao băng */
@@ -405,6 +470,13 @@ const handleForgotPassword = (e) => {
     }
 }
 
+/* Hiệu ứng glow border animation */
+@keyframes glow-rotate {
+    to { 
+        --a: 1turn;
+    }
+}
+
 /* Container wrapper cho hiệu ứng 3D flip */
 .container-wrapper {
     position: relative;
@@ -413,6 +485,25 @@ const handleForgotPassword = (e) => {
     height: 500px;
     perspective: 1000px;
     z-index: 1;
+}
+
+/* Glow border effect */
+.glow-border {
+    box-sizing: border-box;
+    border: solid var(--b) transparent;
+    border-radius: calc(2*var(--b));
+    background: 
+        repeating-conic-gradient(from var(--a, 0deg), 
+            #0000 0% 35%, 
+            #24004619, 
+            #3c096c32, 
+            #5a189a4b, 
+            #7b2cbf64, 
+            #9d4edd7f) border-box;
+    filter: url(#glow-0);
+    animation: glow-rotate 50s linear infinite;
+    /* padding: var(--b); */
+    transition: all 0.3s linear;
 }
 
 .container-wrapper.flipped .container-front {
@@ -432,7 +523,7 @@ const handleForgotPassword = (e) => {
     background: #fff;
     padding: 40px 30px;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-    border-radius: 15px;
+    border-radius: 8px;
     overflow: hidden;
     transform-style: preserve-3d;
     backface-visibility: hidden;
@@ -488,7 +579,7 @@ const handleForgotPassword = (e) => {
     width: 100%;
     object-fit: cover;
     z-index: 10;
-    border-radius: 0 10px 10px 0;
+    border-radius: 0;
 }
 
 .container .cover .text {
@@ -507,8 +598,8 @@ const handleForgotPassword = (e) => {
     position: absolute;
     height: 100%;
     width: 100%;
-    opacity: 0.5;
-    background: #dc3545;
+    opacity: 0.35;
+    background: linear-gradient(135deg, #7d2ae8 0%, #ff6a00 100%);
 }
 
 .cover .text .text-1,
@@ -666,7 +757,7 @@ const handleForgotPassword = (e) => {
     width: 100%;
     object-fit: cover;
     z-index: 10;
-    border-radius: 10px 0 0 10px;
+    border-radius: 0;
 }
 
 .forgot-password-cover .text {
@@ -685,8 +776,8 @@ const handleForgotPassword = (e) => {
     position: absolute;
     height: 100%;
     width: 100%;
-    opacity: 0.5;
-    background: #dc3545;
+    opacity: 0.35;
+    background: linear-gradient(135deg, #7d2ae8 0%, #ff6a00 100%);
     z-index: 15;
 }
 
@@ -855,6 +946,11 @@ const handleForgotPassword = (e) => {
 
     .forgot-password-form .form-content {
         max-width: 100%;
+    }
+
+    /* Điều chỉnh glow border cho mobile */
+    .glow-border {
+        --b: 4px;
     }
 }
 </style>

@@ -33,7 +33,7 @@
             </a>
             
             <div class="divider"></div>
-            <a href="#" class="user-dropdown">
+            <a href="#" class="user-dropdown" @click="handleLogout">
               <i class='bxr  bx-arrow-out-right-square-half'  ></i> 
               <span>Đăng xuất</span>
             </a>
@@ -43,6 +43,22 @@
     </div>
   </nav>
 </template>
+
+<script setup>
+import { showQuickConfirm, showToast } from '@/utils/swalHelper';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+const handleLogout = () => {
+  showQuickConfirm('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất không?', 'question', 'Đăng xuất', 'Hủy', 'btn-danger', 'btn-secondary').then((result) => {
+    if (result.isConfirmed) {
+      showToast('success', 'Đăng xuất thành công');
+      router.push('/login');
+    }
+  });
+}
+</script>
 
 <style scoped>
 nav {
