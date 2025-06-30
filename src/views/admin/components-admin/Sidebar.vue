@@ -92,7 +92,14 @@ const sidebarLinks = [
       { to: '/admin/supplier', icon: 'bi bi-truck', label: 'Nhà cung cấp' },
       { to: '/admin/rank', icon: 'bi bi-star', label: 'Hạng' },
       { to: '/admin/point', icon: 'bi bi-coin', label: 'Điểm' },
-      { to: '/admin/event', icon: 'bi bi-calendar-event', label: 'Sự kiện' },
+    ]
+  },
+  {
+    type: 'submenu',
+    icon: 'bi bi-calendar-event',
+    label: 'Sự kiện',
+    subLinks: [
+      { to: '/admin/event', icon: 'bi bi-calendar-check', label: 'Quản lý sự kiện' },
       { to: '/admin/event-category', icon: 'bi bi-calendar3', label: 'Danh mục sự kiện' },
       { to: '/admin/event-gift', icon: 'bi bi-gift', label: 'Quà tặng sự kiện' },
       { to: '/admin/event-gift-claim', icon: 'bi bi-gift-fill', label: 'Nhận quà sự kiện' },
