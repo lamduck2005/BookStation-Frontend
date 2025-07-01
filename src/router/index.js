@@ -4,6 +4,8 @@ import HomePage from "@/views/client/HomePage.vue";
 import NotificationsPage from "@/views/client/NotificationsPage.vue";
 import DemoPage from "@/views/client/DemoPage.vue";
 import CheckoutPage from "@/views/client/CheckoutPage.vue";
+import Cart from "@/views/client/Cart.vue";
+import DetailProduct from "@/views/client/DetailProduct.vue";
 import User from "@/views/admin/views-admin/User.vue";
 import Product from "@/views/admin/views-admin/Product.vue";
 import Author from "@/views/admin/views-admin/Author.vue";
@@ -57,6 +59,17 @@ const router = createRouter({
       path: "/checkout",
       name: "checkout",
       component: CheckoutPage,
+    },
+    {
+      path: "/cart",
+      name: "cart",
+      component: Cart,
+    },
+    {
+      path: "/product/:id",
+      name: "product-detail",
+      component: DetailProduct,
+      props: true,
     },
     // Admin routes
     {
