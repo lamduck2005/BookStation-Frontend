@@ -1,68 +1,54 @@
 <template>
-  <nav :id="'sidebar'" :class="{ close: isSidebarClosed }">
+  <nav :id="'sidebar'" :class="{ close: isSidebarClosed }" >
     <ul>
+      <!-- nút đóng mở sidebar -->
       <li>
         <span class="logo">BookStation</span>
         <button @click="toggleSidebar" id="toggle-btn">
           <i class="bi bi-chevron-double-left"></i>
         </button>
       </li>
-      <li>
-        <router-link to="/admin/account">
-          <i class="bi bi-person-circle"></i>
-          <span>Account</span>
-        </router-link>
-      </li>
-      <li>
-        <router-link to="/admin/dashboard">
-          <i class="bi bi-bar-chart"></i>
-          <span>Dashboard</span>
-        </router-link>
-      </li>
-      <li>
-        <router-link to="/admin/order">
-          <i class="bi bi-box"></i>
-          <span>Order</span>
-        </router-link>
-      </li>
-      <li>
-        <button @click="toggleSubMenu(0)" class="dropdown-btn" :class="{ rotate: openSubMenuIndex === 0 }">
-          <i class="bi bi-gear"></i>
-          <span>Manage</span>
-          <i class="bi bi-chevron-down"></i>
-        </button>
-        <ul class="sub-menu" :class="{ show: openSubMenuIndex === 0 }">
-          <div>
-            <li><router-link to="/admin/user"><i class="bi bi-people"></i> User</router-link></li>
-            <li><router-link to="/admin/product"><i class="bi bi-book"></i> Book</router-link></li>
-            <li><router-link to="/admin/author"><i class="bi bi-pen"></i> Author</router-link></li>
-            <li><router-link to="/admin/review"><i class="bi bi-chat-dots"></i> Review</router-link></li>
-            <li><router-link to="/admin/flash-sale"><i class="bi bi-lightning"></i> Flash Sale</router-link></li>
-            <li><router-link to="/admin/category"><i class="bi bi-tags"></i> Category</router-link></li>
-            <li><router-link to="/admin/voucher"><i class="bi bi-ticket"></i> Voucher</router-link></li>
-            <li><router-link to="/admin/supplier"><i class="bi bi-truck"></i> Supplier</router-link></li>
-            <li><router-link to="/admin/rank"><i class="bi bi-star"></i> Rank</router-link></li>
-            <li><router-link to="/admin/point"><i class="bi bi-coin"></i> Point</router-link></li>
-          </div>
-        </ul>
-      </li>
-      <li>
-        <router-link to="/admin/notification">
-          <i class="bi bi-bell"></i>
-          <span>Notifications</span>
-        </router-link>
-      </li>
-      <li>
-        <a href="#">
-          <i class="bi bi-box-arrow-right"></i>
-          <span>Logout</span>
-        </a>
-      </li>
+      
+      <!-- Tự động sinh menu từ mảng sidebarLinks -->
+      <template v-for="(link, index) in sidebarLinks" :key="index">
+        <li v-if="link.type === 'link'">
+          <router-link :to="link.to">
+            <i :class="link.icon"></i>
+            <span>{{ link.label }}</span>
+          </router-link>
+        </li>
+        
+        <li v-else-if="link.type === 'submenu'">
+          <button @click="toggleSubMenu(index)" class="dropdown-btn" :class="{ rotate: openSubMenuIndex === index }">
+            <i :class="link.icon"></i>
+            <span>{{ link.label }}</span>
+            <i class="bi bi-chevron-down"></i>
+          </button>
+          <ul class="sub-menu" :class="{ show: openSubMenuIndex === index }">
+            <div>
+              <li v-for="(subLink, subIndex) in link.subLinks" :key="subIndex">
+                <router-link :to="subLink.to">
+                  <i :class="subLink.icon"></i> {{ subLink.label }}
+                </router-link>
+              </li>
+            </div>
+          </ul>
+        </li>
+        
+        <li v-else-if="link.type === 'action'">
+          <a href="#" @click.prevent="link.action">
+            <i :class="link.icon"></i>
+            <span>{{ link.label }}</span>
+          </a>
+        </li>
+      </template>
     </ul>
   </nav>
 </template>
 
 <script setup>
+import router from '@/router'
+import { showQuickConfirm, showToast } from '@/utils/swalHelper'
 import { ref, watch } from 'vue'
 
 const props = defineProps({
@@ -70,6 +56,73 @@ const props = defineProps({
 })
 const emit = defineEmits(['toggleSidebar'])
 const openSubMenuIndex = ref(null)
+
+// Danh sách các link sidebar
+const sidebarLinks = [
+  {
+    type: 'link',
+    to: '/admin/account',
+    icon: 'bi bi-person-circle',
+    label: 'Tài khoản'
+  },
+  {
+    type: 'link',
+    to: '/admin/dashboard',
+    icon: 'bi bi-bar-chart',
+    label: 'Bảng điều khiển'
+  },
+  {
+    type: 'link',
+    to: '/admin/order',
+    icon: 'bi bi-box',
+    label: 'Đơn hàng'
+  },
+  {
+    type: 'submenu',
+    icon: 'bi bi-gear',
+    label: 'Quản lý',
+    subLinks: [
+      { to: '/admin/user', icon: 'bi bi-people', label: 'Người dùng' },
+      { to: '/admin/product', icon: 'bi bi-box', label: 'Sản phẩm' },
+      { to: '/admin/book', icon: 'bi bi-book', label: 'Sách' },
+      { to: '/admin/author', icon: 'bi bi-pen', label: 'Tác giả' },
+      { to: '/admin/review', icon: 'bi bi-chat-dots', label: 'Đánh giá' },
+      { to: '/admin/flash-sale', icon: 'bi bi-lightning', label: 'Flash Sale' },
+      { to: '/admin/category', icon: 'bi bi-tags', label: 'Thể loại' },
+      { to: '/admin/voucher', icon: 'bi bi-ticket', label: 'Voucher' },
+      { to: '/admin/supplier', icon: 'bi bi-truck', label: 'Nhà cung cấp' },
+      { to: '/admin/rank', icon: 'bi bi-star', label: 'Hạng' },
+      { to: '/admin/point', icon: 'bi bi-coin', label: 'Điểm' },
+    ]
+  },
+  {
+    type: 'submenu',
+    icon: 'bi bi-calendar-event',
+    label: 'Sự kiện',
+    subLinks: [
+      { to: '/admin/event', icon: 'bi bi-calendar-check', label: 'Quản lý sự kiện' },
+      { to: '/admin/event-category', icon: 'bi bi-calendar3', label: 'Danh mục sự kiện' },
+      { to: '/admin/event-gift', icon: 'bi bi-gift', label: 'Quà tặng sự kiện' },
+      { to: '/admin/event-gift-claim', icon: 'bi bi-gift-fill', label: 'Nhận quà sự kiện' },
+      { to: '/admin/event-history', icon: 'bi bi-clock-history', label: 'Lịch sử sự kiện' },
+      { to: '/admin/event-participant', icon: 'bi bi-people-fill', label: 'Người tham gia sự kiện' },
+    ]
+  },
+  {
+    type: 'link',
+    to: '/admin/notification',
+    icon: 'bi bi-bell',
+    label: 'Thông báo'
+  },
+  {
+    type: 'action',
+    icon: 'bi bi-box-arrow-right',
+    label: 'Đăng xuất',
+    action: () => {
+      handleLogout()
+    } // TODO: Thêm logic đăng xuất
+  }
+]
 
 function toggleSidebar() {
   emit('toggleSidebar', !props.isSidebarClosed)
@@ -83,6 +136,15 @@ function toggleSubMenu(idx) {
     openSubMenuIndex.value = idx
     if (props.isSidebarClosed) emit('toggleSidebar', false)
   }
+}
+
+const handleLogout = () => {
+  showQuickConfirm('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất không?', 'question', 'Đăng xuất', 'Hủy', 'btn-danger', 'btn-secondary').then((result) => {
+    if (result.isConfirmed) {
+      showToast('success', 'Đăng xuất thành công');
+      router.push('/login');
+    }
+  });
 }
 </script>
 
@@ -99,7 +161,8 @@ function toggleSubMenu(idx) {
   top: 0;
   align-self: start;
   transition: 300ms ease-in-out;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   text-wrap: nowrap;
 }
 #sidebar.close {

@@ -22,8 +22,8 @@ body {
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
+/* ::-webkit-scrollbar {
+    width: 0px;
 }
 
 ::-webkit-scrollbar-track {
@@ -37,5 +37,5 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
     background: #c82333;
-}
+} */
 </style>
