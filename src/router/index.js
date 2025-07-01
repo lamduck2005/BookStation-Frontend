@@ -30,7 +30,7 @@ import EventGift from "@/views/admin/views-admin/EventGift.vue";
 import EventParticipant from "@/views/admin/views-admin/EventParticipant.vue";
 import EventGiftClaim from "@/views/admin/views-admin/EventGiftClaim.vue";
 import EventHistory from "@/views/admin/views-admin/EventHistory.vue";
- 
+
 import LoginPage from "@/views/LoginPage.vue";
 
 const router = createRouter({
@@ -107,13 +107,8 @@ const router = createRouter({
           component: User,
         },
         {
-          path: "product",
-          name: "Product",
-          component: Product,
-        },
-        {
           path: "book",
-          name: "book", 
+          name: "Book",
           component: Book,
         },
         {

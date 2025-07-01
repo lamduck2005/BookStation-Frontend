@@ -27,8 +27,8 @@
           <label class="form-label">Trạng thái</label>
           <select class="form-select" v-model="selectedStatus">
             <option value="">Tất cả trạng thái</option>
-            <option value="active">Hoạt động</option>
-            <option value="banned">Bị khóa</option>
+            <option value="ACTIVE">Hoạt động</option>
+            <option value="BANNED">Bị khóa</option>
           </select>
         </div>
         <div class="col-md-4">
@@ -91,7 +91,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(user, idx) in pagedUsers" :key="user.user_id">
+            <tr v-for="(user, idx) in users" :key="user.user_id">
               <td>{{ user.user_id }}</td>
               <td>{{ user.full_name }}</td>
               <td>{{ user.email }}</td>
@@ -125,7 +125,7 @@
                 </button>
               </td>
             </tr>
-            <tr v-if="pagedUsers.length === 0">
+            <tr v-if="users.length === 0">
               <td colspan="11" class="text-center text-muted">
                 Không có dữ liệu
               </td>
@@ -136,10 +136,10 @@
         <Pagination
           :page-number="currentPage"
           :total-pages="totalPages"
-          :is-last-page="isLastPage"
+          :is-last-page="currentPage >= totalPages - 1"
           :page-size="pageSize"
           :items-per-page-options="itemsPerPageOptions"
-          :total-elements="filteredUsers.length"
+          :total-elements="totalElements"
           @prev="handlePrev"
           @next="handleNext"
           @update:pageSize="handlePageSizeChange"
@@ -233,8 +233,8 @@
                     >Trạng thái <span class="text-danger">*</span></label
                   >
                   <select class="form-select" v-model="newUser.status" required>
-                    <option value="active">Hoạt động</option>
-                    <option value="banned">Bị khóa</option>
+                    <option value="ACTIVE">Hoạt động</option>
+                    <option value="BANNED">Bị khóa</option>
                   </select>
                 </div>
                 <div class="col-12">
@@ -282,162 +282,29 @@
 </template>
 <script setup>
 import Pagination from "@/components/common/Pagination.vue";
-import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { Modal } from "bootstrap";
 import Swal from "sweetalert2";
+import {
+  fetchUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  toggleUserStatus,
+} from "@/services/admin/user";
 
-const userList = ref([
-  {
-    user_id: 1,
-    email: "nguyenvan.an@gmail.com",
-    full_name: "Nguyễn Văn An",
-    phone_number: "0901234567",
-    status: "active",
-    created_at: "2024-06-10",
-    updated_at: "2024-06-10",
-    updated_by: "admin",
-    total_point: 120,
-    current_rank_id: 1,
-    total_spent: 1500000,
-    role_id: 2,
-  },
-  {
-    user_id: 2,
-    email: "nguyenhalinh@gmail.com",
-    full_name: "Nguyễn Hà Linh",
-    phone_number: "0912345678",
-    status: "inactive",
-    created_at: "2024-05-25",
-    updated_at: "2025-06-08",
-    updated_by: "admin",
-    total_point: 80,
-    current_rank_id: 2,
-    total_spent: 2000000,
-    role_id: 3,
-  },
-  {
-    user_id: 3,
-    email: "phanlamhuy@gmail.com",
-    full_name: "Phan Lâm Huy",
-    phone_number: "0987654321",
-    status: "active",
-    created_at: "2024-05-15",
-    updated_at: "2025-06-07",
-    updated_by: "admin",
-    total_point: 300,
-    current_rank_id: 1,
-    total_spent: 3500000,
-    role_id: 1,
-  },
-  {
-    user_id: 4,
-    email: "phamthanh.hoa@gmail.com",
-    full_name: "Phạm Thanh Hoa",
-    phone_number: "0934567890",
-    status: "inactive",
-    created_at: "2025-04-20",
-    updated_at: "2025-06-05",
-    updated_by: "admin",
-    total_point: 60,
-    current_rank_id: 2,
-    total_spent: 800000,
-    role_id: 2,
-  },
-  {
-    user_id: 5,
-    email: "hoangminh.khoa@gmail.com",
-    full_name: "Hoàng Minh Khoa",
-    phone_number: "0978123456",
-    status: "active",
-    created_at: "2024-03-10",
-    updated_at: "2024-06-03",
-    updated_by: "admin",
-    total_point: 200,
-    current_rank_id: 1,
-    total_spent: 5000000,
-    role_id: 2,
-  },
-  {
-    user_id: 6,
-    email: "dotruc.linh@gmail.com",
-    full_name: "Đỗ Trúc Linh",
-    phone_number: "0965432187",
-    status: "inactive",
-    created_at: "2024-02-15",
-    updated_at: "2024-05-30",
-    updated_by: "admin",
-    total_point: 30,
-    current_rank_id: 2,
-    total_spent: 400000,
-    role_id: 3,
-  },
-  {
-    user_id: 7,
-    email: "ngovan.hieu@gmail.com",
-    full_name: "Ngô Văn Hiếu",
-    phone_number: "0943218765",
-    status: "active",
-    created_at: "2024-01-25",
-    updated_at: "2024-05-20",
-    updated_by: "admin",
-    total_point: 170,
-    current_rank_id: 1,
-    total_spent: 4200000,
-    role_id: 2,
-  },
-  {
-    user_id: 8,
-    email: "buithu.ha@gmail.com",
-    full_name: "Bùi Thu Hà",
-    phone_number: "0932187654",
-    status: "inactive",
-    created_at: "2024-01-10",
-    updated_at: "2024-05-10",
-    updated_by: "admin",
-    total_point: 55,
-    current_rank_id: 2,
-    total_spent: 600000,
-    role_id: 3,
-  },
-  {
-    user_id: 9,
-    email: "vuminh.tam@gmail.com",
-    full_name: "Vũ Minh Tâm",
-    phone_number: "0921876543",
-    status: "active",
-    created_at: "2024-06-01",
-    updated_at: "2024-06-09",
-    updated_by: "admin",
-    total_point: 90,
-    current_rank_id: 1,
-    total_spent: 2100000,
-    role_id: 2,
-  },
-  {
-    user_id: 10,
-    email: "trinhthikieu@gmail.com",
-    full_name: "Trịnh Thị Kiều",
-    phone_number: "0918765432",
-    status: "inactive",
-    created_at: "2024-05-05",
-    updated_at: "2024-06-06",
-    updated_by: "admin",
-    total_point: 40,
-    current_rank_id: 2,
-    total_spent: 700000,
-    role_id: 2,
-  },
-]);
-
+const users = ref([]);
+const totalElements = ref(0);
+const totalPages = ref(1);
+const currentPage = ref(0);
+const pageSize = ref(10);
+const itemsPerPageOptions = ref([5, 10, 25, 50]);
 const searchQuery = ref("");
 const selectedStatus = ref("");
 const selectedRole = ref("");
 const isEditMode = ref(false);
-const currentPage = ref(0);
-const pageSize = ref(10);
-const itemsPerPageOptions = ref([5, 10, 25, 50]);
 const newUser = ref({});
-const modalElement = ref(null);
+const loading = ref(false);
 
 const roleMap = {
   1: "Admin",
@@ -457,13 +324,20 @@ const roleBadgeClass = (roleId) => {
   }
 };
 const statusBadgeClass = (status) => {
-  if (status === "active") return "bg-success-subtle text-success";
-  if (status === "banned") return "bg-danger-subtle text-danger";
+  if (status === "ACTIVE") return "bg-success-subtle text-success";
+  if (status === "BANNED") return "bg-danger-subtle text-danger";
   return "bg-secondary";
 };
-// const statusText = (status) =>
-//   status === "active" ? "Hoạt động" : status === "banned" ? "Bị khóa" : status;
-
+const statusText = (status) => {
+  switch (status) {
+    case "ACTIVE":
+      return "Hoạt động";
+    case "BANNED":
+      return "Bị khóa";
+    default:
+      return status;
+  }
+};
 function formatCurrency(val) {
   if (!val) return "-";
   return Number(val).toLocaleString("vi-VN", {
@@ -478,36 +352,62 @@ function formatDate(val) {
   return d.toLocaleDateString("vi-VN");
 }
 
-const filteredUsers = computed(() => {
-  return userList.value.filter(
-    (u) =>
-      (!searchQuery.value ||
-        u.full_name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        u.email?.toLowerCase().includes(searchQuery.value.toLowerCase())) &&
-      (!selectedStatus.value || u.status === selectedStatus.value) &&
-      (!selectedRole.value || String(u.role_id) === String(selectedRole.value))
-  );
+function getUserParams() {
+  return {
+    page: currentPage.value,
+    size: pageSize.value,
+    full_name: searchQuery.value || undefined,
+    status: selectedStatus.value || undefined,
+    role_id: selectedRole.value || undefined,
+  };
+}
+
+async function loadUsers() {
+  loading.value = true;
+  try {
+    const res = await fetchUsers(getUserParams());
+    if (res.data && res.data.data) {
+      users.value = res.data.data.content;
+      totalElements.value = res.data.data.totalElements;
+      totalPages.value = res.data.data.totalPages;
+    } else {
+      users.value = [];
+      totalElements.value = 0;
+      totalPages.value = 1;
+    }
+  } catch (e) {
+    users.value = [];
+    totalElements.value = 0;
+    totalPages.value = 1;
+    Swal.fire({ icon: "error", title: "Lỗi tải dữ liệu người dùng!" });
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(loadUsers);
+
+watch([searchQuery, selectedStatus, selectedRole, pageSize], () => {
+  currentPage.value = 0;
+  loadUsers();
 });
-const totalPages = computed(
-  () => Math.ceil(filteredUsers.value.length / pageSize.value) || 1
-);
-const isLastPage = computed(() => currentPage.value >= totalPages.value - 1);
-const pagedUsers = computed(() =>
-  filteredUsers.value.slice(
-    currentPage.value * pageSize.value,
-    (currentPage.value + 1) * pageSize.value
-  )
-);
 
 function handlePrev() {
-  if (currentPage.value > 0) currentPage.value--;
+  if (currentPage.value > 0) {
+    currentPage.value--;
+    loadUsers();
+  }
 }
 function handleNext() {
-  if (!isLastPage.value) currentPage.value++;
+  if (currentPage.value < totalPages.value - 1) {
+    currentPage.value++;
+    loadUsers();
+  }
 }
 function handlePageSizeChange(newSize) {
   pageSize.value = newSize;
   currentPage.value = 0;
+  loadUsers();
 }
 
 function openAddModal() {
@@ -517,7 +417,7 @@ function openAddModal() {
     email: "",
     phone_number: "",
     role_id: "",
-    status: "active",
+    status: "ACTIVE",
     total_spent: 0,
     total_point: 0,
   };
@@ -533,7 +433,7 @@ function showUserModal() {
   const modal = Modal.getOrCreateInstance(el);
   modal.show();
 }
-function handleSubmitUser() {
+async function handleSubmitUser() {
   // Validate
   if (
     !newUser.value.full_name ||
@@ -541,90 +441,36 @@ function handleSubmitUser() {
     !newUser.value.role_id ||
     !newUser.value.status
   ) {
-    Swal.fire({
-      toast: true,
-      position: "top-end",
-      icon: "error",
-      title: "Vui lòng nhập đủ thông tin bắt buộc!",
-      showConfirmButton: false,
-      timer: 2000,
-    });
+    Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Vui lòng nhập đủ thông tin bắt buộc!", showConfirmButton: false, timer: 2000 });
     return;
   }
-  // Email validate
   if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(newUser.value.email)) {
-    Swal.fire({
-      toast: true,
-      position: "top-end",
-      icon: "error",
-      title: "Email không hợp lệ!",
-      showConfirmButton: false,
-      timer: 2000,
-    });
+    Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Email không hợp lệ!", showConfirmButton: false, timer: 2000 });
     return;
   }
-  // Phone validate (optional, only if entered)
-  if (
-    newUser.value.phone_number &&
-    !/^0\d{9,10}$/.test(newUser.value.phone_number)
-  ) {
-    Swal.fire({
-      toast: true,
-      position: "top-end",
-      icon: "error",
-      title: "Số điện thoại không hợp lệ (bắt đầu bằng 0, 10-11 số)!",
-      showConfirmButton: false,
-      timer: 2000,
-    });
+  if (newUser.value.phone_number && !/^0\d{9,10}$/.test(newUser.value.phone_number)) {
+    Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Số điện thoại không hợp lệ (bắt đầu bằng 0, 10-11 số)!", showConfirmButton: false, timer: 2000 });
     return;
   }
-  // Số âm
-  if (
-    Number(newUser.value.total_spent) < 0 ||
-    Number(newUser.value.total_point) < 0
-  ) {
-    Swal.fire({
-      toast: true,
-      position: "top-end",
-      icon: "error",
-      title: "Tổng chi tiêu và tổng điểm phải >= 0!",
-      showConfirmButton: false,
-      timer: 2000,
-    });
+  if (Number(newUser.value.total_spent) < 0 || Number(newUser.value.total_point) < 0) {
+    Swal.fire({ toast: true, position: "top-end", icon: "error", title: "Tổng chi tiêu và tổng điểm phải >= 0!", showConfirmButton: false, timer: 2000 });
     return;
   }
-  if (isEditMode.value) {
-    // Update
-    const idx = userList.value.findIndex(
-      (u) => u.user_id === newUser.value.user_id
-    );
-    if (idx !== -1) userList.value[idx] = { ...newUser.value };
-    Swal.fire({
-      toast: true,
-      position: "top-end",
-      icon: "success",
-      title: "Cập nhật thành công!",
-      showConfirmButton: false,
-      timer: 1500,
-    });
-  } else {
-    // Add
-    newUser.value.user_id = Date.now();
-    newUser.value.created_at = new Date();
-    newUser.value.updated_at = new Date();
-    userList.value.unshift({ ...newUser.value });
-    Swal.fire({
-      toast: true,
-      position: "top-end",
-      icon: "success",
-      title: "Thêm mới thành công!",
-      showConfirmButton: false,
-      timer: 1500,
-    });
+  try {
+    if (isEditMode.value) {
+      await updateUser(newUser.value.user_id, newUser.value);
+      Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Cập nhật thành công!", showConfirmButton: false, timer: 1500 });
+    } else {
+      await createUser(newUser.value);
+      Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Thêm mới thành công!", showConfirmButton: false, timer: 1500 });
+    }
+    Modal.getOrCreateInstance(document.getElementById("userModal")).hide();
+    loadUsers();
+  } catch (e) {
+    Swal.fire({ icon: "error", title: "Lỗi thao tác người dùng!" });
   }
-  Modal.getOrCreateInstance(document.getElementById("userModal")).hide();
 }
-function confirmDelete(user) {
+async function confirmDelete(user) {
   Swal.fire({
     title: "Bạn chắc chắn muốn xóa?",
     text: `Xóa người dùng: ${user.full_name}`,
@@ -632,84 +478,26 @@ function confirmDelete(user) {
     showCancelButton: true,
     confirmButtonText: "Xóa",
     cancelButtonText: "Hủy",
-  }).then((result) => {
+  }).then(async (result) => {
     if (result.isConfirmed) {
-      userList.value = userList.value.filter((u) => u.user_id !== user.user_id);
-      Swal.fire({
-        toast: true,
-        position: "top-end",
-        icon: "success",
-        title: "Đã xóa!",
-        showConfirmButton: false,
-        timer: 1500,
-      });
+      try {
+        await deleteUser(user.user_id);
+        Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Đã xóa!", showConfirmButton: false, timer: 1500 });
+        loadUsers();
+      } catch (e) {
+        Swal.fire({ icon: "error", title: "Lỗi xóa người dùng!" });
+      }
     }
   });
 }
-
-watch([searchQuery, selectedStatus, selectedRole, pageSize], () => {
-  currentPage.value = 0;
-});
-
-const closeModalOnOutsideClick = (event) => {
-  if (event.target.classList.contains("modal-overlay")) {
-    closeModal();
+async function handleToggleUserStatus(user) {
+  try {
+    await toggleUserStatus(user.user_id);
+    Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Đã đổi trạng thái!", showConfirmButton: false, timer: 1200 });
+    loadUsers();
+  } catch (e) {
+    Swal.fire({ icon: "error", title: "Lỗi đổi trạng thái!" });
   }
-};
-
-const closeDetailModalOnOutsideClick = (event) => {
-  if (event.target.classList.contains("modal-overlay")) {
-    showDetailModal.value = false;
-  }
-};
-
-const viewUserDetail = (user) => {
-  newUser.value = { ...user };
-  showDetailModal.value = true;
-  isEditMode.value = false;
-};
-
-const editUser = (user) => {
-  newUser.value = { ...user };
-  showModal.value = true;
-  isEditMode.value = true;
-};
-
-const closeModal = () => {
-  showModal.value = false;
-};
-
-const saveUser = () => {
-  // Update user data logic here
-  showToast("success", "Cập nhật người dùng: " + newUser.value.user_id);
-  closeModal();
-};
-
-const statusText = (status) => {
-  switch (status) {
-    case "active":
-      return "Hoạt động";
-    case "inactive":
-      return "Không hoạt động";
-    default:
-      return status;
-  }
-};
-
-const statusClass = (status) => {
-  switch (status) {
-    case "active":
-      return "badge bg-success-subtle text-success";
-    case "inactive":
-      return "badge bg-secondary-subtle text-secondary";
-    default:
-      return "badge bg-secondary";
-  }
-};
-
-// Toggle trạng thái user
-function toggleUserStatus(user) {
-  user.status = user.status === "active" ? "inactive" : "active";
 }
 </script>
 <style scoped>
