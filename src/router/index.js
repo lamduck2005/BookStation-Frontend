@@ -8,6 +8,7 @@ import Cart from "@/views/client/Cart.vue";
 import DetailProduct from "@/views/client/DetailProduct.vue";
 import User from "@/views/admin/views-admin/User.vue";
 import Product from "@/views/admin/views-admin/Product.vue";
+import Book from "@/views/admin/views-admin/Book.vue";
 import Author from "@/views/admin/views-admin/Author.vue";
 import Review from "@/views/admin/views-admin/Review.vue";
 import Flash_Sale from "@/views/admin/views-admin/FlashSale.vue";
@@ -109,6 +110,11 @@ const router = createRouter({
           path: "product",
           name: "product",
           component: Product,
+        },
+        {
+          path: "book",
+          name: "book", 
+          component: Book,
         },
         {
           path: "author",

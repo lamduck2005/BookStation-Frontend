@@ -83,7 +83,8 @@ const sidebarLinks = [
     label: 'Quản lý',
     subLinks: [
       { to: '/admin/user', icon: 'bi bi-people', label: 'Người dùng' },
-      { to: '/admin/product', icon: 'bi bi-book', label: 'Sách' },
+      { to: '/admin/product', icon: 'bi bi-box', label: 'Sản phẩm' },
+      { to: '/admin/book', icon: 'bi bi-book', label: 'Sách' },
       { to: '/admin/author', icon: 'bi bi-pen', label: 'Tác giả' },
       { to: '/admin/review', icon: 'bi bi-chat-dots', label: 'Đánh giá' },
       { to: '/admin/flash-sale', icon: 'bi bi-lightning', label: 'Flash Sale' },

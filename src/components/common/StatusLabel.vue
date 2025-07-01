@@ -1,9 +1,16 @@
 <template>
-  <span :class="finalStatusClass">{{ finalStatusText }}</span>
+  <span 
+    :class="finalStatusClass"
+    :style="clickable ? 'cursor: pointer;' : ''"
+    @click="handleClick"
+  >
+    {{ finalStatusText }}
+  </span>
 </template>
 
 <script setup>
 import { computed } from 'vue';
+
 const props = defineProps({
   status: {
     type: [Number, String, Boolean],
@@ -24,8 +31,14 @@ const props = defineProps({
   statusClass: {
     type: String,
     default: ''
+  },
+  clickable: {
+    type: Boolean,
+    default: false
   }
 });
+
+const emit = defineEmits(['toggle']);
 
 const finalStatusClass = computed(() => {
   // Nếu có statusClass tùy chỉnh thì dùng nó
@@ -46,6 +59,12 @@ const finalStatusText = computed(() => {
   // Ngược lại dùng logic cũ cho số
   return Number(props.status) === 1 ? props.activeText : props.inactiveText;
 });
+
+const handleClick = () => {
+  if (props.clickable) {
+    emit('toggle');
+  }
+};
 </script>
 
 <style scoped>
