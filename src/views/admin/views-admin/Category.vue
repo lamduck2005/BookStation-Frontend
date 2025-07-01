@@ -5,7 +5,7 @@
       Admin / <span style="color: black; font-weight: bold">Category</span>
     </div>
     <!-- Nút thêm danh mục mới -->
-    
+
     <!-- Bộ lọc -->
     <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">
       <div
@@ -174,11 +174,7 @@
               <label class="form-label">Danh Mục Cha</label>
               <select v-model="category.parentCategory.id" class="form-select">
                 <option :value="null">Chọn danh mục</option>
-                <option
-                  v-for="cat in dataGetAllParentCategories"
-                  :key="cat.id"
-                  :value="cat.id"
-                >
+                <option v-for="cat in dataGetAll" :key="cat.id" :value="cat.id">
                   {{ cat.categoryName }}
                 </option>
               </select>
@@ -312,11 +308,7 @@
               <label class="form-label">Danh Mục Cha</label>
               <select v-model="editData.parentCategory" class="form-select">
                 <option :value="null">Chọn danh mục</option>
-                <option
-                  v-for="cat in dataGetAllParentCategories"
-                  :key="cat.id"
-                  :value="cat"
-                >
+                <option v-for="cat in dataGetAll" :key="cat.id" :value="cat">
                   {{ cat.categoryName }}
                 </option>
               </select>
@@ -362,6 +354,7 @@ import {
   addCategory,
   deleteCategory,
   getAllCategories,
+  getAllExceptId,
   getAllParentCategories,
   getCategoryById,
   updateCategory,
@@ -371,7 +364,7 @@ import EditButton from "@/components/common/EditButton.vue";
 import DeleteButton from "@/components/common/DeleteButton.vue";
 
 const categories = ref([]);
-const dataGetAllParentCategories = ref([]);
+const dataGetAll = ref([]);
 const showModal = ref(false);
 const category = ref({
   categoryName: "", // Tên danh mục
@@ -404,16 +397,20 @@ const selectedStatus = ref("");
 const toggleCollapse = (category) => {
   category.isOpen = !category.isOpen;
 };
-onMounted(async () => {
+const fetchCategory = async () => {
   try {
     const getAll = await getAllCategories();
-    dataGetAllParentCategories.value = getAll;
+    dataGetAll.value = getAll;
     const data = await getAllParentCategories();
     categories.value = data;
     console.log("Danh sách danh mục sau khi xử lý:", categories.value); // Log dữ liệu đã xử lý
   } catch (error) {
     console.error("Lỗi khi tải danh sách danh mục:", error);
   }
+};
+
+onMounted(() => {
+  fetchCategory();
 });
 
 const viewCategory = async (id) => {
@@ -448,7 +445,7 @@ const add = async () => {
   try {
     console.log("Payload sent to BE:", payload);
     await addCategory(payload);
-    categories.value = await getAllParentCategories();
+       fetchCategory(); // Cập nhật lại danh sách danh mục
     closeModal();
     Swal.fire({
       icon: "success",
@@ -490,6 +487,7 @@ const closeDetailModal = () => {
 };
 const editCategory = async (id) => {
   try {
+    dataGetAll.value = await getAllExceptId(id);
     editData.value = await getCategoryById(id);
     console.log("Edit Data:", editData.value);
     showEditModal.value = true;
@@ -501,7 +499,7 @@ const editCategory = async (id) => {
 const handleUpdateCategory = async (id, category) => {
   try {
     await updateCategory(id, category);
-    categories.value = await getAllParentCategories();
+   fetchCategory(); // Cập nhật lại danh sách danh mục
     showEditModal.value = false;
     Swal.fire({
       icon: "success",
@@ -538,7 +536,8 @@ const handleDeleteCategory = async (id) => {
   if (result.isConfirmed) {
     try {
       await deleteCategory(id);
-      categories.value = await getAllCategories();
+       fetchCategory(); // Cập nhật lại danh sách danh mục
+
       Swal.fire({
         icon: "success",
         title: "Xóa danh mục thành công!",

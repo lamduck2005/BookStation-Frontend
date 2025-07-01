@@ -17,6 +17,15 @@ export const getAllCategories = async () => {
     throw error;
   }
 };
+export const getAllExceptId = async (id) => {
+try {
+  const { data } = await apiClient.get(`/categories/except/${id}`);
+   return data;
+} catch (error) {
+   console.error("Error fetching categories:", error);
+    throw error;
+}
+}
 export const getAllParentCategories  = async () => {
   try {
     const { data } = await apiClient.get("/categories/parentcategories");

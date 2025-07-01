@@ -7,12 +7,11 @@ const apiClient = axios.create({
 });
 
 // Lấy tất cả tác giả
-export const getAllAuthors = async () => {
+export const getAllAuthors = async (params={}) => {
   try {
-    const response = await apiClient.get("/authors");
-    const {status,message,data} = response.data;
-    console.log("Fetched authors:", data);
-    return data;
+    const response = await apiClient.get("/authors",{params});
+    console.log("Fetched authors:", response.data.data);
+    return response.data.data; // Assuming the data is in the 'data' field of the response
   } catch (error) {
     console.error("Error fetching authors:", error);
     throw error;

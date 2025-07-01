@@ -80,6 +80,19 @@
         </table>
       </div>
     </div>
+
+    <!-- Phân trang -->
+    <Pagination
+      :page-number="currentPage"
+      :total-pages="totalPages"
+      :is-last-page="isLastPage"
+      :page-size="pageSize"
+      :items-per-page-options="itemsPerPageOptions"
+      :total-elements="totalElements"
+      @prev="handlePrev"
+      @next="handleNext"
+      @update:pageSize="handlePageSizeChange"
+    />
   </div>
   <!-- Form nổi thêm tác giả -->
   <div
@@ -122,6 +135,13 @@
                 class="form-control"
                 placeholder="Nhập tiểu sử"
               ></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Trạng thái</label>
+              <select v-model="author.status" class="form-select">
+                <option :value="1">Hoạt động</option>
+                <option :value="0">Không hoạt động</option>
+              </select>
             </div>
             <div class="mb-3">
               <label class="form-label">Ngày sinh</label>
@@ -182,6 +202,16 @@
           </div>
           <div class="mb-2"><b>Tiểu sử:</b> {{ detailAuthor.biography }}</div>
           <div class="mb-2"><b>Ngày sinh:</b> {{ detailAuthor.birthDate }}</div>
+          <div class="mb-2">
+            <b>Trạng thái:</b>
+            <span
+              :class="
+                detailAuthor.status === 1 ? 'text-success' : 'text-danger'
+              "
+            >
+              {{ detailAuthor.status === 1 ? "Hoạt động" : "Không hoạt động" }}
+            </span>
+          </div>
           <div class="mb-2">
             <b>Ngày tạo:</b> {{ formatDate(detailAuthor.createdAt) }}
           </div>
@@ -252,6 +282,13 @@
               ></textarea>
             </div>
             <div class="mb-3">
+              <label class="form-label">Trạng thái</label>
+              <select v-model="editData.status" class="form-select">
+                <option :value="1">Hoạt động</option>
+                <option :value="0">Không hoạt động</option>
+              </select>
+            </div>
+            <div class="mb-3">
               <label class="form-label">Ngày sinh</label>
               <input
                 v-model="editData.birthDate"
@@ -284,7 +321,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import {
   getAllAuthors,
   getAuthorById,
@@ -297,6 +334,8 @@ import Swal from "sweetalert2";
 import AddButton from "@/components/common/AddButton.vue";
 import EditButton from "@/components/common/EditButton.vue";
 import DeleteButton from "@/components/common/DeleteButton.vue";
+import Pagination from "@/components/common/Pagination.vue";
+import { debounce } from "@/utils/utils";
 
 const authors = ref([]);
 const showModal = ref(false);
@@ -304,12 +343,14 @@ const author = ref({
   authorName: "",
   biography: "",
   birthDate: "",
+  status: 1, // mặc định là 1
 });
 const detailAuthor = ref({
   id: "",
   authorName: "",
   biography: "",
   birthDate: "",
+  status: 1,
   createdAt: "",
   updatedAt: "",
   createdBy: "",
@@ -322,10 +363,18 @@ const editData = ref({
   authorName: "",
   biography: "",
   birthDate: "",
+  status: 1,
 });
+const currentPage = ref(0);
+const pageSize = ref(5);
+const totalPages = ref(1);
+const totalElements = ref(0);
+const itemsPerPageOptions = ref([5, 10, 25, 50]);
+const isLastPage = ref(false);
+const searchQuery = ref("");
 
-onMounted(async () => {
-  authors.value = await getAllAuthors();
+onMounted(() => {
+  fetchAuthors();
 });
 
 const viewAuthor = async (id) => {
@@ -354,7 +403,8 @@ const add = async () => {
   try {
     await addAuthor(author.value);
 
-    authors.value = await getAllAuthors();
+    fetchAuthors();
+
     closeModal();
     Swal.fire({
       icon: "success",
@@ -374,6 +424,7 @@ function resetForm() {
     authorName: "",
     biography: "",
     birthDate: "",
+    status: 1, // luôn mặc định là 1
   };
 }
 
@@ -391,7 +442,8 @@ const editAuthor = async (id) => {
 const handleUpdateAuthor = async (id, author) => {
   try {
     await updateAuthor(id, author);
-    authors.value = await getAllAuthors();
+    fetchAuthors();
+
     showEditModal.value = false;
     Swal.fire({
       icon: "success",
@@ -428,7 +480,8 @@ const handleDeleteAuthor = async (id) => {
   if (result.isConfirmed) {
     try {
       await deleteAuthor(id);
-      authors.value = await getAllAuthors();
+      fetchAuthors();
+
       Swal.fire({
         icon: "success",
         title: "Xóa tác giả thành công!",
@@ -458,6 +511,44 @@ function formatDate(dateStr) {
   if (!dateStr) return "";
   return dateStr.split("T")[0];
 }
+
+// Hàm lấy danh sách tác giả có phân trang
+const fetchAuthors = async () => {
+  try {
+    const params = {
+      page: currentPage.value,
+      size: pageSize.value,
+      name: searchQuery.value || undefined,
+    };
+    const response = await getAllAuthors(params);
+    const data = response.data ? response.data : response;
+    authors.value = data.content || data;
+    totalPages.value = data.totalPages ?? 1;
+    totalElements.value = data.totalElements ?? authors.value.length;
+    currentPage.value = data.page ?? currentPage.value;
+    pageSize.value = data.size ?? pageSize.value;
+    isLastPage.value = currentPage.value >= totalPages.value - 1;
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách tác giả:", error);
+  }
+};
+
+// Watch để tự động fetch khi thay đổi filter hoặc phân trang
+watch([searchQuery, pageSize, currentPage], () => {
+  debounce(fetchAuthors(), 5000);
+});
+
+// Hàm chuyển trang
+const handlePrev = () => {
+  if (currentPage.value > 0) currentPage.value--;
+};
+const handleNext = () => {
+  if (!isLastPage.value) currentPage.value++;
+};
+const handlePageSizeChange = (newSize) => {
+  pageSize.value = newSize;
+  currentPage.value = 0;
+};
 </script>
 
 <style scoped>
