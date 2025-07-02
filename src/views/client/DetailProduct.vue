@@ -24,6 +24,7 @@
                       <div class="col-6">
                         <button
                           class="btn btn-danger btn-lg w-100 fw-bold buy-now-btn"
+                          @click="buyNow"
                         >
                           Mua ngay
                         </button>
@@ -124,7 +125,17 @@
     </div>
 </template>
 
-<script></script>
+<script>
+export default {
+  name: 'DetailProduct',
+  methods: {
+    buyNow() {
+      // Chuyển hướng sang trang giỏ hàng
+      this.$router.push('/cart');
+    }
+  }
+}
+</script>
 
 <style scoped>
 .product-box {

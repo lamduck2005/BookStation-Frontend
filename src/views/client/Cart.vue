@@ -54,7 +54,7 @@
             <span class="fw-bold" style="font-size: 1.1rem;">Tổng Số Tiền (gồm VAT)</span>
             <span class="text-danger fw-bold" style="font-size: 1.6rem;">550.000 đ</span>
           </div>
-          <button class="btn btn-danger w-100 fw-bold py-2 mb-2" style="font-size: 1.2rem; border-radius: 12px;">
+          <button class="btn btn-danger w-100 fw-bold py-2 mb-2" style="font-size: 1.2rem; border-radius: 12px;" @click="goToCheckout">
             THANH TOÁN
           </button>
           <div class="text-center" style="font-size: 0.95rem; color: #d32f2f;">
@@ -66,7 +66,17 @@
   </div>
 </template>
 
-
+<script>
+export default {
+  name: 'Cart',
+  methods: {
+    goToCheckout() {
+      // Chuyển hướng sang trang thanh toán
+      this.$router.push('/checkout');
+    }
+  }
+}
+</script>
 
 <style scoped>
 .cart-container {
