@@ -1,6 +1,10 @@
 import { createRouter, createWebHistory } from "vue-router";
-import AdminLayout from "../views/admin/AdminLayout.vue";
-import MainLayout from "../components/layout/MainLayout.vue";
+
+// Import layouts
+import AdminLayout from "@/views/admin/AdminLayout.vue";
+import MainLayout from "@/components/layout/MainLayout.vue";
+
+// Import client pages
 import HomePage from "@/views/client/HomePage.vue";
 import NotificationsPage from "@/views/client/NotificationsPage.vue";
 import DemoPage from "@/views/client/DemoPage.vue";
@@ -8,6 +12,23 @@ import CheckoutPage from "@/views/client/CheckoutPage.vue";
 import Cart from "@/views/client/Cart.vue";
 import DetailProduct from "@/views/client/DetailProduct.vue";
 import Trend from "@/views/client/Trend.vue";
+import LoginPage from "@/views/LoginPage.vue";
+
+// Import profile components
+import ProfileLayout from "@/views/client/profile/ProfileLayout.vue";
+import ProfileInfo from "@/views/client/profile/ProfileInfo.vue";
+import ProfileOrders from "@/views/client/profile/ProfileOrders.vue";
+import ProfileAddresses from "@/views/client/profile/ProfileAddresses.vue";
+import ProfileChangePassword from "@/views/client/profile/ProfileChangePassword.vue";
+import ProfileVouchers from "@/views/client/profile/ProfileVouchers.vue";
+import ProfileFPoint from "@/views/client/profile/ProfileFPoint.vue";
+import ProfileNotifications from "@/views/client/profile/ProfileNotifications.vue";
+import ProfileFavorites from "@/views/client/profile/ProfileFavorites.vue";
+import ProfileReviews from "@/views/client/profile/ProfileReviews.vue";
+import ProfileInvoice from "@/views/client/profile/ProfileInvoice.vue";
+import ProfileBenefits from "@/views/client/profile/ProfileBenefits.vue";
+
+// Import admin components
 import User from "@/views/admin/views-admin/User.vue";
 import Product from "@/views/admin/views-admin/Product.vue";
 import Book from "@/views/admin/views-admin/Book.vue";
@@ -32,10 +53,6 @@ import EventGift from "@/views/admin/views-admin/EventGift.vue";
 import EventParticipant from "@/views/admin/views-admin/EventParticipant.vue";
 import EventGiftClaim from "@/views/admin/views-admin/EventGiftClaim.vue";
 import EventHistory from "@/views/admin/views-admin/EventHistory.vue";
-
-import LoginPage from "@/views/LoginPage.vue";
-import Bog from "@/components/common/Bog.vue";
-import Infor from "@/components/common/bog/Infor.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -82,18 +99,79 @@ const router = createRouter({
           component: Trend,
         },
         {
-          path: "bog",
-          name: "bog",
-          component: Bog,
+          path: "profile",
+          name: "profile",
+          component: ProfileLayout,
+          redirect: "/profile/info", // Tự động chuyển đến profile info
           children: [
             {
               path: "info",
-              name: "info",
-              component: Infor,
-            }
-          ]
+              name: "profile-info",
+              component: ProfileInfo,
+            },
+            {
+              path: "orders",
+              name: "profile-orders",
+              component: ProfileOrders,
+            },
+            {
+              path: "addresses",
+              name: "profile-addresses",
+              component: ProfileAddresses,
+            },
+            {
+              path: "change-password",
+              name: "profile-change-password",
+              component: ProfileChangePassword,
+            },
+            {
+              path: "invoice",
+              name: "profile-invoice",
+              component: ProfileInvoice,
+            },
+            {
+              path: "benefits",
+              name: "profile-benefits",
+              component: ProfileBenefits,
+            },
+            {
+              path: "vouchers",
+              name: "profile-vouchers",
+              component: ProfileVouchers,
+            },
+            {
+              path: "fpoint",
+              name: "profile-fpoint",
+              component: ProfileFPoint,
+            },
+            {
+              path: "notifications",
+              name: "profile-notifications",
+              component: ProfileNotifications,
+            },
+            {
+              path: "favorites",
+              name: "profile-favorites",
+              component: ProfileFavorites,
+            },
+            {
+              path: "reviews",
+              name: "profile-reviews",
+              component: ProfileReviews,
+            },
+            {
+              path: "invoice",
+              name: "profile-invoice",
+              component: ProfileInvoice,
+            },
+            {
+              path: "benefits",
+              name: "profile-benefits",
+              component: ProfileBenefits,
+            },
+          ],
         },
-      ]
+      ],
     },
     // Login page - standalone without layout
     {
@@ -227,7 +305,6 @@ const router = createRouter({
           name: "event-history",
           component: EventHistory,
         },
-        
       ],
       // End - Admin routes
     },

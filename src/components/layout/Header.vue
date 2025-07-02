@@ -53,7 +53,7 @@
 
                         <!-- Account -->
                         <div class="d-flex flex-column align-items-center text-decoration-none text-dark">
-                            <RouterLink to="bog" class="text-dark">
+                            <RouterLink to="/profile" class="text-dark d-flex flex-column align-items-center text-decoration-none">
                                 <i class="bi bi-person-circle fs-5"></i>
                                 <small class="text-muted" style="font-size: 11px;">Tài khoản</small>
                             </RouterLink>
