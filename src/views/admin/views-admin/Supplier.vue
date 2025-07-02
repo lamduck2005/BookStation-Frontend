@@ -235,7 +235,7 @@
 
 <script>
 import EditButton from "@/components/common/EditButton.vue";
-import Pagination from "@/components/Common/Pagination.vue";
+
 import DeleteButton from "@/components/common/DeleteButton.vue";
 import ToggleStatus from "@/components/common/ToggleStatus.vue";
 import { showToast } from "@/utils/swalHelper";
@@ -249,6 +249,7 @@ import {
 import Swal from "sweetalert2";
 import { Modal } from "bootstrap";
 import { ref, watch, onMounted } from "vue";
+import Pagination from "@/components/common/Pagination.vue";
 
 export default {
   components: {

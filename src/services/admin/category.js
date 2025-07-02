@@ -38,7 +38,6 @@ export const getAllParentCategories  = async () => {
 
 export const addCategory = async (category) => {
   try {
-    console.log("Payload sent to BE:", category); 
     const { data } = await apiClient.post("/categories", category);
     return data;
   } catch (error) {

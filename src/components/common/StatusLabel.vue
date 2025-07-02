@@ -1,5 +1,5 @@
 <template>
-  <span :class="statusClass">{{ statusText }}</span>
+  <span :class="finalStatusClass">{{ finalStatusText }}</span>
 </template>
 
 <script setup>
@@ -16,17 +16,36 @@ const props = defineProps({
   inactiveText: {
     type: String,
     default: 'Không hoạt động'
+  },
+  statusText: {
+    type: String,
+    default: ''
+  },
+  statusClass: {
+    type: String,
+    default: ''
   }
 });
 
-const statusClass = computed(() =>
-  Number(props.status) === 1
+const finalStatusClass = computed(() => {
+  // Nếu có statusClass tùy chỉnh thì dùng nó
+  if (props.statusClass) {
+    return props.statusClass;
+  }
+  // Ngược lại dùng logic cũ cho số
+  return Number(props.status) === 1
     ? 'status-label-active'
-    : 'status-label-inactive'
-);
-const statusText = computed(() =>
-  Number(props.status) === 1 ? props.activeText : props.inactiveText
-);
+    : 'status-label-inactive';
+});
+
+const finalStatusText = computed(() => {
+  // Nếu có statusText tùy chỉnh thì dùng nó
+  if (props.statusText) {
+    return props.statusText;
+  }
+  // Ngược lại dùng logic cũ cho số
+  return Number(props.status) === 1 ? props.activeText : props.inactiveText;
+});
 </script>
 
 <style scoped>
@@ -61,5 +80,61 @@ const statusText = computed(() =>
   box-shadow: none;
   letter-spacing: 0.1px;
   font-family: inherit;
+}
+
+/* Thêm CSS cho các trạng thái event string */
+.status-draft {
+  display: inline-block;
+  background: #e2e3e5;
+  color: #495057;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 4px 16px;
+  font-size: 0.9rem;
+  border: 1px solid #d6d8db;
+}
+
+.status-published {
+  display: inline-block;
+  background: #d1ecf1;
+  color: #0c5460;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 4px 16px;
+  font-size: 0.9rem;
+  border: 1px solid #bee5eb;
+}
+
+.status-active {
+  display: inline-block;
+  background: #d4edda;
+  color: #218838;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 4px 16px;
+  font-size: 0.9rem;
+  border: 1px solid #c3e6cb;
+}
+
+.status-inactive {
+  display: inline-block;
+  background: #f8d7da;
+  color: #721c24;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 4px 16px;
+  font-size: 0.9rem;
+  border: 1px solid #f5c6cb;
+}
+
+.status-cancelled {
+  display: inline-block;
+  background: #f8d7da;
+  color: #721c24;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 4px 16px;
+  font-size: 0.9rem;
+  border: 1px solid #f5c6cb;
 }
 </style>

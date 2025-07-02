@@ -20,9 +20,7 @@ export const getAllAuthors = async (params={}) => {
 
 export const addAuthor = async (author) => {
   try {
-    const response = await apiClient.post("/authors", author);
-    const {status,message,data} = response.data;
-
+    const { data } = await apiClient.post("/authors", author);
     return data;
   } catch (error) {
     console.error("Error adding author:", error);
@@ -31,9 +29,7 @@ export const addAuthor = async (author) => {
 };
 export const updateAuthor = async (id, author) => {
   try {
-    const response = await apiClient.put(`/authors/${id}`, author);
-    const {status,message,data} = response.data;
-
+    const { data } = await apiClient.put(`/authors/${id}`, author);
     return data;
   } catch (error) {
     console.error("Error updating author:", error);
@@ -43,8 +39,7 @@ export const updateAuthor = async (id, author) => {
 
 export const deleteAuthor = async (id) => {
   try {
-    const response = await apiClient.delete(`/authors/${id}`);
-    const {status,message,data} = response.data;
+    const { data } = await apiClient.delete(`/authors/${id}`);
     return data;
   } catch (error) {
     console.error("Error deleting author:", error);
@@ -55,9 +50,7 @@ export const deleteAuthor = async (id) => {
 
 export const getAuthorById = async (id) => {
   try {
-    const response = await apiClient.get(`/authors/${id}`);
-    const {status,message,data} = response.data;
-
+    const { data } = await apiClient.get(`/authors/${id}`);
     return data;
   } catch (error) {
     throw error;

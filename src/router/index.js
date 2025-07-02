@@ -3,6 +3,9 @@ import AdminLayout from "../views/admin/AdminLayout.vue";
 import HomePage from "@/views/client/HomePage.vue";
 import NotificationsPage from "@/views/client/NotificationsPage.vue";
 import DemoPage from "@/views/client/DemoPage.vue";
+import CheckoutPage from "@/views/client/CheckoutPage.vue";
+import Cart from "@/views/client/Cart.vue";
+import DetailProduct from "@/views/client/DetailProduct.vue";
 import User from "@/views/admin/views-admin/User.vue";
 import Product from "@/views/admin/views-admin/Product.vue";
 import Author from "@/views/admin/views-admin/Author.vue";
@@ -20,6 +23,17 @@ import Point from "@/views/admin/views-admin/Point.vue";
 import Flash_Sale_Item from "@/views/admin/views-admin/FlashSaleDetail.vue";
 import RankDetail from "@/views/admin/views-admin/RankDetail.vue";
 import Template from "@/views/admin/views-admin/Template.vue";
+import Event from "@/views/admin/views-admin/Event.vue";
+import EventCategory from "@/views/admin/views-admin/EventCategory.vue";
+import EventGift from "@/views/admin/views-admin/EventGift.vue";
+import EventParticipant from "@/views/admin/views-admin/EventParticipant.vue";
+import EventGiftClaim from "@/views/admin/views-admin/EventGiftClaim.vue";
+import EventHistory from "@/views/admin/views-admin/EventHistory.vue";
+ 
+import LoginPage from "@/views/LoginPage.vue";
+import Bog from "@/components/common/Bog.vue";
+import Infor from "@/components/common/bog/Infor.vue";
+import Infor from "@/components/common/bog/Infor.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -28,6 +42,11 @@ const router = createRouter({
       path: "/",
       name: "home",
       component: HomePage,
+    },
+    {
+      path: "/login",
+      name: "login",
+      component: LoginPage,
     },
     {
       path: "/notifications",
@@ -39,6 +58,35 @@ const router = createRouter({
       name: "demo",
       component: DemoPage,
     },
+    {
+      path: "/checkout",
+      name: "checkout",
+      component: CheckoutPage,
+    },
+    {
+      path: "/cart",
+      name: "cart",
+      component: Cart,
+    },
+    {
+      path: "/product/:id",
+      name: "product-detail",
+      component: DetailProduct,
+      props: true,
+    },
+     {
+          path: "/bog",
+          name: "bog",
+          component: () => Bog,
+          children: [
+            {
+          path: "/info",
+          name: "info",
+          component: Infor,
+      } ]
+        },
+        
+       
     // Admin routes
     {
       path: "/admin",
@@ -135,6 +183,37 @@ const router = createRouter({
           name: "template",
           component: Template,
         },
+        {
+          path: "event",
+          name: "event",
+          component: Event,
+        },
+        {
+          path: "event-category",
+          name: "event-category",
+          component: EventCategory,
+        },
+        {
+          path: "event-gift",
+          name: "event-gift",
+          component: EventGift,
+        },
+        {
+          path: "event-participant",
+          name: "event-participant",
+          component: EventParticipant,
+        },
+        {
+          path: "event-gift-claim",
+          name: "event-gift-claim",
+          component: EventGiftClaim,
+        },
+        {
+          path: "event-history",
+          name: "event-history",
+          component: EventHistory,
+        },
+        
       ],
       // End - Admin routes
     },
