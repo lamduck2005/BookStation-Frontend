@@ -1,75 +1,108 @@
 <template>
   <div class="container-fluid py-4">
-    <!-- Bộ lọc -->
-    <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">
-      <div
-        class="d-flex align-items-center mb-3 p-2 m-0 rounded-top"
-        style="background-color: #ecae9e"
-      >
-        <i class="bi bi-funnel-fill me-2 text-dark"></i>
-        <h5>Bộ lọc</h5>
+    <!-- ========== BỘ LỌC FLASH SALE ========== -->
+    <div class="card mb-5 shadow-lg border-0 filter-card">
+      <div class="card-header bg-light border-0 py-3">
+        <h5 class="mb-0 text-secondary">
+          <i class="bi bi-funnel me-2"></i>
+          Bộ lọc tìm kiếm
+        </h5>
       </div>
-      <div class="row g-3 m-2 mt-0 p-0">
-        <div class="col-md-4">
-          <label class="form-label">Tìm kiếm:</label>
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Nhập từ khoá tìm kiếm"
-            v-model="searchQuery"
-          />
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">
+              <i class="bi bi-search me-1"></i>
+              Tìm kiếm theo tên chương trình
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              v-model="filter.name"
+              placeholder="Nhập tên chương trình..."
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">
+              <i class="bi bi-toggle-on me-1"></i>
+              Trạng thái
+            </label>
+            <select
+              class="form-select"
+              v-model="filter.status"
+            >
+              <option value="">Tất cả trạng thái</option>
+              <option value="1">Hoạt động</option>
+              <option value="0">Không hoạt động</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">
+              <i class="bi bi-calendar me-1"></i>
+              Ngày bắt đầu
+            </label>
+            <input
+              type="datetime-local"
+              class="form-control"
+              v-model="filter.from"
+            />
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">
+              <i class="bi bi-calendar me-1"></i>
+              Ngày kết thúc
+            </label>
+            <input
+              type="datetime-local"
+              class="form-control"
+              v-model="filter.to"
+            />
+          </div>
+         
         </div>
-        <div class="col-md-4">
-          <label class="form-label">Trạng thái</label>
-          <select class="form-select" v-model="selectedStatus">
-            <option value="">Tất cả trạng thái</option>
-            <option value="1">Hoạt động</option>
-            <option value="0">Không hoạt động</option>
-          </select>
-        </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button
-            class="btn btn-outline-primary w-100 me-2"
-            @click="searchWithFilter"
-          >
-            <i class="bi bi-funnel"></i> Lọc
-          </button>
-        </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button class="btn btn-outline-secondary w-100" @click="clearFilters">
-            <i class="bi bi-x-circle me-1"></i>Xoá bộ lọc
-          </button>
+        <div class="row g-3 pt-3 d-flex justify-content-center">
+          <div class="col-md-1">
+            <button
+              class="btn btn-outline-success w-100 me-2"
+              @click="searchWithFilter"
+            >
+              <i class="bi bi-funnel"></i> Lọc
+            </button>
+          </div>
+          <div class="col-md-2 ">
+            <button
+              class="btn btn-outline-secondary w-100"
+              @click="clearFilters"
+            >
+              <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Nút reload và thêm mới -->
-    <div class="d-flex justify-content-end mb-3 gap-2">
-      <button
-        class="btn btn-outline-info btn-sm py-2"
-        @click="reloadPage"
-        :disabled="loading"
-      >
-        <i class="bi bi-arrow-repeat me-1"></i> Làm mới dữ liệu
-      </button>
-      <button
-        class="btn btn-primary btn-sm py-2"
-        @click="openAddForm"
-        style="background-color: #33304e; border-color: #33304e"
-      >
-        <i class="bi bi-plus-circle me-1"></i> Thêm mới
-      </button>
-    </div>
-
-    <!-- Bảng -->
-    <div class="bg-white p-3 rounded shadow-sm pt-0 ps-0 pe-0">
-      <div
-        class="d-flex align-items-center mb-3 p-2 m-0 rounded-top"
-        style="background-color: #ecae9e"
-      >
-        <strong>Danh sách chương trình giảm giá (Flash Sale)</strong>
+    <!-- ================== BẢNG DANH SÁCH FLASH SALE ================== -->
+    <div class="card shadow-lg border-0 mb-4 flashsale-table-card">
+      <!-- Header bảng: Tên + nút -->
+      <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3">
+        <div>
+          <h5 class="mb-0 text-secondary">
+            <i class="bi bi-lightning-charge me-2"></i>
+            Danh sách chương trình Flash Sale
+          </h5>
+        </div>
+        <div class="d-flex gap-2">
+          <!-- Nút làm mới dữ liệu -->
+          <button class="btn btn-outline-info btn-sm py-2" @click="reloadPage" :disabled="loading">
+            <i class="bi bi-arrow-repeat me-1"></i> Làm mới
+          </button>
+          <!-- Nút thêm mới -->
+          <button class="btn btn-primary btn-sm py-2" style="background-color: #33304e; border-color: #33304e;" @click="openAddForm">
+            <i class="bi bi-plus-circle me-1"></i> Thêm mới
+          </button>
+        </div>
       </div>
-      <div class="p-3">
+      <div class="card-body p-0">
         <!-- Loading state -->
         <div v-if="loading" class="text-center py-4">
           <div class="spinner-border text-primary" role="status">
@@ -77,55 +110,49 @@
           </div>
           <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
         </div>
-
         <!-- Error state -->
-        <div v-else-if="error" class="alert alert-danger" role="alert">
+        <div v-else-if="error" class="alert alert-danger m-4" role="alert">
           <i class="bi bi-exclamation-triangle-fill me-2"></i>
           {{ error }}
-          <button
-            class="btn btn-sm btn-outline-danger ms-2"
-            @click="getDataFromApi"
-          >
+          <button class="btn btn-sm btn-outline-danger ms-2" @click="getDataFromApi">
             Thử lại
           </button>
         </div>
-
         <!-- Data table -->
         <div v-else>
-          <table class="table align-middle">
-            <thead>
+          <table class="table align-middle table-hover mb-0">
+            <thead class="table-light">
               <tr>
-                <th>#</th>
+                <th style="width: 40px">#</th>
                 <th>Tên chương trình</th>
                 <th>Thời gian bắt đầu</th>
                 <th>Thời gian kết thúc</th>
                 <th>Ngày tạo</th>
                 <th>Ngày cập nhật</th>
-                <!-- <th>Số lượng sản phẩm</th> -->
-                <th>Trạng thái</th>
-                <th>Chức năng</th>
+                <th style="width: 200px">Trạng thái</th>
+                <th style="width: 120px">Chức năng</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="flashSales.length === 0">
-                <td colspan="9" class="text-center py-4 text-muted">
+                <td colspan="8" class="text-center py-4 text-muted">
                   <i class="bi bi-inbox me-2"></i>
                   Không có dữ liệu
                 </td>
               </tr>
-              <tr v-for="(item, index) in flashSales" :key="item.id">
-                <td>{{ currentPage * pageSize + index + 1 }}</td>
-                <td>
-                  <router-link :to="`/admin/flash-sale/${item.id}`">
+              <!-- Dòng dữ liệu, dãn dọc py-3 -->
+              <tr v-for="(item, index) in flashSales" :key="item.id" class="align-middle" style="vertical-align: middle;">
+                <td class="py-3">{{ currentPage * pageSize + index + 1 }}</td>
+                <td class="py-3">
+                  <router-link :to="`/admin/flash-sale/${item.id}`" class="fw-semibold text-decoration-underline">
                     {{ item.name }}
                   </router-link>
                 </td>
-                <td>{{ formatDateTime(item.startTime) }}</td>
-                <td>{{ formatDateTime(item.endTime) }}</td>
-                <td>{{ formatDateTime(item.createdAt) }}</td>
-                <td>{{ formatDateTime(item.updatedAt) }}</td>
-                <!-- <td>Chưa có dữ liệu</td> -->
-                <td style="width: 200px">
+                <td class="py-3">{{ formatDateTime(item.startTime) }}</td>
+                <td class="py-3">{{ formatDateTime(item.endTime) }}</td>
+                <td class="py-3">{{ formatDateTime(item.createdAt) }}</td>
+                <td class="py-3">{{ formatDateTime(item.updatedAt) }}</td>
+                <td class="py-3">
                   <ToggleStatus
                     :id="item.id"
                     v-model="item.status"
@@ -133,32 +160,34 @@
                     :false-value="0"
                     active-text="Hoạt động"
                     inactive-text="Không hoạt động"
-                    @change="handleStatusChange(item, item.status)"
+                    @change="handleStatusChange(item.id)"
                   />
                 </td>
-                <td>
+                <td class="py-3">
                   <EditButton @click="openEditForm(item)" />
-                  <DeleteButton @click="handleDeleteFunction(item)" />
+                  <!-- <DeleteButton @click="handleDeleteFunction(item)" /> -->
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-
         <!-- Pagination -->
-        <Pagination
-          :page-number="currentPage"
-          :total-pages="totalPages"
-          :is-last-page="isLastPage"
-          :page-size="pageSize"
-          :items-per-page-options="itemsPerPageOptions"
-          :total-elements="totalElements"
-          @prev="handlePrev"
-          @next="handleNext"
-          @update:pageSize="handlePageSizeChange"
-        />
+        <div class="p-3">
+          <Pagination
+            :page-number="currentPage"
+            :total-pages="totalPages"
+            :is-last-page="isLastPage"
+            :page-size="pageSize"
+            :items-per-page-options="itemsPerPageOptions"
+            :total-elements="totalElements"
+            @prev="handlePrev"
+            @next="handleNext"
+            @update:pageSize="handlePageSizeChange"
+          />
+        </div>
       </div>
     </div>
+    <!-- ================== HẾT PHẦN BẢNG DANH SÁCH FLASH SALE ================== -->
 
     <!-- Modal Thêm/Sửa  -->
     <div
@@ -252,6 +281,7 @@ import ToggleStatus from "@/components/common/ToggleStatus.vue";
 import {
   addFlashSale,
   getAllFlashSale,
+  toggleStatusFlashSale,
   updateFlashSale,
 } from "@/services/admin/flashSale";
 import {
@@ -259,10 +289,13 @@ import {
   timestampToDatetimeLocal,
 } from "@/utils/utils.js";
 
-const searchQuery = ref("");
-const selectedStatus = ref("");
+const filter = ref({
+  name: "",
+  from: "",
+  to: "",
+  status: ""
+});
 
-// Dữ liệu flash sale thực tế
 const flashSales = ref([]);
 
 // Pagination state
@@ -297,14 +330,18 @@ function formatDateTime(timestamp) {
   return date.toLocaleString("vi-VN", { hour12: false });
 }
 
-// bộ lọc
+// Gọi API với các bộ lọc hiện tại
 const searchWithFilter = () => {
-  // TODO: Gọi lại API với searchQuery và selectedStatus
-  showToast("info", "Chức năng tìm kiếm!");
+  getDataFromApi(0, pageSize.value);
 };
+
 const clearFilters = () => {
-  searchQuery.value = "";
-  selectedStatus.value = "";
+  filter.value = {
+    name: "",
+    from: "",
+    to: "",
+    status: ""
+  };
   getDataFromApi(0, pageSize.value);
 };
 
@@ -314,8 +351,13 @@ const reloadPage = () => {
 };
 
 //trạng thái
-const handleStatusChange = (item, newStatus) => {
-  showToast("info", "Chức năng thay đổi trạng thái!");
+const handleStatusChange = (id) => {
+    toggleStatusFlashSale(id).then((res) => {
+        showToast("success", res.data.message || "Thay đổi trạng thái thành công!");
+    }).catch((error) => {
+        showToast("error", error.response?.data?.message || "Có lỗi xảy ra!");
+        console.log(error);
+    });
 };
 
 // thêm sửa
@@ -450,7 +492,17 @@ const getDataFromApi = async (page, size) => {
   loading.value = true;
   error.value = null;
   try {
-    const res = await getAllFlashSale(page, size);
+    // Xây dựng params đúng với API mới
+    const params = {
+      page,
+      size,
+    };
+    if (filter.value.name) params.name = filter.value.name;
+    if (filter.value.status !== "") params.status = filter.value.status;
+    if (filter.value.from) params.from = datetimeLocalToTimestamp(filter.value.from);
+    if (filter.value.to) params.to = datetimeLocalToTimestamp(filter.value.to);
+
+    const res = await getAllFlashSale(params);
     const resData = res.data.data;
     console.log("🚀 ~ getDataFromApi ~ res:", res);
 
@@ -529,5 +581,12 @@ onMounted(async () => {
   min-height: 320px;
   max-height: 70vh;
   overflow-y: auto;
+}
+
+/* Chỉ bo tròn cho div ngoài cùng, không ảnh hưởng header/body bên trong */
+.filter-card,
+.flashsale-table-card {
+  border-radius: 0.8rem !important;
+  overflow: hidden; 
 }
 </style>
