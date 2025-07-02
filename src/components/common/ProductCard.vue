@@ -1,6 +1,6 @@
 <template>
     <div class="product-card h-100">
-        <div class="card border-0 shadow-sm h-100">
+        <div class="card border-0 shadow-sm h-100 cursor-pointer" @click="goToProductDetail">
             <!-- Badge container -->
             <div class="position-relative">
                 <!-- Sale badge -->
@@ -67,6 +67,10 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+
+// Router
+const router = useRouter()
 
 // Props
 const props = defineProps({
@@ -77,6 +81,13 @@ const props = defineProps({
 })
 
 // Methods
+const goToProductDetail = () => {
+    router.push({
+        name: 'product-detail',
+        params: { id: props.product.id }
+    })
+}
+
 const formatPrice = (price) => {
     return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
@@ -104,6 +115,10 @@ const getSalesProgress = (sold, total) => {
 <style scoped>
 .product-card {
     transition: all 0.3s ease;
+}
+
+.cursor-pointer {
+    cursor: pointer;
 }
 
 .product-card:hover {
@@ -144,6 +159,7 @@ const getSalesProgress = (sold, total) => {
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     text-overflow: ellipsis;
     word-break: break-word;

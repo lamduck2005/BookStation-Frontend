@@ -1,11 +1,13 @@
 import { createRouter, createWebHistory } from "vue-router";
 import AdminLayout from "../views/admin/AdminLayout.vue";
+import MainLayout from "../components/layout/MainLayout.vue";
 import HomePage from "@/views/client/HomePage.vue";
 import NotificationsPage from "@/views/client/NotificationsPage.vue";
 import DemoPage from "@/views/client/DemoPage.vue";
 import CheckoutPage from "@/views/client/CheckoutPage.vue";
 import Cart from "@/views/client/Cart.vue";
 import DetailProduct from "@/views/client/DetailProduct.vue";
+import Trend from "@/views/client/Trend.vue";
 import User from "@/views/admin/views-admin/User.vue";
 import Product from "@/views/admin/views-admin/Product.vue";
 import Book from "@/views/admin/views-admin/Book.vue";
@@ -36,41 +38,54 @@ import LoginPage from "@/views/LoginPage.vue";
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // Client routes với MainLayout
     {
       path: "/",
-      name: "home",
-      component: HomePage,
+      component: MainLayout,
+      children: [
+        {
+          path: "",
+          name: "home",
+          component: HomePage,
+        },
+        {
+          path: "notifications",
+          name: "notifications",
+          component: NotificationsPage,
+        },
+        {
+          path: "demo",
+          name: "demo",
+          component: DemoPage,
+        },
+        {
+          path: "checkout",
+          name: "checkout",
+          component: CheckoutPage,
+        },
+        {
+          path: "cart",
+          name: "cart",
+          component: Cart,
+        },
+        {
+          path: "trend",
+          name: "trend",
+          component: Trend,
+        },
+        {
+          path: "product/:id",
+          name: "product-detail",
+          component: DetailProduct,
+          props: true,
+        },
+      ]
     },
+    // Login page without layout
     {
       path: "/login",
       name: "login",
       component: LoginPage,
-    },
-    {
-      path: "/notifications",
-      name: "notifications",
-      component: NotificationsPage,
-    },
-    {
-      path: "/demo",
-      name: "demo",
-      component: DemoPage,
-    },
-    {
-      path: "/checkout",
-      name: "checkout",
-      component: CheckoutPage,
-    },
-    {
-      path: "/cart",
-      name: "cart",
-      component: Cart,
-    },
-    {
-      path: "/product/:id",
-      name: "product-detail",
-      component: DetailProduct,
-      props: true,
     },
     // Admin routes
     {
