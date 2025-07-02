@@ -1,6 +1,6 @@
 import client from "../../utils/axios.js";
 
-// Gọi API lấy danh sách Supplier sử dụng axios đã cấu hình
+// Lấy danh sách voucher
 export const getVouchers = async (params = {}) => {
   try {
     const response = await client.get("/api/vouchers", { params });
@@ -22,7 +22,7 @@ export const createVouchers = async (payload) => {
   }
 };
 
-// Cập nhật thông tin vouchers
+// Cập nhật voucher
 export const updateVouchers = async (payload) => {
   try {
     const response = await client.put("/api/vouchers", payload);
@@ -32,7 +32,8 @@ export const updateVouchers = async (payload) => {
     throw error;
   }
 };
-// Xoá supplier
+
+// Xoá voucher
 export const deleteVouchers = async (id) => {
   try {
     const response = await client.delete(`/api/vouchers/${id}`);
@@ -43,7 +44,7 @@ export const deleteVouchers = async (id) => {
   }
 };
 
-// upStatus supplier
+// Cập nhật trạng thái voucher
 export const upStatusVouchers = async (id, status, updatedBy) => {
   try {
     const response = await client.patch(`/api/vouchers/status`, null, {

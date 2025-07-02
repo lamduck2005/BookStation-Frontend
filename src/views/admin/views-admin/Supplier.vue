@@ -11,23 +11,56 @@
       <h5 class="mb-0">Bộ lọc</h5>
     </div>
     <div class="row g-3 m-2 mt-0 p-0 align-items-end">
-      <div class="col-md-6">
-        <label class="form-label mb-1">Tìm kiếm</label>
+      <div class="col-md-3">
+        <label class="form-label mb-1">Tên nhà cung cấp</label>
         <input
           type="text"
           class="form-control form-control-sm"
-          placeholder="Tên nhà cung cấp, đại diện, email"
-          v-model="searchQuery"
+          placeholder="Tên nhà cung cấp"
+          v-model="supplierNameFilter"
           @input="onFilterChange"
         />
       </div>
-      <div class="col-md-6">
+      <div class="col-md-3">
+        <label class="form-label mb-1">Người đại diện</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Người đại diện"
+          v-model="contactNameFilter"
+          @input="onFilterChange"
+        />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label mb-1">Email</label>
+        <input
+          type="text"
+          class="form-control form-control-sm"
+          placeholder="Email"
+          v-model="emailFilter"
+          @input="onFilterChange"
+        />
+      </div>
+      <div class="col-md-3">
         <label class="form-label mb-1">Trạng thái</label>
-        <select class="form-select form-select-sm" v-model="statusFilter">
+        <select
+          class="form-select form-select-sm"
+          v-model="statusFilter"
+          @change="onFilterChange"
+        >
           <option value="">Tất cả trạng thái</option>
           <option value="Hoạt động">Hoạt động</option>
           <option value="Không hoạt động">Không hoạt động</option>
         </select>
+      </div>
+      <div class="col-12 d-flex justify-content-end">
+        <button
+          class="btn btn-secondary btn-sm"
+          type="button"
+          @click="resetFilter"
+        >
+          Hủy lọc
+        </button>
       </div>
     </div>
   </div>
@@ -65,7 +98,28 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(supplier, index) in pagedSuppliers" :key="supplier.id">
+          <tr v-if="loading">
+            <td :colspan="9" class="py-4 text-center">
+              <div
+                class="spinner-border text-primary me-2"
+                role="status"
+                style="width: 2rem; height: 2rem"
+              >
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              Đang tải dữ liệu...
+            </td>
+          </tr>
+          <tr v-else-if="pagedSuppliers.length === 0">
+            <td :colspan="9" class="py-4 text-center text-muted">
+              Không có dữ liệu
+            </td>
+          </tr>
+          <tr
+            v-else
+            v-for="(supplier, index) in pagedSuppliers"
+            :key="supplier.id"
+          >
             <td @click="showDetail(supplier)" style="cursor: pointer">
               {{ currentPage * pageSize + index + 1 }}
             </td>
@@ -98,7 +152,7 @@
             <td style="width: 100px">
               <div @click.stop>
                 <EditButton @click="openEditSupplier(supplier)" />
-                <DeleteButton @click="deleteSupplierHandler(supplier)" />
+                <!-- <DeleteButton @click="deleteSupplierHandler(supplier)" /> -->
               </div>
             </td>
           </tr>
@@ -271,6 +325,11 @@ export default {
     const statusFilter = ref("");
     const phoneFilter = ref("");
 
+    // Thêm các biến filter riêng biệt
+    const supplierNameFilter = ref("");
+    const contactNameFilter = ref("");
+    const emailFilter = ref("");
+
     // Modal & form
     const isEditMode = ref(false);
     const supplierForm = ref({
@@ -282,34 +341,52 @@ export default {
     });
     const editingSupplier = ref(null);
     const formError = ref("");
+    const loading = ref(false);
 
     // Lấy dữ liệu từ API
     async function fetchSuppliers() {
+      loading.value = true;
       try {
         const params = {
           page: currentPage.value,
           size: pageSize.value,
-          supplierName: searchQuery.value || undefined,
-          status: statusFilter.value || undefined,
-          phoneNumber: phoneFilter.value || undefined,
+          supplierName: supplierNameFilter.value || undefined,
+          contactName: contactNameFilter.value || undefined,
+          email: emailFilter.value || undefined,
+          status:
+            statusFilter.value === ""
+              ? undefined
+              : statusFilter.value === "Hoạt động"
+              ? 1
+              : statusFilter.value === "Không hoạt động"
+              ? 0
+              : undefined,
         };
         const data = await getSuppliers(params);
-        // Chuyển đổi status byte về chuỗi cho ToggleStatus
-        pagedSuppliers.value = (data.content || []).map(item => ({
+        pagedSuppliers.value = (data.content || []).map((item) => ({
           ...item,
-          status: item.status === 1 ? 1 : 0, // luôn là số
+          status: item.status === 1 ? 1 : 0,
         }));
         totalElements.value = data.totalElements || 0;
         totalPages.value = data.totalPages || 1;
         isLastPage.value = currentPage.value >= totalPages.value - 1;
       } catch (e) {
         showToast("error", "Không thể tải danh sách nhà cung cấp!");
+      } finally {
+        loading.value = false;
       }
     }
 
     // Watchers: gọi lại API khi filter/page thay đổi
     watch(
-      [currentPage, pageSize, searchQuery, statusFilter, phoneFilter],
+      [
+        currentPage,
+        pageSize,
+        supplierNameFilter,
+        contactNameFilter,
+        emailFilter,
+        statusFilter,
+      ],
       fetchSuppliers,
       { immediate: true }
     );
@@ -326,11 +403,13 @@ export default {
 
     function onFilterChange() {
       currentPage.value = 0;
+      fetchSuppliers();
     }
     function resetFilter() {
-      searchQuery.value = "";
+      supplierNameFilter.value = "";
+      contactNameFilter.value = "";
+      emailFilter.value = "";
       statusFilter.value = "";
-      phoneFilter.value = "";
       currentPage.value = 0;
     }
 
@@ -423,25 +502,44 @@ export default {
     // Hiển thị chi tiết nhà cung cấp
     function showDetail(supplier) {
       Swal.fire({
-        title: `<strong>Chi tiết nhà cung cấp</strong>`,
+        title: `<strong style=display:block;padding:8px 0;border-radius:6px;color:#2c2c54;">Chi tiết nhà cung cấp</strong>`,
         html: `
-      <div style="text-align: left; font-size: 14px;">
-        <p><strong>Tên nhà cung cấp:</strong> ${
-          supplier.supplierName ?? "-"
-        }</p>
-        <p><strong>Người đại diện:</strong> ${supplier.contactName ?? "-"}</p>
-        <p><strong>Số điện thoại:</strong> ${supplier.phoneNumber ?? "-"}</p>
-        <p><strong>Email:</strong> ${supplier.email ?? "-"}</p>
-        <p><strong>Địa chỉ:</strong> ${supplier.address ?? "-"}</p>
-        <p><strong>Trạng thái:</strong> ${supplier.status==1?'Hoạt động':'Không hoạt động' ?? "-"}</p>
-        <p><strong>Người tạo:</strong> ${supplier.createdBy ?? "-"}</p>
-        <p><strong>Ngày tạo:</strong> ${formatDateTime(supplier.createdAt)}</p>
-        <p><strong>Người cập nhật:</strong> ${supplier.updatedBy ?? "-"}</p>
-        <p><strong>Ngày cập nhật:</strong> ${formatDateTime(
-          supplier.updatedAt
-        )}</p>
+      <div style="max-height:400px;overflow:auto">
+        <table class="table table-bordered text-start" style="background:#ecae9e;border-radius:8px;">
+          <tr><th>Tên nhà cung cấp</th><td>${
+            supplier.supplierName ?? "Không có dữ liệu"
+          }</td></tr>
+          <tr><th>Người đại diện</th><td>${
+            supplier.contactName ?? "Không có dữ liệu"
+          }</td></tr>
+          <tr><th>Số điện thoại</th><td>${
+            supplier.phoneNumber ?? "Không có dữ liệu"
+          }</td></tr>
+          <tr><th>Email</th><td>${
+            supplier.email ?? "Không có dữ liệu"
+          }</td></tr>
+          <tr><th>Địa chỉ</th><td>${
+            supplier.address ?? "Không có dữ liệu"
+          }</td></tr>
+          <tr><th>Trạng thái</th><td>${
+            supplier.status == 1 ? "Hoạt động" : "Không hoạt động"
+          }</td></tr>
+          <tr><th>Người tạo</th><td>${
+            supplier.createdBy ?? "Không có dữ liệu"
+          }</td></tr>
+          <tr><th>Ngày tạo</th><td>${formatDateTime(
+            supplier.createdAt
+          )}</td></tr>
+          <tr><th>Người cập nhật</th><td>${
+            supplier.updatedBy ?? "Không có dữ liệu"
+          }</td></tr>
+          <tr><th>Ngày cập nhật</th><td>${formatDateTime(
+            supplier.updatedAt
+          )}</td></tr>
+        </table>
       </div>
     `,
+        width: 600,
         confirmButtonText: "Đóng",
       });
     }
@@ -528,7 +626,6 @@ export default {
     }
 
     const handleStatusChange = async (supplier, newStatus) => {
-    
       try {
         await upStatusSupplier(supplier.id, newStatus, "admin"); // truyền "admin" là string
         showToast("success", "Đã thay đổi trạng thái.");
@@ -552,6 +649,10 @@ export default {
       searchQuery,
       statusFilter,
       phoneFilter,
+      supplierNameFilter,
+      contactNameFilter,
+      emailFilter,
+      statusFilter,
       onFilterChange,
       resetFilter,
       // Modal & form
@@ -571,6 +672,7 @@ export default {
       handleNext,
       handlePageSizeChange,
       handleStatusChange,
+      loading,
     };
   },
 };
