@@ -4,15 +4,15 @@
             <!-- Badge container -->
             <div class="position-relative">
                 <!-- Sale badge -->
-                <span v-if="product.discount" class="badge bg-danger position-absolute top-0 start-0 m-2 z-index-1 sale-badge">
-                    {{ product.saleLabel || 'Xu hướng' }}
+                <span v-if="product.discountPercentage && product.discountPercentage > 0" class="badge bg-danger position-absolute top-0 start-0 m-2 z-index-1 sale-badge">
+                    {{ getDisplayLabel() }}
                 </span>
                 
                 <!-- Product image -->
                 <div class="product-image-container">
                     <img 
-                        :src="product.image || 'https://via.placeholder.com/200x250?text=Book+Cover'" 
-                        :alt="product.name" 
+                        :src="product.imageUrl || product.image || 'https://via.placeholder.com/200x250?text=Book+Cover'" 
+                        :alt="product.bookName || product.name || 'Book'" 
                         class="card-img-top product-image"
                     >
                 </div>
@@ -22,27 +22,27 @@
             <div class="card-body p-2 d-flex flex-column">
                 <!-- Product category/type -->
                 <div class="product-category mb-1">
-                    <span class="badge" :class="getCategoryBadgeClass(product.category)">
-                        {{ product.categoryLabel || 'Mới' }}
+                    <span class="badge" :class="getCategoryBadgeClass()">
+                        {{ product.categoryName || product.categoryLabel || 'Sách' }}
                     </span>
                 </div>
                 
                 <!-- Product name -->
                 <h6 class="card-title product-name mb-2">
-                    {{ product.name || 'Silver Spoon: Tập 1 - 15 (Hộp 1...)' }}
+                    {{ product.bookName || product.name || 'Chưa có tên sách' }}
                 </h6>
                 
                 <!-- Price section -->
                 <div class="price-section mt-auto mb-2">
                     <div class="d-flex align-items-center gap-2">
                         <span class="current-price fw-bold text-danger fs-6">
-                            {{ formatPrice(product.currentPrice || 690000) }}
+                            {{ formatPrice(getCurrentPrice()) }}
                         </span>
-                        <span v-if="product.originalPrice" class="original-price text-muted text-decoration-line-through small">
-                            {{ formatPrice(product.originalPrice) }}
+                        <span v-if="getOriginalPrice()" class="original-price text-muted text-decoration-line-through small">
+                            {{ formatPrice(getOriginalPrice()) }}
                         </span>
-                        <span v-if="product.discount" class="discount-badge badge bg-danger small">
-                            -{{ product.discount }}%
+                        <span v-if="product.discountPercentage && product.discountPercentage > 0" class="discount-badge badge bg-danger small">
+                            -{{ product.discountPercentage }}%
                         </span>
                     </div>
                 </div>
@@ -53,11 +53,11 @@
                         <div 
                             class="progress-bar bg-danger" 
                             role="progressbar" 
-                            :style="{ width: getSalesProgress(product.sold, product.total) + '%' }"
+                            :style="{ width: getSalesProgress() + '%' }"
                         ></div>
                     </div>
                     <small class="text-muted" style="font-size: 0.8rem;">
-                        Đã bán {{ product.sold || 155 }}
+                        Đã bán {{ product.soldQuantity || product.sold || 0 }}
                     </small>
                 </div>
             </div>
@@ -84,8 +84,34 @@ const props = defineProps({
 const goToProductDetail = () => {
     router.push({
         name: 'product-detail',
-        params: { id: props.product.id }
+        params: { id: props.product.id || props.product.bookId }
     })
+}
+
+const getCurrentPrice = () => {
+    return props.product.price || props.product.currentPrice || 0
+}
+
+const getOriginalPrice = () => {
+    // Nếu có discountPercentage, tính originalPrice từ price hiện tại
+    if (props.product.discountPercentage && props.product.discountPercentage > 0) {
+        const currentPrice = getCurrentPrice()
+        return Math.round(currentPrice / (1 - props.product.discountPercentage / 100))
+    }
+    return props.product.originalPrice || null
+}
+
+const getDisplayLabel = () => {
+    if (props.product.isFlashSale) {
+        return 'FLASH SALE'
+    }
+    if (props.product.discountPercentage >= 30) {
+        return 'HOT SALE'
+    }
+    if (props.product.discountPercentage > 0) {
+        return 'GIẢM GIÁ'
+    }
+    return props.product.saleLabel || 'XU HƯỚNG'
 }
 
 const formatPrice = (price) => {
@@ -93,22 +119,28 @@ const formatPrice = (price) => {
         style: 'currency',
         currency: 'VND',
         minimumFractionDigits: 0
-    }).format(price).replace('₫', 'đ')
+    }).format(price || 0).replace('₫', 'đ')
 }
 
-const getCategoryBadgeClass = (category) => {
-    const categoryClasses = {
-        'xu-huong': 'bg-warning text-dark',
-        'moi': 'bg-success',
-        'hot': 'bg-danger',
-        'bestseller': 'bg-primary'
-    }
-    return categoryClasses[category] || 'bg-warning text-dark'
+const getCategoryBadgeClass = () => {
+    // Dựa vào categoryName hoặc type
+    const categoryName = props.product.categoryName?.toLowerCase() || ''
+    
+    if (categoryName.includes('văn học')) return 'bg-primary'
+    if (categoryName.includes('kinh tế') || categoryName.includes('kinh doanh')) return 'bg-success'
+    if (categoryName.includes('thiếu nhi')) return 'bg-warning text-dark'
+    if (categoryName.includes('ngoại ngữ')) return 'bg-info'
+    if (props.product.isFlashSale) return 'bg-danger'
+    
+    return 'bg-secondary'
 }
 
-const getSalesProgress = (sold, total) => {
-    if (!total) return Math.min((sold || 0) / 200 * 100, 100)
-    return (sold / total) * 100
+const getSalesProgress = () => {
+    const sold = props.product.soldQuantity || props.product.sold || 0
+    const total = props.product.stockQuantity || props.product.total || 200
+    
+    if (total === 0) return 0
+    return Math.min((sold / total) * 100, 100)
 }
 </script>
 

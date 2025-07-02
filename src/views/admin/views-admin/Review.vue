@@ -68,36 +68,37 @@
 
         <!-- Data table -->
         <div v-else>
-          <table class="table align-middle">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Người đánh giá</th>
-                <th>Sản phẩm</th>
-                <th>Nội dung</th>
-                <th>Điểm đánh giá</th>
-                <th>Ngày đánh giá</th>
-                <th>Trạng thái</th>
-                <th>Chức năng</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="templateData.length === 0">
-                <td colspan="8" class="text-center py-4 text-muted">
-                  <i class="bi bi-inbox me-2"></i>
-                  Không có dữ liệu
-                </td>
-              </tr>
-              <tr v-for="(item, index) in templateData" :key="item.id">
-                <td>{{ (currentPage * pageSize) + index + 1 }}</td>
-                <td>{{ item.col1 }}</td>
-                <td>{{ item.col2 }}</td>
-                <td>{{ item.col3 }}</td>
-                <td>{{ item.col4 }}</td>
-                <td>{{ item.col6 }}</td>
-                <td style="width: 200px;">
-                  <ToggleStatus :id="item.id" v-model="item.status" :true-value="1" :false-value="0"
-                    active-text="Hoạt động" inactive-text="Không hoạt động" @change="handleStatusChange()" />
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Người đánh giá</th>
+                  <th>Sản phẩm</th>
+                  <th>Nội dung</th>
+                  <th>Điểm đánh giá</th>
+                  <th>Ngày đánh giá</th>
+                  <th>Trạng thái</th>
+                  <th>Chức năng</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="templateData.length === 0">
+                  <td colspan="8" class="text-center py-4 text-muted">
+                    <i class="bi bi-inbox me-2"></i>
+                    Không có dữ liệu
+                  </td>
+                </tr>
+                <tr v-for="(item, index) in templateData" :key="item.id">
+                  <td>{{ (currentPage * pageSize) + index + 1 }}</td>
+                  <td>{{ item.col1 }}</td>
+                  <td>{{ item.col2 }}</td>
+                  <td>{{ item.col3 }}</td>
+                  <td>{{ item.col4 }}</td>
+                  <td>{{ item.col6 }}</td>
+                  <td style="width: 200px;">
+                    <ToggleStatus :id="item.id" v-model="item.status" :true-value="1" :false-value="0"
+                      active-text="Hoạt động" inactive-text="Không hoạt động" @change="handleStatusChange()" />
                 </td>
                 <td>
                   <EditButton @click="openEditForm" />
@@ -106,6 +107,7 @@
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
 
         <!-- Pagination -->

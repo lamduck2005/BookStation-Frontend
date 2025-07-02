@@ -60,24 +60,25 @@
         <strong>Danh sách voucher</strong>
       </div>
       <div class="p-3">
-        <table class="table align-middle text-center">
-          <thead>
-            <tr>
-              <th>STT</th>
-              <th>Mã voucher</th>
-              <th>Phần trăm giảm</th>
-              <th>Ngày bắt đầu</th>
-              <th>Ngày kết thúc</th>
-              <th>Trạng thái</th>
-              <th>Người tạo</th>
-              <th colspan="3">Chức năng</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(voucher, index) in listVoucher"
-              :key="voucher.id"
-              @click="showDetail(voucher)"
+        <div class="table-responsive">
+          <table class="table align-middle text-center">
+            <thead>
+              <tr>
+                <th>STT</th>
+                <th>Mã voucher</th>
+                <th>Phần trăm giảm</th>
+                <th>Ngày bắt đầu</th>
+                <th>Ngày kết thúc</th>
+                <th>Trạng thái</th>
+                <th>Người tạo</th>
+                <th colspan="3">Chức năng</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(voucher, index) in listVoucher"
+                :key="voucher.id"
+                @click="showDetail(voucher)"
               class="cursor-pointer"
             >
               <td>{{ currentPage * pageSize + index + 1 }}</td>
@@ -113,6 +114,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
         <!-- Pagination -->
         <Pagination
           :page-number="currentPage"
@@ -314,7 +316,7 @@
 import EditButton from "@/components/common/EditButton.vue";
 import DeleteButton from "@/components/common/DeleteButton.vue";
 import ToggleStatus from "@/components/common/ToggleStatus.vue";
-import Pagination from "@/components/Common/Pagination.vue";
+import Pagination from "@/components/common/Pagination.vue";
 import { showToast } from "@/utils/swalHelper";
 import { Modal } from "bootstrap";
 import { ref, computed, watch, onMounted } from "vue";

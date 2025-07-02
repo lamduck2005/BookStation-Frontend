@@ -47,36 +47,38 @@
       </div>
 
       <div class="p-3">
-        <table class="table align-middle">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Tên rank</th>
-              <th>Chi tiêu tối thiểu</th>
-              <th>Hệ số điểm</th>
-              <th style="width: 200px;">Trạng thái</th>
-              <th style="width: 100px;">Chức năng</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(rank, index) in ranks" :key="rank.id">
-              <td>{{ index + 1 }}</td>
-              <td>
-                <router-link :to="{ name: 'rank-detail', params: { id: rank.id }, query: { name: rank.name } }" style="color: #007bff; text-decoration: underline; cursor: pointer;">
-                  {{ rank.name }}
-                </router-link>
-              </td>
-              <td>{{ rank.minSpend !== undefined && rank.minSpend !== null && rank.minSpend !== '-' ? rank.minSpend.toLocaleString() + ' VND' : '-' }}</td>
-              <td>{{ rank.pointMultiplier !== undefined && rank.pointMultiplier !== null && rank.pointMultiplier !== '-' ? rank.pointMultiplier + 'x' : '-' }}</td>
-              <td style="width: 200px;">
-                <StatusLabel :status="1" />
-              </td>
-              <td style="width: 100px;">
-                <EditButton @click="openEditModal(rank, index)" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Tên rank</th>
+                <th>Chi tiêu tối thiểu</th>
+                <th>Hệ số điểm</th>
+                <th style="width: 200px;">Trạng thái</th>
+                <th style="width: 100px;">Chức năng</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(rank, index) in ranks" :key="rank.id">
+                <td>{{ index + 1 }}</td>
+                <td>
+                  <router-link :to="{ name: 'rank-detail', params: { id: rank.id }, query: { name: rank.name } }" style="color: #007bff; text-decoration: underline; cursor: pointer;">
+                    {{ rank.name }}
+                  </router-link>
+                </td>
+                <td>{{ rank.minSpend !== undefined && rank.minSpend !== null && rank.minSpend !== '-' ? rank.minSpend.toLocaleString() + ' VND' : '-' }}</td>
+                <td>{{ rank.pointMultiplier !== undefined && rank.pointMultiplier !== null && rank.pointMultiplier !== '-' ? rank.pointMultiplier + 'x' : '-' }}</td>
+                <td style="width: 200px;">
+                  <StatusLabel :status="1" />
+                </td>
+                <td style="width: 100px;">
+                  <EditButton @click="openEditModal(rank, index)" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
         <!-- Pagination -->
         <Pagination :page-number="currentPage" :total-pages="totalPages" :is-last-page="isLastPage"

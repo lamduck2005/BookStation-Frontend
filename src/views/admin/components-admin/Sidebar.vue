@@ -94,6 +94,7 @@ const sidebarLinks = [
       { to: "/admin/category", icon: "bi bi-tags", label: "Thể loại" },
       { to: "/admin/voucher", icon: "bi bi-ticket", label: "Voucher" },
       { to: "/admin/supplier", icon: "bi bi-truck", label: "Nhà cung cấp" },
+      { to: "/admin/publisher", icon: "bi bi-journal-bookmark", label: "Nhà xuất bản" },
       { to: "/admin/rank", icon: "bi bi-star", label: "Hạng" },
       { to: "/admin/point", icon: "bi bi-coin", label: "Điểm" },
     ],

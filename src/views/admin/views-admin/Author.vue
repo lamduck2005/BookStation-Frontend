@@ -39,45 +39,47 @@
       </div>
 
       <div class="p-3">
-        <table class="table align-middle">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th style="width: 170px">Tên tác giả</th>
-              <th>Tiểu sử</th>
-              <th style="width: 110px">Ngày sinh</th>
-              <th class="text-center text-nowrap" style="width: 150px">
-                Chức năng
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(author, index) in authors" :key="author.id">
-              <td>{{ index + 1 }}</td>
-              <td>{{ author.authorName }}</td>
-              <td style="max-width: 200px; white-space: pre-line">
-                {{ author.biography }}
-              </td>
-              <td>{{ formatDate(author.birthDate) }}</td>
-              <td class="text-center text-nowrap">
-                <div class="d-inline-flex gap-1">
-                  <button
-                    class="btn btn-outline-dark action-btn"
-                    @click="viewAuthor(author.id)"
-                    title="Xem"
-                  >
-                    <i class="bi bi-eye"></i>
-                  </button>
-                  <EditButton @click="editAuthor(author.id)" title="Sửa" />
-                  <DeleteButton
-                    @click="handleDeleteAuthor(author.id)"
-                    title="Xóa"
-                  />
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th style="width: 170px">Tên tác giả</th>
+                <th>Tiểu sử</th>
+                <th style="width: 110px">Ngày sinh</th>
+                <th class="text-center text-nowrap" style="width: 150px">
+                  Chức năng
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(author, index) in authors" :key="author.id">
+                <td>{{ index + 1 }}</td>
+                <td>{{ author.authorName }}</td>
+                <td style="max-width: 200px; white-space: pre-line">
+                  {{ author.biography }}
+                </td>
+                <td>{{ formatDate(author.birthDate) }}</td>
+                <td class="text-center text-nowrap">
+                  <div class="d-inline-flex gap-1">
+                    <button
+                      class="btn btn-outline-dark action-btn"
+                      @click="viewAuthor(author.id)"
+                      title="Xem"
+                    >
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <EditButton @click="editAuthor(author.id)" title="Sửa" />
+                    <DeleteButton
+                      @click="handleDeleteAuthor(author.id)"
+                      title="Xóa"
+                    />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -726,6 +728,54 @@ const handlePageSizeChange = (newSize) => {
 }
 .action-btn:hover {
   background: #f0f0f0;
+}
+
+/* Table responsive improvements */
+.table-responsive {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.table-responsive table {
+  min-width: 800px; /* Ensure table has minimum width for proper scrolling */
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Responsive table fixes */
+@media (max-width: 1200px) {
+  .table-responsive table {
+    min-width: 900px;
+  }
+}
+
+@media (max-width: 992px) {
+  .table-responsive table {
+    min-width: 800px;
+  }
+}
+
+@media (max-width: 768px) {
+  .table-responsive table {
+    min-width: 700px;
+  }
 }
 </style>
 
