@@ -34,6 +34,8 @@ import EventGiftClaim from "@/views/admin/views-admin/EventGiftClaim.vue";
 import EventHistory from "@/views/admin/views-admin/EventHistory.vue";
 
 import LoginPage from "@/views/LoginPage.vue";
+import Bog from "@/components/common/Bog.vue";
+import Infor from "@/components/common/bog/Infor.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -69,19 +71,31 @@ const router = createRouter({
           component: Cart,
         },
         {
-          path: "trend",
-          name: "trend",
-          component: Trend,
-        },
-        {
           path: "product/:id",
           name: "product-detail",
           component: DetailProduct,
           props: true,
         },
+        {
+          path: "trend",
+          name: "trend",
+          component: Trend,
+        },
+        {
+          path: "bog",
+          name: "bog",
+          component: Bog,
+          children: [
+            {
+              path: "info",
+              name: "info",
+              component: Infor,
+            }
+          ]
+        },
       ]
     },
-    // Login page without layout
+    // Login page - standalone without layout
     {
       path: "/login",
       name: "login",
@@ -90,7 +104,7 @@ const router = createRouter({
     // Admin routes
     {
       path: "/admin",
-      component: () => AdminLayout,
+      component: AdminLayout,
       children: [
         {
           path: "",
@@ -213,6 +227,7 @@ const router = createRouter({
           name: "event-history",
           component: EventHistory,
         },
+        
       ],
       // End - Admin routes
     },

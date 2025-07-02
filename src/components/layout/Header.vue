@@ -53,8 +53,10 @@
 
                         <!-- Account -->
                         <div class="d-flex flex-column align-items-center text-decoration-none text-dark">
-                            <i class="bi bi-person fs-5"></i>
-                            <small class="text-muted" style="font-size: 11px;">Tài khoản</small>
+                            <RouterLink to="bog" class="text-dark">
+                                <i class="bi bi-person-circle fs-5"></i>
+                                <small class="text-muted" style="font-size: 11px;">Tài khoản</small>
+                            </RouterLink>
                         </div>
 
                         <!-- Language -->
