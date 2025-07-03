@@ -58,12 +58,12 @@
       </div>
       <div class="row g-3 m-2 mt-2 p-0">
         <div class="col-md-6">
-          <label class="form-label">Thành phố:</label>
+          <label class="form-label">Địa chỉ:</label>
           <input 
             type="text" 
             class="form-control" 
-            placeholder="Nhập thành phố" 
-            v-model="city" 
+            placeholder="Nhập địa chỉ" 
+            v-model="address" 
             @input="debouncedSearch"
             @keyup.enter="applyFilters"
           />
@@ -102,7 +102,7 @@
                 <th style="min-width: 150px;">Người liên hệ</th>
                 <th style="min-width: 150px;">Email</th>
                 <th style="min-width: 120px;">Số điện thoại</th>
-                <th style="min-width: 120px;">Thành phố</th>
+                <th style="min-width: 120px;">Địa chỉ</th>
                 <th style="min-width: 100px;">Trạng thái</th>
                 <th style="min-width: 120px;">Thao tác</th>
               </tr>
@@ -113,18 +113,16 @@
                 <td>
                   <div>
                     <strong>{{ supplier.supplierName }}</strong>
-                    <div class="text-muted small">{{ supplier.website }}</div>
                   </div>
                 </td>
                 <td>
                   <div>
                     <div>{{ supplier.contactName }}</div>
-                    <div class="text-muted small">{{ supplier.contactTitle }}</div>
                   </div>
                 </td>
                 <td>{{ supplier.email }}</td>
-                <td>{{ supplier.phone }}</td>
-                <td>{{ supplier.city }}</td>
+                <td>{{ supplier.phoneNumber }}</td>
+                <td>{{ supplier.address }}</td>
                 <td>
                   <ToggleStatus 
                     :id="supplier.id"
@@ -165,118 +163,109 @@
 
   <!-- Add/Edit Supplier Modal -->
   <div class="modal fade" :class="{ show: showModal }" tabindex="-1" style="display: block;" v-if="showModal">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header" style="background-color: #ecae9e;">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content enhanced-modal">
+        <div class="modal-header gradient-header">
           <h5 class="modal-title">
             <i class="bi me-2" :class="isEditMode ? 'bi-pencil-square' : 'bi-plus-circle'"></i>
             {{ isEditMode ? 'Sửa Nhà cung cấp' : 'Thêm Nhà cung cấp' }}
           </h5>
-          <button type="button" class="custom-close-btn" @click="closeModal" style="background: transparent; border: none; box-shadow: none; outline: none;">
-            <img src="https://cdn-icons-png.flaticon.com/128/1828/1828666.png" alt="Close" style="width: 24px; height: 24px;" />
+          <button type="button" class="custom-close-btn" @click="closeModal">
+            <i class="bi bi-x-lg"></i>
           </button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body enhanced-body">
+          <!-- Nút Fake Data ở đầu modal body -->
+          <div v-if="!isEditMode" class="mb-3 text-end">
+            <button 
+              type="button" 
+              class="btn btn-outline-warning btn-sm rounded-pill fake-data-btn"
+              @click="fillFakeData"
+              title="Điền dữ liệu mẫu để test nhanh"
+            >
+              🎲 Fake Data (Test)
+            </button>
+          </div>
+          
           <form @submit.prevent="handleSubmit">
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">Tên nhà cung cấp <span class="text-danger">*</span></label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  v-model="formData.supplierName"
-                  placeholder="Nhập tên nhà cung cấp"
-                  required
-                />
+            <!-- Section 1: Thông tin cơ bản -->
+            <div class="form-section">
+              <div class="section-header">
+                <i class="bi bi-info-circle section-icon"></i>
+                <h6 class="section-title">Thông tin cơ bản</h6>
               </div>
-              <div class="col-md-6">
-                <label class="form-label">Tên người liên hệ</label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  v-model="formData.contactName"
-                  placeholder="Nhập tên người liên hệ"
-                />
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label enhanced-label">Tên nhà cung cấp <span class="text-danger">*</span></label>
+                  <input 
+                    type="text" 
+                    class="form-control enhanced-input" 
+                    v-model="formData.supplierName"
+                    placeholder="Nhập tên nhà cung cấp"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label enhanced-label">Tên người liên hệ <span class="text-danger">*</span></label>
+                  <input 
+                    type="text" 
+                    class="form-control enhanced-input" 
+                    v-model="formData.contactName"
+                    placeholder="Nhập tên người liên hệ"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label enhanced-label">Số điện thoại <span class="text-danger">*</span></label>
+                  <input 
+                    type="text" 
+                    class="form-control enhanced-input" 
+                    v-model="formData.phoneNumber"
+                    placeholder="Nhập số điện thoại"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label enhanced-label">Email <span class="text-danger">*</span></label>
+                  <input 
+                    type="email" 
+                    class="form-control enhanced-input" 
+                    v-model="formData.email"
+                    placeholder="Nhập email"
+                    required
+                  />
+                </div>
+                <div class="col-md-12">
+                  <label class="form-label enhanced-label">Địa chỉ <span class="text-danger">*</span></label>
+                  <input 
+                    type="text" 
+                    class="form-control enhanced-input" 
+                    v-model="formData.address"
+                    placeholder="Nhập địa chỉ"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label enhanced-label">Trạng thái <span class="text-danger">*</span></label>
+                  <select class="form-select enhanced-input" v-model="formData.status" required>
+                    <option value="">Chọn trạng thái</option>
+                    <option value="1">Hoạt động</option>
+                    <option value="0">Không hoạt động</option>
+                  </select>
+                </div>
               </div>
-              <div class="col-md-6">
-                <label class="form-label">Chức vụ</label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  v-model="formData.contactTitle"
-                  placeholder="Nhập chức vụ"
-                />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Email</label>
-                <input 
-                  type="email" 
-                  class="form-control" 
-                  v-model="formData.email"
-                  placeholder="Nhập email"
-                />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Số điện thoại</label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  v-model="formData.phone"
-                  placeholder="Nhập số điện thoại"
-                />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Website</label>
-                <input 
-                  type="url" 
-                  class="form-control" 
-                  v-model="formData.website"
-                  placeholder="Nhập website"
-                />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Thành phố</label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  v-model="formData.city"
-                  placeholder="Nhập thành phố"
-                />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Khu vực</label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  v-model="formData.region"
-                  placeholder="Nhập khu vực"
-                />
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">Địa chỉ</label>
-                <input 
-                  type="text" 
-                  class="form-control" 
-                  v-model="formData.address"
-                  placeholder="Nhập địa chỉ"
-                />
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Trạng thái <span class="text-danger">*</span></label>
-                <select class="form-select" v-model="formData.status" required>
-                  <option value="">Chọn trạng thái</option>
-                  <option value="1">Hoạt động</option>
-                  <option value="0">Không hoạt động</option>
-                </select>
-              </div>
-            </div>
-            <div class="d-flex justify-content-end mt-3">
-              <button type="button" class="btn btn-secondary me-2" @click="closeModal">Hủy</button>
-              <button type="submit" class="btn btn-primary" :style="{ backgroundColor: '#33304e', borderColor: '#33304e' }">
-                {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }}
-              </button>
             </div>
           </form>
+        </div>
+        <div class="modal-footer enhanced-footer">
+          <button type="button" class="btn btn-secondary btn-cancel" @click="closeModal">
+            <i class="bi bi-x-circle me-1"></i>
+            Hủy
+          </button>
+          <button type="button" class="btn btn-primary btn-submit" @click="handleSubmit">
+            <i class="bi bi-check-circle me-1"></i>
+            {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }}
+          </button>
         </div>
       </div>
     </div>
@@ -302,7 +291,7 @@ const suppliers = ref([]);
 const searchQuery = ref('');
 const contactName = ref('');
 const email = ref('');
-const city = ref('');
+const address = ref('');
 const selectedStatus = ref('');
 const currentPage = ref(0);
 const pageSize = ref(10);
@@ -320,13 +309,9 @@ const formData = ref({
   id: null,
   supplierName: '',
   contactName: '',
-  contactTitle: '',
-  address: '',
-  city: '',
-  region: '',
-  phone: '',
+  phoneNumber: '',
   email: '',
-  website: '',
+  address: '',
   status: '',
   createdBy: 'admin',
   updatedBy: 'admin'
@@ -359,8 +344,8 @@ const fetchSuppliers = async () => {
       params.email = email.value;
     }
     
-    if (city.value) {
-      params.city = city.value;
+    if (address.value) {
+      params.address = address.value;
     }
     
     if (selectedStatus.value !== '') {
@@ -368,12 +353,14 @@ const fetchSuppliers = async () => {
     }
     
     const response = await getSuppliers(params);
-    const data = response.data || {};
+    const data = response || {};
     
     suppliers.value = data.content || [];
     totalPages.value = data.totalPages || 0;
     totalElements.value = data.totalElements || 0;
     isLastPage.value = data.last || false;
+    // Update current page from backend response
+    currentPage.value = data.number || 0;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách suppliers:', error);
     showToast('error', 'Lỗi khi tải danh sách nhà cung cấp!', 2000);
@@ -391,7 +378,7 @@ const clearFilters = () => {
   searchQuery.value = '';
   contactName.value = '';
   email.value = '';
-  city.value = '';
+  address.value = '';
   selectedStatus.value = '';
   currentPage.value = 0;
   fetchSuppliers();
@@ -424,13 +411,9 @@ const openAddModal = () => {
     id: null,
     supplierName: '',
     contactName: '',
-    contactTitle: '',
-    address: '',
-    city: '',
-    region: '',
-    phone: '',
+    phoneNumber: '',
     email: '',
-    website: '',
+    address: '',
     status: '',
     createdBy: 'admin',
     updatedBy: 'admin'
@@ -445,14 +428,10 @@ const openEditModal = (supplier, index) => {
     id: supplier.id,
     supplierName: supplier.supplierName,
     contactName: supplier.contactName,
-    contactTitle: supplier.contactTitle,
-    address: supplier.address,
-    city: supplier.city,
-    region: supplier.region,
-    phone: supplier.phone,
+    phoneNumber: supplier.phoneNumber,
     email: supplier.email,
-    website: supplier.website,
-    status: supplier.status,
+    address: supplier.address,
+    status: supplier.status.toString(),
     createdBy: supplier.createdBy,
     updatedBy: 'admin'
   };
@@ -465,13 +444,9 @@ const closeModal = () => {
     id: null,
     supplierName: '',
     contactName: '',
-    contactTitle: '',
-    address: '',
-    city: '',
-    region: '',
-    phone: '',
+    phoneNumber: '',
     email: '',
-    website: '',
+    address: '',
     status: '',
     createdBy: 'admin',
     updatedBy: 'admin'
@@ -536,6 +511,92 @@ const handleDelete = async (supplier) => {
   }
 };
 
+const fillFakeData = () => {
+  console.log('=== DEBUG: fillFakeData called ===');
+  
+  // Generate unique name with timestamp
+  const timestamp = Date.now();
+  const supplierNames = [
+    'NXB Kim Đồng',
+    'NXB Trẻ',
+    'NXB Văn học',
+    'NXB Giáo dục',
+    'Fahasa',
+    'Vinabook',
+    'Thái Hà Books',
+    'Omega Plus',
+    'Alphabooks',
+    'Nhã Nam'
+  ];
+  
+  const contactNames = [
+    'Nguyễn Văn A',
+    'Trần Thị B',
+    'Lê Văn C',
+    'Phạm Thị D',
+    'Hoàng Văn E',
+    'Ngô Thị F',
+    'Vũ Văn G',
+    'Đặng Thị H',
+    'Bùi Văn I',
+    'Lý Thị K'
+  ];
+  
+  const addresses = [
+    'Số 55 Quang Trung, Hai Bà Trưng, Hà Nội',
+    '161B Lý Chính Thắng, Quận 3, TP.HCM',
+    '18 Nguyễn Trường Tộ, Ba Đình, Hà Nội',
+    '81 Trần Quốc Toản, Quận 3, TP.HCM',
+    '60-62 Lê Lợi, Quận 1, TP.HCM',
+    '32 Hàm Long, Hoàn Kiếm, Hà Nội',
+    '91 Hai Bà Trưng, Quận 1, TP.HCM',
+    '14 Trần Hưng Đạo, Hoàn Kiếm, Hà Nội',
+    '25 Nguyễn Huệ, Quận 1, TP.HCM',
+    '43 Hàng Bông, Hoàn Kiếm, Hà Nội'
+  ];
+  
+  const phoneNumbers = [
+    '0123456789',
+    '0987654321',
+    '0123456788',
+    '0987654322',
+    '0123456787',
+    '0987654323',
+    '0123456786',
+    '0987654324',
+    '0123456785',
+    '0987654325'
+  ];
+  
+  const emails = [
+    'contact@kimdong.com.vn',
+    'info@nxbtre.com.vn',
+    'contact@vanhoc.vn',
+    'info@giaoduc.vn',
+    'contact@fahasa.com',
+    'info@vinabook.com',
+    'contact@thaihabooks.com',
+    'info@omegaplus.vn',
+    'contact@alphabooks.vn',
+    'info@nhanam.vn'
+  ];
+  
+  const randomIndex = Math.floor(Math.random() * supplierNames.length);
+  
+  formData.value = {
+    ...formData.value,
+    supplierName: `${supplierNames[randomIndex]} Test ${timestamp}`,
+    contactName: contactNames[randomIndex],
+    phoneNumber: phoneNumbers[randomIndex],
+    email: emails[randomIndex],
+    address: addresses[randomIndex],
+    status: Math.random() > 0.5 ? '1' : '0'
+  };
+  
+  console.log('=== DEBUG: fillFakeData completed ===');
+  console.log('formData.value:', formData.value);
+};
+
 // Lifecycle
 onMounted(() => {
   fetchSuppliers();
@@ -552,6 +613,12 @@ onMounted(() => {
   padding: 0.5rem;
   border-radius: 0.375rem;
   transition: all 0.15s ease-in-out;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+  color: #2c2c54;
+  font-size: 1.2rem;
 }
 
 .custom-close-btn:hover {
@@ -565,5 +632,226 @@ onMounted(() => {
 
 .modal {
   z-index: 1050;
+}
+
+/* Enhanced Modal Styles */
+.enhanced-modal {
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: none;
+  overflow: hidden;
+}
+
+.gradient-header {
+  background: linear-gradient(135deg, #ecae9e 0%, #d49489 100%);
+  border-bottom: none;
+  border-radius: 15px 15px 0 0;
+  padding: 1rem 1.25rem;
+  position: relative;
+}
+
+.gradient-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+  background-size: 300% 100%;
+  animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.modal-title {
+  font-weight: 600;
+  color: #2c2c54;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.enhanced-body {
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.enhanced-footer {
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  padding: 0.875rem 1.25rem;
+  border-radius: 0 0 15px 15px;
+}
+
+/* Form Section Styles */
+.form-section {
+  margin-bottom: 1.75rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid #ecae9e;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.form-section:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f1f3f4;
+  position: relative;
+}
+
+.section-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, #ecae9e, #4ecdc4);
+  border-radius: 1px;
+}
+
+.section-icon {
+  font-size: 1rem;
+  color: #ecae9e;
+  margin-right: 0.5rem;
+  padding: 0.4rem;
+  background: rgba(236, 174, 158, 0.1);
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2c2c54;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.enhanced-label {
+  font-weight: 500;
+  color: #2c2c54;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.enhanced-input {
+  border-radius: 8px;
+  border: 1px solid #e1e5e9;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  background: #fff;
+}
+
+.enhanced-input:focus {
+  border-color: #ecae9e;
+  box-shadow: 0 0 0 0.2rem rgba(236, 174, 158, 0.25);
+  outline: none;
+}
+
+.enhanced-input:hover {
+  border-color: #d0d7de;
+}
+
+.btn-cancel {
+  background: #6c757d;
+  border-color: #6c757d;
+  color: white;
+  border-radius: 8px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel:hover {
+  background: #5a6268;
+  border-color: #5a6268;
+  transform: translateY(-1px);
+}
+
+.btn-submit {
+  background: #ecae9e;
+  border-color: #ecae9e;
+  color: white;
+  border-radius: 8px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-submit:hover {
+  background: #d49489;
+  border-color: #d49489;
+  transform: translateY(-1px);
+}
+
+.fake-data-btn {
+  background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+  border: none;
+  color: #2c2c54;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(254, 202, 87, 0.3);
+}
+
+.fake-data-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(254, 202, 87, 0.4);
+  background: linear-gradient(135deg, #ff9ff3 0%, #feca57 100%);
+}
+
+.fake-data-btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .enhanced-modal {
+    border-radius: 0;
+    margin: 0;
+    height: 100vh;
+  }
+  
+  .gradient-header {
+    border-radius: 0;
+  }
+  
+  .enhanced-footer {
+    border-radius: 0;
+  }
+  
+  .form-section {
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
+  
+  .section-header {
+    margin-bottom: 0.75rem;
+  }
+  
+  .enhanced-input {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
 }
 </style>
