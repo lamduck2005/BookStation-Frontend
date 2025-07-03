@@ -121,7 +121,7 @@ import Pagination from '@/components/common/Pagination.vue';
 import ToggleStatus from '@/components/common/ToggleStatus.vue';
 import { toggleUserRankStatus } from '@/services/admin/userRank.js';
 import { showToast } from '@/utils/swalHelper';
-import { getRanks } from '@/services/admin/rank.js';
+import { getRanksDropdown } from '@/services/admin/rank.js';
 
 const route = useRoute();
 const rankId = route.params.id;
@@ -171,7 +171,7 @@ const fetchUserRanks = async () => {
 
 const fetchRankDropdown = async () => {
   try {
-    const res = await axios.get('/api/ranks/dropdown');
+    const res = await getRanksDropdown();
     rankOptions.value = res.data?.data || [];
   } catch (e) {
     rankOptions.value = [];

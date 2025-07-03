@@ -384,7 +384,7 @@ import EditButton from '@/components/common/EditButton.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import AddButton from '@/components/common/AddButton.vue';
 import StatusLabel from '@/components/common/StatusLabel.vue';
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { Modal } from 'bootstrap';
 import { getPublishers, createPublisher, updatePublisher, updatePublisherStatus, deletePublisher } from '@/services/admin/publisher';
 import { showQuickConfirm, showToast } from '@/utils/swalHelper';
@@ -489,6 +489,24 @@ watch([currentPage], () => {
   fetchPublishers();
 });
 
+// Debounce search to avoid too many API calls
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func.apply(null, args), delay);
+  };
+};
+
+const debouncedFetchPublishers = debounce(() => {
+  currentPage.value = 0;
+  fetchPublishers();
+}, 300);
+
+watch([searchQuery, emailFilter, selectedStatus], () => {
+  debouncedFetchPublishers();
+});
+
 // Format date function
 const formatDate = (timestamp) => {
   if (!timestamp) return '';
@@ -528,10 +546,8 @@ const openAddModal = () => {
   
   try {
     const modalElement = document.getElementById('addPublisherModal');
-    console.log('Modal element:', modalElement);
     if (modalElement) {
-      const modal = new Modal(modalElement);
-      console.log('Modal instance created:', modal);
+      const modal = Modal.getOrCreateInstance(modalElement);
       modal.show();
     } else {
       console.error('Modal element not found');
@@ -563,7 +579,7 @@ const openEditModal = (publisher, index) => {
   try {
     const modalElement = document.getElementById('addPublisherModal');
     if (modalElement) {
-      const modal = new Modal(modalElement);
+      const modal = Modal.getOrCreateInstance(modalElement);
       modal.show();
     } else {
       console.error('Modal element not found when trying to open edit modal');
@@ -654,6 +670,8 @@ const handleSubmitPublisher = async () => {
       } else {
         showToast('error', 'Có lỗi xảy ra, vui lòng kiểm tra lại thông tin nhập.');
       }
+    } else if (error.code === 'NETWORK_ERROR') {
+      showToast('error', 'Lỗi kết nối mạng. Vui lòng kiểm tra kết nối và thử lại.');
     } else {
       showToast('error', 'Không thể lưu thông tin nhà xuất bản. Vui lòng thử lại sau.');
     }
@@ -664,39 +682,17 @@ const closeModal = () => {
   try {
     const modalElement = document.getElementById('addPublisherModal');
     if (modalElement) {
-      // Tìm modal instance hiện tại
-      const modal = Modal.getInstance(modalElement);
-      if (modal) {
-        modal.hide();
-      } else {
-        // Nếu không có instance, tạo mới và hide
-        const newModal = new Modal(modalElement);
-        newModal.hide();
-      }
+      // Sử dụng Bootstrap Modal API đúng cách
+      const modal = Modal.getOrCreateInstance(modalElement);
+      modal.hide();
       
-      // Đảm bảo cleanup hoàn toàn
-      setTimeout(() => {
-        // Remove backdrop
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => backdrop.remove());
-        
-        // Remove modal classes from body
-        document.body.classList.remove('modal-open');
-        document.body.style.removeProperty('overflow');
-        document.body.style.removeProperty('padding-right');
-        
-        // Reset modal state
-        modalElement.classList.remove('show');
-        modalElement.style.display = 'none';
-        modalElement.setAttribute('aria-hidden', 'true');
-        modalElement.removeAttribute('aria-modal');
-      }, 150);
-    } else {
-      console.error('Modal element not found when trying to close');
+      // Cleanup sau khi modal đã đóng
+      modalElement.addEventListener('hidden.bs.modal', () => {
+        forceCleanupModal();
+      }, { once: true });
     }
   } catch (error) {
     console.error('Error closing modal:', error);
-    // Force cleanup nếu có lỗi
     forceCleanupModal();
   }
 };
@@ -787,13 +783,8 @@ const clearFilters = () => {
 };
 
 // Debounce function for search input
-let searchTimeout = null;
 const debouncedSearch = () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    currentPage.value = 0;
-    fetchPublishers();
-  }, 500);
+  debouncedFetchPublishers();
 };
 
 // Pagination functions
@@ -830,8 +821,25 @@ const fillFakeData = () => {
   };
 };
 
+let modalElement = null;
+
 onMounted(() => {
+  modalElement = document.getElementById('addPublisherModal');
+  if (modalElement) {
+    modalElement.addEventListener('hidden.bs.modal', () => {
+      // Reset form state when modal is hidden
+      resetFormErrors();
+    });
+  }
   fetchPublishers();
+});
+
+onUnmounted(() => {
+  if (modalElement) {
+    modalElement.removeEventListener('hidden.bs.modal', () => {
+      resetFormErrors();
+    });
+  }
 });
 </script>
 

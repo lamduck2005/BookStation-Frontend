@@ -36,12 +36,8 @@ export const createPublisher = async (publisherData) => {
 // Cập nhật nhà xuất bản
 export const updatePublisher = async (id, publisherData) => {
   try {
-    // Theo tài liệu API, PUT sử dụng request body chứa ID, không phải path parameter
-    const payload = {
-      id: id,
-      ...publisherData
-    };
-    const response = await client.put('/api/publishers', payload);
+    // Gửi PUT đúng chuẩn REST: id trên URL, body không cần id
+    const response = await client.put(`/api/publishers/${id}`, publisherData);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi cập nhật nhà xuất bản:', error);
