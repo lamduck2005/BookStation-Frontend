@@ -30,3 +30,8 @@ export function timestampToDatetimeLocal(timestamp) {
   
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
+
+
+export const getUserId = () => {
+  return 1; //fake user id
+}
