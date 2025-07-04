@@ -21,21 +21,43 @@ body {
     box-sizing: border-box;
 }
 
-/* Custom scrollbar */
-/* ::-webkit-scrollbar {
-    width: 0px;
+/* Enable custom scrollbar globally */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
     background: #f1f1f1;
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #dc3545;
+    background: #888;
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #c82333;
-} */
+    background: #555;
+}
+
+/* Ensure table responsive containers can scroll */
+.table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Fix for Bootstrap table responsive on small screens */
+@media (max-width: 1200px) {
+    .table-responsive {
+        overflow-x: auto !important;
+        display: block;
+        width: 100%;
+        white-space: nowrap;
+    }
+    
+    .table-responsive table {
+        min-width: 1000px; /* Ensure minimum width for proper scrolling */
+    }
+}
 </style>

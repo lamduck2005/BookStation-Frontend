@@ -83,7 +83,9 @@
               <td>
                 <span
                   :class="
-                    category.status === 1 ? 'badge bg-success' : 'badge bg-danger'
+                    category.status === 1
+                      ? 'badge bg-success'
+                      : 'badge bg-danger'
                   "
                 >
                   {{ category.status === 1 ? "Hoạt động" : "Không hoạt động" }}
@@ -99,7 +101,10 @@
                     <i class="bi bi-eye"></i>
                   </button>
                   <EditButton @click="editCategory(category.id)" title="Sửa" />
-
+                  <ToggleStatus
+                    :status="category.status"
+                    @toggle="handleToggleStatus(category.id)"
+                  />
                   <DeleteButton
                     @click="handleDeleteCategory(category.id)"
                     title="Xóa"
@@ -142,7 +147,10 @@
                     <i class="bi bi-eye"></i>
                   </button>
                   <EditButton @click="editCategory(child.id)" title="Sửa" />
-
+                  <ToggleStatus
+                    :status="child.status"
+                    @toggle="handleToggleStatus(child.id)"
+                  />
                   <DeleteButton
                     @click="handleDeleteCategory(child.id)"
                     title="Xóa"
@@ -401,6 +409,7 @@ import {
 import AddButton from "@/components/common/AddButton.vue";
 import EditButton from "@/components/common/EditButton.vue";
 import DeleteButton from "@/components/common/DeleteButton.vue";
+import ToggleStatus from "@/components/common/ToggleStatus.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import { debounce } from "@/utils/utils";
 
@@ -577,7 +586,7 @@ const editCategory = async (id) => {
 const handleUpdateCategory = async (id, category) => {
   try {
     await updateCategory(id, category);
-    fetchCategory(); 
+    fetchCategory();
     showEditModal.value = false;
     Swal.fire({
       icon: "success",
@@ -641,6 +650,34 @@ const handleDeleteCategory = async (id) => {
   }
 };
 
+const handleToggleStatus = async (id) => {
+  try {
+    await toggleStatus(id);
+    fetchCategory(); // Refresh the list to show updated status
+
+    Swal.fire({
+      icon: "success",
+      title: "Cập nhật trạng thái thành công!",
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    });
+  } catch (error) {
+    console.error("Lỗi khi cập nhật trạng thái danh mục:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Cập nhật trạng thái thất bại!",
+      text: "Không thể cập nhật trạng thái danh mục.",
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    });
+  }
+};
 
 // Watch để tự động fetch khi thay đổi filter hoặc phân trang
 watch([searchQuery, selectedStatus, pageSize, currentPage], () => {
@@ -805,5 +842,53 @@ textarea {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+/* Table responsive improvements */
+.table-responsive {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.table-responsive table {
+  min-width: 800px; /* Ensure table has minimum width for proper scrolling */
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Responsive table fixes */
+@media (max-width: 1200px) {
+  .table-responsive table {
+    min-width: 900px;
+  }
+}
+
+@media (max-width: 992px) {
+  .table-responsive table {
+    min-width: 800px;
+  }
+}
+
+@media (max-width: 768px) {
+  .table-responsive table {
+    min-width: 700px;
+  }
 }
 </style>

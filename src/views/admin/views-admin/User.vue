@@ -74,64 +74,66 @@
         <strong>Danh sách Người dùng</strong>
       </div>
       <div class="p-3">
-        <table class="table align-middle">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Họ tên</th>
-              <th>Email</th>
-              <th>SĐT</th>
-              <th>Vai trò</th>
-              <th>Trạng thái</th>
-              <th>Tổng chi tiêu</th>
-              <th>Tổng điểm</th>
-              <th>Ngày tạo</th>
-              <th>Ngày cập nhật</th>
-              <th style="width: 120px">Chức năng</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(user, idx) in users" :key="user.user_id">
-              <td>{{ user.user_id }}</td>
-              <td>{{ user.full_name }}</td>
-              <td>{{ user.email }}</td>
-              <td>{{ user.phone_number }}</td>
-              <td>
-                <span :class="['badge', roleBadgeClass(user.role_id)]">{{
-                  roleMap[user.role_id] || "User"
-                }}</span>
-              </td>
-              <td>
-                <span :class="['badge', statusBadgeClass(user.status)]">{{
-                  statusText(user.status)
-                }}</span>
-              </td>
-              <td>{{ formatCurrency(user.total_spent) }}</td>
-              <td>{{ user.total_point }}</td>
-              <td>{{ formatDate(user.created_at) }}</td>
-              <td>{{ formatDate(user.updated_at) }}</td>
-              <td>
-                <button
-                  class="btn btn-sm btn-outline-primary me-1"
-                  @click="openEditModal(user)"
-                >
-                  <i class="bi bi-pencil"></i>
-                </button>
-                <button
-                  class="btn btn-sm btn-outline-danger"
-                  @click="confirmDelete(user)"
-                >
-                  <i class="bi bi-trash"></i>
-                </button>
-              </td>
-            </tr>
-            <tr v-if="users.length === 0">
-              <td colspan="11" class="text-center text-muted">
-                Không có dữ liệu
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Họ tên</th>
+                <th>Email</th>
+                <th>SĐT</th>
+                <th>Vai trò</th>
+                <th>Trạng thái</th>
+                <th>Tổng chi tiêu</th>
+                <th>Tổng điểm</th>
+                <th>Ngày tạo</th>
+                <th>Ngày cập nhật</th>
+                <th style="width: 120px">Chức năng</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(user, idx) in users" :key="user.user_id">
+                <td>{{ user.user_id }}</td>
+                <td>{{ user.full_name }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.phone_number }}</td>
+                <td>
+                  <span :class="['badge', roleBadgeClass(user.role_id)]">{{
+                    roleMap[user.role_id] || "User"
+                  }}</span>
+                </td>
+                <td>
+                  <span :class="['badge', statusBadgeClass(user.status)]">{{
+                    statusText(user.status)
+                  }}</span>
+                </td>
+                <td>{{ formatCurrency(user.total_spent) }}</td>
+                <td>{{ user.total_point }}</td>
+                <td>{{ formatDate(user.created_at) }}</td>
+                <td>{{ formatDate(user.updated_at) }}</td>
+                <td>
+                  <button
+                    class="btn btn-sm btn-outline-primary me-1"
+                    @click="openEditModal(user)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    @click="confirmDelete(user)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="users.length === 0">
+                <td colspan="11" class="text-center text-muted">
+                  Không có dữ liệu
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <!-- Pagination -->
         <Pagination
           :page-number="currentPage"
@@ -672,5 +674,53 @@ input:checked + .slider {
 }
 input:checked + .slider:before {
   transform: translateX(20px);
+}
+
+/* Table responsive improvements */
+.table-responsive {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.table-responsive table {
+  min-width: 1100px; /* Ensure table has minimum width for proper scrolling */
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Responsive table fixes */
+@media (max-width: 1200px) {
+  .table-responsive table {
+    min-width: 1200px;
+  }
+}
+
+@media (max-width: 992px) {
+  .table-responsive table {
+    min-width: 1100px;
+  }
+}
+
+@media (max-width: 768px) {
+  .table-responsive table {
+    min-width: 1000px;
+  }
 }
 </style>

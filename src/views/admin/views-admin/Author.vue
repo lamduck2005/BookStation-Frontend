@@ -769,6 +769,54 @@ const handlePageSizeChange = (newSize) => {
 .action-btn:hover {
   background: #f0f0f0;
 }
+
+/* Table responsive improvements */
+.table-responsive {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.table-responsive table {
+  min-width: 800px; /* Ensure table has minimum width for proper scrolling */
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Responsive table fixes */
+@media (max-width: 1200px) {
+  .table-responsive table {
+    min-width: 900px;
+  }
+}
+
+@media (max-width: 992px) {
+  .table-responsive table {
+    min-width: 800px;
+  }
+}
+
+@media (max-width: 768px) {
+  .table-responsive table {
+    min-width: 700px;
+  }
+}
 </style>
 
 <!-- Bootstrap Icons CDN -->

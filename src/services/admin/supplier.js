@@ -1,57 +1,80 @@
-import client from "../../utils/axios.js";
+import client from '@/utils/axios';
 
-// Gọi API lấy danh sách Supplier sử dụng axios đã cấu hình
+// Lấy danh sách suppliers
 export const getSuppliers = async (params = {}) => {
   try {
-    const response = await client.get("/api/suppliers", { params });
+    const response = await client.get('/api/suppliers', { params });
     return response.data;
   } catch (error) {
-    console.error("Lỗi khi lấy danh sách supplier:", error);
+    console.error('Lỗi khi lấy danh sách suppliers:', error);
     throw error;
   }
 };
 
-// Thêm mới supplier
-export const createSupplier = async (payload) => {
+// Lấy danh sách suppliers dropdown
+export const getSuppliersDropdown = async () => {
   try {
-    const response = await client.post("/api/suppliers", payload);
+    const response = await client.get('/api/suppliers/dropdown');
     return response.data;
   } catch (error) {
-    console.error("Lỗi khi thêm supplier:", error);
+    console.error('Lỗi khi lấy danh sách suppliers dropdown:', error);
     throw error;
   }
 };
 
-// Cập nhật thông tin supplier
-export const updateSupplier = async (payload) => {
+// Tạo supplier mới
+export const createSupplier = async (supplierData) => {
   try {
-    const response = await client.put("/api/suppliers", payload);
+    const response = await client.post('/api/suppliers', supplierData);
     return response.data;
   } catch (error) {
-    console.error("Lỗi khi cập nhật supplier:", error);
+    console.error('Lỗi khi tạo supplier:', error);
     throw error;
   }
 };
-// Xoá supplier
+
+// Cập nhật supplier
+export const updateSupplier = async (supplierData) => {
+  try {
+    const response = await client.put('/api/suppliers', supplierData);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi cập nhật supplier:', error);
+    throw error;
+  }
+};
+
+// Xóa supplier
 export const deleteSupplier = async (id) => {
   try {
     const response = await client.delete(`/api/suppliers/${id}`);
     return response.data;
   } catch (error) {
-    console.error("Lỗi khi xoá supplier:", error);
+    console.error('Lỗi khi xóa supplier:', error);
     throw error;
   }
 };
 
-// upStatus supplier
-export const upStatusSupplier = async (id, status, updatedBy) => {
+// Cập nhật trạng thái supplier
+export const updateSupplierStatus = async (id, status, updatedBy) => {
   try {
     const response = await client.patch(`/api/suppliers/status`, null, {
-      params: { id, status, updatedBy },
+      params: { id, status, updatedBy }
     });
     return response.data;
   } catch (error) {
-    console.error("Lỗi khi cập nhật trạng thái supplier:", error);
+    console.error('Lỗi khi cập nhật trạng thái supplier:', error);
+    throw error;
+  }
+};
+
+// Lấy chi tiết supplier
+export const getSupplierById = async (id) => {
+  try {
+    const response = await client.get(`/api/suppliers/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy chi tiết supplier:', error);
     throw error;
   }
 };
