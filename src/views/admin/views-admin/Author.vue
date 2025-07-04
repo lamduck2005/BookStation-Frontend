@@ -46,6 +46,7 @@
               <th style="width: 170px">Tên tác giả</th>
               <th>Tiểu sử</th>
               <th style="width: 110px">Ngày sinh</th>
+              <th style="width: 130px">Trạng thái</th>
               <th class="text-center text-nowrap" style="width: 150px">
                 Chức năng
               </th>
@@ -59,6 +60,13 @@
                 {{ author.biography }}
               </td>
               <td>{{ formatDate(author.birthDate) }}</td>
+              <td>
+                <ToggleStatus
+                  :id="author.id"
+                  v-model="author.status"
+                  @change="(status) => handleToggleStatus(author.id, status)"
+                />
+              </td>
               <td class="text-center text-nowrap">
                 <div class="d-inline-flex gap-1">
                   <button
@@ -328,6 +336,7 @@ import {
   addAuthor,
   updateAuthor,
   deleteAuthor,
+  toggleStatus,
 } from "../../../services/admin/author";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import Swal from "sweetalert2";
@@ -335,6 +344,7 @@ import AddButton from "@/components/common/AddButton.vue";
 import EditButton from "@/components/common/EditButton.vue";
 import DeleteButton from "@/components/common/DeleteButton.vue";
 import Pagination from "@/components/common/Pagination.vue";
+import ToggleStatus from "@/components/common/ToggleStatus.vue";
 import { debounce } from "@/utils/utils";
 
 const authors = ref([]);
@@ -504,6 +514,38 @@ const handleDeleteAuthor = async (id) => {
         timerProgressBar: true,
       });
     }
+  }
+};
+
+// Hàm xử lý toggle status
+const handleToggleStatus = async (id, status) => {
+  try {
+    await toggleStatus(id);
+    // Refresh lại danh sách để đảm bảo đồng bộ
+    fetchAuthors();
+    Swal.fire({
+      icon: "success",
+      title: `Đã ${status === 1 ? "kích hoạt" : "tắt"} trạng thái!`,
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    });
+  } catch (error) {
+    console.error("Lỗi khi thay đổi trạng thái:", error);
+    // Refresh lại để khôi phục trạng thái cũ
+    fetchAuthors();
+    Swal.fire({
+      icon: "error",
+      title: "Thay đổi trạng thái thất bại!",
+      text: "Không thể thay đổi trạng thái tác giả.",
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    });
   }
 };
 

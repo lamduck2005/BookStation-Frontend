@@ -56,3 +56,14 @@ export const getAuthorById = async (id) => {
     throw error;
   }
 };
+
+// Đổi trạng thái tác giả
+export const toggleStatus = async (id) => {
+  try {
+    const { data } = await apiClient.patch(`/authors/${id}/toggle-status`);
+    return data;
+  } catch (error) {
+    console.error("Error toggling author status:", error);
+    throw error;
+  }
+};

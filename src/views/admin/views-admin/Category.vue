@@ -49,8 +49,9 @@
           <thead class="table-light">
             <tr>
               <th style="width: 50px">#</th>
-              <th style="width: 60%">Tên danh mục</th>
+              <th style="width: 50%">Tên danh mục</th>
               <th>Mô tả</th>
+              <th style="width: 100px">Trạng thái</th>
               <th class="text-center text-nowrap" style="width: 150px">
                 Chức năng
               </th>
@@ -78,6 +79,15 @@
 
               <td style="max-width: 200px; white-space: pre-line">
                 {{ category.description }}
+              </td>
+              <td>
+                <span
+                  :class="
+                    category.status === 1 ? 'badge bg-success' : 'badge bg-danger'
+                  "
+                >
+                  {{ category.status === 1 ? "Hoạt động" : "Không hoạt động" }}
+                </span>
               </td>
               <td class="text-center text-nowrap">
                 <div class="d-inline-flex gap-1">
@@ -113,6 +123,15 @@
               <td style="max-width: 200px; white-space: pre-line">
                 {{ child?.description ? child.description : "Không có mô tả" }}
               </td>
+              <td>
+                <span
+                  :class="
+                    child?.status === 1 ? 'badge bg-success' : 'badge bg-danger'
+                  "
+                >
+                  {{ child?.status === 1 ? "Hoạt động" : "Không hoạt động" }}
+                </span>
+              </td>
               <td class="text-center text-nowrap">
                 <div class="d-inline-flex gap-1">
                   <button
@@ -135,6 +154,19 @@
         </table>
       </div>
     </div>
+
+    <!-- Phân trang -->
+    <Pagination
+      :page-number="currentPage"
+      :total-pages="totalPages"
+      :is-last-page="isLastPage"
+      :page-size="pageSize"
+      :items-per-page-options="itemsPerPageOptions"
+      :total-elements="totalElements"
+      @prev="handlePrev"
+      @next="handleNext"
+      @update:pageSize="handlePageSizeChange"
+    />
   </div>
   <!-- Modal thêm danh mục -->
   <div
@@ -187,6 +219,13 @@
                 placeholder="Nhập mô tả"
               ></textarea>
             </div>
+            <div class="mb-3">
+              <label class="form-label">Trạng thái</label>
+              <select v-model="category.status" class="form-select">
+                <option :value="1">Hoạt động</option>
+                <option :value="0">Không hoạt động</option>
+              </select>
+            </div>
           </form>
         </div>
         <div class="modal-footer">
@@ -238,10 +277,10 @@
           </div>
           <div class="mb-2"><b>Mô tả:</b> {{ detailCategory.description }}</div>
           <div class="mb-2">
-            <b>Ngày tạo:</b> {{ formatDate(detailCategory.createdAt) }}
+            <b>Ngày tạo:</b> {{ detailCategory.createdAt }}
           </div>
           <div class="mb-2">
-            <b>Ngày cập nhật:</b> {{ formatDate(detailCategory.updatedAt) }}
+            <b>Ngày cập nhật:</b> {{ detailCategory.updatedAt }}
           </div>
           <div class="mb-2">
             <b>Người tạo:</b> {{ detailCategory.createdBy }}
@@ -346,7 +385,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 
 import "bootstrap-icons/font/bootstrap-icons.css";
 import Swal from "sweetalert2";
@@ -362,6 +401,8 @@ import {
 import AddButton from "@/components/common/AddButton.vue";
 import EditButton from "@/components/common/EditButton.vue";
 import DeleteButton from "@/components/common/DeleteButton.vue";
+import Pagination from "@/components/common/Pagination.vue";
+import { debounce } from "@/utils/utils";
 
 const categories = ref([]);
 const dataGetAll = ref([]);
@@ -394,6 +435,14 @@ const editData = ref({
 const searchQuery = ref("");
 const selectedStatus = ref("");
 
+// Pagination variables
+const currentPage = ref(0);
+const pageSize = ref(5);
+const totalPages = ref(1);
+const totalElements = ref(0);
+const itemsPerPageOptions = ref([5, 10, 25, 50]);
+const isLastPage = ref(false);
+
 const toggleCollapse = (category) => {
   category.isOpen = !category.isOpen;
 };
@@ -401,9 +450,38 @@ const fetchCategory = async () => {
   try {
     const getAll = await getAllCategories();
     dataGetAll.value = getAll;
-    const data = await getAllParentCategories();
-    categories.value = data;
-    console.log("Danh sách danh mục sau khi xử lý:", categories.value); // Log dữ liệu đã xử lý
+
+    // Fetch with pagination parameters
+    const params = {
+      page: currentPage.value,
+      size: pageSize.value,
+      name: searchQuery.value || undefined,
+      status: selectedStatus.value || undefined,
+    };
+
+    const response = await getAllParentCategories(params);
+
+    const data = response.data ? response.data : response;
+
+    categories.value = data.content || data;
+    totalPages.value = data.totalPages ?? 1;
+    totalElements.value = data.totalElements ?? categories.value.length;
+    currentPage.value = data.page ?? currentPage.value;
+    pageSize.value = data.size ?? pageSize.value;
+    isLastPage.value = currentPage.value >= totalPages.value - 1;
+
+    console.log("=== DEBUG PAGINATION DATA ===");
+    console.log("Original response:", response);
+    console.log("Processed data:", data);
+    console.log("categories.value:", categories.value);
+    console.log("totalPages:", totalPages.value);
+    console.log("totalElements:", totalElements.value);
+    console.log("currentPage:", currentPage.value);
+    console.log("pageSize:", pageSize.value);
+    console.log("isLastPage:", isLastPage.value);
+    console.log("============================");
+
+    console.log("Danh sách danh mục sau khi xử lý:", categories.value);
   } catch (error) {
     console.error("Lỗi khi tải danh sách danh mục:", error);
   }
@@ -445,7 +523,7 @@ const add = async () => {
   try {
     console.log("Payload sent to BE:", payload);
     await addCategory(payload);
-       fetchCategory(); // Cập nhật lại danh sách danh mục
+    fetchCategory(); // Cập nhật lại danh sách danh mục
     closeModal();
     Swal.fire({
       icon: "success",
@@ -499,7 +577,7 @@ const editCategory = async (id) => {
 const handleUpdateCategory = async (id, category) => {
   try {
     await updateCategory(id, category);
-   fetchCategory(); // Cập nhật lại danh sách danh mục
+    fetchCategory(); 
     showEditModal.value = false;
     Swal.fire({
       icon: "success",
@@ -536,7 +614,7 @@ const handleDeleteCategory = async (id) => {
   if (result.isConfirmed) {
     try {
       await deleteCategory(id);
-       fetchCategory(); // Cập nhật lại danh sách danh mục
+      fetchCategory(); // Cập nhật lại danh sách danh mục
 
       Swal.fire({
         icon: "success",
@@ -562,9 +640,25 @@ const handleDeleteCategory = async (id) => {
     }
   }
 };
-const formatDate = (dateStr) => {
-  if (!dateStr) return "";
-  return dateStr.split("T")[0];
+
+
+// Watch để tự động fetch khi thay đổi filter hoặc phân trang
+watch([searchQuery, selectedStatus, pageSize, currentPage], () => {
+  debounce(fetchCategory(), 500);
+});
+
+// Hàm chuyển trang
+const handlePrev = () => {
+  if (currentPage.value > 0) currentPage.value--;
+};
+
+const handleNext = () => {
+  if (!isLastPage.value) currentPage.value++;
+};
+
+const handlePageSizeChange = (newSize) => {
+  pageSize.value = newSize;
+  currentPage.value = 0;
 };
 </script>
 

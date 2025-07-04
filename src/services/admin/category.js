@@ -26,9 +26,9 @@ try {
     throw error;
 }
 }
-export const getAllParentCategories  = async () => {
+export const getAllParentCategories  = async (params={}) => {
   try {
-    const { data } = await apiClient.get("/categories/parentcategories");
+    const { data } = await apiClient.get("/categories/parentcategories",{params});
     return data;
   } catch (error) {
     console.error("Error fetching categories:", error);
