@@ -57,25 +57,38 @@
               />
               <div class="cart-img-container me-3">
                 <img 
-                  :src="item.book?.imageUrl || 'https://via.placeholder.com/150x150?text=No+Image'" 
-                  :alt="item.book?.title || 'Sản phẩm'" 
+                  :src="item.bookImageUrl || 'https://via.placeholder.com/150x150?text=No+Image'" 
+                  :alt="item.bookName || 'Sản phẩm'" 
                   class="cart-img me-3" 
                   width="150" 
                   height="150"
                 />
-                <div v-if="item.isFlashSale" class="flash-sale-badge">
+                <div v-if="item.itemType === 'FLASH_SALE'" class="flash-sale-badge">
                   <i class="fa fa-bolt"></i> FLASH SALE
                 </div>
               </div>
               <div class="product-info flex-grow-1 me-3">
                 <div class="fw-normal mb-2">
-                  {{ item.book?.title || 'Tên sản phẩm không có' }}
+                  {{ item.bookName || 'Tên sản phẩm không có' }}
                 </div>
                 <div class="fw-bold text-danger" style="font-size: 1.1rem;">
                   {{ formatPrice(item.unitPrice) }}
                 </div>
-                <div v-if="item.savedAmount > 0" class="text-success small">
-                  Tiết kiệm: {{ formatPrice(item.savedAmount) }}
+                <div v-if="item.flashSalePrice && item.bookPrice > item.flashSalePrice" class="text-success small">
+                  Tiết kiệm: {{ formatPrice(item.bookPrice - item.flashSalePrice) }} ({{ item.flashSaleDiscount }}%)
+                </div>
+                <div v-if="item.itemType === 'FLASH_SALE'" class="text-secondary small">
+                  {{ item.flashSaleName }}
+                  <span v-if="item.flashSaleEndTime && !item.flashSaleExpired && item.flashSaleEndTime > Date.now()" class="flash-sale-countdown-text ms-2">
+                    <i class="fa fa-clock"></i> {{ formatCountdownCompact(item.flashSaleEndTime) }}
+                  </span>
+                </div>
+                <div v-if="item.stockWarning" class="text-danger small mt-1">
+                  {{ item.stockWarning }}
+                </div>
+                <div v-if="item.stockLimited && item.availableStock" class="text-warning small mt-1">
+                  <i class="fa fa-exclamation-triangle me-1"></i>
+                  Còn {{ item.availableStock }} sản phẩm
                 </div>
               </div>
               <div class="cart-qty-group d-flex align-items-center justify-content-center" style="min-width: 120px;">
@@ -88,6 +101,8 @@
                 <button 
                   class="btn btn-light px-2 py-1 border"
                   @click="increaseQuantity(item)"
+                  :disabled="!item.canAddMore || item.quantity >= item.maxAvailableQuantity"
+                  :title="!item.canAddMore ? 'Đã đạt giới hạn mua' : ''"
                 >+</button>
               </div>
               <div class="cart-price text-danger fw-bold text-end" style="min-width: 120px;">
@@ -192,7 +207,8 @@ export default {
       cartItems: [],
       loading: true,
       selectedItems: [],
-      shippingFee: 20000
+      shippingFee: 20000,
+      countdownInterval: null
     }
   },
   computed: {
@@ -208,12 +224,22 @@ export default {
     totalSavedAmount() {
       return this.selectedItems.reduce((total, itemId) => {
         const item = this.cartItems.find(item => item.id === itemId)
-        return total + (item ? (item.savedAmount || 0) : 0)
+        let savedAmount = 0;
+        if (item && item.flashSalePrice && item.bookPrice > item.flashSalePrice) {
+          savedAmount = (item.bookPrice - item.flashSalePrice) * item.quantity;
+        }
+        return total + savedAmount;
       }, 0)
     }
   },
   async mounted() {
     await this.loadCartItems()
+    this.startCountdownTimer()
+  },
+  beforeUnmount() {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval)
+    }
   },
   methods: {
     async loadCartItems() {
@@ -261,8 +287,11 @@ export default {
           // Cập nhật local state
           const index = this.cartItems.findIndex(cartItem => cartItem.id === item.id)
           if (index > -1) {
-            this.cartItems[index].quantity = newQuantity
-            this.cartItems[index].totalPrice = response.data.data.totalPrice
+            const updatedItem = response.data.data
+            // Cập nhật dữ liệu từ response
+            this.cartItems[index].quantity = updatedItem.quantity
+            this.cartItems[index].totalPrice = updatedItem.totalPrice
+            this.cartItems[index].unitPrice = updatedItem.unitPrice
           }
         }
       } catch (error) {
@@ -282,8 +311,11 @@ export default {
           // Cập nhật local state
           const index = this.cartItems.findIndex(cartItem => cartItem.id === item.id)
           if (index > -1) {
-            this.cartItems[index].quantity = newQuantity
-            this.cartItems[index].totalPrice = response.data.data.totalPrice
+            const updatedItem = response.data.data
+            // Cập nhật dữ liệu từ response
+            this.cartItems[index].quantity = updatedItem.quantity
+            this.cartItems[index].totalPrice = updatedItem.totalPrice
+            this.cartItems[index].unitPrice = updatedItem.unitPrice
           }
         }
       } catch (error) {
@@ -295,12 +327,12 @@ export default {
     async removeItem(itemId) {
       // Tìm thông tin sản phẩm để hiển thị
       const item = this.cartItems.find(item => item.id === itemId)
-      const productName = item?.book?.title || 'sản phẩm này'
+      const productName = item?.bookName || 'sản phẩm này'
       
-      // Hiển thị SweetAlert2 để xác nhận xóa
+      // Hiển thị SweetAlert2 để xác nhận xóa với tên sách thực
       const result = await showQuickConfirm(
-        'Xóa sản phẩm?', 
-        `Bạn có chắc muốn xóa "${productName}" khỏi giỏ hàng không?`,
+        'Xóa sách khỏi giỏ hàng?', 
+        `Bạn có chắc muốn xóa sách "${productName}" khỏi giỏ hàng không?`,
         'warning',
         'Xóa sản phẩm',
         'Hủy',
@@ -341,6 +373,86 @@ export default {
     formatPrice(price) {
       if (!price) return '0 đ'
       return new Intl.NumberFormat('vi-VN').format(price) + ' đ'
+    },
+    
+    formatCountdown(endTime) {
+      if (!endTime) return 'Đã hết hạn'
+      
+      const now = Date.now()
+      const timeLeft = endTime - now
+      
+      if (timeLeft <= 0) {
+        return 'Đã hết hạn'
+      }
+      
+      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24))
+      const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000)
+      
+      if (days > 0) {
+        return `${days}d ${hours}h ${minutes}m`
+      } else if (hours > 0) {
+        return `${hours}h ${minutes}m ${seconds}s`
+      } else if (minutes > 0) {
+        return `${minutes}m ${seconds}s`
+      } else {
+        return `${seconds}s`
+      }
+    },
+    
+    formatCountdownCompact(endTime) {
+      if (!endTime) return 'Hết hạn'
+      
+      const now = Date.now()
+      const timeLeft = endTime - now
+      
+      if (timeLeft <= 0) {
+        return 'Hết hạn'
+      }
+      
+      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24))
+      const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000)
+      
+      if (days > 0) {
+        return `${days} ngày ${hours} giờ ${minutes} phút ${seconds} giây`
+      } else if (hours > 0) {
+        return `${hours} giờ ${minutes} phút ${seconds} giây`
+      } else if (minutes > 0) {
+        return `${minutes} phút ${seconds} giây`
+      } else {
+        return `${seconds} giây`
+      }
+    },
+    
+    startCountdownTimer() {
+      // Cập nhật countdown mỗi giây
+      this.countdownInterval = setInterval(() => {
+        // Kiểm tra và xử lý các flash sale đã hết hạn
+        this.checkExpiredFlashSales()
+        this.$forceUpdate() // Buộc Vue re-render để cập nhật countdown
+      }, 1000)
+    },
+    
+    checkExpiredFlashSales() {
+      const now = Date.now()
+      this.cartItems.forEach((item, index) => {
+        if (item.itemType === 'FLASH_SALE' && item.flashSaleEndTime && item.flashSaleEndTime <= now) {
+          // Flash sale đã hết hạn, cập nhật item
+          this.cartItems[index].flashSaleExpired = true
+          // Có thể thêm logic để reload cart hoặc cập nhật giá
+        }
+      })
+    },
+    
+    formatCountdown(endTime) {
+      const totalSeconds = Math.max(0, Math.floor((new Date(endTime) - new Date()) / 1000))
+      const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0')
+      const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0')
+      const seconds = String(totalSeconds % 60).padStart(2, '0')
+      return `${hours}:${minutes}:${seconds}`
     },
     
     goToCheckout() {
@@ -441,14 +553,42 @@ export default {
   display: flex;
   align-items: center;
   gap: 2px;
+  box-shadow: 0 2px 6px rgba(255, 71, 87, 0.4);
 }
 
 .flash-sale-badge i {
   font-size: 0.6rem;
+  animation: flash 1.5s infinite;
+}
+
+.flash-sale-countdown-text {
+  color: #ff9800 !important;
+  font-weight: normal;
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+
+.flash-sale-countdown-text i {
+  animation: pulse 1s infinite;
+  margin-right: 2px;
+}
+
+@keyframes flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.box {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
 .product-info {
-  max-width: calc(100% - 400px); /* Để đảm bảo không chiếm hết không gian */
+  max-width: calc(100% - 400px);
 }
 
 .cart-qty-group {
@@ -457,7 +597,7 @@ export default {
 
 .cart-price {
   flex-shrink: 0;
-  white-space: nowrap; /* Không cho phép xuống dòng */
+  white-space: nowrap;
 }
 
 .cart-item {
@@ -467,9 +607,5 @@ export default {
 
 .promotion-box {
   border: 1px solid #e0e0e0;
-}
-
-.box {
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 </style>

@@ -8,7 +8,9 @@
                     <!-- Logo -->
                     <div class="col-auto">
                         <div class="logo me-4">
-                            <img src="https://cdn1.fahasa.com/media/catalog/product/9/7/9786043462111_1.jpg" alt="Fahasa Logo" style="height: 40px;">
+                            <RouterLink to="/">
+                                <img src="https://cdn1.fahasa.com/media/catalog/product/9/7/9786043462111_1.jpg" alt="Fahasa Logo" style="height: 40px;">
+                            </RouterLink>
                         </div>
                     </div>
 
@@ -79,7 +81,7 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link fw-semibold text-dark" href="#">Trang chủ</a>
+                            <RouterLink class="nav-link fw-semibold text-dark" to="/">Trang chủ</RouterLink>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" href="#">Sách hot</a>
@@ -113,6 +115,7 @@
 
 <script setup>
 import NotificationComponent from '@/components/common/NotificationComponent.vue'
+import { RouterLink } from 'vue-router'
 </script>
 
 <style scoped>
@@ -198,5 +201,17 @@ import NotificationComponent from '@/components/common/NotificationComponent.vue
 
 .d-flex.flex-column.align-items-center:hover small {
     color: #dc3545 !important;
+}
+
+/* Logo RouterLink styling */
+.logo a {
+    display: block;
+    text-decoration: none;
+}
+
+/* NavLink RouterLink styling */
+.nav-link.router-link-active {
+    color: #dc3545 !important;
+    font-weight: bold;
 }
 </style>
