@@ -52,18 +52,38 @@
                         </div>
 
                         <!-- Account -->
-                        <div class="d-flex flex-column align-items-center text-decoration-none text-dark">
-                            <RouterLink to="/profile" class="text-dark d-flex flex-column align-items-center text-decoration-none">
-                                <i class="bi bi-person-circle fs-5"></i>
-                                <small class="text-muted" style="font-size: 11px;">Tài khoản</small>
-                            </RouterLink>
+                        <div class="user-link position-relative d-flex flex-column align-items-center text-decoration-none text-dark" style="cursor:pointer;">
+                            <!-- <img src="https://cdn1.fahasa.com/media/catalog/product/9/7/9786043462111_1.jpg" alt="account" class="avatar" /> -->
+                             <div class="avatar d-flex align-items-center justify-content-center">
+                                 <i class=" bi bi-person-circle"></i>
+                             </div>
+                            <small class="text-muted" style="font-size: 11px;">Tài khoản</small>
+                            <div class="user-link-dropdown">
+                                <RouterLink to="/profile" class="user-dropdown">
+                                    <i class="bi bi-person-circle"></i>
+                                    <span>Hồ sơ</span>
+                                </RouterLink>
+                                <RouterLink to="/profile/orders" class="user-dropdown">
+                                    <i class="bi bi-bag"></i>
+                                    <span>Đơn hàng</span>
+                                </RouterLink>
+                                <RouterLink to="/profile/settings" class="user-dropdown">
+                                    <i class="bi bi-gear"></i>
+                                    <span>Cài đặt</span>
+                                </RouterLink>
+                                <div class="divider"></div>
+                                <a href="#" class="user-dropdown" @click.prevent="handleLogout">
+                                    <i class="bi bi-box-arrow-right"></i>
+                                    <span>Đăng xuất</span>
+                                </a>
+                            </div>
                         </div>
 
                         <!-- Language -->
-                        <div class="d-flex align-items-center">
+                        <!-- <div class="d-flex align-items-center">
                             <img src="https://flagcdn.com/16x12/vn.png" alt="VN" class="me-1">
                             <i class="bi bi-chevron-down small"></i>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
             </div>
@@ -113,6 +133,20 @@
 
 <script setup>
 import NotificationComponent from '@/components/common/NotificationComponent.vue'
+import { useRouter } from 'vue-router'
+import { showQuickConfirm, showToast } from '@/utils/swalHelper'
+import { clearAuth } from '@/utils/utils'
+
+const router = useRouter();
+
+const handleLogout = async () => {
+    const result = await showQuickConfirm("Xác nhận đăng xuất", "Bạn có chắc chắn muốn đăng xuất không?");
+    if(result.isConfirmed) {
+        showToast('success', 'Đăng xuất thành công');
+        clearAuth();
+        router.push('/auth');
+    }
+}
 </script>
 
 <style scoped>
@@ -183,5 +217,67 @@ import NotificationComponent from '@/components/common/NotificationComponent.vue
 .d-flex.flex-column small {
     margin-top: 2px;
     font-size: 11px;
+}
+
+/* Account dropdown styling */
+.user-link {
+    position: relative;
+    display: inline-block;
+}
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #dc3545;
+    margin-bottom: 2px;
+    transition: box-shadow 0.2s;
+}
+.avatar:hover {
+    box-shadow: 0 0 0 3px #ffe0e0;
+}
+.user-link-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    border-radius: 10px;
+    min-width: 180px;
+    z-index: 100;
+    padding: 10px 0;
+    animation: fadeIn 0.2s;
+}
+.user-link:hover .user-link-dropdown,
+.user-link .user-link-dropdown:hover {
+    display: block;
+}
+.user-dropdown {
+    display: flex;
+    align-items: center;
+    padding: 10px 18px;
+    color: #333;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: background 0.18s;
+    cursor: pointer;
+}
+.user-dropdown i {
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+.user-dropdown:hover {
+    background: #f1f5fa;
+    color: #dc3545;
+}
+.divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 8px 0;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px);}
+    to { opacity: 1; transform: translateY(0);}
 }
 </style>
