@@ -45,11 +45,11 @@
                         <NotificationComponent mode="dropdown" />
 
                         <!-- Cart -->
-                        <div class="d-flex flex-column align-items-center text-decoration-none text-dark position-relative">
+                        <RouterLink to="/cart" class="d-flex flex-column align-items-center text-decoration-none text-dark position-relative">
                             <i class="bi bi-cart3 fs-5"></i>
                             <small class="text-muted" style="font-size: 11px;">Giỏ Hàng</small>
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 9px;">0</span>
-                        </div>
+                        </RouterLink>
 
                         <!-- Account -->
                         <div class="d-flex flex-column align-items-center text-decoration-none text-dark">
@@ -183,5 +183,20 @@ import NotificationComponent from '@/components/common/NotificationComponent.vue
 .d-flex.flex-column small {
     margin-top: 2px;
     font-size: 11px;
+}
+
+/* Cart icon hover effect */
+.d-flex.flex-column.align-items-center:hover {
+    color: #dc3545 !important;
+    transform: translateY(-1px);
+    transition: all 0.3s ease;
+}
+
+.d-flex.flex-column.align-items-center:hover i {
+    color: #dc3545 !important;
+}
+
+.d-flex.flex-column.align-items-center:hover small {
+    color: #dc3545 !important;
 }
 </style>
