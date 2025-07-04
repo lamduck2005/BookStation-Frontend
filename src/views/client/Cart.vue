@@ -79,9 +79,9 @@
                 </div>
                 <div v-if="item.itemType === 'FLASH_SALE'" class="text-secondary small">
                   {{ item.flashSaleName }}
-                  <span v-if="item.flashSaleEndTime && !item.flashSaleExpired && item.flashSaleEndTime > Date.now()" class="flash-sale-countdown-text ms-2">
-                    <i class="fa fa-clock"></i> {{ formatCountdownCompact(item.flashSaleEndTime) }}
-                  </span>
+                  <div v-if="item.flashSaleEndTime && !item.flashSaleExpired && countdownTexts[item.id]" class="flash-sale-countdown-text mt-1">
+                    <i class="fa fa-bolt"></i> Kết thúc sau: {{ countdownTexts[item.id] }}
+                  </div>
                 </div>
                 <div v-if="item.stockWarning" class="text-danger small mt-1">
                   {{ item.stockWarning }}
@@ -196,9 +196,11 @@
 </template>
 
 <script>
+import { ref } from 'vue'
 import { getCartItems, updateCartItem, removeCartItem } from '@/services/client/cart.js'
 import { showNotification } from '@/utils/notification.js'
 import { showQuickConfirm, showToast } from '@/utils/swalHelper.js'
+import { createFlashSaleManager, formatCountdownTime } from '@/utils/flashSaleUtils.js'
 
 export default {
   name: 'Cart',
@@ -208,7 +210,8 @@ export default {
       loading: true,
       selectedItems: [],
       shippingFee: 20000,
-      countdownInterval: null
+      flashSaleManager: null,
+      countdownTexts: {} // Quay lại object thường
     }
   },
   computed: {
@@ -234,11 +237,30 @@ export default {
   },
   async mounted() {
     await this.loadCartItems()
-    this.startCountdownTimer()
+    this.setupFlashSaleCountdowns()
+    
+    // Debug: Kiểm tra dữ liệu flash sale
+    console.log('=== FLASH SALE DEBUG ===')
+    console.log('Cart items loaded:', this.cartItems)
+    this.cartItems.forEach(item => {
+      if (item.itemType === 'FLASH_SALE') {
+        console.log(`Flash Sale Item ${item.id}:`, {
+          name: item.bookName,
+          endTime: item.flashSaleEndTime,
+          endTimeDate: new Date(item.flashSaleEndTime),
+          currentTime: Date.now(),
+          currentTimeDate: new Date(),
+          isExpired: item.flashSaleExpired,
+          timeRemaining: item.flashSaleEndTime - Date.now()
+        })
+      }
+    })
+    console.log('Countdown texts:', this.countdownTexts)
+    console.log('=====================')
   },
   beforeUnmount() {
-    if (this.countdownInterval) {
-      clearInterval(this.countdownInterval)
+    if (this.flashSaleManager) {
+      this.flashSaleManager.stopAllCountdowns()
     }
   },
   methods: {
@@ -252,6 +274,8 @@ export default {
           this.cartItems = response.data.data || []
           // Mặc định chọn tất cả items
           this.selectedItems = this.cartItems.map(item => item.id)
+          // Setup countdown cho flash sales
+          this.setupFlashSaleCountdowns()
         }
       } catch (error) {
         console.error('Error loading cart items:', error)
@@ -375,84 +399,94 @@ export default {
       return new Intl.NumberFormat('vi-VN').format(price) + ' đ'
     },
     
-    formatCountdown(endTime) {
-      if (!endTime) return 'Đã hết hạn'
-      
-      const now = Date.now()
-      const timeLeft = endTime - now
-      
-      if (timeLeft <= 0) {
-        return 'Đã hết hạn'
+    setupFlashSaleCountdowns() {
+      // Dọn dẹp manager cũ nếu có
+      if (this.flashSaleManager) {
+        this.flashSaleManager.stopAllCountdowns()
       }
       
-      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24))
-      const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
-      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000)
+      console.log('Setting up flash sale countdowns for items:', this.cartItems)
       
-      if (days > 0) {
-        return `${days}d ${hours}h ${minutes}m`
-      } else if (hours > 0) {
-        return `${hours}h ${minutes}m ${seconds}s`
-      } else if (minutes > 0) {
-        return `${minutes}m ${seconds}s`
-      } else {
-        return `${seconds}s`
+      // Lọc các items có flash sale hợp lệ
+      const flashSaleItems = this.cartItems.filter(item => 
+        item.itemType === 'FLASH_SALE' && 
+        item.flashSaleEndTime && 
+        !item.flashSaleExpired &&
+        item.flashSaleEndTime > Date.now()
+      )
+      
+      console.log('Flash sale items to setup countdown:', flashSaleItems)
+      
+      if (flashSaleItems.length === 0) {
+        console.log('No valid flash sale items found')
+        return
       }
+      
+      // Tạo manager mới
+      this.flashSaleManager = createFlashSaleManager(
+        flashSaleItems,
+        // Callback khi flash sale hết hạn
+        (expiredItem) => {
+          console.log('Flash sale expired for item:', expiredItem.id)
+          // Đánh dấu item đã hết hạn
+          const index = this.cartItems.findIndex(item => item.id === expiredItem.id)
+          if (index > -1) {
+            this.cartItems[index].flashSaleExpired = true
+          }
+          // Xóa countdown text
+          delete this.countdownTexts[expiredItem.id]
+          // Gọi lại API để cập nhật giá
+          this.reloadCartAfterFlashSaleExpired(expiredItem)
+        },
+        // Callback cập nhật countdown text (sử dụng format compact)
+        (itemId, countdownText) => {
+          console.log('Updating countdown for item:', itemId, 'text:', countdownText)
+          // Vue 3: Trigger reactivity bằng cách tạo object mới
+          this.countdownTexts = {
+            ...this.countdownTexts,
+            [itemId]: countdownText
+          }
+          console.log('Current countdownTexts:', this.countdownTexts)
+        },
+        'compact' // Sử dụng format compact cho gọn gàng hơn
+      )
+      
+      console.log('Flash sale manager created:', this.flashSaleManager)
     },
     
-    formatCountdownCompact(endTime) {
-      if (!endTime) return 'Hết hạn'
-      
-      const now = Date.now()
-      const timeLeft = endTime - now
-      
-      if (timeLeft <= 0) {
-        return 'Hết hạn'
-      }
-      
-      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24))
-      const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))
-      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000)
-      
-      if (days > 0) {
-        return `${days} ngày ${hours} giờ ${minutes} phút ${seconds} giây`
-      } else if (hours > 0) {
-        return `${hours} giờ ${minutes} phút ${seconds} giây`
-      } else if (minutes > 0) {
-        return `${minutes} phút ${seconds} giây`
-      } else {
-        return `${seconds} giây`
-      }
-    },
-    
-    startCountdownTimer() {
-      // Cập nhật countdown mỗi giây
-      this.countdownInterval = setInterval(() => {
-        // Kiểm tra và xử lý các flash sale đã hết hạn
-        this.checkExpiredFlashSales()
-        this.$forceUpdate() // Buộc Vue re-render để cập nhật countdown
-      }, 1000)
-    },
-    
-    checkExpiredFlashSales() {
-      const now = Date.now()
-      this.cartItems.forEach((item, index) => {
-        if (item.itemType === 'FLASH_SALE' && item.flashSaleEndTime && item.flashSaleEndTime <= now) {
-          // Flash sale đã hết hạn, cập nhật item
-          this.cartItems[index].flashSaleExpired = true
-          // Có thể thêm logic để reload cart hoặc cập nhật giá
+    async reloadCartAfterFlashSaleExpired(expiredItem) {
+      try {
+        console.log('Reloading cart after flash sale expired for item:', expiredItem.bookName)
+        showToast('info', `Flash sale cho "${expiredItem.bookName}" đã kết thúc. Đang cập nhật giá...`)
+        
+        // Reload cart items để cập nhật giá mới
+        const response = await getCartItems(1)
+        
+        if (response.status === 200) {
+          const oldCartItems = [...this.cartItems]
+          this.cartItems = response.data.data || []
+          
+          // Giữ nguyên selected items
+          this.selectedItems = this.selectedItems.filter(itemId => 
+            this.cartItems.some(item => item.id === itemId)
+          )
+          
+          // Tìm item đã cập nhật để so sánh giá
+          const updatedItem = this.cartItems.find(item => 
+            item.bookId === expiredItem.bookId && item.id === expiredItem.id
+          )
+          
+          if (updatedItem && updatedItem.unitPrice !== expiredItem.unitPrice) {
+            showToast('warning', `Giá sản phẩm "${expiredItem.bookName}" đã được cập nhật từ ${this.formatPrice(expiredItem.unitPrice)} thành ${this.formatPrice(updatedItem.unitPrice)}`)
+          }
+          
+          // Setup lại countdown cho các flash sale còn lại
+          this.setupFlashSaleCountdowns()
         }
-      })
-    },
-    
-    formatCountdown(endTime) {
-      const totalSeconds = Math.max(0, Math.floor((new Date(endTime) - new Date()) / 1000))
-      const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0')
-      const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0')
-      const seconds = String(totalSeconds % 60).padStart(2, '0')
-      return `${hours}:${minutes}:${seconds}`
+      } catch (error) {
+        console.error('Error reloading cart after flash sale expired:', error)
+        showToast('error', 'Không thể cập nhật giá sau khi flash sale kết thúc')
+      }
     },
     
     goToCheckout() {
@@ -562,13 +596,19 @@ export default {
 }
 
 .flash-sale-countdown-text {
-  color: #ff9800 !important;
-  font-weight: normal;
+  color: #ffd700 !important; /* Màu vàng đậm */
+  background: rgba(255, 215, 0, 0.1); /* Background vàng nhạt */
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #ffd700;
+  font-weight: 600;
   white-space: nowrap;
   font-size: 0.8rem;
+  display: inline-block;
 }
 
 .flash-sale-countdown-text i {
+  color: #ffb300 !important;
   animation: pulse 1s infinite;
   margin-right: 2px;
 }

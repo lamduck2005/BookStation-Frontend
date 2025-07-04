@@ -293,6 +293,7 @@
 import { getBookDetail } from '@/services/client/book.js'
 import { addToCart as addToCartAPI } from '@/services/client/cart.js'
 import { showToast } from '@/utils/swalHelper.js'
+import { createFlashSaleCountdown, formatCountdownTime } from '@/utils/flashSaleUtils.js'
 
 export default {
   name: 'DetailProduct',
@@ -301,9 +302,8 @@ export default {
       book: null,
       loading: true,
       error: null,
-      countdownTimer: null,
-      countdownDisplay: '00:00:00',
-      serverTimeDiff: 0,
+      flashSaleCountdown: null,
+      countdownDisplay: 'Hết hạn',
       quantity: 1,
       addingToCart: false
     }
@@ -320,8 +320,8 @@ export default {
     await this.loadBookDetail()
   },
   beforeUnmount() {
-    if (this.countdownTimer) {
-      clearInterval(this.countdownTimer)
+    if (this.flashSaleCountdown) {
+      this.flashSaleCountdown.clear()
     }
   },
   methods: {
@@ -339,11 +339,6 @@ export default {
         
         if (response.status === 200) {
           this.book = response.data
-          
-          // Tính toán server time diff để chống hack
-          if (this.book.serverTime) {
-            this.serverTimeDiff = this.book.serverTime - Date.now()
-          }
           
           // Nếu có flash sale, setup countdown timer
           if (this.book.flashSalePrice !== null && this.book.flashSaleEndTime) {
@@ -363,23 +358,29 @@ export default {
     setupCountdownTimer() {
       if (!this.book.flashSaleEndTime) return
       
-      this.countdownTimer = setInterval(() => {
-        const now = Date.now() + this.serverTimeDiff // Sync với server time
-        const remaining = this.book.flashSaleEndTime - now
-        
-        if (remaining <= 0) {
-          clearInterval(this.countdownTimer)
-          this.countdownDisplay = '00:00:00'
+      // Dọn dẹp countdown cũ nếu có
+      if (this.flashSaleCountdown) {
+        this.flashSaleCountdown.clear()
+      }
+      
+      this.flashSaleCountdown = createFlashSaleCountdown(
+        this.book.flashSaleEndTime,
+        this.book.serverTime,
+        // Callback khi flash sale hết hạn
+        () => {
+          this.countdownDisplay = 'Hết hạn'
+          console.log('Flash sale expired for book:', this.book.bookName)
+          showToast('info', 'Flash sale đã kết thúc. Đang cập nhật giá...')
           // Flash sale đã kết thúc, reload trang để cập nhật giá
           this.loadBookDetail()
-        } else {
-          const hours = Math.floor(remaining / (1000 * 60 * 60))
-          const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60))
-          const seconds = Math.floor((remaining % (1000 * 60)) / 1000)
-          
-          this.countdownDisplay = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-        }
-      }, 1000)
+        },
+        // Callback cập nhật countdown display (sử dụng format full)
+        (countdownText) => {
+          // Sử dụng trực tiếp countdownText được truyền từ utility
+          this.countdownDisplay = countdownText
+        },
+        'full' // Sử dụng format full
+      )
     },
     
     formatPrice(price) {
