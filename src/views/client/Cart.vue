@@ -94,15 +94,24 @@
               <div class="cart-qty-group d-flex align-items-center justify-content-center" style="min-width: 120px;">
                 <button 
                   class="btn btn-light px-2 py-1 border"
-                  @click="decreaseQuantity(item)"
+                  @click.prevent.stop="decreaseQuantity(item)"
                   :disabled="item.quantity <= 1"
+                  type="button"
                 >-</button>
-                <span class="mx-2">{{ item.quantity }}</span>
+                <input
+                  type="text"
+                  class="mx-2 text-center"
+                  style="width: 50px; border: 1px solid #ddd; padding: 0.25rem; appearance: textfield;"
+                  :value="item.quantity"
+                  @change="updateQuantity(item, $event)"
+                  @keypress="numberOnly($event)"
+                />
                 <button 
                   class="btn btn-light px-2 py-1 border"
-                  @click="increaseQuantity(item)"
-                  :disabled="!item.canAddMore || item.quantity >= item.maxAvailableQuantity"
-                  :title="!item.canAddMore ? 'Đã đạt giới hạn mua' : ''"
+                  @click.prevent.stop="increaseQuantity(item)"
+                  :disabled="item.quantity >= (item.maxAvailableQuantity || 99)"
+                  :title="item.quantity >= (item.maxAvailableQuantity || 99) ? 'Đã đạt giới hạn mua' : ''"
+                  type="button"
                 >+</button>
               </div>
               <div class="cart-price text-danger fw-bold text-end" style="min-width: 120px;">
@@ -272,8 +281,19 @@ export default {
         
         if (response.status === 200) {
           this.cartItems = response.data.data || []
+          
+          // Đảm bảo các sản phẩm có đầy đủ thông tin cần thiết
+          this.cartItems = this.cartItems.map(item => {
+            return {
+              ...item,
+              // Mặc định cho phép tăng giảm số lượng nếu không có thông tin giới hạn
+              maxAvailableQuantity: item.maxAvailableQuantity || 99
+            }
+          })
+          
           // Mặc định chọn tất cả items
           this.selectedItems = this.cartItems.map(item => item.id)
+          
           // Setup countdown cho flash sales
           this.setupFlashSaleCountdowns()
         }
@@ -302,33 +322,121 @@ export default {
       }
     },
     
-    async increaseQuantity(item) {
-      try {
-        const newQuantity = item.quantity + 1
-        const response = await updateCartItem(item.id, newQuantity)
+    increaseQuantity(item) {
+      console.log('Tăng số lượng cho item:', item.id, 'số lượng hiện tại:', item.quantity)
+      
+      // Tăng số lượng trước để UI phản hồi ngay lập tức
+      const index = this.cartItems.findIndex(cartItem => cartItem.id === item.id)
+      if (index > -1) {
+        const newQuantity = this.cartItems[index].quantity + 1
+        console.log('Số lượng mới:', newQuantity)
         
-        if (response.status === 200) {
-          // Cập nhật local state
-          const index = this.cartItems.findIndex(cartItem => cartItem.id === item.id)
-          if (index > -1) {
-            const updatedItem = response.data.data
-            // Cập nhật dữ liệu từ response
-            this.cartItems[index].quantity = updatedItem.quantity
-            this.cartItems[index].totalPrice = updatedItem.totalPrice
-            this.cartItems[index].unitPrice = updatedItem.unitPrice
-          }
-        }
-      } catch (error) {
-        console.error('Error updating quantity:', error)
-        showToast('error', 'Không thể cập nhật số lượng')
+        // Đặt giá trị mới vào UI trước
+        const oldQuantity = this.cartItems[index].quantity
+        const oldTotalPrice = this.cartItems[index].totalPrice
+        this.cartItems[index].quantity = newQuantity
+        
+        // Tính toán tạm thời cho totalPrice mới (để UI cập nhật ngay lập tức)
+        const unitPrice = this.cartItems[index].unitPrice
+        this.cartItems[index].totalPrice = unitPrice * newQuantity
+        
+        // Gọi API
+        updateCartItem(item.id, newQuantity)
+          .then(response => {
+            console.log('Kết quả API:', response.data)
+            
+            if (response.status === 200) {
+              const updatedItem = response.data.data
+              console.log('Cập nhật item:', updatedItem)
+              
+              // Cập nhật dữ liệu từ response
+              this.cartItems[index].quantity = updatedItem.quantity
+              this.cartItems[index].totalPrice = updatedItem.totalPrice
+              this.cartItems[index].unitPrice = updatedItem.unitPrice
+              
+              // Kiểm tra nếu có dữ liệu flash sale, cũng cập nhật
+              if (updatedItem.flashSalePrice) {
+                this.cartItems[index].flashSalePrice = updatedItem.flashSalePrice
+              }
+              
+              // Hiển thị thông báo thành công
+              showToast('success', 'Đã cập nhật số lượng', 'center', true, 3000)
+            }
+          })
+          .catch(error => {
+            console.error('Error updating quantity:', error)
+            // Hoàn tác thay đổi trên UI
+            this.cartItems[index].quantity = oldQuantity
+            this.cartItems[index].totalPrice = oldTotalPrice
+            showToast('error', 'Không thể cập nhật số lượng')
+          })
       }
     },
     
-    async decreaseQuantity(item) {
+    decreaseQuantity(item) {
+      console.log('Giảm số lượng cho item:', item.id, 'số lượng hiện tại:', item.quantity)
       if (item.quantity <= 1) return
       
+      // Giảm số lượng trước để UI phản hồi ngay lập tức
+      const index = this.cartItems.findIndex(cartItem => cartItem.id === item.id)
+      if (index > -1) {
+        const newQuantity = this.cartItems[index].quantity - 1
+        console.log('Số lượng mới:', newQuantity)
+        
+        // Đặt giá trị mới vào UI trước
+        const oldQuantity = this.cartItems[index].quantity
+        this.cartItems[index].quantity = newQuantity
+        
+        // Gọi API
+        updateCartItem(item.id, newQuantity)
+          .then(response => {
+            console.log('Kết quả API:', response.data)
+            
+            if (response.status === 200) {
+              const updatedItem = response.data.data
+              console.log('Cập nhật item:', updatedItem)
+              
+              // Cập nhật dữ liệu từ response
+              this.cartItems[index].quantity = updatedItem.quantity
+              this.cartItems[index].totalPrice = updatedItem.totalPrice
+              this.cartItems[index].unitPrice = updatedItem.unitPrice
+              
+              // Kiểm tra nếu có dữ liệu flash sale, cũng cập nhật
+              if (updatedItem.flashSalePrice) {
+                this.cartItems[index].flashSalePrice = updatedItem.flashSalePrice
+              }
+              
+              // Hiển thị thông báo thành công
+              showToast('success', 'Đã cập nhật số lượng', 'center', true, 3000)
+            }
+          })
+          .catch(error => {
+            console.error('Error updating quantity:', error)
+            // Hoàn tác thay đổi trên UI
+            this.cartItems[index].quantity = oldQuantity
+            showToast('error', 'Không thể cập nhật số lượng')
+          })
+      }
+    },
+    
+    async updateQuantity(item, event) {
+      const newQuantity = parseInt(event.target.value)
+      
+      // Kiểm tra giá trị hợp lệ
+      if (isNaN(newQuantity) || newQuantity < 1) {
+        event.target.value = item.quantity
+        return
+      }
+      
+      // Kiểm tra giới hạn tối đa (nếu có)
+      const maxQuantity = item.maxAvailableQuantity || 99
+      if (newQuantity > maxQuantity) {
+        event.target.value = maxQuantity
+        showToast('warning', `Số lượng tối đa có thể mua là ${maxQuantity}`)
+        return
+      }
+      
       try {
-        const newQuantity = item.quantity - 1
         const response = await updateCartItem(item.id, newQuantity)
         
         if (response.status === 200) {
@@ -340,11 +448,27 @@ export default {
             this.cartItems[index].quantity = updatedItem.quantity
             this.cartItems[index].totalPrice = updatedItem.totalPrice
             this.cartItems[index].unitPrice = updatedItem.unitPrice
+            // Kiểm tra nếu có dữ liệu flash sale, cũng cập nhật
+            if (updatedItem.flashSalePrice) {
+              this.cartItems[index].flashSalePrice = updatedItem.flashSalePrice
+            }
+            // Hiển thị thông báo thành công
+            showToast('success', 'Đã cập nhật số lượng', 'center', true, 3000)
           }
         }
       } catch (error) {
         console.error('Error updating quantity:', error)
         showToast('error', 'Không thể cập nhật số lượng')
+        // Reset về giá trị ban đầu nếu lỗi
+        event.target.value = item.quantity
+      }
+    },
+    
+    numberOnly(event) {
+      // Chỉ cho phép nhập các ký tự số từ 0-9
+      const keyCode = event.keyCode ? event.keyCode : event.which
+      if ((keyCode < 48 || keyCode > 57) && keyCode !== 46) {
+        event.preventDefault()
       }
     },
     
@@ -647,5 +771,17 @@ export default {
 
 .promotion-box {
   border: 1px solid #e0e0e0;
+}
+
+/* Ẩn nút lên xuống của input số lượng */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 </style>
