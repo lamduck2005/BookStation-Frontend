@@ -12,7 +12,6 @@ import CheckoutPage from "@/views/client/CheckoutPage.vue";
 import Cart from "@/views/client/Cart.vue";
 import DetailProduct from "@/views/client/DetailProduct.vue";
 import Trend from "@/views/client/Trend.vue";
-import LoginPage from "@/views/LoginPage.vue";
 
 // Import profile components
 import ProfileLayout from "@/views/client/profile/ProfileLayout.vue";
@@ -53,6 +52,10 @@ import EventGift from "@/views/admin/views-admin/EventGift.vue";
 import EventParticipant from "@/views/admin/views-admin/EventParticipant.vue";
 import EventGiftClaim from "@/views/admin/views-admin/EventGiftClaim.vue";
 import EventHistory from "@/views/admin/views-admin/EventHistory.vue";
+
+
+import AuthPage from "@/views/AuthPage.vue";
+import { showToast } from "@/utils/swalHelper";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -175,9 +178,9 @@ const router = createRouter({
     },
     // Login page - standalone without layout
     {
-      path: "/login",
-      name: "login",
-      component: LoginPage,
+      path: "/auth",
+      name: "auth",
+      component: AuthPage,
     },
     // Admin routes
     {
@@ -314,6 +317,17 @@ const router = createRouter({
       // End - Admin routes
     },
   ],
+});
+
+// tự động chuyển hướng về trang đăng nhập nếu token hết hạn
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('authToken');
+  if (!token && to.path !== '/auth') {
+    showToast('error', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
+    next('/auth');
+  } else {
+    next();
+  }
 });
 
 export default router;

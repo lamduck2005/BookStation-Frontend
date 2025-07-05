@@ -2,6 +2,7 @@
 import router from '@/router'
 import { showToast } from '@/utils/swalHelper'
 import { ref } from 'vue'
+import { register, login } from '@/services/auth'
 
 // Reactive data cho form đăng nhập
 const loginForm = ref({
@@ -10,7 +11,7 @@ const loginForm = ref({
 })
 
 // Reactive data cho form đăng ký
-const signupForm = ref({
+const registerForm = ref({
     fullName: '',
     email: '',
     password: ''
@@ -20,6 +21,10 @@ const signupForm = ref({
 const forgotPasswordForm = ref({
     email: ''
 })
+
+// Reactive data cho hiện/ẩn mật khẩu
+const showLoginPassword = ref(false)
+const showRegisterPassword = ref(false)
 
 const stars = [
     { tailLength: '15em', topOffset: '0vh', duration: '9s', delay: '0s' },
@@ -61,52 +66,119 @@ const showForgotPassword = () => {
 }
 
 // Hàm xử lý đăng nhập
-const handleLogin = (e) => {
-    e.preventDefault()
-    const email = loginForm.value.email
+const handleLogin = async (e) => {
+    e.preventDefault();
 
-    if(email.startsWith('a')) {
-        showToast('success', 'Đăng nhập thành công!')
-        router.push('/admin')
-    } else {
-        showToast('success', 'Đăng nhập thành công!')
-        router.push('/')
+    try {
+        // Gọi API đăng nhập
+        const res = await login({
+            email: loginForm.value.email,
+            password: loginForm.value.password,
+        });
+
+        // Lưu token & thông tin người dùng
+        const { token, user } = res.data.data;
+        if (token) {
+            localStorage.setItem('authToken', token);
+            // Lưu thêm cookie để thuận tiện cho backend nếu cần
+            document.cookie = `authToken=${token}; path=/;`;
+        }
+        // if (user) {
+        //     localStorage.setItem('authUser', JSON.stringify(user));
+        // }
+
+        showToast('success', res.data.message || 'Đăng nhập thành công!');
+
+        // Điều hướng: tạm thời kiểm tra email bắt đầu bằng 'a' để vào admin
+        if (user?.roleName == "ADMIN") {
+            router.push('/admin');
+        } else if (user?.roleName == "CUSTOMER") {
+            router.push('/');
+        } else {
+            showToast('error', 'Bạn không có quyền truy cập!');
+            // router.push('/');
+        }
+    } catch (error) {
+        showToast('error', error?.response?.data?.message || 'Sai email hoặc mật khẩu!');
     }
+};
+
+const validateRegisterForm = () => {
+  // Kiểm tra tên
+  const name = registerForm.value.fullName.trim();
+  // Regex cho tên: chỉ cho phép chữ cái (cả tiếng Việt), khoảng trắng, không ký tự đặc biệt, độ dài 2-50
+  const nameRegex = /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểếỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸỳỵỷỹ\s]{2,50}$/u;
+  if (!name) {
+    showToast('error', 'Vui lòng nhập họ tên!');
+    return false;
+  }
+  if (name.length < 2 || name.length > 50) {
+    showToast('error', 'Tên phải từ 2 đến 50 ký tự!');
+    return false;
+  }
+  if (!nameRegex.test(name)) {
+    showToast('error', 'Tên không được chứa ký tự đặc biệt!');
+    return false;
+  }
+
+  // Kiểm tra email
+  const email = registerForm.value.email.trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email) {
+    showToast('error', 'Vui lòng nhập email!');
+    return false;
+  }
+  if (email.length > 50) {
+    showToast('error', 'Email tối đa 50 ký tự!');
+    return false;
+  }
+  if (!emailRegex.test(email)) {
+    showToast('error', 'Email không hợp lệ!');
+    return false;
+  }
+
+  // Kiểm tra mật khẩu
+  const password = registerForm.value.password;
+  // Regex: chỉ cho phép a-zA-Z0-9, không dấu cách, không ký tự đặc biệt, 6-20 ký tự
+  const passwordRegex = /^[a-zA-Z0-9]{6,20}$/;
+  if (!password) {
+    showToast('error', 'Vui lòng nhập mật khẩu!');
+    return false;
+  }
+  if (password.length < 6 || password.length > 20) {
+    showToast('error', 'Mật khẩu phải từ 6 đến 20 ký tự!');
+    return false;
+  }
+  if (!passwordRegex.test(password)) {
+    showToast('error', 'Mật khẩu chỉ được chứa chữ hoa, chữ thường và số, không dấu cách, không ký tự đặc biệt!');
+    return false;
+  }
+
+  return true;
 }
 
 // Hàm xử lý đăng ký
-const handleSignup = (e) => {
+const handleRegister = async (e) => {
     e.preventDefault()
     
-    // Validation
-    if (!signupForm.value.fullName || !signupForm.value.email || !signupForm.value.password) {
-        showToast('error', 'Vui lòng nhập đầy đủ thông tin!')
-        return
+    if (!validateRegisterForm()) {
+        return;
     }
     
-    // Kiểm tra email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(signupForm.value.email)) {
-        showToast('error', 'Email không hợp lệ!')
-        return
-    }
+    try{
+        const res = await register(registerForm.value);
+        console.log('Register data:', res)
     
-    // Kiểm tra mật khẩu (ít nhất 6 ký tự)
-    if (signupForm.value.password.length < 6) {
-        showToast('error', 'Mật khẩu phải có ít nhất 6 ký tự!')
-        return
-    }
-    
-    // TODO: Gọi API đăng ký ở đây
-    console.log('Signup data:', signupForm.value)
-    
-    showToast('success', 'Đăng ký thành công!')
+        showToast('success', res.data.message || 'Đăng ký thành công!')
     
     // Reset form
-    signupForm.value = {
+    registerForm.value = {
         fullName: '',
         email: '',
         password: ''
+    }
+    } catch (error) {
+        showToast('error', error.response.data?.message || 'Đăng ký thất bại!')
     }
 }
 
@@ -206,8 +278,8 @@ const handleForgotPassword = (e) => {
                     <div class="back">
                         <img class="backImg" src="../assets/img/login/backImg.jpg" alt="">
                         <div class="text">
-                            <span class="text-1">Hoàn thành hành trình dài <br> bằng một bước chân</span>
-                            <span class="text-2">Hãy bắt đầu ngay</span>
+                            <span class="text-1">Khám phá kiến thức <br> với BookStation</span>
+                            <span class="text-2">Đăng ký ngay để trải nghiệm</span>
                         </div>
                     </div>
                 </div>
@@ -229,14 +301,19 @@ const handleForgotPassword = (e) => {
                                     <div class="input-box">
                                         <i class="bx bx-lock"></i>
                                         <input 
-                                            type="password" 
+                                            :type="showLoginPassword ? 'text' : 'password'" 
                                             placeholder="Nhập mật khẩu" 
                                             v-model="loginForm.password"
                                             required
                                         >
+                                        <i 
+                                            :class="showLoginPassword ? 'bx bx-eye' : 'bx bx-eye-closed'" 
+                                            class="password-toggle"
+                                            @click="showLoginPassword = !showLoginPassword"
+                                        ></i>
                                     </div>
                                     <div class="text">
-                                        <a href="#" @click.prevent="showForgotPassword">Quên mật khẩu?</a>
+                                        <a  href="#" @click.prevent="showForgotPassword">Quên mật khẩu?</a>
                                     </div>
                                     <div class="button input-box">
                                         <input type="submit" value="Đăng nhập">
@@ -246,16 +323,16 @@ const handleForgotPassword = (e) => {
                                 </div>
                             </form>
                         </div>
-                        <div class="signup-form">
+                        <div class="register-form">
                             <div class="title">Đăng ký</div>
-                            <form @submit="handleSignup">
+                            <form @submit="handleRegister">
                                 <div class="input-boxes">
                                     <div class="input-box">
                                         <i class="bx bx-user"></i>
                                         <input 
                                             type="text" 
                                             placeholder="Nhập họ tên" 
-                                            v-model="signupForm.fullName"
+                                            v-model="registerForm.fullName"
                                             required
                                         >
                                     </div>
@@ -264,18 +341,23 @@ const handleForgotPassword = (e) => {
                                         <input 
                                             type="email" 
                                             placeholder="Nhập email của bạn" 
-                                            v-model="signupForm.email"
+                                            v-model="registerForm.email"
                                             required
                                         >
                                     </div>
                                     <div class="input-box">
                                         <i class="bx bx-lock"></i>
                                         <input 
-                                            type="password" 
+                                            :type="showRegisterPassword ? 'text' : 'password'" 
                                             placeholder="Nhập mật khẩu" 
-                                            v-model="signupForm.password"
+                                            v-model="registerForm.password"
                                             required
                                         >
+                                        <i 
+                                            :class="showRegisterPassword ? 'bx bx-eye' : 'bx bx-eye-closed'" 
+                                            class="password-toggle"
+                                            @click="showRegisterPassword = !showRegisterPassword"
+                                        ></i>
                                     </div>
                                     <div class="button input-box">
                                         <input type="submit" value="Đăng ký">
@@ -629,7 +711,7 @@ const handleForgotPassword = (e) => {
 }
 
 .form-content .login-form,
-.form-content .signup-form {
+.form-content .register-form {
     width: calc(100% / 2 - 25px);
 }
 
@@ -650,7 +732,7 @@ const handleForgotPassword = (e) => {
     background: #dc3545;
 }
 
-.forms .signup-form .title:before {
+.forms .form-content .title:before {
     width: 20px;
 }
 
@@ -688,6 +770,17 @@ const handleForgotPassword = (e) => {
     position: absolute;
     color: #dc3545;
     font-size: 17px;
+}
+
+.form-content .input-box .password-toggle {
+    right: 10px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    z-index: 10;
+}
+
+.form-content .input-box .password-toggle:hover {
+    color: #a02834;
 }
 
 .forms .form-content .text {
@@ -921,16 +1014,16 @@ const handleForgotPassword = (e) => {
     }
 
     .form-content .login-form,
-    .form-content .signup-form,
+    .form-content .register-form,
     .forgot-password-form .form-content {
         width: 100%;
     }
 
-    .form-content .signup-form {
+    .form-content .register-form {
         display: none;
     }
 
-    .container #flip:checked~.forms .signup-form {
+    .container #flip:checked~.forms .register-form {
         display: block;
     }
 

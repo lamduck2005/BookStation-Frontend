@@ -31,7 +31,36 @@ export function timestampToDatetimeLocal(timestamp) {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-
-export const getUserId = () => {
-  return 1; //fake user id
+export const clearAuth = () => {
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('authUser');
+  document.cookie = 'authToken=; Max-Age=0; path=/;';
 }
+
+// Giải mã JWT (lấy payload)
+export const parseJwt = (token) => {
+  if (!token) return null;
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+}
+
+// Lấy user object từ token
+export const getUserFromToken = () => parseJwt(localStorage.getItem('authToken'));
+
+// Lấy từng trường nhỏ
+export const getUserId = () => getUserFromToken()?.id;
+export const getUserEmail = () => getUserFromToken()?.email;
+export const getUserFullName = () => getUserFromToken()?.fullName;
+export const getUserRole = () => getUserFromToken()?.role;
+export const getUserPhone = () => getUserFromToken()?.phone;
