@@ -82,10 +82,13 @@ const props = defineProps({
 
 // Methods
 const goToProductDetail = () => {
-    router.push({
-        name: 'product-detail',
-        params: { id: props.product.id || props.product.bookId }
-    })
+    const productId = props.product.id || props.product.bookId
+    if (productId) {
+        router.push({
+            name: 'product-detail',
+            params: { id: productId }
+        })
+    }
 }
 
 const getCurrentPrice = () => {

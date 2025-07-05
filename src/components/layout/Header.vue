@@ -8,7 +8,9 @@
                     <!-- Logo -->
                     <div class="col-auto">
                         <div class="logo me-4">
-                            <img src="https://cdn1.fahasa.com/media/catalog/product/9/7/9786043462111_1.jpg" alt="Fahasa Logo" style="height: 40px;">
+                            <RouterLink to="/">
+                                <img src="https://cdn1.fahasa.com/media/catalog/product/9/7/9786043462111_1.jpg" alt="Fahasa Logo" style="height: 40px;">
+                            </RouterLink>
                         </div>
                     </div>
 
@@ -45,11 +47,11 @@
                         <NotificationComponent mode="dropdown" />
 
                         <!-- Cart -->
-                        <div class="d-flex flex-column align-items-center text-decoration-none text-dark position-relative">
+                        <RouterLink to="/cart" class="d-flex flex-column align-items-center text-decoration-none text-dark position-relative">
                             <i class="bi bi-cart3 fs-5"></i>
                             <small class="text-muted" style="font-size: 11px;">Giỏ Hàng</small>
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 9px;">0</span>
-                        </div>
+                        </RouterLink>
 
                         <!-- Account -->
                         <div class="user-link position-relative d-flex flex-column align-items-center text-decoration-none text-dark" style="cursor:pointer;">
@@ -99,7 +101,7 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link fw-semibold text-dark" href="#">Trang chủ</a>
+                            <RouterLink class="nav-link fw-semibold text-dark" to="/">Trang chủ</RouterLink>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" href="#">Sách hot</a>
@@ -147,6 +149,7 @@ const handleLogout = async () => {
         router.push('/auth');
     }
 }
+import { RouterLink } from 'vue-router'
 </script>
 
 <style scoped>
@@ -279,5 +282,32 @@ const handleLogout = async () => {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px);}
     to { opacity: 1; transform: translateY(0);}
+}
+
+/* Cart icon hover effect */
+.d-flex.flex-column.align-items-center:hover {
+    color: #dc3545 !important;
+    transform: translateY(-1px);
+    transition: all 0.3s ease;
+}
+
+.d-flex.flex-column.align-items-center:hover i {
+    color: #dc3545 !important;
+}
+
+.d-flex.flex-column.align-items-center:hover small {
+    color: #dc3545 !important;
+}
+
+/* Logo RouterLink styling */
+.logo a {
+    display: block;
+    text-decoration: none;
+}
+
+/* NavLink RouterLink styling */
+.nav-link.router-link-active {
+    color: #dc3545 !important;
+    font-weight: bold;
 }
 </style>
