@@ -226,6 +226,7 @@ import { RouterLink } from 'vue-router'
 .user-link {
     position: relative;
     display: inline-block;
+    z-index: 1000;
 }
 .avatar {
     width: 32px;
