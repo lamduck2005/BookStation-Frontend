@@ -29,9 +29,9 @@ export const getCartItems = async (userId) => {
 // Update cart item quantity
 export const updateCartItem = async (cartItemId, quantity) => {
   try {
-    const response = await axiosClient.put(`/api/carts/items/${cartItemId}`, {
-      quantity: quantity
-    })
+    console.log(`Calling API: PUT /api/carts/items/${cartItemId}?quantity=${quantity}`)
+    const response = await axiosClient.put(`/api/carts/items/${cartItemId}?quantity=${quantity}`)
+    console.log('API Response:', response)
     return response
   } catch (error) {
     console.error('Error updating cart item:', error)

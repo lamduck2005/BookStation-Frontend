@@ -1,15 +1,15 @@
 import Swal from "sweetalert2";
 import "./swalHelper.css"; // Import file CSS custom
 
-export const showToast = (icon, title, timer = 3000) => {
+export const showToast = (icon, title, position = "top-end", showProgress = true, timer = 3000) => {
   Swal.fire({
     toast: true,
-    position: "top-end",
+    position: position,
     icon,
     title,
     showConfirmButton: false,
     timer,
-    timerProgressBar: true,
+    timerProgressBar: showProgress,
     customClass: {
       popup: "animated-toast",
     },
