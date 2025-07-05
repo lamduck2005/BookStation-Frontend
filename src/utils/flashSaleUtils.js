@@ -26,7 +26,7 @@ export function createFlashSaleCountdown(flashSaleEndTime, serverTime, onExpired
     const remaining = flashSaleEndTime - now
     
     if (remaining <= 0) {
-      clearInterval(timer)
+      clearInterval(timer)//stop countdown
       if (onExpired) {
         onExpired()
       }
