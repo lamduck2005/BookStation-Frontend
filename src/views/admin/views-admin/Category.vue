@@ -1,165 +1,265 @@
 <template>
-  <div class="container mt-4">
-    <!-- Breadcrumb -->
-    <div class="mb-2" style="font-weight: 500; color: #555">
-      Admin / <span style="color: black; font-weight: bold">Category</span>
-    </div>
-    <!-- Nút thêm danh mục mới -->
-
-    <!-- Bộ lọc -->
-    <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">
-      <div
-        class="d-flex align-items-center mb-3 p-2 m-0 rounded-top"
-        style="background-color: #ecae9e"
-      >
-        <i class="bi bi-funnel-fill me-2 text-dark"></i>
-        <h5 class="mb-0">Bộ lọc</h5>
+  <div class="container-fluid py-4">
+    <!-- ========== BỘ LỌC CATEGORY ========== -->
+    <div class="card mb-5 shadow-lg border-0 filter-card">
+      <div class="card-header bg-light border-0 py-3">
+        <h5 class="mb-0 text-secondary">
+          <i class="bi bi-funnel me-2"></i>
+          Bộ lọc tìm kiếm
+        </h5>
       </div>
-      <div class="row g-3 m-2 mt-0 p-0">
-        <div class="col-md-6">
-          <label class="form-label">Tìm kiếm:</label>
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Nhập tên danh mục"
-            v-model="searchQuery"
-          />
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">
+              <i class="bi bi-search me-1"></i>
+              Tìm kiếm theo tên danh mục
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              v-model="searchQuery"
+              placeholder="Nhập tên danh mục..."
+            />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">
+              <i class="bi bi-toggle-on me-1"></i>
+              Trạng thái
+            </label>
+            <select class="form-select" v-model="selectedStatus">
+              <option value="">Tất cả trạng thái</option>
+              <option value="1">Hoạt động</option>
+              <option value="0">Không hoạt động</option>
+            </select>
+          </div>
         </div>
-        <div class="col-md-6">
-          <label class="form-label">Trạng thái</label>
-          <select class="form-select" v-model="selectedStatus">
-            <option value="">Tất cả trạng thái</option>
-            <option value="1">Hoạt động</option>
-            <option value="0">Không hoạt động</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="d-flex justify-content-end mb-3">
-      <AddButton @click="openModal" />
-    </div>
-    <div class="div-list-category">
-      <!-- Tiêu đề danh sách -->
-      <div class="category-list-title-custom">Danh sách Category</div>
-
-      <div class="table-responsive">
-        <table
-          class="table align-middle table-hover custom-table shadow-sm rounded"
-        >
-          <thead class="table-light">
-            <tr>
-              <th style="width: 50px">#</th>
-              <th style="width: 50%">Tên danh mục</th>
-              <th>Mô tả</th>
-              <th style="width: 100px">Trạng thái</th>
-              <th class="text-center text-nowrap" style="width: 150px">
-                Chức năng
-              </th>
-            </tr>
-          </thead>
-          <tbody v-for="(category, index) in categories" :key="category.id">
-            <tr>
-              <td>{{ index + 1 }}</td>
-              <td>
-                <button
-                  v-if="
-                    category.parentCategory && category.parentCategory.length
-                  "
-                  @click="toggleCollapse(category)"
-                  class="btn"
-                >
-                  <span class="node-icon me-2">
-                    <i v-if="category.isOpen" class="bi bi-caret-down-fill"></i>
-                    <i v-else class="bi bi-caret-right-fill"></i>
-                  </span>
-                  {{ category.categoryName }}
-                </button>
-                <span v-else>{{ category.categoryName }}</span>
-              </td>
-
-              <td style="max-width: 200px; white-space: pre-line">
-                {{ category.description }}
-              </td>
-              <td>
-                <span
-                  :class="
-                    category.status === 1
-                      ? 'badge bg-success'
-                      : 'badge bg-danger'
-                  "
-                >
-                  {{ category.status === 1 ? "Hoạt động" : "Không hoạt động" }}
-                </span>
-              </td>
-              <td class="text-center text-nowrap">
-                <div class="d-inline-flex gap-1">
-                  <button
-                    class="btn btn-outline-dark action-btn"
-                    @click="viewCategory(category.id)"
-                    title="Xem"
-                  >
-                    <i class="bi bi-eye"></i>
-                  </button>
-                  <EditButton @click="editCategory(category.id)" title="Sửa" />
-                  <ToggleStatus
-                    :status="category.status"
-                    @toggle="handleToggleStatus(category.id)"
-                  />
-                  <DeleteButton
-                    @click="handleDeleteCategory(category.id)"
-                    title="Xóa"
-                  />
-                </div>
-              </td>
-            </tr>
-            <!-- Hiển thị con nếu mở -->
-            <tr
-              v-if="category.parentCategory && category.parentCategory.length"
-              v-for="(child, index) in category.parentCategory"
-              :key="child?.id || 'no-id'"
-              v-show="category.isOpen"
+        <div class="row g-3 pt-3 d-flex justify-content-center">
+          <div class="col-md-1">
+            <button
+              class="btn btn-outline-success w-100 me-2"
+              @click="searchWithFilter"
             >
-              <td>{{ index + 1 }}</td>
-              <td style="padding-left: 50px">
-                <span class="node-icon">
-                  {{ child.categoryName ? child.categoryName : "Không có tên" }}
-                </span>
-              </td>
-              <td style="max-width: 200px; white-space: pre-line">
-                {{ child?.description ? child.description : "Không có mô tả" }}
-              </td>
-              <td>
-                <span
-                  :class="
-                    child?.status === 1 ? 'badge bg-success' : 'badge bg-danger'
-                  "
+              <i class="bi bi-funnel"></i> Lọc
+            </button>
+          </div>
+          <div class="col-md-2">
+            <button
+              class="btn btn-outline-secondary w-100"
+              @click="clearFilters"
+            >
+              <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================== BẢNG DANH SÁCH CATEGORY ================== -->
+    <div class="card shadow-lg border-0 mb-4 category-table-card">
+      <!-- Header bảng: Tên + nút -->
+      <div
+        class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3"
+      >
+        <div>
+          <h5 class="mb-0 text-secondary">
+            <i class="bi bi-tags me-2"></i>
+            Danh sách danh mục
+          </h5>
+        </div>
+        <div class="d-flex gap-2">
+          <!-- Nút làm mới dữ liệu -->
+          <button
+            class="btn btn-outline-info btn-sm py-2"
+            @click="reloadPage"
+            :disabled="loading"
+          >
+            <i class="bi bi-arrow-repeat me-1"></i> Làm mới
+          </button>
+          <!-- Nút thêm mới -->
+          <button
+            class="btn btn-primary btn-sm py-2"
+            style="background-color: #33304e; border-color: #33304e"
+            @click="openModal"
+          >
+            <i class="bi bi-plus-circle me-1"></i> Thêm mới
+          </button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <!-- Loading state -->
+        <div v-if="loading" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Đang tải...</span>
+          </div>
+          <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+        </div>
+        <!-- Error state -->
+        <div v-else-if="error" class="alert alert-danger m-4" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          {{ error }}
+          <button
+            class="btn btn-sm btn-outline-danger ms-2"
+            @click="fetchCategory"
+          >
+            Thử lại
+          </button>
+        </div>
+        <!-- Data table -->
+        <div v-else>
+          <table class="table align-middle table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 60px">#</th>
+                <th style="width: 45%">Tên danh mục</th>
+                <th style="width: 25%">Mô tả</th>
+                <th style="width: 120px">Trạng thái</th>
+                <th class="text-center" style="width: 150px">Chức năng</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="categories.length === 0">
+                <td colspan="5" class="text-center py-4 text-muted">
+                  <i class="bi bi-inbox me-2"></i>
+                  Không có dữ liệu
+                </td>
+              </tr>
+              <!-- Dòng dữ liệu danh mục cha -->
+              <template
+                v-for="(category, index) in categories"
+                :key="category.id"
+              >
+                <tr
+                  class="align-middle parent-row"
+                  style="vertical-align: middle"
                 >
-                  {{ child?.status === 1 ? "Hoạt động" : "Không hoạt động" }}
-                </span>
-              </td>
-              <td class="text-center text-nowrap">
-                <div class="d-inline-flex gap-1">
-                  <button
-                    class="btn btn-outline-dark action-btn"
-                    @click="viewCategory(child.id)"
-                    title="Xem"
+                  <td class="py-3 text-center fw-bold">
+                    {{ currentPage * pageSize + index + 1 }}
+                  </td>
+                  <td class="py-3">
+                    <div class="d-flex align-items-center">
+                      <button
+                        v-if="
+                          category.parentCategory &&
+                          category.parentCategory.length > 0
+                        "
+                        @click="toggleCollapse(category)"
+                        class="btn btn-sm btn-outline-secondary me-2 toggle-btn"
+                      >
+                        <i
+                          v-if="category.isOpen"
+                          class="bi bi-chevron-down"
+                        ></i>
+                        <i v-else class="bi bi-chevron-right"></i>
+                      </button>
+                      <span class="fw-semibold category-name">{{
+                        category.categoryName
+                      }}</span>
+                    </div>
+                  </td>
+                  <td class="py-3">
+                    <div class="description-text" :title="category.description">
+                      {{ category.description || "Không có mô tả" }}
+                    </div>
+                  </td>
+                  <td class="py-3">
+                    <!-- Thay thế badge bằng ToggleStatus -->
+                    <ToggleStatus
+                      :id="category.id"
+                      v-model="category.status"
+                      :true-value="1"
+                      :false-value="0"
+                      active-text="Hoạt động"
+                      inactive-text="Không hoạt động"
+                      @change="
+                        (status) => handleToggleStatus(category.id, status)
+                      "
+                    />
+                  </td>
+                  <td class="py-3 text-center">
+                    <div class="d-inline-flex gap-1">
+                      <button
+                        class="btn btn-outline-info btn-sm action-btn"
+                        @click="viewCategory(category.id)"
+                        title="Xem chi tiết"
+                      >
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <EditButton
+                        @click="editCategory(category.id)"
+                        title="Sửa"
+                      />
+                    </div>
+                  </td>
+                </tr>
+                <!-- Hiển thị danh mục con -->
+                <template
+                  v-if="
+                    category.parentCategory &&
+                    category.parentCategory.length > 0
+                  "
+                  v-for="(child, childIndex) in category.parentCategory"
+                  :key="`${category.id}-${child.id}`"
+                >
+                  <tr
+                    v-show="category.isOpen"
+                    class="align-middle child-row"
+                    style="vertical-align: middle"
                   >
-                    <i class="bi bi-eye"></i>
-                  </button>
-                  <EditButton @click="editCategory(child.id)" title="Sửa" />
-                  <ToggleStatus
-                    :status="child.status"
-                    @toggle="handleToggleStatus(child.id)"
-                  />
-                  <DeleteButton
-                    @click="handleDeleteCategory(child.id)"
-                    title="Xóa"
-                  />
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                    <td class="py-2 text-center text-muted">
+                      {{ currentPage * pageSize + index + 1 }}.{{
+                        childIndex + 1
+                      }}
+                    </td>
+                    <td class="py-2" style="padding-left: 60px">
+                      <div class="d-flex align-items-center">
+                        <i class="bi bi-arrow-return-right me-2 text-muted"></i>
+                        <span class="child-category-name">
+                          {{ child.categoryName || "Không có tên" }}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="py-2">
+                      <div class="description-text" :title="child.description">
+                        {{ child.description || "Không có mô tả" }}
+                      </div>
+                    </td>
+                    <td class="py-2">
+                      <!-- Thay thế badge bằng ToggleStatus cho child category -->
+                      <ToggleStatus
+                        :id="child.id"
+                        v-model="child.status"
+                        :true-value="1"
+                        :false-value="0"
+                        active-text="Hoạt động"
+                        inactive-text="Không hoạt động"
+                        @change="
+                          (status) => handleToggleStatus(child.id, status)
+                        "
+                      />
+                    </td>
+                    <td class="py-2 text-center">
+                      <div class="d-inline-flex gap-1">
+                        <button
+                          class="btn btn-outline-info btn-sm action-btn"
+                          @click="viewCategory(child.id)"
+                          title="Xem chi tiết"
+                        >
+                          <i class="bi bi-eye"></i>
+                        </button>
+                        <EditButton
+                          @click="editCategory(child.id)"
+                          title="Sửa"
+                        />
+                       
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </template>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -394,7 +494,6 @@
 
 <script setup>
 import { ref, onMounted, watch } from "vue";
-
 import "bootstrap-icons/font/bootstrap-icons.css";
 import Swal from "sweetalert2";
 import {
@@ -405,12 +504,13 @@ import {
   getAllParentCategories,
   getCategoryById,
   updateCategory,
+  toggleStatus, // Thêm import toggleStatus
 } from "../../../services/admin/category";
 import AddButton from "@/components/common/AddButton.vue";
 import EditButton from "@/components/common/EditButton.vue";
 import DeleteButton from "@/components/common/DeleteButton.vue";
-import ToggleStatus from "@/components/common/ToggleStatus.vue";
 import Pagination from "@/components/common/Pagination.vue";
+import ToggleStatus from "@/components/common/ToggleStatus.vue"; // Import ToggleStatus component
 import { debounce } from "@/utils/utils";
 
 const categories = ref([]);
@@ -612,52 +712,53 @@ const handleUpdateCategory = async (id, category) => {
   }
 };
 
-const handleDeleteCategory = async (id) => {
-  const result = await Swal.fire({
-    title: "Bạn có chắc chắn muốn xóa danh mục này?",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Xóa",
-    cancelButtonText: "Hủy",
-  });
-  if (result.isConfirmed) {
-    try {
-      await deleteCategory(id);
-      fetchCategory(); // Cập nhật lại danh sách danh mục
+// const handleDeleteCategory = async (id) => {
+//   const result = await Swal.fire({
+//     title: "Bạn có chắc chắn muốn xóa danh mục này?",
+//     icon: "warning",
+//     showCancelButton: true,
+//     confirmButtonText: "Xóa",
+//     cancelButtonText: "Hủy",
+//   });
+//   if (result.isConfirmed) {
+//     try {
+//       await deleteCategory(id);
+//       fetchCategory(); // Cập nhật lại danh sách danh mục
 
-      Swal.fire({
-        icon: "success",
-        title: "Xóa danh mục thành công!",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-      });
-    } catch (error) {
-      console.error("Lỗi khi xóa danh mục:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Xóa thất bại!",
-        text: "Không thể xóa danh mục.",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-      });
-    }
-  }
-};
+//       Swal.fire({
+//         icon: "success",
+//         title: "Xóa danh mục thành công!",
+//         toast: true,
+//         position: "top-end",
+//         showConfirmButton: false,
+//         timer: 2000,
+//         timerProgressBar: true,
+//       });
+//     } catch (error) {
+//       console.error("Lỗi khi xóa danh mục:", error);
+//       Swal.fire({
+//         icon: "error",
+//         title: "Xóa thất bại!",
+//         text: "Không thể xóa danh mục.",
+//         toast: true,
+//         position: "top-end",
+//         showConfirmButton: false,
+//         timer: 2000,
+//         timerProgressBar: true,
+//       });
+//     }
+//   }
+// };
 
-const handleToggleStatus = async (id) => {
+// Hàm xử lý toggle status
+const handleToggleStatus = async (id, status) => {
   try {
     await toggleStatus(id);
-    fetchCategory(); // Refresh the list to show updated status
-
+    // Refresh lại danh sách để đảm bảo đồng bộ
+    fetchCategory();
     Swal.fire({
       icon: "success",
-      title: "Cập nhật trạng thái thành công!",
+      title: `Đã ${status === 1 ? "kích hoạt" : "tắt"} trạng thái!`,
       toast: true,
       position: "top-end",
       showConfirmButton: false,
@@ -665,11 +766,13 @@ const handleToggleStatus = async (id) => {
       timerProgressBar: true,
     });
   } catch (error) {
-    console.error("Lỗi khi cập nhật trạng thái danh mục:", error);
+    console.error("Lỗi khi thay đổi trạng thái:", error);
+    // Refresh lại để khôi phục trạng thái cũ
+    fetchCategory();
     Swal.fire({
       icon: "error",
-      title: "Cập nhật trạng thái thất bại!",
-      text: "Không thể cập nhật trạng thái danh mục.",
+      title: "Thay đổi trạng thái thất bại!",
+      text: "Không thể thay đổi trạng thái danh mục.",
       toast: true,
       position: "top-end",
       showConfirmButton: false,
