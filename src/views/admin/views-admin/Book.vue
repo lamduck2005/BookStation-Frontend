@@ -90,6 +90,27 @@
             </select>
           </div>
           <div class="col-md-2">
+            <label for="publisherFilter" class="form-label">
+              <i class="bi bi-journal-bookmark me-1"></i>
+              Nhà xuất bản
+            </label>
+            <select
+              class="form-select"
+              id="publisherFilter"
+              v-model="selectedPublisher"
+              @change="applyFilters"
+            >
+              <option value="">Tất cả nhà xuất bản</option>
+              <option
+                v-for="publisher in publishers"
+                :key="publisher.id"
+                :value="publisher.id"
+              >
+                {{ publisher.name }}
+              </option>
+            </select>
+          </div>
+          <div class="col-md-2">
             <label for="statusFilter" class="form-label">
               <i class="bi bi-toggle-on me-1"></i>
               Trạng thái
@@ -441,6 +462,28 @@
                   </select>
                 </div>
               </div>
+                
+              <div class="row g-3 mt-2">
+                <div class="col-md-6">
+                  <label for="publisherId" class="form-label enhanced-label">
+                    Nhà xuất bản
+                  </label>
+                  <select
+                    class="form-select enhanced-input"
+                    id="publisherId"
+                    v-model="newBook.publisherId"
+                  >
+                    <option value="">Chọn nhà xuất bản</option>
+                    <option
+                      v-for="publisher in publishers"
+                      :key="publisher.id"
+                      :value="publisher.id"
+                    >
+                      {{ publisher.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
 
               <div class="row g-3 mt-2">
                 <div class="col-md-4">
@@ -555,6 +598,7 @@ import StatusLabel from '@/components/common/StatusLabel.vue';
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { Modal } from 'bootstrap';
 import { getBooks, createBook, updateBook, getAuthorsDropdown, getCategoriesDropdown, getSuppliersDropdown, toggleBookStatus, deleteBook } from '@/services/admin/book';
+import { getPublishersDropdown } from '@/services/admin/publisher';
 import Swal from 'sweetalert2';
 
 // Search and filter states
@@ -562,6 +606,7 @@ const searchQuery = ref('');
 const bookCodeFilter = ref('');
 const selectedCategory = ref('');
 const selectedSupplier = ref('');
+const selectedPublisher = ref('');
 const selectedStatus = ref('');
 const minPrice = ref('');
 const maxPrice = ref('');
@@ -576,6 +621,7 @@ const newBook = ref({
   publicationDate: '',
   categoryId: '',
   supplierId: '',
+  publisherId: '',
   bookCode: '',
   status: 1,
   authorIds: [] // BẮT BUỘC - Danh sách ID tác giả
@@ -601,6 +647,7 @@ const publicationDateFormatted = computed({
 const authors = ref([]);
 const categories = ref([]);
 const suppliers = ref([]);
+const publishers = ref([]);
 
 // Track edit mode and index
 const isEditMode = ref(false);
@@ -637,6 +684,9 @@ const fetchBooks = async () => {
     if (selectedSupplier.value) {
       params.supplierId = selectedSupplier.value;
     }
+    if (selectedPublisher.value) {
+      params.publisherId = selectedPublisher.value;
+    }
     if (selectedStatus.value !== '') {
       params.status = selectedStatus.value;
     }
@@ -666,22 +716,25 @@ const fetchBooks = async () => {
   }
 };
 
-// Load authors, categories and suppliers data
+// Load authors, categories, suppliers and publishers data
 const loadDropdownData = async () => {
   try {
-    const [authorsResponse, categoriesResponse, suppliersResponse] = await Promise.all([
+    const [authorsResponse, categoriesResponse, suppliersResponse, publishersResponse] = await Promise.all([
       getAuthorsDropdown(),
       getCategoriesDropdown(),
-      getSuppliersDropdown()
+      getSuppliersDropdown(),
+      getPublishersDropdown()
     ]);
     
     authors.value = authorsResponse.data || [];
     categories.value = categoriesResponse.data || [];
     suppliers.value = suppliersResponse.data || [];
+    publishers.value = publishersResponse.data || [];
     
     console.log('authors.value:', authors.value);
     console.log('categories.value:', categories.value);
     console.log('suppliers.value:', suppliers.value);
+    console.log('publishers.value:', publishers.value);
   } catch (error) {
     console.error('Lỗi khi tải dữ liệu dropdown:', error);
     Swal.fire({
@@ -762,6 +815,7 @@ const openEditModal = (book, index) => {
     publicationDate: book.publicationDate || '',
     categoryId: book.categoryId || '',
     supplierId: book.supplierId || '',
+    publisherId: book.publisherId || '',
     bookCode: book.bookCode,
     status: book.status,
     authorIds: book.authors ? book.authors.map(author => author.id) : [] // Map authors to authorIds
@@ -962,6 +1016,7 @@ const applyFilters = () => {
     bookCodeFilter: bookCodeFilter.value,
     selectedCategory: selectedCategory.value,
     selectedSupplier: selectedSupplier.value,
+    selectedPublisher: selectedPublisher.value,
     selectedStatus: selectedStatus.value,
     minPrice: minPrice.value,
     maxPrice: maxPrice.value
@@ -975,6 +1030,7 @@ const clearFilters = () => {
   bookCodeFilter.value = '';
   selectedCategory.value = '';
   selectedSupplier.value = '';
+  selectedPublisher.value = '';
   selectedStatus.value = '';
   minPrice.value = '';
   maxPrice.value = '';
@@ -1023,6 +1079,7 @@ const resetBookModal = () => {
     publicationDate: '',
     categoryId: '',
     supplierId: '',
+    publisherId: '',
     bookCode: '',
     status: 1,
     authorIds: [] // Reset authorIds
@@ -1100,6 +1157,9 @@ const fillFakeData = () => {
   
   const randomSupplierId = suppliers.value.length > 0 ? 
     suppliers.value[Math.floor(Math.random() * suppliers.value.length)].id : '';
+    
+  const randomPublisherId = publishers.value.length > 0 ? 
+    publishers.value[Math.floor(Math.random() * publishers.value.length)].id : '';
   
   const randomStatus = Math.random() > 0.2 ? 1 : 0; // 80% active
   
@@ -1120,6 +1180,7 @@ const fillFakeData = () => {
     publicationDate: publicationDate.getTime(),
     categoryId: randomCategoryId,
     supplierId: randomSupplierId,
+    publisherId: randomPublisherId,
     bookCode: `BOOK${timestamp}`,
     status: randomStatus,
     authorIds: randomAuthorIds // 🔥 BẮT BUỘC - Random authorIds
@@ -1509,6 +1570,60 @@ const fillFakeData = () => {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Table responsive improvements */
+.table-responsive {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.table-responsive table {
+  min-width: 1200px; /* Ensure table has minimum width for proper scrolling */
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Responsive table fixes */
+@media (max-width: 1400px) {
+  .table-responsive table {
+    min-width: 1400px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .table-responsive table {
+    min-width: 1200px;
+  }
+}
+
+@media (max-width: 992px) {
+  .table-responsive table {
+    min-width: 1000px;
+  }
+}
+
+@media (max-width: 768px) {
+  .table-responsive table {
+    min-width: 900px;
   }
 }
 </style>

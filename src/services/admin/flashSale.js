@@ -1,12 +1,19 @@
 import client from '../../utils/axios.js';
 
-export const getAllFlashSale = async (page, size) => {
-    return await client.get(`/api/flash-sales`, {
-        params: {
-            page,
-            size
-        }
-    });
+export const getAllFlashSale = async (pageOrParams = 0, size = 10, filters = {}) => {
+    let params = {};
+
+    if (typeof pageOrParams === 'object') {
+        params = { ...pageOrParams };
+    } else {
+        params = {
+            page: pageOrParams,
+            size,
+            ...filters
+        };
+    }
+
+    return await client.get(`/api/flash-sales`, { params });
 }
 
 export const addFlashSale = async (data) => {
@@ -16,3 +23,8 @@ export const addFlashSale = async (data) => {
 export const updateFlashSale = async (id, data) => {
     return await client.put(`/api/flash-sales/${id}`, data);
 }
+
+export const toggleStatusFlashSale = async (id) => {
+    return await client.patch(`/api/flash-sales/${id}/status`);
+}
+

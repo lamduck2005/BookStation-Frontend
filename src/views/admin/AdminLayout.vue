@@ -40,6 +40,7 @@ function handleSidebarToggle(val) {
 .main {
   flex: 1;
   transition: margin-left 0.3s;
+  overflow-x: auto;
   /* margin-left: 250px; */
 }
 .main.sidebar-closed {
@@ -48,5 +49,40 @@ function handleSidebarToggle(val) {
 .router {
   padding: 0.1rem 1rem;
   min-height: calc(100vh - 60px);
+  overflow-x: auto;
+}
+
+/* Ensure tables can scroll horizontally */
+.router :deep(.table-responsive) {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom scrollbar for better UX */
+.main::-webkit-scrollbar,
+.router::-webkit-scrollbar,
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.main::-webkit-scrollbar-track,
+.router::-webkit-scrollbar-track,
+.table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.main::-webkit-scrollbar-thumb,
+.router::-webkit-scrollbar-thumb,
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.main::-webkit-scrollbar-thumb:hover,
+.router::-webkit-scrollbar-thumb:hover,
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 </style>

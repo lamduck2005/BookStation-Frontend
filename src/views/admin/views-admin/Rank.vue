@@ -5,24 +5,43 @@
       <h6 class="text-muted">
         Admin / <strong>Rank</strong>
       </h6>
-    </div> <!-- Bộ lọc -->
+    </div>
+    
+    <!-- Bộ lọc -->
     <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">
       <div class="d-flex align-items-center mb-3 p-2 m-0 rounded-top" style="background-color: #ecae9e;">
         <i class="bi bi-funnel-fill me-2 text-dark"></i>
         <h5>Bộ lọc</h5>
       </div>
       <div class="row g-3 m-2 mt-0 p-0">
-        <div class="col-md-6">
+        <div class="col-md-4">
           <label class="form-label">Tìm kiếm:</label>
-          <input type="text" class="form-control" placeholder="Nhập tên rank" v-model="searchQuery" />
+          <input 
+            type="text" 
+            class="form-control" 
+            placeholder="Nhập tên rank" 
+            v-model="searchQuery" 
+            @input="debouncedSearch"
+            @keyup.enter="applyFilters"
+          />
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
           <label class="form-label">Trạng thái</label>
-          <select class="form-select" v-model="selectedStatus">
+          <select class="form-select" v-model="selectedStatus" @change="applyFilters">
             <option value="">Tất cả trạng thái</option>
             <option value="1">Hoạt động</option>
             <option value="0">Không hoạt động</option>
           </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <button type="button" class="btn btn-secondary me-2" @click="clearFilters">
+            <i class="bi bi-arrow-clockwise me-1"></i>
+            Xóa bộ lọc
+          </button>
+          <button type="button" class="btn btn-primary" @click="applyFilters">
+            <i class="bi bi-search me-1"></i>
+            Tìm kiếm
+          </button>
         </div>
       </div>
     </div>
@@ -32,14 +51,6 @@
       <AddButton @click="openAddModal" />
     </div>
 
-    <!-- Chú ý loại rank -->
-    <div class="rank-warning-label d-flex align-items-center justify-content-center mb-3">
-      <img src="https://cdn-icons-png.flaticon.com/128/3756/3756730.png" alt="Warning" class="rank-warning-icon me-2" />
-      <span class="rank-warning-text">
-        <strong>Chỉ có 3 loại rank: Bạc, Vàng và Kim Cương. Vui lòng không thêm loại khác!</strong>
-      </span>
-    </div>
-
     <!-- Danh sách Rank -->
     <div class="bg-white p-3 rounded shadow-sm pt-0 ps-0 pe-0">
       <div class="d-flex align-items-center mb-3 p-2 m-0 rounded-top" style="background-color: #ecae9e;">
@@ -47,441 +58,377 @@
       </div>
 
       <div class="p-3">
-        <table class="table align-middle">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Tên rank</th>
-              <th>Chi tiêu tối thiểu</th>
-              <th>Hệ số điểm</th>
-              <th style="width: 200px;">Trạng thái</th>
-              <th style="width: 100px;">Chức năng</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(rank, index) in ranks" :key="rank.id">
-              <td>{{ index + 1 }}</td>
-              <td>
-                <router-link :to="{ name: 'rank-detail', params: { id: rank.id }, query: { name: rank.name } }" style="color: #007bff; text-decoration: underline; cursor: pointer;">
-                  {{ rank.name }}
-                </router-link>
-              </td>
-              <td>{{ rank.minSpend !== undefined && rank.minSpend !== null && rank.minSpend !== '-' ? rank.minSpend.toLocaleString() + ' VND' : '-' }}</td>
-              <td>{{ rank.pointMultiplier !== undefined && rank.pointMultiplier !== null && rank.pointMultiplier !== '-' ? rank.pointMultiplier + 'x' : '-' }}</td>
-              <td style="width: 200px;">
-                <StatusLabel :status="1" />
-              </td>
-              <td style="width: 100px;">
-                <EditButton @click="openEditModal(rank, index)" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th style="min-width: 50px;">STT</th>
+                <th style="min-width: 200px;">Tên Rank</th>
+                <th style="min-width: 150px;">Mức chi tiêu tối thiểu</th>
+                <th style="min-width: 150px;">Hệ số điểm</th>
+                <th style="min-width: 100px;">Trạng thái</th>
+                <th style="min-width: 150px;">Ngày tạo</th>
+                <th style="min-width: 120px;">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(rank, index) in ranks" :key="rank.id">
+                <td>{{ (currentPage * pageSize) + index + 1 }}</td>
+                <td>
+                  <router-link 
+                    :to="{ name: 'Rank detail', params: { id: rank.id }, query: { name: rank.name } }"
+                    class="text-decoration-none fw-bold text-primary"
+                  >
+                    {{ rank.name }}
+                  </router-link>
+                </td>
+                <td>{{ formatCurrency(rank.minSpent) }}</td>
+                <td>{{ rank.pointMultiplier }}x</td>
+                <td>
+                  <StatusLabel 
+                    :status="rank.status"
+                    :status-text="rank.status == 1 ? 'Hoạt động' : 'Không hoạt động'"
+                    :status-class="rank.status == 1 ? 'status-active' : 'status-inactive'"
+                  />
+                </td>
+                <td>{{ formatDate(rank.createdAt) }}</td>
+                <td>
+                  <div class="d-flex gap-2">
+                    <EditButton @click="openEditModal(rank, index)" />
+                    <DeleteButton @click="handleDelete(rank)" />
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
         <!-- Pagination -->
-        <Pagination :page-number="currentPage" :total-pages="totalPages" :is-last-page="isLastPage"
-          :page-size="pageSize" :items-per-page-options="itemsPerPageOptions" :total-elements="totalElements"
-          @prev="handlePrev" @next="handleNext" @update:pageSize="handlePageSizeChange" />
+        <Pagination 
+          :page-number="currentPage" 
+          :total-pages="totalPages" 
+          :is-last-page="isLastPage"
+          :page-size="pageSize" 
+          :items-per-page-options="itemsPerPageOptions" 
+          :total-elements="totalElements"
+          @prev="handlePrev" 
+          @next="handleNext" 
+          @update:pageSize="handlePageSizeChange" 
+        />
       </div>
-
     </div>
-  </div> <!-- Add/Edit Rank Modal -->
-  <div class="modal fade" id="addRankModal" tabindex="-1" aria-labelledby="addRankModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header" style="background-color: #ecae9e;">
-          <h5 class="modal-title" id="addRankModalLabel">
-            <i class="bi me-2 bi-plus-circle"></i>
+  </div>
+
+  <!-- Add/Edit Rank Modal -->
+  <div class="modal fade" :class="{ show: showModal }" tabindex="-1" style="display: block;" v-if="showModal">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content enhanced-modal">
+        <div class="modal-header gradient-header">
+          <h5 class="modal-title">
+            <i class="bi me-2" :class="isEditMode ? 'bi-pencil-square' : 'bi-plus-circle'"></i>
             {{ isEditMode ? 'Sửa Rank' : 'Thêm Rank' }}
-          </h5><button type="button" class="custom-close-btn" data-bs-dismiss="modal" aria-label="Close">
-            <img src="https://cdn-icons-png.flaticon.com/128/694/694604.png" alt="Close" />
+          </h5>
+          <button type="button" class="custom-close-btn" @click="closeModal">
+            <i class="bi bi-x-lg"></i>
           </button>
         </div>
-        <div class="modal-body">
-          <form @submit.prevent="handleSubmitRank">
-            <div class="row g-3">
-              <!-- Tên rank (input text) -->
-              <div class="col-12" style="position:relative;">
-                <label for="rankName" class="form-label">
-                  Tên rank <span class="text-danger">*</span>
-                </label>
-                <div style="display:flex;align-items:center;position:relative;">
-                  <input type="text" class="form-control" id="rankName" placeholder="Nhập tên rank" v-model="newRank.name" required :disabled="isEditMode && isSpecialRankName" />
-                  <img v-if="!isEditMode && newRank.name && isInvalidRankName" src="https://cdn-icons-png.flaticon.com/128/12008/12008347.png" alt="Restriction" style="width:24px;height:24px;margin-left:8px;" />
-                  <img v-if="!isEditMode && newRank.name && !isInvalidRankName" src="https://cdn-icons-png.flaticon.com/128/5610/5610944.png" alt="Valid" style="width:24px;height:24px;margin-left:8px;" />
+        <div class="modal-body enhanced-body">
+          <form @submit.prevent="handleSubmit">
+            <!-- Section 1: Thông tin cơ bản -->
+            <div class="form-section">
+              <div class="section-header">
+                <i class="bi bi-award section-icon"></i>
+                <h6 class="section-title">Thông tin Rank</h6>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label enhanced-label">Tên Rank <span class="text-danger">*</span></label>
+                  <select 
+                    class="form-select enhanced-input" 
+                    v-model="formData.rankName"
+                    required
+                    :disabled="isEditMode"
+                  >
+                    <option value="">Chọn loại rank</option>
+                    <option value="Vàng">Vàng</option>
+                    <option value="Bạc">Bạc</option>
+                    <option value="Kim cương">Kim cương</option>
+                  </select>
+                  <div class="form-text">Chỉ được phép tạo 3 loại rank: Vàng, Bạc, Kim cương</div>
                 </div>
-                <div v-if="!isEditMode && isInvalidRankName" class="form-text text-danger" style="font-size:0.92rem;">
-                  Tên rank chỉ được phép là Bạc, Vàng hoặc Kim Cương.
+                <div class="col-md-6">
+                  <label class="form-label enhanced-label">Trạng thái <span class="text-danger">*</span></label>
+                  <select class="form-select enhanced-input" v-model="formData.status" required>
+                    <option value="">Chọn trạng thái</option>
+                    <option value="1">Hoạt động</option>
+                    <option value="0">Không hoạt động</option>
+                  </select>
                 </div>
               </div>
+            </div>
 
-              <!-- Trạng thái -->
-              <div class="col-12" v-if="!isEditMode">
-                <label for="rankStatus" class="form-label">
-                  Trạng thái <span class="text-danger">*</span>
-                </label>
-                <select class="form-select" id="rankStatus" v-model="newRank.status" required>
-                  <option value="">Chọn trạng thái</option>
-                  <option value="1">Hoạt động</option>
-                  <option value="0">Không hoạt động</option>
-                </select>
+            <!-- Section 2: Điều kiện và hệ số -->
+            <div class="form-section">
+              <div class="section-header">
+                <i class="bi bi-calculator section-icon"></i>
+                <h6 class="section-title">Điều kiện và Hệ số</h6>
               </div>
-
-              <!-- Chi tiêu tối thiểu -->
-              <div class="col-12">
-                <label for="minSpend" class="form-label">
-                  Chi tiêu tối thiểu (VND)
-                </label>
-                <input type="number" class="form-control" id="minSpend" placeholder="Nhập chi tiêu tối thiểu"
-                  v-model="newRank.minSpend" min="0" />
-              </div>
-
-              <!-- Hệ số điểm -->
-              <div class="col-12">
-                <label for="pointMultiplier" class="form-label">
-                  Hệ số điểm
-                </label>
-                <input type="number" class="form-control" id="pointMultiplier" placeholder="Nhập hệ số điểm"
-                  v-model="newRank.pointMultiplier" min="1" step="0.1" />
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label enhanced-label">Mức chi tiêu tối thiểu <span class="text-danger">*</span></label>
+                  <input 
+                    type="number" 
+                    class="form-control enhanced-input" 
+                    v-model="formData.minSpent"
+                    placeholder="Nhập mức chi tiêu tối thiểu"
+                    required
+                    min="0"
+                    step="1000"
+                  />
+                  <div class="form-text">Số tiền khách hàng cần chi tiêu để đạt rank này</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label enhanced-label">Hệ số điểm <span class="text-danger">*</span></label>
+                  <input 
+                    type="number" 
+                    class="form-control enhanced-input" 
+                    v-model="formData.pointMultiplier"
+                    placeholder="Nhập hệ số điểm"
+                    required
+                    min="1"
+                    max="5"
+                    step="0.1"
+                  />
+                  <div class="form-text">Hệ số nhân điểm khi khách hàng mua hàng (1.0 - 5.0)</div>
+                </div>
               </div>
             </div>
           </form>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <div class="modal-footer enhanced-footer">
+          <button type="button" class="btn btn-secondary btn-cancel" @click="closeModal">
+            <i class="bi bi-x-circle me-1"></i>
             Hủy
-          </button> <button type="button" class="btn btn-primary" @click="handleSubmitRank"
-            style="background-color: #33304e; border-color: #33304e;">
+          </button>
+          <button type="button" class="btn btn-primary btn-submit" @click="handleSubmit">
+            <i class="bi bi-check-circle me-1"></i>
             {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }}
           </button>
         </div>
       </div>
     </div>
   </div>
+  <div v-if="showModal" class="modal-backdrop fade show"></div>
 </template>
-<script setup>
-import EditButton from '@/components/common/EditButton.vue';
-import Pagination from '@/components/common/Pagination.vue';
-import AddButton from '@/components/common/AddButton.vue';
-import StatusLabel from '@/components/common/StatusLabel.vue';
-import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { Modal } from 'bootstrap';
-import { getRanks, createRank } from '@/services/admin/rank';
-import Swal from 'sweetalert2';
 
+<script setup>
+import { ref, onMounted, computed } from 'vue';
+import { getRanks, createRank, updateRank, deleteRank } from '@/services/admin/rank.js';
+import { showToast, showQuickConfirm } from '@/utils/swalHelper';
+import { debounce } from '@/utils/utils';
+
+// Components
+import AddButton from '@/components/common/AddButton.vue';
+import EditButton from '@/components/common/EditButton.vue';
+import DeleteButton from '@/components/common/DeleteButton.vue';
+import StatusLabel from '@/components/common/StatusLabel.vue';
+import Pagination from '@/components/common/Pagination.vue';
+
+// Reactive data
+const ranks = ref([]);
 const searchQuery = ref('');
 const selectedStatus = ref('');
+const currentPage = ref(0);
+const pageSize = ref(10);
+const totalPages = ref(0);
+const totalElements = ref(0);
+const itemsPerPageOptions = ref([5, 10, 25, 50]);
+const isLastPage = ref(false);
+const loading = ref(false);
 
-// New/Edit rank form data
-const newRank = ref({
-  id: '',
-  name: '',
-  type: 'GOLD',
-  status: '1',
-  minSpend: 0,
-  pointMultiplier: 1
+// Modal
+const showModal = ref(false);
+const isEditMode = ref(false);
+const editingIndex = ref(-1);
+const formData = ref({
+  id: null,
+  rankName: '',
+  minSpent: '',
+  pointMultiplier: '',
+  status: ''
 });
 
-// Track edit mode and index
-const isEditMode = ref(false);
-const editIndex = ref(null);
+// Computed
+const debouncedSearch = computed(() => debounce(() => {
+  currentPage.value = 0;
+  fetchRanks();
+}, 500));
 
-// Pagination state
-const currentPage = ref(0);
-const pageSize = ref(5);
-const totalPages = ref(1);
-const totalElements = ref(5);
-const itemsPerPageOptions = ref([5, 10, 25, 50]);
-
-// Computed property for last page check
-const isLastPage = ref(false);
-
-// Fake data for testing
-const ranks = ref([]);
-
+// Methods
 const fetchRanks = async () => {
   try {
+    loading.value = true;
     const params = {
       page: currentPage.value,
       size: pageSize.value,
     };
-    if (searchQuery.value) params.name = searchQuery.value;
-    if (selectedStatus.value !== '') params.status = selectedStatus.value;
+    
+    if (searchQuery.value) {
+      params.name = searchQuery.value;
+    }
+    
+    if (selectedStatus.value !== '') {
+      params.status = selectedStatus.value;
+    }
+    
     const response = await getRanks(params);
-    const data = response.data ? response.data : response;
-    ranks.value = data.content.map(item => ({
-      id: item.id,
-      name: item.name,
-      minSpend: item.minSpent ?? '-', // Đúng trường mới
-      pointMultiplier: item.pointMultiplier ?? '-',
-      email: item.email ?? '',
-      status: item.status === null ? 1 : item.status
-    }));
-    totalPages.value = data.totalPages ?? 1;
-    totalElements.value = data.totalElements ?? ranks.value.length;
-    currentPage.value = data.page ?? currentPage.value;
-    pageSize.value = data.size ?? pageSize.value;
-    isLastPage.value = currentPage.value >= totalPages.value - 1;
+    const data = response.data || {};
+    
+    ranks.value = data.content || [];
+    totalPages.value = data.totalPages || 0;
+    totalElements.value = data.totalElements || 0;
+    isLastPage.value = data.last || false;
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách rank:', error);
+    console.error('Lỗi khi lấy danh sách ranks:', error);
+    showToast('error', 'Lỗi khi tải danh sách rank!', 2000);
+  } finally {
+    loading.value = false;
   }
 };
 
-// Watchers để gọi fetchRanks khi thay đổi filter hoặc phân trang
-import { watch } from 'vue';
-watch([searchQuery, selectedStatus, pageSize, currentPage], () => {
+const applyFilters = () => {
+  currentPage.value = 0;
   fetchRanks();
-});
-
-// Đảm bảo modal không bị kẹt backdrop hoặc tối màn hình:
-// Luôn dùng Modal.getOrCreateInstance để tránh tạo nhiều instance và lỗi backdrop
-const openAddModal = () => {
-  isEditMode.value = false;
-  newRank.value = {
-    id: '',
-    name: '',
-    type: 'GOLD',
-    status: '1',
-    minSpend: 0,
-    pointMultiplier: 1
-  };
-  isSpecialRankName.value = false;
-  isInvalidRankName.value = false;
-  const modalElement = document.getElementById('addRankModal');
-  const modal = Modal.getOrCreateInstance(modalElement); // <-- Sử dụng getOrCreateInstance
-  modal.show();
 };
 
-const isSpecialRankName = ref(false);
-const isInvalidRankName = ref(false);
-
-const allowedRankNames = ['bạc', 'vàng', 'kim cương'];
-
-const validateRankName = (name) => {
-  const trimmed = (name || '').trim().toLowerCase();
-  return allowedRankNames.includes(trimmed);
+const clearFilters = () => {
+  searchQuery.value = '';
+  selectedStatus.value = '';
+  currentPage.value = 0;
+  fetchRanks();
 };
 
-const openEditModal = (rank, index) => {
-  isEditMode.value = true;
-  editIndex.value = index;
-  newRank.value = { ...rank };
-  // Convert status to string for v-model
-  newRank.value.status = String(rank.status);
-  // Convert type to string for v-model
-  newRank.value.type = String(rank.type);
-  // Check if rank name is special (bạc, vàng, kim cương)
-  const name = (newRank.value.name || '').trim().toLowerCase();
-  isSpecialRankName.value = allowedRankNames.includes(name);
-  isInvalidRankName.value = false;
-  const modalElement = document.getElementById('addRankModal');
-  const modal = Modal.getOrCreateInstance(modalElement); // <-- Sử dụng getOrCreateInstance
-  modal.show();
-};
-
-// Watch rank name changes for add mode
-watch(
-  () => newRank.value.name,
-  (val) => {
-    if (!isEditMode.value) {
-      isInvalidRankName.value = !validateRankName(val);
-    }
-  }
-);
-
-const handleSubmitRank = async () => {
-  // Validate form
-  if (!newRank.value.name || newRank.value.name.trim() === '') {
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'error',
-      title: 'Tên rank không được để trống!',
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true
-    });
-    return;
-  }
-  if (!isEditMode.value && isInvalidRankName.value) {
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'error',
-      title: 'Tên rank chỉ được phép là Bạc, Vàng hoặc Kim Cương!',
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true
-    });
-    return;
-  }
-  if (newRank.value.status === '' || newRank.value.status === null || newRank.value.status === undefined) {
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'error',
-      title: 'Vui lòng chọn trạng thái!',
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true
-    });
-    return;
-  }
-  if (newRank.value.minSpend === '' || newRank.value.minSpend === null || isNaN(Number(newRank.value.minSpend)) || Number(newRank.value.minSpend) < 0) {
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'error',
-      title: 'Chi tiêu tối thiểu phải là số lớn hơn hoặc bằng 0!',
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true
-    });
-    return;
-  }
-  if (newRank.value.pointMultiplier === '' || newRank.value.pointMultiplier === null || isNaN(Number(newRank.value.pointMultiplier)) || Number(newRank.value.pointMultiplier) < 1) {
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'error',
-      title: 'Hệ số điểm phải là số lớn hơn hoặc bằng 1!',
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true
-    });
-    return;
-  }
-
-  if (isEditMode.value && editIndex.value !== null) {
-    // Update existing rank
-    ranks.value[editIndex.value] = {
-      ...newRank.value,
-      minSpend: Number(newRank.value.minSpend),
-      pointMultiplier: Number(newRank.value.pointMultiplier),
-      status: Number(newRank.value.status),
-      type: newRank.value.type
-    };
-    // Show success toast after update
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'success',
-      title: 'Cập nhật rank thành công!',
-      showConfirmButton: false,
-      timer: 1500,
-      timerProgressBar: true
-    });
-  } else {
-    // Thêm mới rank
-    const payload = {
-      rankName: newRank.value.name,
-      minSpent: Number(newRank.value.minSpend),
-      pointMultiplier: Number(newRank.value.pointMultiplier),
-      status: Number(newRank.value.status)
-    };
-    try {
-      await createRank(payload);
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'success',
-        title: 'Thêm rank thành công!',
-        showConfirmButton: false,
-        timer: 1500,
-        timerProgressBar: true
-      });
-      await fetchRanks();
-    } catch (error) {
-      let status = error?.response?.status || error?.response?.data?.status || 'Lỗi';
-      let message = error?.response?.data?.message || 'Thêm rank thất bại!';
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'error',
-        title: `Lỗi ${status}`,
-        text: message,
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
-      });
-    }
-  }
-
-  // Close modal after submit
-  const modalElement = document.getElementById('addRankModal');
-  const modal = Modal.getOrCreateInstance(modalElement);
-  modal.hide();
-};
-
-const closeModal = () => {
-  const modalElement = document.getElementById('addRankModal');
-  const modal = Modal.getOrCreateInstance(modalElement); // <-- Sử dụng getOrCreateInstance
-  modal.hide();
-};
-
-// Thêm biến để kiểm soát trạng thái hover restriction icon
-const showRestriction = ref({});
-
-const handleStatusChange = (rank) => {
-  // Luôn show toast cảnh báo khi cố ý thao tác
-  Swal.fire({
-    toast: true,
-    position: 'top-end',
-    icon: 'error',
-    title: 'Không được tắt trạng thái rank!',
-    showConfirmButton: false,
-    timer: 2000,
-    timerProgressBar: true
-  });
-  // Luôn giữ trạng thái là 1
-  rank.status = 1;
-};
-
-// Pagination functions
 const handlePrev = () => {
   if (currentPage.value > 0) {
     currentPage.value--;
+    fetchRanks();
   }
 };
 
 const handleNext = () => {
   if (!isLastPage.value) {
     currentPage.value++;
+    fetchRanks();
   }
 };
 
 const handlePageSizeChange = (newSize) => {
   pageSize.value = newSize;
   currentPage.value = 0;
+  fetchRanks();
 };
 
-const resetRankModal = () => {
+const formatDate = (dateString) => {
+  if (!dateString) return '-';
+  return new Date(dateString).toLocaleString('vi-VN');
+};
+
+const formatCurrency = (amount) => {
+  if (!amount) return '0 VND';
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND'
+  }).format(amount);
+};
+
+const openAddModal = () => {
   isEditMode.value = false;
-  editIndex.value = null;
-  newRank.value = {
-    id: '',
-    name: '',
-    type: 'GOLD',
-    status: '1',
-    minSpend: 0,
-    pointMultiplier: 1
+  editingIndex.value = -1;
+  formData.value = {
+    id: null,
+    rankName: '',
+    minSpent: '',
+    pointMultiplier: '',
+    status: ''
+  };
+  showModal.value = true;
+};
+
+const openEditModal = (rank, index) => {
+  isEditMode.value = true;
+  editingIndex.value = index;
+  formData.value = {
+    id: rank.id,
+    rankName: rank.name,
+    minSpent: rank.minSpent,
+    pointMultiplier: rank.pointMultiplier,
+    status: rank.status
+  };
+  showModal.value = true;
+};
+
+const closeModal = () => {
+  showModal.value = false;
+  formData.value = {
+    id: null,
+    rankName: '',
+    minSpent: '',
+    pointMultiplier: '',
+    status: ''
   };
 };
 
-let modalElement = null;
+const handleSubmit = async () => {
+  try {
+    const submitData = {
+      ...formData.value,
+      minSpent: Number(formData.value.minSpent),
+      pointMultiplier: Number(formData.value.pointMultiplier),
+      status: Number(formData.value.status)
+    };
+    
+    if (isEditMode.value) {
+      await updateRank(submitData);
+      showToast('success', 'Cập nhật rank thành công!', 2000);
+    } else {
+      await createRank(submitData);
+      showToast('success', 'Thêm rank thành công!', 2000);
+    }
+    
+    closeModal();
+    fetchRanks();
+  } catch (error) {
+    console.error('Lỗi khi xử lý rank:', error);
+    const message = error.response?.data?.message || 'Có lỗi xảy ra!';
+    showToast('error', message, 3000);
+  }
+};
 
+const handleDelete = async (rank) => {
+  const result = await showQuickConfirm(
+    'Xác nhận xóa',
+    `Bạn có chắc chắn muốn xóa rank "${rank.name}"?`,
+    'warning',
+    'Xóa',
+    'Hủy'
+  );
+  
+  if (result.isConfirmed) {
+    try {
+      await deleteRank(rank.id);
+      showToast('success', 'Xóa rank thành công!', 2000);
+      fetchRanks();
+    } catch (error) {
+      console.error('Lỗi khi xóa rank:', error);
+      const message = error.response?.data?.message || 'Lỗi khi xóa rank!';
+      showToast('error', message, 3000);
+    }
+  }
+};
+
+// Lifecycle
 onMounted(() => {
-  modalElement = document.getElementById('addRankModal');
-  if (modalElement) {
-    modalElement.addEventListener('hidden.bs.modal', resetRankModal);
-  }
-  fetchRanks(); // Gọi API khi component mount
-});
-
-onUnmounted(() => {
-  if (modalElement) {
-    modalElement.removeEventListener('hidden.bs.modal', resetRankModal);
-  }
+  fetchRanks();
 });
 </script>
 
@@ -491,97 +438,320 @@ onUnmounted(() => {
   vertical-align: middle;
 }
 
-.modal-dialog {
-  max-width: 450px !important;
+.text-primary {
+  color: #0d6efd !important;
 }
 
-.modal-content {
+.text-primary:hover {
+  color: #0b5ed7 !important;
+}
+
+/* Enhanced Modal Styles */
+.modal-lg {
+  max-width: 700px !important;
+}
+
+.modal-dialog-scrollable {
+  max-height: 90vh;
+}
+
+.modal-dialog-scrollable .modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.enhanced-modal {
   border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   border: none;
+  overflow: hidden;
 }
 
-.modal-header {
-  border-bottom: 2px solid #ecae9e;
+.gradient-header {
+  background: linear-gradient(135deg, #ecae9e 0%, #d49489 100%);
+  border-bottom: none;
   border-radius: 15px 15px 0 0;
-  padding: 0.8rem 1.2rem;
+  padding: 1rem 1.25rem;
   position: relative;
+}
+
+.gradient-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+  background-size: 300% 100%;
+  animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 .modal-title {
   font-weight: 600;
   color: #2c2c54;
   font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.enhanced-body {
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.enhanced-footer {
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  padding: 0.875rem 1.25rem;
+  border-radius: 0 0 15px 15px;
+}
+
+/* Form Section Styles */
+.form-section {
+  margin-bottom: 1.75rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid #ecae9e;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.form-section:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.form-section:nth-child(1) {
+  border-left-color: #ecae9e;
+}
+
+.form-section:nth-child(2) {
+  border-left-color: #4ecdc4;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f1f3f4;
+  position: relative;
+}
+
+.section-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, #ecae9e, #4ecdc4);
+  border-radius: 1px;
+}
+
+.section-icon {
+  font-size: 1rem;
+  color: #ecae9e;
+  margin-right: 0.5rem;
+  padding: 0.4rem;
+  background: rgba(236, 174, 158, 0.1);
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-title {
+  margin: 0;
+  font-weight: 600;
+  color: #2c2c54;
+  font-size: 0.95rem;
+}
+
+/* Enhanced Form Controls */
+.enhanced-label {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: #495057;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+}
+
+.enhanced-label .text-danger {
+  margin-left: 0.25rem;
+}
+
+.enhanced-input {
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  background: #ffffff;
+}
+
+.enhanced-input:focus {
+  border-color: #ecae9e;
+  box-shadow: 0 0 0 0.15rem rgba(236, 174, 158, 0.25);
+  background: #ffffff;
+}
+
+.enhanced-input:hover {
+  border-color: #d49489;
+}
+
+/* Button Styles */
+.btn-submit {
+  background: linear-gradient(135deg, #ecae9e 0%, #d49489 100%);
+  border: none;
+  border-radius: 20px;
+  padding: 0.6rem 1.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 12px rgba(236, 174, 158, 0.3);
+}
+
+.btn-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(236, 174, 158, 0.4);
+  background: linear-gradient(135deg, #d49489 0%, #c08579 100%);
+}
+
+.btn-cancel {
+  border: 1px solid #6c757d;
+  border-radius: 20px;
+  padding: 0.6rem 1.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  background: transparent;
+  color: #6c757d;
+}
+
+.btn-cancel:hover {
+  background: #6c757d;
+  color: white;
+  transform: translateY(-1px);
 }
 
 .custom-close-btn {
-  background: none;
+  background: rgba(255, 255, 255, 0.2);
   border: none;
-  padding: 0.5rem;
+  padding: 0.6rem;
   cursor: pointer;
   position: absolute;
-  right: 1rem;
+  right: 1.25rem;
   top: 50%;
   transform: translateY(-50%);
+  font-size: 1rem;
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2c2c54;
+  transition: all 0.3s ease;
 }
 
-.custom-close-btn img {
-  width: 30px;
-  height: 30px;
+.custom-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-50%) scale(1.1);
 }
 
+/* Status Styles */
 .status-active {
-  display: inline-block;
-  background: #d4f5dd;
+  background: #d4edda;
   color: #218838;
   font-weight: 500;
   border-radius: 8px;
   padding: 4px 16px;
-  font-size: 1rem;
-  border: 1px solid #b2e6c1;
-  box-shadow: 0 1px 2px rgba(34,197,94,0.08);
-  letter-spacing: 0.5px;
-}
-
-.status-label-active {
-  display: inline-block;
-  background: #d4edda;
-  color: #218838;
-  font-weight: 400;
-  border-radius: 6px;
-  padding: 1px 8px;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   border: 1px solid #c3e6cb;
-  vertical-align: middle;
-  margin-left: 0;
-  margin-right: 0;
-  box-shadow: none;
-  letter-spacing: 0.1px;
-  font-family: inherit;
 }
 
-/* New styles for rank warning label */
-.rank-warning-label {
-  background: #fff3cd;
-  border: 1.5px solid #ffeeba;
+.status-inactive {
+  background: #f8d7da;
+  color: #721c24;
+  font-weight: 500;
   border-radius: 8px;
-  padding: 10px 18px;
-  margin-bottom: 18px;
-  font-size: 1.08rem;
-  color: #856404;
-  font-family: 'Segoe UI', 'Arial', sans-serif;
-  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.08);
+  padding: 4px 16px;
+  font-size: 0.9rem;
+  border: 1px solid #f5c6cb;
 }
 
-.rank-warning-icon {
-  width: 28px;
-  height: 28px;
-  margin-right: 8px;
+.modal-backdrop {
+  z-index: 1040;
 }
 
-.rank-warning-text {
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  font-size: 1.08rem;
+.modal {
+  z-index: 1050;
+}
+
+/* Form text */
+.form-text {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .enhanced-modal {
+    margin: 0.5rem;
+  }
+  
+  .enhanced-body {
+    padding: 0.75rem;
+  }
+  
+  .form-section {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .modal-lg {
+    max-width: 95% !important;
+  }
+}
+
+/* Animation for form sections */
+.form-section {
+  animation: slideInUp 0.4s ease-out;
+}
+
+.form-section:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.form-section:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

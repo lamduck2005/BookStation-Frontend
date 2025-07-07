@@ -10,7 +10,7 @@
     <!-- Page Header -->
     <div class="page-header mb-4">
       <h2 class="page-title">Số địa chỉ</h2>
-      <button class="btn btn-primary" @click="showAddAddressModal = true">
+      <button class="btn btn-danger" @click="showAddAddressModal = true">
         <i class="bi bi-plus-circle me-2"></i>
         Thêm địa chỉ mới
       </button>
@@ -191,7 +191,7 @@
                 <button type="button" class="btn btn-secondary" @click="closeAddressModal">
                   Hủy
                 </button>
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-danger">
                   {{ editingAddress ? 'Cập nhật' : 'Thêm địa chỉ' }}
                 </button>
               </div>

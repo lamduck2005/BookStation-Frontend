@@ -261,6 +261,11 @@ const router = createRouter({
           component: Supplier,
         },
         {
+          path: "publisher",
+          name: "Publisher",
+          component: () => import('@/views/admin/views-admin/Publisher.vue'),
+        },
+        {
           path: "rank",
           name: "Rank",
           component: Rank,
