@@ -8,31 +8,141 @@
                     <!-- Logo -->
                     <div class="col-auto">
                         <div class="logo me-4">
-                            <img src="https://cdn1.fahasa.com/media/catalog/product/9/7/9786043462111_1.jpg" alt="Fahasa Logo" style="height: 40px;">
+              <img
+                src="/src/assets/img/logo.png"
+                alt="Fahasa Logo"
+                style="height: 55px; width: 55px"
+              />
+
                         </div>
                     </div>
 
                     <!-- Categories dropdown (màu đỏ) -->
-                    <div class="col-auto bg-danger text-white d-flex align-items-center px-3" style="height: 60px;">
-                        <div class="dropdown">
-                            <button class="btn btn-danger dropdown-toggle border-0 d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
+          <div
+            class="col-auto bg-danger text-white d-flex align-items-center px-3 position-relative categories-dropdown"
+            style="height: 60px"
+            @mouseenter="showCategoryMenu = true"
+            @mouseleave="showCategoryMenu = false"
+          >
+            <div class="d-flex align-items-center gap-2">
                                 <i class="bi bi-grid-3x3-gap"></i>
                                 <span class="fw-bold d-none d-md-inline">Danh mục sản phẩm</span>
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#">Văn học</a></li>
-                                <li><a class="dropdown-item" href="#">Kinh tế</a></li>
-                                <li><a class="dropdown-item" href="#">Thiếu nhi</a></li>
-                                <li><a class="dropdown-item" href="#">Giáo khoa</a></li>
-                                <li><a class="dropdown-item" href="#">Kỹ năng sống</a></li>
+              <i class="bi bi-chevron-down small"></i>
+            </div>
+
+            <!-- Mega menu dropdown -->
+            <div
+              v-show="showCategoryMenu"
+              class="category-mega-menu position-absolute bg-white shadow-lg border-0"
+              @mouseenter="showCategoryMenu = true"
+              @mouseleave="showCategoryMenu = false"
+            >
+              <div class="container-fluid p-4">
+                <div class="row g-4">
+                  <!-- Lặp qua các danh mục chính -->
+                  <div
+                    v-for="(category, index) in categories"
+                    :key="category.id"
+                    :class="getColumnClass(index)"
+                  >
+                    <div class="category-section">
+                      <h6 class="category-title text-danger fw-bold mb-3">
+                        <i
+                          :class="getCategoryIcon(category.categoryName)"
+                          class="me-2"
+                        ></i>
+                        {{ category.categoryName.toUpperCase() }}
+                      </h6>
+                      <ul class="category-list list-unstyled">
+                        <!-- Hiển thị danh mục con -->
+                        <li
+                          v-for="child in category.parentCategory"
+                          :key="child.id"
+                        >
+                          <a
+                            href="#"
+                            class="category-link"
+                            @click.prevent="goToCategory(child.id)"
+                          >
+                            {{ child.categoryName }}
+                          </a>
+                        </li>
+                        <!-- Link xem tất cả -->
+                        <li v-if="category.parentCategory.length > 0">
+                          <a
+                            href="#"
+                            class="category-link text-primary"
+                            @click.prevent="goToCategory(category.id)"
+                          >
+                            Xem tất cả
+                          </a>
+                        </li>
+                        <!-- Hiển thị message nếu không có danh mục con -->
+                        <li v-if="category.parentCategory.length === 0">
+                          <span class="text-muted small">Đang cập nhật...</span>
+                        </li>
                             </ul>
                         </div>
                     </div>
+                </div>
+
+                <!-- Thêm một số danh mục đặc biệt nếu cần -->
+                <div
+                  class="row g-4 pt-3 border-top"
+                  v-if="categories.length > 0"
+                >
+                  <div class="col-md-6">
+                    <div class="special-section">
+                      <h6 class="fw-bold text-danger mb-2">
+                        <i class="bi bi-fire me-2"></i>
+                        SÁCH MỚI ♥
+                      </h6>
+                      <div class="special-links">
+                        <a href="#" class="badge bg-danger text-white me-2 mb-1"
+                          >SÁCH HOT</a
+                        >
+                        <a href="#" class="badge bg-danger text-white me-2 mb-1"
+                          >MỚI NHẤT</a
+                        >
+                        <a href="#" class="badge bg-danger text-white me-2 mb-1"
+                          >TRENDING</a
+                        >
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="special-section">
+                      <h6 class="fw-bold text-danger mb-2">
+                        <i class="bi bi-lightning me-2"></i>
+                        KHUYẾN MÃI ♥
+                      </h6>
+                      <div class="special-links">
+                        <a href="#" class="badge bg-warning text-dark me-2 mb-1"
+                          >GIẢM GIÁ</a
+                        >
+                        <a href="#" class="badge bg-warning text-dark me-2 mb-1"
+                          >FLASH SALE</a
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
                     <!-- Search bar (nền xám) -->
-                    <div class="col bg-light d-flex align-items-center px-3" style="height: 60px;">
+          <div
+            class="col bg-light d-flex align-items-center px-3"
+            style="height: 60px"
+          >
                         <div class="input-group w-100">
-                            <input type="text" class="form-control border-0 bg-transparent" placeholder="Bút chì đọc - Học tiếng Anh" style="box-shadow: none;">
+              <input
+                type="text"
+                class="form-control border-0 bg-transparent"
+                placeholder="Tìm kiếm sách, tác giả..."
+                style="box-shadow: none"
+              />
                             <button class="btn btn-danger px-4" type="button">
                                 <i class="bi bi-search"></i>
                             </button>
@@ -40,28 +150,48 @@
                     </div>
 
                     <!-- Right side icons -->
-                    <div class="col-auto d-flex align-items-center gap-3 px-3" style="height: 60px;">
+          <div
+            class="col-auto d-flex align-items-center gap-3 px-3"
+            style="height: 60px"
+          >
                         <!-- Notifications -->
                         <NotificationComponent mode="dropdown" />
 
                         <!-- Cart -->
-                        <div class="d-flex flex-column align-items-center text-decoration-none text-dark position-relative">
+            <div
+              class="d-flex flex-column align-items-center text-decoration-none text-dark position-relative"
+            >
                             <i class="bi bi-cart3 fs-5"></i>
-                            <small class="text-muted" style="font-size: 11px;">Giỏ Hàng</small>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 9px;">0</span>
+              <small class="text-muted" style="font-size: 11px">Giỏ Hàng</small>
+              <span
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                style="font-size: 9px"
+                >0</span
+              >
                         </div>
 
                         <!-- Account -->
-                        <div class="d-flex flex-column align-items-center text-decoration-none text-dark">
-                            <RouterLink to="/profile" class="text-dark d-flex flex-column align-items-center text-decoration-none">
+            <div
+              class="d-flex flex-column align-items-center text-decoration-none text-dark"
+            >
+              <RouterLink
+                to="/profile"
+                class="text-dark d-flex flex-column align-items-center text-decoration-none"
+              >
                                 <i class="bi bi-person-circle fs-5"></i>
-                                <small class="text-muted" style="font-size: 11px;">Tài khoản</small>
+                <small class="text-muted" style="font-size: 11px"
+                  >Tài khoản</small
+                >
                             </RouterLink>
                         </div>
 
                         <!-- Language -->
                         <div class="d-flex align-items-center">
-                            <img src="https://flagcdn.com/16x12/vn.png" alt="VN" class="me-1">
+              <img
+                src="https://flagcdn.com/16x12/vn.png"
+                alt="VN"
+                class="me-1"
+              />
                             <i class="bi bi-chevron-down small"></i>
                         </div>
                     </div>
@@ -72,7 +202,12 @@
         <!-- Navigation menu dưới -->
         <nav class="navbar navbar-expand-lg navbar-light bg-white border-top">
             <div class="container-fluid px-3">
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 
@@ -80,6 +215,114 @@
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
                             <a class="nav-link fw-semibold text-dark" href="#">Trang chủ</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-dark" href="#">Sách hot</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-dark" href="#">Sách mới</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-dark" href="#">Flash Sale</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-dark" href="#">Khuyến mãi</a>
+            </li>
+          </ul>
+
+          <div class="d-flex align-items-center gap-3">
+            <small class="text-muted">
+              <i class="bi bi-telephone me-1"></i>
+              1900-1234
+            </small>
+            <small class="text-muted">
+              <i class="bi bi-envelope me-1"></i>
+              support@bookstation.com
+            </small>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+</template>
+
+<script setup>
+import { ref, onMounted } from "vue";
+import NotificationComponent from "@/components/common/NotificationComponent.vue";
+import { getAllCategoriesForUser } from "@/services/admin/category";
+
+// State cho dropdown
+const showCategoryMenu = ref(false);
+const categories = ref([]);
+
+onMounted(() => {
+  fetchCategory();
+});
+
+const fetchCategory = async () => {
+  try {
+    const response = await getAllCategoriesForUser();
+    const data = response.data ? response.data : response;
+    categories.value = data.content || data;
+    console.log("Danh sách danh mục sau khi xử lý:", categories.value);
+  } catch (error) {
+    console.error("Lỗi khi tải danh sách danh mục:", error);
+  }
+};
+
+// Hàm lấy class cho cột dựa trên index
+const getColumnClass = (index) => {
+  const totalCategories = categories.value.length;
+  if (totalCategories <= 4) {
+    return "col-md-3";
+  } else if (totalCategories <= 6) {
+    return "col-md-2";
+  } else {
+    return "col-md-2";
+  }
+};
+
+// Hàm lấy icon cho từng danh mục
+const getCategoryIcon = (categoryName) => {
+  const iconMap = {
+    "Tiểu thuyết": "bi bi-book",
+    "Phi tiểu thuyết": "bi bi-journal",
+    "Giáo dục": "bi bi-mortarboard",
+    "Thiếu nhi": "bi bi-balloon",
+    "Kinh doanh": "bi bi-graph-up",
+    "Văn học": "bi bi-book",
+    "Khoa học": "bi bi-atom",
+    "Lịch sử": "bi bi-clock-history",
+    "Tâm lý": "bi bi-heart",
+    "Kỹ năng": "bi bi-person-check",
+  };
+
+  // Tìm icon phù hợp hoặc dùng icon mặc định
+  for (const [key, icon] of Object.entries(iconMap)) {
+    if (categoryName.toLowerCase().includes(key.toLowerCase())) {
+      return icon;
+    }
+  }
+  return "bi bi-bookmark";
+};
+
+// Hàm xử lý khi click vào danh mục
+const goToCategory = (id) => {
+  console.log("Navigating to category:", id);
+
+};
+=======
+        <!-- Navigation menu dưới -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white border-top">
+            <div class="container-fluid px-3">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <RouterLink class="nav-link fw-semibold text-dark" to="/">Trang chủ</RouterLink>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" href="#">Sách hot</a>
@@ -113,6 +356,22 @@
 
 <script setup>
 import NotificationComponent from '@/components/common/NotificationComponent.vue'
+import { useRouter } from 'vue-router'
+import { showQuickConfirm, showToast } from '@/utils/swalHelper'
+import { clearAuth } from '@/utils/utils'
+
+const router = useRouter();
+
+const handleLogout = async () => {
+    const result = await showQuickConfirm("Xác nhận đăng xuất", "Bạn có chắc chắn muốn đăng xuất không?");
+    if(result.isConfirmed) {
+        showToast('success', 'Đăng xuất thành công');
+        clearAuth();
+        router.push('/auth');
+    }
+}
+import { RouterLink } from 'vue-router'
+>>>>>>> 3566a8c285311f64db016cebfc4cf05ec5811b73
 </script>
 
 <style scoped>
@@ -131,8 +390,106 @@ import NotificationComponent from '@/components/common/NotificationComponent.vue
 }
 
 .logo img {
-    height: 40px;
-    width: auto;
+  height: 55px;
+  width: 55px;
+}
+
+/* Categories dropdown styling */
+.categories-dropdown {
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.categories-dropdown:hover {
+  background-color: #c82333 !important;
+}
+
+/* Mega menu styling */
+.category-mega-menu {
+  top: 100%;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  max-width: 1200px;
+  z-index: 1050;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  animation: fadeInDown 0.3s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.category-section {
+  padding: 0.5rem 0;
+}
+
+.category-title {
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #f8f9fa;
+}
+
+.category-list {
+  margin: 0;
+  padding: 0;
+}
+
+.category-list li {
+  margin-bottom: 0.5rem;
+}
+
+.category-link {
+  color: #6c757d;
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  display: block;
+  padding: 0.25rem 0;
+  line-height: 1.4;
+}
+
+.category-link:hover {
+  color: #dc3545;
+  padding-left: 0.5rem;
+  transform: translateX(2px);
+}
+
+.category-link.text-primary {
+  color: #007bff !important;
+  font-weight: 500;
+}
+
+.category-link.text-primary:hover {
+  color: #0056b3 !important;
+}
+
+/* Special sections */
+.special-section {
+  padding: 0.5rem 0;
+}
+
+.special-links .badge {
+  font-size: 0.7rem;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.special-links .badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Search bar styling */
@@ -165,9 +522,18 @@ import NotificationComponent from '@/components/common/NotificationComponent.vue
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .main-header .col-auto:nth-child(2) {
+  .categories-dropdown {
         display: none !important;
     }
+
+  .category-mega-menu {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: none;
+  }
     
     .d-none.d-md-inline {
         display: none !important;
@@ -183,5 +549,95 @@ import NotificationComponent from '@/components/common/NotificationComponent.vue
 .d-flex.flex-column small {
     margin-top: 2px;
     font-size: 11px;
+}
+
+/* Account dropdown styling */
+.user-link {
+    position: relative;
+    display: inline-block;
+    z-index: 1000;
+}
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #dc3545;
+    margin-bottom: 2px;
+    transition: box-shadow 0.2s;
+}
+.avatar:hover {
+    box-shadow: 0 0 0 3px #ffe0e0;
+}
+.user-link-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    border-radius: 10px;
+    min-width: 180px;
+    z-index: 100;
+    padding: 10px 0;
+    animation: fadeIn 0.2s;
+}
+.user-link:hover .user-link-dropdown,
+.user-link .user-link-dropdown:hover {
+    display: block;
+}
+.user-dropdown {
+    display: flex;
+    align-items: center;
+    padding: 10px 18px;
+    color: #333;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: background 0.18s;
+    cursor: pointer;
+}
+.user-dropdown i {
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+.user-dropdown:hover {
+    background: #f1f5fa;
+    color: #dc3545;
+}
+.divider {
+    height: 1px;
+    background: #e5e7eb;
+    margin: 8px 0;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px);}
+    to { opacity: 1; transform: translateY(0);}
+}
+
+/* Cart icon hover effect */
+.d-flex.flex-column.align-items-center:hover {
+    color: #dc3545 !important;
+    transform: translateY(-1px);
+    transition: all 0.3s ease;
+}
+
+.d-flex.flex-column.align-items-center:hover i {
+    color: #dc3545 !important;
+}
+
+.d-flex.flex-column.align-items-center:hover small {
+    color: #dc3545 !important;
+}
+
+/* Logo RouterLink styling */
+.logo a {
+    display: block;
+    text-decoration: none;
+}
+
+/* NavLink RouterLink styling */
+.nav-link.router-link-active {
+    color: #dc3545 !important;
+    font-weight: bold;
 }
 </style>
