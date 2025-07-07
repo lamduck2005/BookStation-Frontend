@@ -53,6 +53,7 @@ import EventGift from "@/views/admin/views-admin/EventGift.vue";
 import EventParticipant from "@/views/admin/views-admin/EventParticipant.vue";
 import EventGiftClaim from "@/views/admin/views-admin/EventGiftClaim.vue";
 import EventHistory from "@/views/admin/views-admin/EventHistory.vue";
+import ProductCatalog from "@/views/client/ProductCatalog.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -169,6 +170,11 @@ const router = createRouter({
               name: "profile-benefits",
               component: ProfileBenefits,
             },
+            {
+      path: "/products",
+      name: "product-catalog",
+      component: ProductCatalog,
+    },
           ],
         },
       ],
