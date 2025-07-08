@@ -11,7 +11,7 @@
                 <!-- Product image -->
                 <div class="product-image-container">
                     <img 
-                        :src="product.imageUrl || product.image || 'https://via.placeholder.com/200x250?text=Book+Cover'" 
+                        :src="(product.images && product.images.length > 0) ? product.images[0] : (product.imageUrl || product.image || 'https://via.placeholder.com/200x250?text=Book+Cover')" 
                         :alt="product.bookName || product.name || 'Book'" 
                         class="card-img-top product-image"
                     >
