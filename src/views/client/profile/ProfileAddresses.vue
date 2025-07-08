@@ -119,30 +119,32 @@
               <div class="row mb-3">
                 <div class="col-md-4">
                   <label class="form-label">Tỉnh/Thành phố *</label>
-                  <select class="form-select" v-model="addressForm.province" required>
+                  <select class="form-select" v-model="addressForm.provinceId" required @change="onProvinceChange">
                     <option value="">Chọn tỉnh/thành phố</option>
-                    <option value="hanoi">Hà Nội</option>
-                    <option value="hcm">Hồ Chí Minh</option>
-                    <option value="danang">Đà Nẵng</option>
+                    <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">
+                      {{ p.ProvinceName }}
+                    </option>
                   </select>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Quận/Huyện *</label>
-                  <select class="form-select" v-model="addressForm.district" required>
+                  <select class="form-select" v-model="addressForm.districtId" required @change="onDistrictChange">
                     <option value="">Chọn quận/huyện</option>
-                    <option value="dongda">Đông Đa</option>
-                    <option value="hoankiem">Hoàn Kiếm</option>
-                    <option value="badinh">Ba Đình</option>
+                    <option v-for="d in districts" :key="d.DistrictID" :value="d.DistrictID">
+                      {{ d.DistrictName || d.ProvinceName }}
+                    </option>
                   </select>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label">Phường/Xã *</label>
-                  <select class="form-select" v-model="addressForm.ward" required>
+                  <select class="form-select" v-model="addressForm.wardCode" required @change="onWardChange">
                     <option value="">Chọn phường/xã</option>
-                    <option value="benngh">Bến Nghé</option>
-                    <option value="bachmai">Bạch Mai</option>
+                    <option v-for="w in wards" :key="w.WardCode" :value="w.WardCode">
+                      {{ w.WardName }}
+                    </option>
                   </select>
                 </div>
+                <span class="text-danger fst-italic m-1">{{ isLoadingEditAddress ? 'Đang tải dữ liệu địa chỉ, vui lòng chờ...' : '' }}</span>
               </div>
 
               <div class="mb-3">
@@ -207,10 +209,17 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ghn } from '@/utils/giaohangnhanh'
+import { ref, reactive, onMounted, watch } from 'vue'
 
 const showAddAddressModal = ref(false)
 const editingAddress = ref(null)
+const isLoadingEditAddress = ref(false)
+
+// Danh sách địa chỉ động
+const provinces = ref([])
+const districts = ref([])
+const wards = ref([])
 
 // Fake addresses data
 const addresses = ref([
@@ -260,11 +269,59 @@ const addressForm = reactive({
   name: '',
   phone: '',
   address: '',
-  province: '',
-  district: '',
-  ward: '',
+  province: '', // lưu tên tỉnh
+  provinceId: '', // lưu ProvinceID
+  district: '', // lưu tên quận
+  districtId: '', // lưu DistrictID
+  ward: '',     // lưu tên phường
+  wardCode: '', // lưu WardCode
   type: 'home',
   isDefault: false
+})
+
+// Hàm lấy danh sách tỉnh/thành
+const fetchProvinces = async () => {
+  const res = await ghn.address.getProvinces()
+  // Lọc bỏ các tỉnh test theo ID
+  const excludeIds = [2002, 298, 290, 286]
+  provinces.value = (res.data || res)
+    .filter(p => !excludeIds.includes(p.ProvinceID))
+    .sort((a, b) => a.ProvinceName.localeCompare(b.ProvinceName))
+}
+// Hàm lấy danh sách quận/huyện
+const fetchDistricts = async (provinceId) => {
+  if (!provinceId) {
+    districts.value = []
+    return
+  }
+  const res = await ghn.address.getDistricts(provinceId)
+  districts.value = (res.data || res)
+    .sort((a, b) => (a.DistrictName || a.ProvinceName).localeCompare(b.DistrictName || b.ProvinceName))
+}
+// Hàm lấy danh sách phường/xã
+const fetchWards = async (districtId) => {
+  if (!districtId) {
+    wards.value = []
+    return
+  }
+  const res = await ghn.address.getWards(districtId)
+  wards.value = (res.data || res)
+    .sort((a, b) => a.WardName.localeCompare(b.WardName))
+}
+
+// Watch để tự động load quận/huyện khi chọn tỉnh
+watch(() => addressForm.provinceId, (newVal) => {
+  addressForm.district = ''
+  addressForm.districtId = ''
+  addressForm.ward = ''
+  addressForm.wardCode = ''
+  fetchDistricts(newVal)
+})
+// Watch để tự động load phường/xã khi chọn quận
+watch(() => addressForm.districtId, (newVal) => {
+  addressForm.ward = ''
+  addressForm.wardCode = ''
+  fetchWards(newVal)
 })
 
 // Reset form
@@ -274,8 +331,11 @@ const resetForm = () => {
     phone: '',
     address: '',
     province: '',
+    provinceId: '',
     district: '',
+    districtId: '',
     ward: '',
+    wardCode: '',
     type: 'home',
     isDefault: false
   })
@@ -289,10 +349,27 @@ const closeAddressModal = () => {
 }
 
 // Edit address
-const editAddress = (address) => {
-  editingAddress.value = address
-  Object.assign(addressForm, address)
+const editAddress = async (address) => {
+  isLoadingEditAddress.value = true
   showAddAddressModal.value = true
+
+
+  editingAddress.value = address
+  // Gán các trường cơ bản
+  addressForm.name = address.name
+  addressForm.phone = address.phone
+  addressForm.address = address.address
+  addressForm.type = address.type
+  addressForm.isDefault = address.isDefault
+
+  // Gán provinceId trước, chờ fetchDistricts xong rồi gán districtId, tương tự cho ward
+  addressForm.provinceId = address.provinceId
+  await fetchDistricts(address.provinceId)
+  addressForm.districtId = address.districtId
+  await fetchWards(address.districtId)
+  addressForm.wardCode = address.wardCode
+
+  isLoadingEditAddress.value = false
 }
 
 // Save address
@@ -330,6 +407,23 @@ const deleteAddress = (id) => {
     }
   }
 }
+
+const onProvinceChange = () => {
+  const p = provinces.value.find(p => p.ProvinceID == addressForm.provinceId)
+  addressForm.province = p ? p.ProvinceName : ''
+}
+const onDistrictChange = () => {
+  const d = districts.value.find(d => d.DistrictID == addressForm.districtId)
+  addressForm.district = d ? (d.DistrictName || d.ProvinceName) : ''
+}
+const onWardChange = () => {
+  const w = wards.value.find(w => w.WardCode == addressForm.wardCode)
+  addressForm.ward = w ? w.WardName : ''
+}
+
+onMounted(() => {
+  fetchProvinces()
+})
 </script>
 
 <style scoped>
