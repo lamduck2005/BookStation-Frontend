@@ -189,6 +189,10 @@
                         @click="editCategory(category.id)"
                         title="Sửa"
                       />
+                      <DeleteButton
+                          @click="handleDeleteCategory(category.id)"
+                          title="Xóa"
+                        />
                     </div>
                   </td>
                 </tr>
@@ -251,7 +255,10 @@
                           @click="editCategory(child.id)"
                           title="Sửa"
                         />
-                       
+                       <DeleteButton
+                          @click="handleDeleteCategory(child.id)"
+                          title="Xóa"
+                        />
                       </div>
                     </td>
                   </tr>
@@ -504,7 +511,8 @@ import {
   getAllParentCategories,
   getCategoryById,
   updateCategory,
-  toggleStatus, // Thêm import toggleStatus
+  toggleStatus,
+  getAllCategoriesParentNull, // Thêm import toggleStatus
 } from "../../../services/admin/category";
 import AddButton from "@/components/common/AddButton.vue";
 import EditButton from "@/components/common/EditButton.vue";
@@ -557,7 +565,7 @@ const toggleCollapse = (category) => {
 };
 const fetchCategory = async () => {
   try {
-    const getAll = await getAllCategories();
+    const getAll = await getAllCategoriesParentNull();
     dataGetAll.value = getAll;
 
     // Fetch with pagination parameters
@@ -712,43 +720,43 @@ const handleUpdateCategory = async (id, category) => {
   }
 };
 
-// const handleDeleteCategory = async (id) => {
-//   const result = await Swal.fire({
-//     title: "Bạn có chắc chắn muốn xóa danh mục này?",
-//     icon: "warning",
-//     showCancelButton: true,
-//     confirmButtonText: "Xóa",
-//     cancelButtonText: "Hủy",
-//   });
-//   if (result.isConfirmed) {
-//     try {
-//       await deleteCategory(id);
-//       fetchCategory(); // Cập nhật lại danh sách danh mục
+const handleDeleteCategory = async (id) => {
+  const result = await Swal.fire({
+    title: "Bạn có chắc chắn muốn xóa danh mục này?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Xóa",
+    cancelButtonText: "Hủy",
+  });
+  if (result.isConfirmed) {
+    try {
+      await deleteCategory(id);
+      fetchCategory(); // Cập nhật lại danh sách danh mục
 
-//       Swal.fire({
-//         icon: "success",
-//         title: "Xóa danh mục thành công!",
-//         toast: true,
-//         position: "top-end",
-//         showConfirmButton: false,
-//         timer: 2000,
-//         timerProgressBar: true,
-//       });
-//     } catch (error) {
-//       console.error("Lỗi khi xóa danh mục:", error);
-//       Swal.fire({
-//         icon: "error",
-//         title: "Xóa thất bại!",
-//         text: "Không thể xóa danh mục.",
-//         toast: true,
-//         position: "top-end",
-//         showConfirmButton: false,
-//         timer: 2000,
-//         timerProgressBar: true,
-//       });
-//     }
-//   }
-// };
+      Swal.fire({
+        icon: "success",
+        title: "Xóa danh mục thành công!",
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+    } catch (error) {
+      console.error("Lỗi khi xóa danh mục:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Xóa thất bại!",
+        text: "Không thể xóa danh mục.",
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+    }
+  }
+};
 
 // Hàm xử lý toggle status
 const handleToggleStatus = async (id, status) => {

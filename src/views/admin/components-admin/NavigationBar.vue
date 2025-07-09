@@ -46,6 +46,7 @@
 
 <script setup>
 import { showQuickConfirm, showToast } from '@/utils/swalHelper';
+import { clearAuth } from '@/utils/utils';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -54,7 +55,8 @@ const handleLogout = () => {
   showQuickConfirm('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất không?', 'question', 'Đăng xuất', 'Hủy', 'btn-danger', 'btn-secondary').then((result) => {
     if (result.isConfirmed) {
       showToast('success', 'Đăng xuất thành công');
-      router.push('/login');
+      clearAuth();
+      router.push('/auth');
     }
   });
 }

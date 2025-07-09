@@ -110,3 +110,13 @@ export const toggleBookStatus = async (id) => {
     throw error;
   }
 };
+export const getBooksClient = async (params = {}) => {
+  try {
+    const response = await client.get('/api/books/client', { params });
+    // console.log(response.data);
+    return response.data.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách sách:', error);
+    throw error;
+  }
+};

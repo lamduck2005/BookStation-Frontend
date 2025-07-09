@@ -1,370 +1,57 @@
 <template>
   <!-- filepath: d:\BookStation-Frontend\src\views\client\ProductGrid.vue -->
   <div class="product-grid-container">
-    <div class="container-fluid py-4">
-      <div class="row g-3">
-        <div
-          v-for="product in products"
-          :key="product.id"
-          class="col-6 col-md-4 col-lg-3"
-        >
-          <div class="product-card h-100">
-            <!-- Sale Badge -->
-            <div class="sale-badge">
-              <span class="badge bg-primary">sắp có hàng</span>
-            </div>
-
-            <!-- Product Image -->
-            <div class="product-image">
-              <img
-                :src="product.image"
-                :alt="product.title"
-                class="img-fluid"
-                @error="handleImageError"
-              />
-            </div>
-
-            <!-- Product Info -->
-            <div class="product-info p-3">
-              <h6 class="product-title mb-2">{{ product.title }}</h6>
-              <div class="price-section">
-                <span class="current-price text-danger fw-bold">
-                  {{ formatPrice(product.currentPrice) }}
-                </span>
-                <span
-                  v-if="
-                    product.originalPrice &&
-                    product.originalPrice > product.currentPrice
-                  "
-                  class="original-price text-muted text-decoration-line-through ms-2"
-                >
-                  {{ formatPrice(product.originalPrice) }}
-                </span>
-              </div>
-
-              <!-- Discount Percentage -->
-              <div v-if="product.discountPercent" class="discount-badge mt-1">
-                <span class="badge bg-danger"
-                  >-{{ product.discountPercent }}%</span
-                >
-              </div>
-
-              <!-- Action Buttons -->
-              <div class="product-actions mt-3">
-                <button
-                  class="btn btn-outline-primary btn-sm me-2"
-                  @click="addToCart(product)"
-                >
-                  <i class="bi bi-cart-plus"></i>
-                </button>
-                <button
-                  class="btn btn-outline-danger btn-sm"
-                  @click="addToWishlist(product)"
-                >
-                  <i class="bi bi-heart"></i>
-                </button>
-                <button
-                  class="btn btn-primary btn-sm ms-auto"
-                  @click="viewDetails(product)"
-                >
-                  Xem chi tiết
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+    <!-- Loading Spinner -->
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
       </div>
+    </div>
 
-      <!-- Load More Button -->
-      <div class="text-center mt-4" v-if="hasMore">
-        <button
-          class="btn btn-outline-primary"
-          @click="loadMore"
-          :disabled="loading"
-        >
-          <span
-            v-if="loading"
-            class="spinner-border spinner-border-sm me-2"
-          ></span>
-          {{ loading ? "Đang tải..." : "Xem thêm sản phẩm" }}
-        </button>
+    <!-- Product Grid -->
+    <div v-else-if="products && products.length > 0" class="row g-3">
+      <div
+        v-for="product in products"
+        :key="product.id"
+        class="col-6 col-md-4 col-lg-3"
+      >
+        <!-- Giả sử bạn có component ProductCard để hiển thị từng sản phẩm -->
+        <ProductCard :product="product" />
       </div>
+    </div>
+
+    <!-- Empty State -->
+    <div v-else class="text-center py-5 text-muted">
+      <p>Không tìm thấy sản phẩm nào phù hợp.</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
-import { useRouter } from "vue-router";
+import ProductCard from "@/components/common/ProductCard.vue";
+import { watch } from "vue"; // <-- 1. Import watch
 
-// Props
+// 2. Định nghĩa props như cũ
 const props = defineProps({
-  categoryId: {
-    type: [String, Number],
-    default: null,
+  products: {
+    type: Array,
+    default: () => [],
   },
-  searchQuery: {
-    type: String,
-    default: "",
-  },
-  sortBy: {
-    type: String,
-    default: "default",
-  },
-  priceRange: {
-    type: Object,
-    default: () => ({ min: 0, max: 1000000 }),
+  loading: {
+    type: Boolean,
+    default: false,
   },
 });
 
-// Emits
-const emit = defineEmits(["product-click", "add-to-cart", "add-to-wishlist"]);
-
-// Router
-const router = useRouter();
-
-// State
-const products = ref([]);
-const loading = ref(false);
-const hasMore = ref(true);
-const currentPage = ref(1);
-
-// Fake Data
-const generateFakeProducts = () => {
-  const fakeProducts = [
-    {
-      id: 1,
-      title: "Global Success - Bài Tập Tiếng Anh Lớp 9 - Tập 2 - Có Đáp Án",
-      image: "/src/assets/img/books/book1.jpg",
-      currentPrice: 105000,
-      originalPrice: 120000,
-      discountPercent: 12,
-      category: "Giáo dục",
-      isAvailable: true,
-      stock: 15,
-    },
-    {
-      id: 2,
-      title: "Global Success - Bài Tập Tiếng Anh Lớp 9 - Không Đáp Án",
-      image: "/src/assets/img/books/book2.jpg",
-      currentPrice: 149000,
-      originalPrice: 165000,
-      discountPercent: 10,
-      category: "Giáo dục",
-      isAvailable: true,
-      stock: 8,
-    },
-    {
-      id: 3,
-      title:
-        "Sách Tranh Giáo Dục An Toàn Cho Học Sinh - An Toàn Trong Gia Đình",
-      image: "/src/assets/img/books/book3.jpg",
-      currentPrice: 59000,
-      originalPrice: 75000,
-      discountPercent: 21,
-      category: "Thiếu nhi",
-      isAvailable: true,
-      stock: 25,
-    },
-    {
-      id: 4,
-      title: "Sách Tranh Giáo Dục An Toàn Cho Học Sinh - An Toàn Giao Thông",
-      image: "/src/assets/img/books/book4.jpg",
-      currentPrice: 59000,
-      originalPrice: 75000,
-      discountPercent: 21,
-      category: "Thiếu nhi",
-      isAvailable: false,
-      stock: 0,
-    },
-    {
-      id: 5,
-      title: "Hậu Lê Thống Chí (Theo Bản In Của Nhà In Trường Xuân Năm 1912)",
-      image: "/src/assets/img/books/book5.jpg",
-      currentPrice: 110000,
-      originalPrice: null,
-      discountPercent: null,
-      category: "Lịch sử",
-      isAvailable: true,
-      stock: 5,
-    },
-    {
-      id: 6,
-      title: "Sân Chơi Trí Tuệ - Rèn Luyện Khả Năng - Tưởng Tượng",
-      image: "/src/assets/img/books/book6.jpg",
-      currentPrice: 48000,
-      originalPrice: 60000,
-      discountPercent: 20,
-      category: "Thiếu nhi",
-      isAvailable: true,
-      stock: 12,
-    },
-    {
-      id: 7,
-      title: "Sân Chơi Trí Tuệ - Rèn Luyện Khả Năng - Nhận Biết",
-      image: "/src/assets/img/books/book7.jpg",
-      currentPrice: 48000,
-      originalPrice: 60000,
-      discountPercent: 20,
-      category: "Thiếu nhi",
-      isAvailable: true,
-      stock: 18,
-    },
-    {
-      id: 8,
-      title: "Sân Chơi Trí Tuệ - Rèn Luyện Khả Năng - Quan Sát",
-      image: "/src/assets/img/books/book8.jpg",
-      currentPrice: 48000,
-      originalPrice: 60000,
-      discountPercent: 20,
-      category: "Thiếu nhi",
-      isAvailable: true,
-      stock: 22,
-    },
-  ];
-
-  return fakeProducts;
-};
-
-// Computed
-const filteredProducts = computed(() => {
-  let filtered = [...products.value];
-
-  // Filter by search query
-  if (props.searchQuery) {
-    filtered = filtered.filter((product) =>
-      product.title.toLowerCase().includes(props.searchQuery.toLowerCase())
-    );
-  }
-
-  // Filter by price range
-  filtered = filtered.filter(
-    (product) =>
-      product.currentPrice >= props.priceRange.min &&
-      product.currentPrice <= props.priceRange.max
-  );
-
-  // Sort products
-  switch (props.sortBy) {
-    case "price-asc":
-      filtered.sort((a, b) => a.currentPrice - b.currentPrice);
-      break;
-    case "price-desc":
-      filtered.sort((a, b) => b.currentPrice - a.currentPrice);
-      break;
-    case "name-asc":
-      filtered.sort((a, b) => a.title.localeCompare(b.title));
-      break;
-    case "name-desc":
-      filtered.sort((a, b) => b.title.localeCompare(a.title));
-      break;
-    case "discount":
-      filtered.sort(
-        (a, b) => (b.discountPercent || 0) - (a.discountPercent || 0)
-      );
-      break;
-    default:
-      // Keep original order
-      break;
-  }
-
-  return filtered;
-});
-
-// Methods
-const formatPrice = (price) => {
-  return new Intl.NumberFormat("vi-VN").format(price) + " đ";
-};
-
-const handleImageError = (event) => {
-  event.target.src = "/src/assets/img/placeholder-book.jpg";
-};
-
-const addToCart = (product) => {
-  if (!product.isAvailable) {
-    alert("Sản phẩm hiện tại không có sẵn");
-    return;
-  }
-
-  console.log("Adding to cart:", product);
-  emit("add-to-cart", product);
-
-  // TODO: Implement actual cart logic
-  alert(`Đã thêm "${product.title}" vào giỏ hàng`);
-};
-
-const addToWishlist = (product) => {
-  console.log("Adding to wishlist:", product);
-  emit("add-to-wishlist", product);
-
-  // TODO: Implement actual wishlist logic
-  alert(`Đã thêm "${product.title}" vào danh sách yêu thích`);
-};
-
-const viewDetails = (product) => {
-  console.log("Viewing product details:", product);
-  emit("product-click", product);
-
-  // Navigate to product detail page
-  router.push(`/product/${product.id}`);
-};
-
-const loadMore = async () => {
-  loading.value = true;
-
-  // Simulate API call
-  setTimeout(() => {
-    const newProducts = generateFakeProducts().map((product) => ({
-      ...product,
-      id: product.id + currentPage.value * 8,
-    }));
-
-    products.value.push(...newProducts);
-    currentPage.value++;
-
-    // Stop loading more after 3 pages
-    if (currentPage.value >= 3) {
-      hasMore.value = false;
-    }
-
-    loading.value = false;
-  }, 1000);
-};
-
-const fetchProducts = async () => {
-  loading.value = true;
-
-  try {
-    // Simulate API call
-    setTimeout(() => {
-      products.value = generateFakeProducts();
-      loading.value = false;
-    }, 500);
-
-    // TODO: Replace with actual API call
-    // const response = await productService.getProducts({
-    //   categoryId: props.categoryId,
-    //   search: props.searchQuery,
-    //   page: currentPage.value
-    // });
-    // products.value = response.data;
-  } catch (error) {
-    console.error("Error fetching products:", error);
-    loading.value = false;
-  }
-};
-
-// Lifecycle
-onMounted(() => {
-  fetchProducts();
-});
-
-// Watch for prop changes
-// watch([() => props.categoryId, () => props.searchQuery], () => {
-//   currentPage.value = 1;
-//   hasMore.value = true;
-//   fetchProducts();
-// });
+// 3. Sử dụng watch để theo dõi sự thay đổi của props.products
+watch(
+  () => props.products, // Theo dõi sự thay đổi của thuộc tính 'products' trong 'props'
+  (newProducts) => {
+    // Hàm này sẽ chạy mỗi khi props.products thay đổi
+    console.log("ProductGrid đã nhận được dữ liệu sản phẩm mới:", newProducts);
+  },
+  { deep: true } // Thêm deep: true để theo dõi thay đổi sâu bên trong mảng
+);
 </script>
 
 <style scoped>

@@ -48,17 +48,20 @@
           <div class="action-buttons">
             <button
               class="btn btn-outline-danger btn-lg add-cart-btn"
-              :disabled="book.stockQuantity <= 0"
+              :disabled="book.stockQuantity <= 0 || addingToCart"
+              @click="addToCart(false)"
             >
-              <i class="fa fa-shopping-cart me-2"></i>
-              {{ book.stockQuantity > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng' }}
+              <i v-if="addingToCart" class="fa fa-spinner fa-spin me-2"></i>
+              <i v-else class="fa fa-shopping-cart me-2"></i>
+              {{ addingToCart ? 'Đang thêm...' : (book.stockQuantity > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng') }}
             </button>
             <button
               class="btn btn-danger btn-lg buy-now-btn"
               @click="buyNow"
-              :disabled="book.stockQuantity <= 0"
+              :disabled="book.stockQuantity <= 0 || addingToCart"
             >
-              {{ book.stockQuantity > 0 ? 'Mua ngay' : 'Hết hàng' }}
+              <i v-if="addingToCart" class="fa fa-spinner fa-spin me-2"></i>
+              {{ addingToCart ? 'Đang xử lý...' : (book.stockQuantity > 0 ? 'Mua ngay' : 'Hết hàng') }}
             </button>
           </div>
         </div>
@@ -288,6 +291,9 @@
 
 <script>
 import { getBookDetail } from '@/services/client/book.js'
+import { addToCart as addToCartAPI } from '@/services/client/cart.js'
+import { showToast } from '@/utils/swalHelper.js'
+import { createFlashSaleCountdown, formatCountdownTime } from '@/utils/flashSaleUtils.js'
 
 export default {
   name: 'DetailProduct',
@@ -296,10 +302,10 @@ export default {
       book: null,
       loading: true,
       error: null,
-      countdownTimer: null,
-      countdownDisplay: '00:00:00',
-      serverTimeDiff: 0,
-      quantity: 1
+      flashSaleCountdown: null,
+      countdownDisplay: 'Hết hạn',
+      quantity: 1,
+      addingToCart: false
     }
   },
   computed: {
@@ -314,8 +320,8 @@ export default {
     await this.loadBookDetail()
   },
   beforeUnmount() {
-    if (this.countdownTimer) {
-      clearInterval(this.countdownTimer)
+    if (this.flashSaleCountdown) {
+      this.flashSaleCountdown.clear()
     }
   },
   methods: {
@@ -333,11 +339,6 @@ export default {
         
         if (response.status === 200) {
           this.book = response.data
-          
-          // Tính toán server time diff để chống hack
-          if (this.book.serverTime) {
-            this.serverTimeDiff = this.book.serverTime - Date.now()
-          }
           
           // Nếu có flash sale, setup countdown timer
           if (this.book.flashSalePrice !== null && this.book.flashSaleEndTime) {
@@ -357,23 +358,29 @@ export default {
     setupCountdownTimer() {
       if (!this.book.flashSaleEndTime) return
       
-      this.countdownTimer = setInterval(() => {
-        const now = Date.now() + this.serverTimeDiff // Sync với server time
-        const remaining = this.book.flashSaleEndTime - now
-        
-        if (remaining <= 0) {
-          clearInterval(this.countdownTimer)
-          this.countdownDisplay = '00:00:00'
+      // Dọn dẹp countdown cũ nếu có
+      if (this.flashSaleCountdown) {
+        this.flashSaleCountdown.clear()
+      }
+      
+      this.flashSaleCountdown = createFlashSaleCountdown(
+        this.book.flashSaleEndTime,
+        this.book.serverTime,
+        // Callback khi flash sale hết hạn
+        () => {
+          this.countdownDisplay = 'Hết hạn'
+          console.log('Flash sale expired for book:', this.book.bookName)
+          showToast('info', 'Flash sale đã kết thúc. Đang cập nhật giá...')
           // Flash sale đã kết thúc, reload trang để cập nhật giá
           this.loadBookDetail()
-        } else {
-          const hours = Math.floor(remaining / (1000 * 60 * 60))
-          const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60))
-          const seconds = Math.floor((remaining % (1000 * 60)) / 1000)
-          
-          this.countdownDisplay = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-        }
-      }, 1000)
+        },
+        // Callback cập nhật countdown display (sử dụng format full)
+        (countdownText) => {
+          // Sử dụng trực tiếp countdownText được truyền từ utility
+          this.countdownDisplay = countdownText
+        },
+        'full' // Sử dụng format full
+      )
     },
     
     formatPrice(price) {
@@ -408,12 +415,67 @@ export default {
     },
     
     buyNow() {
-      if (!this.book || this.book.stockQuantity <= 0) {
+      if (!this.book || this.book.stockQuantity <= 0 || this.addingToCart) {
         return
       }
       
-      // Chuyển hướng sang trang giỏ hàng
-      this.$router.push('/cart')
+      // Thêm vào giỏ hàng trước, sau đó chuyển hướng sang checkout
+      this.addToCart(true)
+    },
+    
+    async addToCart(isBuyNow = false) {
+      if (!this.book || this.book.stockQuantity <= 0 || this.addingToCart) {
+        return
+      }
+      
+      try {
+        this.addingToCart = true
+        
+        // Tạm thời sử dụng userId = 1, sau này sẽ lấy từ auth
+        const cartData = {
+          userId: 1, // TODO: Lấy từ user authentication
+          bookId: this.book.id,
+          quantity: this.quantity
+        }
+        
+        const response = await addToCartAPI(cartData)
+        
+        if (response.status === 200) {
+          // Hiển thị thông báo thành công
+          showToast('success', response.data.message || 'Thêm sản phẩm vào giỏ hàng thành công!')
+          
+          // Nếu có flash sale, hiển thị số tiền tiết kiệm
+          if (response.data.data?.savedAmount > 0) {
+            setTimeout(() => {
+              showToast('info', `Bạn đã tiết kiệm ${this.formatPrice(response.data.data.savedAmount)}!`)
+            }, 2000)
+          }
+          
+          // CHỈ khi là mua ngay mới chuyển hướng sang checkout
+          if (isBuyNow) {
+            setTimeout(() => {
+              this.$router.push('/checkout')
+            }, 1500)
+          }
+        }
+      } catch (error) {
+        console.error('Error adding to cart:', error)
+        
+        // Xử lý các loại lỗi khác nhau
+        let errorMessage = 'Có lỗi xảy ra khi thêm vào giỏ hàng'
+        
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message
+        } else if (error.response?.status === 404) {
+          errorMessage = 'Không tìm thấy sản phẩm'
+        } else if (error.response?.status === 400) {
+          errorMessage = 'Thông tin không hợp lệ'
+        }
+        
+        showToast('error', errorMessage)
+      } finally {
+        this.addingToCart = false
+      }
     },
     
     increaseQuantity() {

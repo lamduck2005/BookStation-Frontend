@@ -125,3 +125,25 @@ export const getAllCategoriesForUser  = async () => {
   }
 };
 
+// Lấy tất cả danh mục cha (parent-null)
+export const getAllCategoriesParentNull = async () => {
+  try {
+    const response = await client.get("/api/categories/parent-null");
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching categories with parent null:", error);
+    throw error;
+  }
+};
+
+// Lấy tất cả danh mục con theo id cha
+export const getAllCategoriesByParentId = async (parentId) => {
+  try {
+    const response = await client.get(`/api/categories/parent/${parentId}`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching categories by parent id:", error);
+    throw error;
+  }
+};
+

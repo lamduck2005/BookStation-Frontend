@@ -1,5 +1,11 @@
 <script setup>
 import Trend from '@/views/client/Trend.vue'
+import { onMounted } from 'vue';
+import { getUserFromToken, getUserFullName, getUserId, getUserEmail } from '@/utils/utils';
+
+onMounted(() => {
+    console.log("Thằng này là " + getUserFullName() + ", có id là " + getUserId() + " và email là " + getUserEmail());
+})
 </script>
 
 <template>

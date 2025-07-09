@@ -1,5 +1,4 @@
 <template>
-  <!-- filepath: d:\BookStation-Frontend\src\views\client\ProductCatalog\FilterProduct.vue -->
   <div class="filter-sidebar">
     <div class="filter-container">
       <!-- Danh mục chính -->
@@ -13,25 +12,25 @@
           >
             <label class="form-check-label">
               <input
-                type="checkbox"
+                type="radio"
                 class="form-check-input"
                 :value="mainCategory.id"
-                v-model="selectedMainCategories"
+                v-model="selectedMainCategory"
                 @change="onMainCategoryChange"
+                @click="onMainCategoryClick(mainCategory.id)"
               />
-              <span class="category-name">{{ mainCategory.name }}</span>
-              <span class="category-count">({{ mainCategory.count }})</span>
+              <span class="category-name">{{ mainCategory.categoryName }}</span>
             </label>
           </div>
         </div>
       </div>
 
       <!-- Danh mục phụ -->
-      <div class="filter-section">
+      <div class="filter-section" v-if="selectedMainCategory">
         <h6 class="filter-title">DANH MỤC PHỤ</h6>
         <div class="filter-content">
           <div
-            v-for="subCategory in visibleSubCategories"
+            v-for="subCategory in filteredSubCategories"
             :key="subCategory.id"
             class="filter-item"
           >
@@ -41,21 +40,10 @@
                 class="form-check-input"
                 :value="subCategory.id"
                 v-model="selectedSubCategories"
-                @change="onSubCategoryChange"
               />
-              <span class="category-name">{{ subCategory.name }}</span>
-              <span class="category-count">({{ subCategory.count }})</span>
+              <span class="category-name">{{ subCategory.categoryName }}</span>
             </label>
           </div>
-
-          <!-- Xem thêm button -->
-          <button
-            v-if="subCategories.length > showSubCategoriesLimit"
-            class="btn-show-more"
-            @click="toggleShowMoreSubCategories"
-          >
-            {{ showAllSubCategories ? "Thu gọn ▲" : "Xem thêm ▼" }}
-          </button>
         </div>
       </div>
 
@@ -70,14 +58,13 @@
           >
             <label class="form-check-label">
               <input
-                type="checkbox"
+                type="radio"
                 class="form-check-input"
                 :value="priceRange.id"
-                v-model="selectedPriceRanges"
+                v-model="selectedPriceRange"
                 @change="onPriceRangeChange"
               />
               <span class="category-name">{{ priceRange.label }}</span>
-              <span class="category-count">({{ priceRange.count }})</span>
             </label>
           </div>
 
@@ -112,33 +99,9 @@
         </div>
       </div>
 
-      <!-- Lựa tuổi -->
-      <div class="filter-section">
-        <h6 class="filter-title">LỨA TUỔI</h6>
-        <div class="filter-content">
-          <div
-            v-for="ageGroup in ageGroups"
-            :key="ageGroup.id"
-            class="filter-item"
-          >
-            <label class="form-check-label">
-              <input
-                type="checkbox"
-                class="form-check-input"
-                :value="ageGroup.id"
-                v-model="selectedAgeGroups"
-                @change="onAgeGroupChange"
-              />
-              <span class="category-name">{{ ageGroup.name }}</span>
-              <span class="category-count">({{ ageGroup.count }})</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
       <!-- Nhà phát hành -->
       <div class="filter-section">
-        <h6 class="filter-title">NHÀ PHÁT HÀNH</h6>
+        <h6 class="filter-title">Nhà xuất bản</h6>
         <div class="filter-content">
           <div
             v-for="publisher in visiblePublishers"
@@ -147,14 +110,13 @@
           >
             <label class="form-check-label">
               <input
-                type="checkbox"
+                type="radio"
                 class="form-check-input"
                 :value="publisher.id"
-                v-model="selectedPublishers"
-                @change="onPublisherChange"
+                v-model="selectedPublisher"
+                @change="emitFilterChange"
               />
-              <span class="category-name">{{ publisher.name }}</span>
-              <span class="category-count">({{ publisher.count }})</span>
+              <span class="category-name">{{ publisher.publisherName }}</span>
             </label>
           </div>
 
@@ -185,9 +147,14 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
+import {
+  getAllCategoriesByParentId,
+  getAllCategoriesParentNull,
+} from "@/services/admin/category";
+import { getAllPublishers } from "@/services/admin/publisher";
 
-// Props
+// 1. Định nghĩa props để nhận giá trị khởi tạo
 const props = defineProps({
   initialFilters: {
     type: Object,
@@ -195,86 +162,99 @@ const props = defineProps({
   },
 });
 
-// Emits
 const emit = defineEmits(["filter-change"]);
 
-// State
-const selectedMainCategories = ref([]);
+const mainCategories = ref([]);
+const subCategories = ref([]);
+const publishers = ref([]);
+
+// --- THAY ĐỔI CÁC BIẾN NÀY ---
 const selectedSubCategories = ref([]);
-const selectedPriceRanges = ref([]);
-const selectedAgeGroups = ref([]);
-const selectedPublishers = ref([]);
+const selectedPublisher = ref(null); // <-- Đổi từ mảng thành null
+const selectedMainCategory = ref(null);
+const selectedPriceRange = ref(null);
+// --- KẾT THÚC THAY ĐỔI ---
 
 const minPrice = ref(0);
 const maxPrice = ref(1000000);
 const absoluteMinPrice = ref(0);
 const absoluteMaxPrice = ref(1000000);
 
-const showAllSubCategories = ref(false);
 const showAllPublishers = ref(false);
-const showSubCategoriesLimit = 6;
-const showPublishersLimit = 5;
-
-// Fake Data
-const mainCategories = ref([{ id: 1, name: "Sách Tiếng Việt", count: 504 }]);
-
-const subCategories = ref([
-  { id: 1, name: "Thiếu Nhi", count: 308 },
-  { id: 2, name: "Văn Học", count: 125 },
-  { id: 3, name: "Sách Học Ngoại Ngữ", count: 27 },
-  { id: 4, name: "Tâm Lý - Kỹ Năng Sống", count: 11 },
-  { id: 5, name: "Lịch Sử - Địa Lý - Tôn Giáo", count: 10 },
-  { id: 6, name: "Giáo Khoa - Tham Khảo", count: 9 },
-  { id: 7, name: "Chính Trị - Pháp Lý - Triết Học", count: 6 },
-  { id: 8, name: "Kinh Tế - Quản Lý", count: 4 },
-  { id: 9, name: "Khoa Học - Công Nghệ", count: 3 },
-]);
+const showPublishersLimit = ref(5);
 
 const priceRanges = ref([
-  { id: 1, label: "0đ - 150.000đ", min: 0, max: 150000, count: 488 },
-  { id: 2, label: "150.000đ - 300.000đ", min: 150000, max: 300000, count: 49 },
-  { id: 3, label: "300.000đ - 500.000đ", min: 300000, max: 500000, count: 11 },
-  { id: 4, label: "500.000đ - 700.000đ", min: 500000, max: 700000, count: 4 },
-  { id: 5, label: "700.000đ Trở Lên", min: 700000, max: 999999999, count: 4 },
+  { id: 1, label: "0đ - 150,000đ", min: 0, max: 150000 },
+  { id: 2, label: "150,000đ - 300,000đ", min: 150000, max: 300000 },
+  { id: 3, label: "300,000đ - 500,000đ", min: 300000, max: 500000 },
+  { id: 4, label: "500,000đ - 700,000đ", min: 500000, max: 700000 },
+  { id: 5, label: "700,000đ Trở Lên", min: 700000, max: Infinity },
 ]);
 
-const ageGroups = ref([
-  { id: 1, name: "6+(2)", count: 2 },
-  { id: 2, name: "8+(2)", count: 2 },
-]);
+// Hàm thông báo lỗi
+const showError = (msg) => {
+  alert(msg); // Bạn có thể thay bằng toast hoặc emit sự kiện nếu muốn
+};
 
-const publishers = ref([
-  { id: 1, name: "Giáo Dục Việt Nam", count: 1209 },
-  { id: 2, name: "Đại Học Quốc Gia Hà Nội", count: 1153 },
-  { id: 3, name: "Dân Trí", count: 1123 },
-  { id: 4, name: "Thanh Niên", count: 525 },
-  { id: 5, name: "Văn Học", count: 504 },
-  { id: 6, name: "Kim Đồng", count: 320 },
-  { id: 7, name: "Trẻ", count: 285 },
-]);
-
-// Computed
-const visibleSubCategories = computed(() => {
-  if (showAllSubCategories.value) {
-    return subCategories.value;
+// Hàm lấy danh mục chính
+const fetchMainCategories = async () => {
+  try {
+    const data = await getAllCategoriesParentNull();
+    mainCategories.value = data;
+  } catch (e) {
+    showError("Lỗi lấy danh mục chính!");
   }
-  return subCategories.value.slice(0, showSubCategoriesLimit);
-});
+};
+
+const onMainCategoryChange = async (event) => {
+  // --- THÊM DÒNG NÀY ---
+  selectedSubCategories.value = []; // Xóa các danh mục phụ đã chọn
+  // --- KẾT THÚC THÊM ---
+
+  const id = selectedMainCategory.value;
+  try {
+    const data = await getAllCategoriesByParentId(id);
+    subCategories.value = data;
+  } catch (e) {
+    showError("Lỗi lấy danh mục phụ!");
+    subCategories.value = [];
+  }
+  emitFilterChange();
+};
+
+// Lấy danh sách nhà xuất bản
+const fetchPublishers = async () => {
+  try {
+    const data = await getAllPublishers();
+    publishers.value = data;
+  } catch (e) {
+    showError("Lỗi lấy danh sách nhà xuất bản!");
+    publishers.value = [];
+  }
+};
 
 const visiblePublishers = computed(() => {
   if (showAllPublishers.value) {
     return publishers.value;
   }
-  return publishers.value.slice(0, showPublishersLimit);
+  return publishers.value.slice(0, showPublishersLimit.value);
+});
+
+const filteredSubCategories = computed(() => {
+  if (selectedSubCategories.value.length === 0) {
+    return subCategories.value;
+  }
+  return subCategories.value.filter((sc) =>
+    selectedSubCategories.value.includes(sc.id)
+  );
 });
 
 const hasActiveFilters = computed(() => {
   return (
-    selectedMainCategories.value.length > 0 ||
+    selectedMainCategory.value !== null ||
     selectedSubCategories.value.length > 0 ||
-    selectedPriceRanges.value.length > 0 ||
-    selectedAgeGroups.value.length > 0 ||
-    selectedPublishers.value.length > 0 ||
+    selectedPriceRange.value !== null || // <-- Sửa lại cho đúng biến
+    selectedPublisher.value !== null || // <-- Sửa lại cho đúng biến
     minPrice.value !== absoluteMinPrice.value ||
     maxPrice.value !== absoluteMaxPrice.value
   );
@@ -282,11 +262,9 @@ const hasActiveFilters = computed(() => {
 
 const currentFilters = computed(() => {
   return {
-    mainCategories: selectedMainCategories.value,
+    mainCategory: selectedMainCategory.value,
     subCategories: selectedSubCategories.value,
-    priceRanges: selectedPriceRanges.value,
-    ageGroups: selectedAgeGroups.value,
-    publishers: selectedPublishers.value,
+    publisherId: selectedPublisher.value, // <-- Đổi tên và giá trị
     customPriceRange: {
       min: minPrice.value,
       max: maxPrice.value,
@@ -299,67 +277,57 @@ const formatPrice = (price) => {
   return new Intl.NumberFormat("vi-VN").format(price) + " đ";
 };
 
-const toggleShowMoreSubCategories = () => {
-  showAllSubCategories.value = !showAllSubCategories.value;
-};
-
 const toggleShowMorePublishers = () => {
   showAllPublishers.value = !showAllPublishers.value;
 };
 
-const onMainCategoryChange = () => {
-  emitFilterChange();
-};
-
-const onSubCategoryChange = () => {
-  emitFilterChange();
-};
-
 const onPriceRangeChange = () => {
-  // Clear custom price range when predefined range is selected
-  if (selectedPriceRanges.value.length > 0) {
+  const range = priceRanges.value.find(
+    (pr) => pr.id === selectedPriceRange.value
+  );
+  if (range) {
+    minPrice.value = range.min;
+    maxPrice.value =
+      range.max === Infinity ? absoluteMaxPrice.value : range.max;
+  } else {
     minPrice.value = absoluteMinPrice.value;
     maxPrice.value = absoluteMaxPrice.value;
   }
-  emitFilterChange();
+  emitFilterChange(); // <-- Thêm vào đây
 };
-
-const onAgeGroupChange = () => {
-  emitFilterChange();
-};
-
-const onPublisherChange = () => {
-  emitFilterChange();
-};
-
 const onMinPriceChange = (event) => {
   const value = parseInt(event.target.value);
   if (value < maxPrice.value) {
     minPrice.value = value;
-    // Clear predefined price ranges when custom range is used
-    selectedPriceRanges.value = [];
-    emitFilterChange();
+    selectedPriceRange.value = null; // bỏ chọn radio
   }
+  emitFilterChange(); // <-- Thêm vào đây
 };
 
 const onMaxPriceChange = (event) => {
   const value = parseInt(event.target.value);
   if (value > minPrice.value) {
     maxPrice.value = value;
-    // Clear predefined price ranges when custom range is used
-    selectedPriceRanges.value = [];
-    emitFilterChange();
+    selectedPriceRange.value = null; // bỏ chọn radio
   }
+  emitFilterChange(); // <-- Thêm vào đây
 };
-
 const clearAllFilters = () => {
-  selectedMainCategories.value = [];
+  // --- THÊM DÒNG NÀY ---
+  selectedMainCategory.value = null; // <-- Xóa cả danh mục chính
+  subCategories.value = []; // Xóa danh sách danh mục con
+  // --- KẾT THÚC THÊM ---
+
   selectedSubCategories.value = [];
-  selectedPriceRanges.value = [];
-  selectedAgeGroups.value = [];
-  selectedPublishers.value = [];
+  selectedPriceRange.value = null; // <-- Sửa lại cho đúng biến
+  selectedPublisher.value = null; // <-- Sửa lại cho đúng biến
   minPrice.value = absoluteMinPrice.value;
   maxPrice.value = absoluteMaxPrice.value;
+  emitFilterChange();
+};
+
+const onMainCategoryClick = (id) => {
+  selectedMainCategory.value = id;
   emitFilterChange();
 };
 
@@ -367,28 +335,53 @@ const emitFilterChange = () => {
   emit("filter-change", currentFilters.value);
 };
 
-// Initialize with default data
-onMounted(() => {
-  // Load initial filters if provided
-  if (props.initialFilters) {
-    selectedMainCategories.value = props.initialFilters.mainCategories || [];
-    selectedSubCategories.value = props.initialFilters.subCategories || [];
-    selectedPriceRanges.value = props.initialFilters.priceRanges || [];
-    selectedAgeGroups.value = props.initialFilters.ageGroups || [];
-    selectedPublishers.value = props.initialFilters.publishers || [];
+// Hàm để tải danh mục con dựa vào ID cha
+const fetchSubCategoriesForParent = async (parentId) => {
+  if (!parentId) {
+    subCategories.value = [];
+    return;
+  }
+  try {
+    const data = await getAllCategoriesByParentId(parentId);
+    subCategories.value = data;
+  } catch (e) {
+    showError("Lỗi lấy danh mục phụ!");
+    subCategories.value = [];
+  }
+};
 
-    if (props.initialFilters.customPriceRange) {
-      minPrice.value = props.initialFilters.customPriceRange.min;
-      maxPrice.value = props.initialFilters.customPriceRange.max;
+// 2. Cập nhật onMounted để xử lý initialFilters
+onMounted(async () => {
+  // Tải danh sách danh mục chính và nhà xuất bản
+  await fetchMainCategories();
+  await fetchPublishers();
+
+  // Kiểm tra và áp dụng bộ lọc khởi tạo
+  if (props.initialFilters) {
+    const { mainCategory, subCategories: initialSubCategories } =
+      props.initialFilters;
+
+    if (mainCategory) {
+      selectedMainCategory.value = mainCategory;
+      // Tải danh sách danh mục con tương ứng
+      await fetchSubCategoriesForParent(mainCategory);
+      // Sau khi tải xong, gán giá trị cho danh mục con đã chọn
+      if (initialSubCategories && initialSubCategories.length > 0) {
+        selectedSubCategories.value = initialSubCategories;
+      }
     }
   }
 });
 
-// Watch for changes and emit
+// 3. Thêm watch để xử lý khi người dùng click qua lại các danh mục trên Header
 watch(
-  currentFilters,
-  () => {
-    emitFilterChange();
+  () => props.initialFilters,
+  async (newFilters) => {
+    if (newFilters) {
+      selectedMainCategory.value = newFilters.mainCategory || null;
+      await fetchSubCategoriesForParent(newFilters.mainCategory);
+      selectedSubCategories.value = newFilters.subCategories || [];
+    }
   },
   { deep: true }
 );
@@ -549,7 +542,6 @@ watch(
 .range-min {
   z-index: 1;
 }
-
 .range-max {
   z-index: 2;
 }
@@ -559,16 +551,13 @@ watch(
   padding-top: 1rem;
   border-top: 1px solid #e9ecef;
 }
-
 .filter-actions .btn {
   transition: all 0.2s ease;
 }
-
 .filter-actions .btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
-
 .filter-actions .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -580,11 +569,9 @@ watch(
     position: static;
     margin-bottom: 1rem;
   }
-
   .filter-container {
     padding: 1rem;
   }
-
   .filter-section {
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
@@ -608,7 +595,6 @@ watch(
 .filter-actions .btn {
   transition: all 0.2s ease;
 }
-
 .filter-content {
   transition: max-height 0.3s ease;
 }
