@@ -29,3 +29,9 @@ export function deleteUser(id) {
 export function toggleUserStatus(id) {
   return axios.patch(`/api/users/${id}/toggle-status`);
 }
+export function getProfile() {
+  return axios.get('/api/users/profile');
+}
+export function updateProfile(id,data) {
+  return axios.put(`/api/users/profile/${id}`, data);
+}

@@ -40,6 +40,7 @@
                 class="form-check-input"
                 :value="subCategory.id"
                 v-model="selectedSubCategories"
+                @change="emitFilterChange"
               />
               <span class="category-name">{{ subCategory.categoryName }}</span>
             </label>
