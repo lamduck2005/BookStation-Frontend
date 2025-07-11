@@ -1,15 +1,10 @@
 <template>
   <div class="profile-addresses">
-    <!-- Warning Alert -->
-    <div class="alert alert-warning d-flex align-items-center mb-4">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i>
-      <span>Bạn vui lòng cập nhật thông tin tài khoản:</span>
-      <a href="#" class="ms-2 text-primary fw-bold">Cập nhật thông tin ngay</a>
-    </div>
+    
 
     <!-- Page Header -->
     <div class="page-header mb-4">
-      <h2 class="page-title">Số địa chỉ</h2>
+      <h2 class="page-title">Sổ địa chỉ</h2>
       <button class="btn btn-primary" @click="showAddAddressModal = true">
         <i class="bi bi-plus-circle me-2"></i>
         Thêm địa chỉ mới
@@ -18,7 +13,15 @@
 
     <!-- Addresses List -->
     <div class="addresses-list">
-      <div v-if="addresses.length === 0" class="no-addresses">
+      <!-- Loading State -->
+      <div v-if="isLoadingAddresses" class="loading-state text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Đang tải...</span>
+        </div>
+        <p class="mt-2 text-muted">Đang tải danh sách địa chỉ...</p>
+      </div>
+
+      <div v-else-if="addresses.length === 0" class="no-addresses">
         <div class="empty-state">
           <i class="bi bi-geo-alt text-muted"></i>
           <p class="text-muted">Bạn chưa có địa chỉ nào.</p>
@@ -28,26 +31,30 @@
         </div>
       </div>
 
-      <div v-else class="row">
+      <div v-else class="row addresses-grid">
         <div v-for="address in addresses" :key="address.id" class="col-md-6 mb-4">
-          <div class="address-card">
+          <div class="address-card animate-fade-in">
             <div class="address-header d-flex justify-content-between align-items-start">
               <div class="address-info">
-                <h5 class="address-name">{{ address.name }}</h5>
-                <p class="address-phone mb-1">{{ address.phone }}</p>
-                <p class="address-text mb-0">{{ address.fullAddress }}</p>
+                <h5 class="address-name">{{ address.recipientName }}</h5>
+                <p class="address-phone mb-1">{{ address.phoneNumber }}</p>
+                <p class="address-text mb-0">{{ address.addressDetail }}, {{ address.wardName }}, {{ address.districtName }}, {{ address.provinceName }}</p>
               </div>
               <div class="address-actions">
                 <button 
                   class="btn btn-sm btn-outline-secondary me-2" 
+                  :disabled="isLoadingEditAddress"
                   @click="editAddress(address)"
                 >
+                  <span v-if="isLoadingEditAddress && editingAddress?.id === address.id" class="spinner-border spinner-border-sm me-1" role="status"></span>
                   Sửa
                 </button>
                 <button 
                   class="btn btn-sm btn-outline-danger" 
+                  :disabled="isDeletingAddress"
                   @click="deleteAddress(address.id)"
                 >
+                  <span v-if="isDeletingAddress && deletingAddressId === address.id" class="spinner-border spinner-border-sm me-1" role="status"></span>
                   <i class="bi bi-trash"></i>
                 </button>
               </div>
@@ -56,12 +63,16 @@
             <div class="address-footer mt-3">
               <div class="address-labels">
                 <span v-if="address.isDefault" class="badge bg-success">Mặc định</span>
-                <span v-if="address.type === 'home'" class="badge bg-info">Nhà riêng</span>
-                <span v-if="address.type === 'office'" class="badge bg-warning">Văn phòng</span>
+                <span v-if="address.addressType === 'HOME'" class="badge bg-info">
+                  <i class="bi bi-house-door me-1"></i>Nhà riêng
+                </span>
+                <span v-if="address.addressType === 'OFFICE'" class="badge bg-warning">
+                  <i class="bi bi-building me-1"></i>Văn phòng
+                </span>
               </div>
               
               <div class="address-shipping-info">
-                <small class="text-muted">{{ address.shippingNote }}</small>
+                <small class="text-muted">{{ address.isDefault ? 'Địa chỉ thanh toán mặc định' : 'Địa chỉ khác' }}</small>
               </div>
             </div>
           </div>
@@ -70,9 +81,9 @@
     </div>
 
     <!-- Add/Edit Address Modal -->
-    <div class="modal" :class="{ 'show d-block': showAddAddressModal }" v-if="showAddAddressModal">
+    <div class="modal modal-fade" :class="{ 'show d-block': showAddAddressModal }" v-if="showAddAddressModal">
       <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+        <div class="modal-content animate-scale-in">
           <div class="modal-header">
             <h5 class="modal-title">
               {{ editingAddress ? 'Cập nhật địa chỉ' : 'Thêm địa chỉ mới' }}
@@ -88,8 +99,8 @@
                   <input 
                     type="text" 
                     class="form-control" 
-                    v-model="addressForm.name"
-                    placeholder="Vũ Linh"
+                    v-model="addressForm.recipientName"
+                    placeholder="Nguyễn Văn A"
                     required
                   />
                 </div>
@@ -98,8 +109,8 @@
                   <input 
                     type="tel" 
                     class="form-control" 
-                    v-model="addressForm.phone"
-                    placeholder="0346447583"
+                    v-model="addressForm.phoneNumber"
+                    placeholder="0123456789"
                     required
                   />
                 </div>
@@ -110,8 +121,8 @@
                 <input 
                   type="text" 
                   class="form-control" 
-                  v-model="addressForm.address"
-                  placeholder="phố 31 đông đa"
+                  v-model="addressForm.addressDetail"
+                  placeholder="Số nhà 1, ngõ 1"
                   required
                 />
               </div>
@@ -156,8 +167,8 @@
                       type="radio" 
                       name="addressType" 
                       id="home"
-                      value="home"
-                      v-model="addressForm.type"
+                      value="HOME"
+                      v-model="addressForm.addressType"
                     />
                     <label class="form-check-label" for="home">Nhà riêng</label>
                   </div>
@@ -167,8 +178,8 @@
                       type="radio" 
                       name="addressType" 
                       id="office"
-                      value="office"
-                      v-model="addressForm.type"
+                      value="OFFICE"
+                      v-model="addressForm.addressType"
                     />
                     <label class="form-check-label" for="office">Văn phòng</label>
                   </div>
@@ -182,6 +193,7 @@
                     type="checkbox" 
                     id="isDefault"
                     v-model="addressForm.isDefault"
+                    :disabled="addresses.length === 0 && !editingAddress"
                   />
                   <label class="form-check-label" for="isDefault">
                     Đặt làm địa chỉ mặc định
@@ -193,7 +205,8 @@
                 <button type="button" class="btn btn-secondary" @click="closeAddressModal">
                   Hủy
                 </button>
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary" :disabled="isSavingAddress">
+                  <span v-if="isSavingAddress" class="spinner-border spinner-border-sm me-2" role="status"></span>
                   {{ editingAddress ? 'Cập nhật' : 'Thêm địa chỉ' }}
                 </button>
               </div>
@@ -211,72 +224,53 @@
 <script setup>
 import { ghn } from '@/utils/giaohangnhanh'
 import { ref, reactive, onMounted, watch } from 'vue'
+import { getAddresses, addAddress, updateAddress as updateAddressApi, deleteAddress as deleteAddressApi } from '@/services/client/address'
+import { showToast, showQuickConfirm } from '@/utils/swalHelper'
 
 const showAddAddressModal = ref(false)
 const editingAddress = ref(null)
 const isLoadingEditAddress = ref(false)
+const isSavingAddress = ref(false)
+const isDeletingAddress = ref(false)
+const deletingAddressId = ref(null)
 
 // Danh sách địa chỉ động
 const provinces = ref([])
 const districts = ref([])
 const wards = ref([])
 
-// Fake addresses data
-const addresses = ref([
-  {
-    id: 1,
-    name: 'Vũ Linh',
-    phone: '0346447583',
-    address: 'phố 31 đông đa',
-    province: 'Hà Nội',
-    district: 'Quận 1',
-    ward: 'Phường Bến Nghé',
-    fullAddress: 'phố 31 đông đa, Phường Bến Nghé, Quận 1, Hà Nội, VN',
-    type: 'home',
-    isDefault: true,
-    shippingNote: 'Địa chỉ thanh toán mặc định'
-  },
-  {
-    id: 2,
-    name: 'linh vugk',
-    phone: '0989898990',
-    address: 'phố 31 đông đa',
-    province: 'Hà Nội',
-    district: 'Quận Hai Bà Trưng',
-    ward: 'Phường Bạch Mai',
-    fullAddress: 'phố 31 đông đa, Phường Bạch Mai, Quận Hai Bà Trưng, Hà Nội, VN',
-    type: 'office',
-    isDefault: false,
-    shippingNote: 'Địa chỉ khác'
-  },
-  {
-    id: 3,
-    name: 'linh vu',
-    phone: '0989898990',
-    address: 'td',
-    province: 'Thụy Sĩ',
-    district: '',
-    ward: '',
-    fullAddress: 'td, ffgj, Appenzell Innerrhoden, CH',
-    type: 'home',
-    isDefault: false,
-    shippingNote: 'Địa chỉ khác'
+// Danh sách địa chỉ trả về từ server
+const addresses = ref([])
+const isLoadingAddresses = ref(false)
+
+const fetchAddresses = async () => {
+  isLoadingAddresses.value = true
+  try {
+    const res = await getAddresses()
+    const raw = res.data?.data || []
+    addresses.value = raw.map(a => ({ ...a, addressType: ['HOME','OFFICE'].includes(a.addressType) ? a.addressType : 'HOME' }))
+  } catch (error) {
+    const errorMsg = error.response?.data?.message || 'Không thể lấy danh sách địa chỉ'
+    showToast('error', errorMsg)
+    console.error('Fetch addresses error:', error)
+  } finally {
+    isLoadingAddresses.value = false
   }
-])
+}
 
 // Address form
 const addressForm = reactive({
-  name: '',
-  phone: '',
-  address: '',
-  province: '', // lưu tên tỉnh
-  provinceId: '', // lưu ProvinceID
-  district: '', // lưu tên quận
-  districtId: '', // lưu DistrictID
-  ward: '',     // lưu tên phường
-  wardCode: '', // lưu WardCode
-  type: 'home',
-  isDefault: false
+  recipientName: '',
+  phoneNumber: '',
+  addressDetail: '',
+  provinceName: '',
+  provinceId: '',
+  districtName: '',
+  districtId: '',
+  wardName: '',
+  wardCode: '',
+  isDefault: false,
+  addressType: 'HOME'
 })
 
 // Hàm lấy danh sách tỉnh/thành
@@ -311,33 +305,58 @@ const fetchWards = async (districtId) => {
 
 // Watch để tự động load quận/huyện khi chọn tỉnh
 watch(() => addressForm.provinceId, (newVal) => {
-  addressForm.district = ''
+  addressForm.districtName = ''
   addressForm.districtId = ''
-  addressForm.ward = ''
+  addressForm.wardName = ''
   addressForm.wardCode = ''
   fetchDistricts(newVal)
 })
 // Watch để tự động load phường/xã khi chọn quận
 watch(() => addressForm.districtId, (newVal) => {
-  addressForm.ward = ''
+  addressForm.wardName = ''
   addressForm.wardCode = ''
   fetchWards(newVal)
 })
 
+// Watch để tự động tích mặc định và disable checkbox khi thêm địa chỉ đầu tiên
+watch(showAddAddressModal, (val) => {
+  if (val && !editingAddress.value) {
+    // mở modal thêm mới
+    addressForm.isDefault = addresses.value.length === 0
+  }
+})
+
+// Regex utils
+const nameRegex = /^[A-Za-zÀ-ỹà-ỹ\s]{3,100}$/u
+const phoneRegex = /^0\d{9}$/
+
+const validateForm = () => {
+  if (!addressForm.recipientName || !addressForm.phoneNumber || !addressForm.addressDetail || !addressForm.provinceId || !addressForm.districtId || !addressForm.wardCode) {
+    return 'Vui lòng điền đầy đủ thông tin bắt buộc';
+  }
+  if (!nameRegex.test(addressForm.recipientName.trim())) {
+    return 'Họ tên phải từ 3-100 ký tự, không chứa ký tự đặc biệt';
+  }
+  if (!phoneRegex.test(addressForm.phoneNumber.trim())) {
+    return 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0';
+  }
+  return '';
+}
+
 // Reset form
 const resetForm = () => {
   Object.assign(addressForm, {
-    name: '',
-    phone: '',
-    address: '',
-    province: '',
+    recipientName: '',
+    phoneNumber: '',
+    addressDetail: '',
+    provinceName: '',
     provinceId: '',
-    district: '',
+    districtName: '',
     districtId: '',
-    ward: '',
+    wardName: '',
     wardCode: '',
-    type: 'home',
-    isDefault: false
+    isDefault: false,
+    addressType: 'HOME'
   })
 }
 
@@ -356,73 +375,109 @@ const editAddress = async (address) => {
 
   editingAddress.value = address
   // Gán các trường cơ bản
-  addressForm.name = address.name
-  addressForm.phone = address.phone
-  addressForm.address = address.address
-  addressForm.type = address.type
+  addressForm.recipientName = address.recipientName
+  addressForm.phoneNumber = address.phoneNumber
+  addressForm.addressDetail = address.addressDetail
+  addressForm.addressType = ['HOME','OFFICE'].includes(address.addressType) ? address.addressType : 'HOME'
   addressForm.isDefault = address.isDefault
 
-  // Gán provinceId trước, chờ fetchDistricts xong rồi gán districtId, tương tự cho ward
+  // Gán provinceId
   addressForm.provinceId = address.provinceId
   await fetchDistricts(address.provinceId)
   addressForm.districtId = address.districtId
   await fetchWards(address.districtId)
   addressForm.wardCode = address.wardCode
 
+  // Gán tên tỉnh/quận/phường
+  addressForm.provinceName = address.provinceName
+  addressForm.districtName = address.districtName
+  addressForm.wardName = address.wardName
+
   isLoadingEditAddress.value = false
 }
 
-// Save address
-const saveAddress = () => {
-  if (editingAddress.value) {
-    // Update existing address
-    const index = addresses.value.findIndex(a => a.id === editingAddress.value.id)
-    if (index !== -1) {
-      addresses.value[index] = { 
-        ...editingAddress.value, 
-        ...addressForm,
-        fullAddress: `${addressForm.address}, ${addressForm.ward}, ${addressForm.district}, ${addressForm.province}`
-      }
-    }
-  } else {
-    // Add new address
-    const newAddress = {
-      id: Date.now(),
-      ...addressForm,
-      fullAddress: `${addressForm.address}, ${addressForm.ward}, ${addressForm.district}, ${addressForm.province}`,
-      shippingNote: addressForm.isDefault ? 'Địa chỉ thanh toán mặc định' : 'Địa chỉ khác'
-    }
-    addresses.value.push(newAddress)
+const saveAddress = async () => {
+  // Auto set mặc định nếu là địa chỉ đầu tiên
+  if (!editingAddress.value && addresses.value.length === 0) {
+    addressForm.isDefault = true
   }
-  
-  closeAddressModal()
+
+  // Validate
+  const validationMsg = validateForm()
+  if (validationMsg) {
+    showToast('error', validationMsg)
+    return
+  }
+
+  isSavingAddress.value = true
+  try {
+    if (editingAddress.value) {
+      await updateAddressApi(editingAddress.value.id, { ...addressForm })
+      showToast('success', 'Cập nhật địa chỉ thành công!')
+    } else {
+      await addAddress({ ...addressForm })
+      showToast('success', 'Thêm địa chỉ thành công!')
+    }
+    await fetchAddresses()
+    closeAddressModal()
+  } catch (error) {
+    const errorMsg = error.response?.data?.message || 'Lưu địa chỉ thất bại'
+    showToast('error', errorMsg)
+    console.error('Save address error:', error)
+  } finally {
+    isSavingAddress.value = false
+  }
 }
 
-// Delete address
-const deleteAddress = (id) => {
-  if (confirm('Bạn có chắc chắn muốn xóa địa chỉ này?')) {
-    const index = addresses.value.findIndex(a => a.id === id)
-    if (index !== -1) {
-      addresses.value.splice(index, 1)
-    }
+const deleteAddress = async (id) => {
+  const addr = addresses.value.find(a => a.id === id)
+  let confirmText = 'Bạn có chắc chắn muốn xóa địa chỉ này?'
+  if (addr?.isDefault) {
+    confirmText = 'Đây là địa chỉ mặc định, sau khi xóa hệ thống sẽ tự đặt mặc định cho địa chỉ khác (nếu có). Bạn có chắc chắn?'
+  }
+
+  const result = await showQuickConfirm(
+    'Xác nhận xóa',
+    confirmText,
+    'warning',
+    'Xóa',
+    'Hủy',
+    'btn-danger'
+  )
+  if (!result.isConfirmed) return
+
+  isDeletingAddress.value = true
+  deletingAddressId.value = id
+  try {
+    await deleteAddressApi(id)
+    showToast('success', 'Xóa địa chỉ thành công!')
+    await fetchAddresses()
+  } catch (error) {
+    const errorMsg = error.response?.data?.message || 'Xóa địa chỉ thất bại'
+    showToast('error', errorMsg)
+    console.error('Delete address error:', error)
+  } finally {
+    isDeletingAddress.value = false
+    deletingAddressId.value = null
   }
 }
 
 const onProvinceChange = () => {
   const p = provinces.value.find(p => p.ProvinceID == addressForm.provinceId)
-  addressForm.province = p ? p.ProvinceName : ''
+  addressForm.provinceName = p ? p.ProvinceName : ''
 }
 const onDistrictChange = () => {
   const d = districts.value.find(d => d.DistrictID == addressForm.districtId)
-  addressForm.district = d ? (d.DistrictName || d.ProvinceName) : ''
+  addressForm.districtName = d ? (d.DistrictName || d.ProvinceName) : ''
 }
 const onWardChange = () => {
   const w = wards.value.find(w => w.WardCode == addressForm.wardCode)
-  addressForm.ward = w ? w.WardName : ''
+  addressForm.wardName = w ? w.WardName : ''
 }
 
 onMounted(() => {
   fetchProvinces()
+  fetchAddresses()
 })
 </script>
 
@@ -452,6 +507,11 @@ onMounted(() => {
 
 .addresses-list {
   margin-top: 24px;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 60px 20px;
 }
 
 .empty-state {
@@ -519,6 +579,47 @@ onMounted(() => {
 
 .modal {
   background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-fade {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.addresses-grid .address-card:nth-child(odd) {
+  animation-delay: 0.1s;
+}
+
+.addresses-grid .address-card:nth-child(even) {
+  animation-delay: 0.2s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
 }
 
 .modal-dialog {
