@@ -56,6 +56,7 @@ import EventHistory from "@/views/admin/views-admin/EventHistory.vue";
 
 import AuthPage from "@/views/AuthPage.vue";
 import { showToast } from "@/utils/swalHelper";
+import ResetPassword from "@/views/ResetPassword.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -176,11 +177,16 @@ const router = createRouter({
         },
       ],
     },
-    // Login page - standalone without layout
+    // Trang auth, không thuộc parent nào
     {
       path: "/auth",
       name: "auth",
       component: AuthPage,
+    },
+    {
+      path: "/reset-password",
+      name: "reset-password",
+      component: ResetPassword,
     },
     // Admin routes
     {
@@ -320,9 +326,12 @@ const router = createRouter({
 });
 
 // tự động chuyển hướng về trang đăng nhập nếu token hết hạn
+const allowRoutes = ['/auth', '/reset-password']
+
+
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('authToken');
-  if (!token && to.path !== '/auth') {
+  if (!token && !allowRoutes.includes(to.path)) {
     showToast('error', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
     next('/auth');
   } else {

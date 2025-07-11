@@ -50,3 +50,25 @@ export const showQuickConfirm = (
   });
 };
 
+export const showAlert = (
+  title,
+  text,
+  icon = "info",
+  confirmButtonText = "OK",
+  confirmButtonClass = "btn-success"
+) => {
+  return Swal.fire({
+    title,
+    text,
+    icon,
+    confirmButtonText,
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    allowEnterKey: false,
+    customClass: {
+      confirmButton: "btn " + confirmButtonClass,
+    },
+    buttonsStyling: false, // Bắt buộc để dùng class custom
+  });
+};
+
