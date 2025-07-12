@@ -52,7 +52,7 @@
             >
               <input 
                 type="checkbox" 
-                :checked="selectedItems.includes(item.id)"
+                :checked="item.selected"
                 @change="toggleItemSelection(item.id)"
                 class="custom-checkbox me-3" 
               />
@@ -208,6 +208,8 @@
 <script>
 import { ref } from 'vue'
 import { getCartItems, updateCartItem, removeCartItem } from '@/services/client/cart.js'
+import { selectCartItem } from '@/services/client/cart.js'
+import { createSessionFromCart } from '@/services/client/checkout.js'
 import { getUserId } from '@/utils/utils.js'
 import { showNotification } from '@/utils/notification.js'
 import { showQuickConfirm, showToast } from '@/utils/swalHelper.js'
@@ -222,7 +224,8 @@ export default {
       selectedItems: [],
       shippingFee: 20000,
       flashSaleManager: null,
-      countdownTexts: {} // Quay lại object thường
+      countdownTexts: {},
+      sessionCreating: false // trạng thái tạo session
     }
   },
   computed: {
@@ -249,6 +252,8 @@ export default {
   async mounted() {
     await this.loadCartItems()
     this.setupFlashSaleCountdowns()
+    // Tạo session checkout mới khi vào cart lần đầu
+    await this.createCheckoutSession()
     
     // Debug: Kiểm tra dữ liệu flash sale
     console.log('=== FLASH SALE DEBUG ===')
@@ -275,6 +280,19 @@ export default {
     }
   },
   methods: {
+    async createCheckoutSession() {
+      // Tạo session checkout mới mỗi khi có thay đổi sản phẩm
+      const userId = getUserId()
+      if (!userId || this.selectedItems.length === 0) return
+      this.sessionCreating = true
+      try {
+        await createSessionFromCart(userId)
+      } catch (err) {
+        console.error('Error creating checkout session:', err)
+      } finally {
+        this.sessionCreating = false
+      }
+    },
     async loadCartItems() {
       try {
         this.loading = true
@@ -312,15 +330,28 @@ export default {
       } else {
         this.selectedItems = this.cartItems.map(item => item.id)
       }
+      // Tạo session mới khi thay đổi tick chọn
+      this.createCheckoutSession()
     },
     
-    toggleItemSelection(itemId) {
-      const index = this.selectedItems.indexOf(itemId)
-      if (index > -1) {
-        this.selectedItems.splice(index, 1)
-      } else {
-        this.selectedItems.push(itemId)
+    async toggleItemSelection(itemId) {
+      const item = this.cartItems.find(item => item.id === itemId)
+      if (!item) return
+      try {
+        const response = await selectCartItem(itemId)
+        // Backend trả về trạng thái mới, cập nhật lại item.selected
+        if (response.status === 200 && response.data?.data) {
+          item.selected = response.data.data.selected
+        } else {
+          // Nếu không trả về thì tự đảo trạng thái
+          item.selected = !item.selected
+        }
+      } catch (err) {
+        console.error('Error updating selected state:', err)
+        showToast('error', 'Không thể cập nhật trạng thái chọn sản phẩm')
       }
+      // Tạo session mới khi thay đổi tick chọn
+      this.createCheckoutSession()
     },
     
     increaseQuantity(item) {
@@ -330,43 +361,27 @@ export default {
       const index = this.cartItems.findIndex(cartItem => cartItem.id === item.id)
       if (index > -1) {
         const newQuantity = this.cartItems[index].quantity + 1
-        console.log('Số lượng mới:', newQuantity)
-        
-        // Đặt giá trị mới vào UI trước
         const oldQuantity = this.cartItems[index].quantity
         const oldTotalPrice = this.cartItems[index].totalPrice
         this.cartItems[index].quantity = newQuantity
-        
-        // Tính toán tạm thời cho totalPrice mới (để UI cập nhật ngay lập tức)
         const unitPrice = this.cartItems[index].unitPrice
         this.cartItems[index].totalPrice = unitPrice * newQuantity
-        
-        // Gọi API
         updateCartItem(item.id, newQuantity)
           .then(response => {
-            console.log('Kết quả API:', response.data)
-            
             if (response.status === 200) {
               const updatedItem = response.data.data
-              console.log('Cập nhật item:', updatedItem)
-              
-              // Cập nhật dữ liệu từ response
               this.cartItems[index].quantity = updatedItem.quantity
               this.cartItems[index].totalPrice = updatedItem.totalPrice
               this.cartItems[index].unitPrice = updatedItem.unitPrice
-              
-              // Kiểm tra nếu có dữ liệu flash sale, cũng cập nhật
               if (updatedItem.flashSalePrice) {
                 this.cartItems[index].flashSalePrice = updatedItem.flashSalePrice
               }
-              
-              // Hiển thị thông báo thành công
-              showToast('success', 'Đã cập nhật số lượng', 'center', true, 3000)
+              showToast('success', 'Đã cập nhật số lượng', 'center', true, 300)
+              // Tạo session mới khi thay đổi số lượng
+              this.createCheckoutSession()
             }
           })
           .catch(error => {
-            console.error('Error updating quantity:', error)
-            // Hoàn tác thay đổi trên UI
             this.cartItems[index].quantity = oldQuantity
             this.cartItems[index].totalPrice = oldTotalPrice
             showToast('error', 'Không thể cập nhật số lượng')
@@ -382,38 +397,24 @@ export default {
       const index = this.cartItems.findIndex(cartItem => cartItem.id === item.id)
       if (index > -1) {
         const newQuantity = this.cartItems[index].quantity - 1
-        console.log('Số lượng mới:', newQuantity)
-        
-        // Đặt giá trị mới vào UI trước
         const oldQuantity = this.cartItems[index].quantity
         this.cartItems[index].quantity = newQuantity
-        
-        // Gọi API
         updateCartItem(item.id, newQuantity)
           .then(response => {
-            console.log('Kết quả API:', response.data)
-            
             if (response.status === 200) {
               const updatedItem = response.data.data
-              console.log('Cập nhật item:', updatedItem)
-              
-              // Cập nhật dữ liệu từ response
               this.cartItems[index].quantity = updatedItem.quantity
               this.cartItems[index].totalPrice = updatedItem.totalPrice
               this.cartItems[index].unitPrice = updatedItem.unitPrice
-              
-              // Kiểm tra nếu có dữ liệu flash sale, cũng cập nhật
               if (updatedItem.flashSalePrice) {
                 this.cartItems[index].flashSalePrice = updatedItem.flashSalePrice
               }
-              
-              // Hiển thị thông báo thành công
-              showToast('success', 'Đã cập nhật số lượng', 'center', true, 3000)
+              showToast('success', 'Đã cập nhật số lượng', 'center', true, 300)
+              // Tạo session mới khi thay đổi số lượng
+              this.createCheckoutSession()
             }
           })
           .catch(error => {
-            console.error('Error updating quantity:', error)
-            // Hoàn tác thay đổi trên UI
             this.cartItems[index].quantity = oldQuantity
             showToast('error', 'Không thể cập nhật số lượng')
           })
@@ -436,40 +437,27 @@ export default {
         showToast('warning', `Số lượng tối đa có thể mua là ${maxQuantity}`)
         return
       }
-      
       try {
         const response = await updateCartItem(item.id, newQuantity)
-        
         if (response.status === 200) {
-          // Cập nhật local state
           const index = this.cartItems.findIndex(cartItem => cartItem.id === item.id)
           if (index > -1) {
             const updatedItem = response.data.data
-            // Cập nhật dữ liệu từ response
             this.cartItems[index].quantity = updatedItem.quantity
             this.cartItems[index].totalPrice = updatedItem.totalPrice
             this.cartItems[index].unitPrice = updatedItem.unitPrice
-            // Kiểm tra nếu có dữ liệu flash sale, cũng cập nhật
             if (updatedItem.flashSalePrice) {
               this.cartItems[index].flashSalePrice = updatedItem.flashSalePrice
             }
-            // Hiển thị thông báo thành công
-            showToast('success', 'Đã cập nhật số lượng', 'center', true, 3000)
+            showToast('success', 'Đã cập nhật số lượng', 'center', true, 300)
+            // Tạo session mới khi thay đổi số lượng
+            this.createCheckoutSession()
           }
         }
       } catch (error) {
         console.error('Error updating quantity:', error)
         showToast('error', 'Không thể cập nhật số lượng')
-        // Reset về giá trị ban đầu nếu lỗi
         event.target.value = item.quantity
-      }
-    },
-    
-    numberOnly(event) {
-      // Chỉ cho phép nhập các ký tự số từ 0-9
-      const keyCode = event.keyCode ? event.keyCode : event.which
-      if ((keyCode < 48 || keyCode > 57) && keyCode !== 46) {
-        event.preventDefault()
       }
     },
     
@@ -512,6 +500,8 @@ export default {
           
           // Hiển thị thông báo xóa thành công ở giữa màn hình
           showToast('success', 'Đã xóa sản phẩm khỏi giỏ hàng')
+          // Tạo session mới khi xóa sản phẩm
+          this.createCheckoutSession()
         }
       } catch (error) {
         console.error('Error removing item:', error)
@@ -614,16 +604,18 @@ export default {
       }
     },
     
-    goToCheckout() {
+    async goToCheckout() {
       if (this.selectedItems.length === 0) {
         showToast('warning', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán')
         return
       }
-      
-      // Lưu selected items vào localStorage để sử dụng ở checkout
-      localStorage.setItem('checkoutItems', JSON.stringify(this.selectedItems))
-      
-      // Chuyển hướng sang trang thanh toán
+      const userId = getUserId()
+      if (!userId) {
+        showToast('error', 'Vui lòng đăng nhập để tiếp tục thanh toán')
+        this.$router.push('/login')
+        return
+      }
+      // Chỉ cần chuyển hướng sang trang checkout, bên đó sẽ tự lấy session mới nhất
       this.$router.push('/checkout')
     }
   }

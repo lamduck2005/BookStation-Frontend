@@ -1,77 +1,93 @@
 <template>
   <div class="container-fluid py-3">
-    <div class="row justify-content-center">
+    <!-- Loading state -->
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-danger" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <div class="mt-2">Đang tải thông tin thanh toán...</div>
+    </div>
+
+    <!-- Error state -->
+    <div v-else-if="error" class="alert alert-danger text-center">
+      <h5>❌ Có lỗi xảy ra</h5>
+      <p>{{ error }}</p>
+      <button class="btn btn-primary" @click="$router.push('/cart')">Quay lại giỏ hàng</button>
+    </div>
+
+    <!-- Main content -->
+    <div v-else class="row justify-content-center">
       <div class="col-12 col-xl-9">
+        <!-- Session info -->
+        <!-- Đã xoá phần hiển thị Phiên thanh toán, Tổng cộng, Sản phẩm -->
+
+        <!-- Validation errors -->
+        <div v-if="validationErrors && validationErrors.length > 0" class="alert alert-warning">
+          <h6>⚠️ Có vấn đề cần kiểm tra:</h6>
+          <ul class="mb-0">
+            <li v-for="error in validationErrors" :key="error">{{ error }}</li>
+          </ul>
+          <button class="btn btn-outline-warning btn-sm mt-2" @click="validateSession">
+            🔄 Kiểm tra lại
+          </button>
+        </div>
+
         <!-- Địa chỉ giao hàng -->
         <div class="card mb-3">
           <div class="card-header bg-white py-2">
             <h6 class="mb-0 text-uppercase fw-bold">Địa chỉ giao hàng</h6>
           </div>
           <div class="card-body py-3">
-            <!-- Địa chỉ đầu tiên -->
-            <div class="d-flex align-items-start mb-2 p-2 border rounded">
-              <div class="form-check me-2 mt-1">
-                <input class="form-check-input" type="radio" name="address" id="address1" checked>
-                <label class="form-check-label" for="address1"></label>
+            <!-- Loading state cho địa chỉ -->
+            <div v-if="addressLoading" class="text-center py-3">
+              <div class="spinner-border spinner-border-sm text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
               </div>
-              <div class="flex-grow-1">
-                <div class="d-flex justify-content-between align-items-start">
-                  <div class="small">
-                    <strong>Vu Linh</strong> | phố 31 đồng da, Phường Bến Nghé, Quận 1, Hồ Chí Minh, VN | 0346447583
+              <span class="ms-2 small">Đang tải địa chỉ...</span>
+            </div>
+            
+            <!-- Có địa chỉ -->
+            <div v-else-if="selectedAddress" class="position-relative">
+              <!-- Địa chỉ đã chọn -->
+              <div class="d-flex">
+                <!-- Radio button -->
+                <div class="form-check me-2 align-self-start mt-1">
+                  <input class="form-check-input" type="radio" name="address" checked>
+                </div>
+                
+                <!-- Thông tin địa chỉ -->
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center mb-1">
+                    <strong class="me-2">{{ selectedAddress.recipientName }}</strong>
+                    <span class="text-muted">{{ selectedAddress.phoneNumber }}</span>
                   </div>
-                  <button class="btn btn-outline-primary btn-sm" style="font-size: 11px; padding: 2px 8px;">Sửa</button>
+                  <div class="text-muted small">
+                    {{ formatFullAddress(selectedAddress) }}
+                  </div>
+                  <div v-if="selectedAddress.isDefault" class="mt-1">
+                    <span class="badge bg-primary" style="font-size: 10px;">Mặc định</span>
+                  </div>
+                </div>
+                
+                <!-- Nút sửa/thay đổi -->
+                <div class="align-self-start">
+                  <button class="btn btn-link text-primary p-0 text-decoration-none small" @click="showAddressModal = true">
+                    Sửa
+                  </button>
                 </div>
               </div>
             </div>
-
-            <!-- Địa chỉ thứ hai -->
-            <div class="d-flex align-items-start mb-2 p-2 border rounded">
-              <div class="form-check me-2 mt-1">
-                <input class="form-check-input" type="radio" name="address" id="address2">
-                <label class="form-check-label" for="address2"></label>
+            
+            <!-- Không có địa chỉ -->
+            <div v-else class="text-center py-3">
+              <div class="text-muted mb-2">
+                <i class="fas fa-map-marker-alt me-2"></i>
+                Bạn chưa có địa chỉ giao hàng
               </div>
-              <div class="flex-grow-1">
-                <div class="d-flex justify-content-between align-items-start">
-                  <div class="small">
-                    <strong>linh vugk</strong> | phố 31 đồng da, Phường Bạch Mai, Quận Hai Bà Trưng, Hà Nội, VN | 0989898990
-                  </div>
-                  <div>
-                    <button class="btn btn-outline-primary btn-sm me-1" style="font-size: 11px; padding: 2px 8px;">Sửa</button>
-                    <button class="btn btn-outline-danger btn-sm" style="font-size: 11px; padding: 2px 8px;">Xóa</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Địa chỉ thứ ba -->
-            <div class="d-flex align-items-start mb-2 p-2 border rounded">
-              <div class="form-check me-2 mt-1">
-                <input class="form-check-input" type="radio" name="address" id="address3">
-                <label class="form-check-label" for="address3"></label>
-              </div>
-              <div class="flex-grow-1">
-                <div class="d-flex justify-content-between align-items-start">
-                  <div class="small">
-                    <strong>linh vu</strong> | td, tggl, Appenzell Innerrhoden, trú, CH | 0989898990
-                  </div>
-                  <div>
-                    <button class="btn btn-outline-primary btn-sm me-1" style="font-size: 11px; padding: 2px 8px;">Sửa</button>
-                    <button class="btn btn-outline-danger btn-sm" style="font-size: 11px; padding: 2px 8px;">Xóa</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Thêm địa chỉ mới -->
-            <div class="d-flex align-items-center p-2 border rounded border-dashed">
-              <div class="form-check me-2">
-                <i class="fas fa-plus text-danger" style="font-size: 12px;"></i>
-              </div>
-              <div>
-                <button class="btn btn-link text-danger p-0 text-decoration-none small">
-                  Giao hàng đến địa chỉ khác
-                </button>
-              </div>
+              <button class="btn btn-primary btn-sm" @click="showAddressModal = true">
+                <i class="fas fa-plus me-1"></i>
+                Thêm địa chỉ
+              </button>
             </div>
           </div>
         </div>
@@ -82,15 +98,9 @@
             <h6 class="mb-0 text-uppercase fw-bold">Phương thức vận chuyển</h6>
           </div>
           <div class="card-body py-3">
-            <div class="d-flex align-items-center p-2 border rounded">
-              <div class="form-check me-2">
-                <input class="form-check-input" type="radio" name="shipping" id="shipping1" checked>
-                <label class="form-check-label" for="shipping1"></label>
-              </div>
-              <div>
-                <strong class="small">Giao hàng tiêu chuẩn: 20.000 đ</strong>
-                <div class="text-muted" style="font-size: 12px;">Dự kiến giao: Thứ Tư - 02/07</div>
-              </div>
+            <div class="alert alert-info text-center">
+              <i class="fas fa-info-circle me-2"></i>
+              Chức năng chọn phương thức vận chuyển sẽ được triển khai trong phiên bản tiếp theo
             </div>
           </div>
         </div>
@@ -236,6 +246,7 @@
             </div>
           </div>
         </div>
+        </div>
 
         <!-- Thành viên BookStation -->
         <div class="card mb-3">
@@ -331,30 +342,6 @@
           </div>
         </div>
 
-        <!-- Thông tin khác -->
-        <div class="card mb-3">
-          <div class="card-header bg-white py-2">
-            <h6 class="mb-0 text-uppercase fw-bold">Thông tin khác</h6>
-          </div>
-          <div class="card-body py-3">
-            <div class="form-check mb-2">
-              <input class="form-check-input" type="checkbox" id="note">
-              <label class="form-check-label small" for="note">
-                Ghi chú
-              </label>
-            </div>
-            <div class="form-check mb-3">
-              <input class="form-check-input" type="checkbox" id="invoice">
-              <label class="form-check-label small" for="invoice">
-                Xuất hóa đơn GTGT 
-                <span class="text-primary ms-1" style="font-size: 11px;">Chi tiết</span>
-              </label>
-            </div>
-            <div class="text-danger small">
-              *Từ ngày 01/11/2020, Công ty BookStation không giải quyết việc xuất lại hóa đơn cho các trường hợp Quý khách không đăng ký thông tin
-            </div>
-          </div>
-        </div>
 
         <!-- Kiểm tra lại đơn hàng -->
         <div class="card mb-5">
@@ -362,30 +349,37 @@
             <h6 class="mb-0 text-uppercase fw-bold">Kiểm tra lại đơn hàng</h6>
           </div>
           <div class="card-body py-3">
-            <div class="d-flex align-items-start">
-              <img 
-                src="/src/assets/img/login/frontImg.jpg" 
-                alt="Product" 
-                class="me-3" 
-                style="width: 80px; height: 100px; object-fit: cover; border-radius: 4px;"
-              >
-              <div class="flex-grow-1">
-                <div class="d-flex justify-content-between align-items-start">
-                  <div class="small flex-grow-1 me-3" style="line-height: 1.4;">
-                    <strong>Búp Sen Xanh - Bìa Cứng - Tặng Kèm Obi + Postcard Hành Trình Cứu Nước - Độc Quyền BookStation</strong>
-                  </div>
-                  <div class="small text-muted text-nowrap me-3">
-                    110.000 đ
-                  </div>
-                  <div class="small text-muted text-nowrap me-3">
-                    1
-                  </div>
-                  <div class="small fw-bold text-nowrap">
-                    110.000 đ
+            <div v-if="session && session.checkoutItems && session.checkoutItems.length > 0">
+
+              <div v-for="item in session.checkoutItems" :key="item.bookId" class="d-flex align-items-start mb-3">
+                <img 
+                  :src="item.bookImage || '/src/assets/img/login/frontImg.jpg'" 
+                  alt="Product" 
+                  class="me-3" 
+                  style="width: 80px; height: 100px; object-fit: cover; border-radius: 4px;"
+                >
+                <div class="flex-grow-1">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="small flex-grow-1 me-3" style="line-height: 1.4;">
+                      <strong>{{ item.bookTitle }}</strong>
+                      <span v-if="item.isOutOfStock" class="badge bg-danger ms-2">Hết hàng</span>
+                      <span v-if="item.isFlashSale" class="badge bg-warning ms-2">Flash Sale</span>
+                    </div>
+                    <div class="small text-muted text-nowrap me-3">
+                      {{ formatPrice(item.unitPrice) }}
+                    </div>
+                    <div class="small text-muted text-nowrap me-3">
+                      {{ item.quantity }}
+                    </div>
+                    <div class="small fw-bold text-nowrap">
+                      {{ formatPrice(item.totalPrice) }}
+                    </div>
                   </div>
                 </div>
               </div>
+             
             </div>
+            <div v-else class="text-center text-muted">Không có sản phẩm nào trong đơn hàng.</div>
           </div>
         </div>
 
@@ -393,6 +387,7 @@
         <!-- Đã chuyển xuống thanh dưới -->
       </div>
     </div>
+    
 
     <!-- Thanh tổng tiền cố định ở dưới -->
     <div class="fixed-bottom bg-white border-top shadow-lg">
@@ -403,15 +398,15 @@
             <div class="text-end">
               <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="small text-muted me-3">Thành tiền</span>
-                <span class="fw-bold small">110.000 đ</span>
+                <span class="fw-bold small">{{ formatPrice(session?.subtotal || 0) }}</span>
               </div>
               <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="small text-muted me-3">Phí vận chuyển (Giao hàng tiêu chuẩn)</span>
-                <span class="fw-bold small">20.000 đ</span>
+                <span class="fw-bold small">{{ formatPrice(session?.shippingFee || 20000) }}</span>
               </div>
               <div class="d-flex justify-content-between align-items-center">
                 <span class="small text-muted me-3">Tổng Số Tiền (gồm VAT)</span>
-                <span class="fw-bold text-warning">130.000 đ</span>
+                <span class="fw-bold text-warning">{{ formatPrice(session?.totalAmount || 0) }}</span>
               </div>
             </div>
           </div>
@@ -442,54 +437,297 @@
 
     <!-- Padding để tránh bị che bởi thanh cố định -->
     <div style="height: 120px;"></div>
-  </div>
+
+    <!-- Modal chọn địa chỉ -->
+    <div class="modal fade" :class="{ show: showAddressModal }" :style="{ display: showAddressModal ? 'block' : 'none' }" tabindex="-1" @click.self="showAddressModal = false">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Chọn địa chỉ giao hàng</h5>
+            <button type="button" class="btn-close" @click="showAddressModal = false"></button>
+          </div>
+          <div class="modal-body">
+            <div v-if="addresses.length === 0" class="text-center py-3">
+              <div class="text-muted">Bạn chưa có địa chỉ nào</div>
+              <button class="btn btn-primary btn-sm mt-2">
+                <i class="fas fa-plus me-1"></i>
+                Thêm địa chỉ mới
+              </button>
+            </div>
+            <div v-else>
+              <div v-for="address in addresses" :key="address.id" class="border rounded p-3 mb-2" :class="{ 'border-primary': selectedAddress?.id === address.id }" @click="selectAddress(address)" style="cursor: pointer;">
+                <div class="d-flex">
+                  <div class="form-check me-2 align-self-start mt-1">
+                    <input class="form-check-input" type="radio" name="modalAddress" :checked="selectedAddress?.id === address.id">
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-1">
+                      <strong class="me-2">{{ address.recipientName }}</strong>
+                      <span class="text-muted">{{ address.phoneNumber }}</span>
+                      <span v-if="address.isDefault" class="badge bg-primary ms-2" style="font-size: 10px;">Mặc định</span>
+                    </div>
+                    <div class="text-muted small">
+                      {{ formatFullAddress(address) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="showAddressModal = false">Hủy</button>
+            <button type="button" class="btn btn-primary" @click="showAddressModal = false">Xác nhận</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Modal backdrop -->
+    <div v-if="showAddressModal" class="modal-backdrop fade show"></div>
+  
 </template>
 
-<script>
-export default {
-  name: 'CheckoutPage',
-  data() {
-    return {
-      couponCode: '',
-      selectedAddress: 'address1',
-      selectedShipping: 'shipping1',
-      selectedPayment: 'zalopay',
-      agreed: true,
-      usePoints: false,
-      useFreeship: false,
-      addNote: false,
-      needInvoice: false,
-      fPoints: 0,
-      freeshipCount: 0
+
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import {
+  getCheckoutSession,
+  getLatestCheckoutSession,
+  validateCheckoutSession,
+  createOrderFromSession,
+  recalculateSessionPricing
+} from '@/services/client/checkout.js'
+import { getDefaultAddress, getAddresses } from '@/services/client/address.js'
+import { getUserId } from '@/utils/utils.js'
+import { showToast } from '@/utils/swalHelper.js'
+
+const router = useRouter()
+const route = useRoute()
+const loading = ref(true)
+const orderLoading = ref(false)
+const session = ref(null)
+const sessionId = ref(null)
+const error = ref(null)
+const validationErrors = ref([])
+const agreed = ref(true)
+const couponCode = ref('')
+
+// Address related states
+const selectedAddress = ref(null)
+const addresses = ref([])
+const addressLoading = ref(false)
+const showAddressModal = ref(false)
+
+let validationTimer = null
+
+const formatPrice = (price) => {
+  if (!price) return '0 ₫'
+  return new Intl.NumberFormat('vi-VN').format(price) + ' ₫'
+}
+
+const loadLatestSession = async (userId) => {
+  try {
+    loading.value = true
+    error.value = null
+    const response = await getLatestCheckoutSession(userId)
+    if (response.status === 200 && response.data) {
+      session.value = response.data.data // <-- đúng cấu trúc
+      sessionId.value = response.data.data.id
+       console.log(
+    'session:', session.value,
+    'checkoutItems:', session.value?.checkoutItems,
+    'length:', session.value?.checkoutItems?.length,
+    'condition:', !!(session.value && session.value.checkoutItems && session.value.checkoutItems.length > 0)
+  )
+      await validateSession()
+    } else {
+      throw new Error('Không tìm thấy phiên thanh toán mới nhất.')
     }
-  },
-  methods: {
-    applyCoupon() {
-      if (this.couponCode.trim()) {
-        // Xử lý áp dụng mã giảm giá
-        alert('Mã giảm giá đã được áp dụng!');
+  } catch (err) {
+    console.error('Error loading latest checkout session:', err)
+    const errorMessage = err.response?.data?.message || err.message
+    if (err.response?.status === 404) {
+      error.value = 'Không có phiên thanh toán nào. Vui lòng quay lại giỏ hàng.'
+    } else {
+      error.value = errorMessage || 'Không thể tải thông tin thanh toán.'
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+const validateSession = async () => {
+  try {
+    const userId = getUserId()
+    const id = session.value?.id
+    if (!userId || !id) return
+    const response = await validateCheckoutSession(id, userId)
+    if (response.status === 200) {
+      validationErrors.value = []
+      if (response.data) {
+        session.value = response.data.data
+        sessionId.value = response.data.data.id
       }
-    },
-    selectCoupon() {
-      // Mở modal chọn mã khuyến mãi
-      alert('Chọn mã khuyến mãi');
-    },
-    selectGift() {
-      // Mở modal chọn quà
-      alert('Chọn quà tặng');
-    },
-    processPayment() {
-      if (!this.agreed) {
-        alert('Vui lòng đồng ý với điều khoản và điều kiện!');
-        return;
-      }
-      
-      // Xử lý thanh toán
-      alert('Đang xử lý thanh toán...');
-      // Redirect hoặc gọi API thanh toán ở đây
+    } else {
+      throw new Error('Validation failed')
+    }
+  } catch (err) {
+    console.error('Validation error:', err)
+    const errorMessage = err.response?.data?.message || err.message
+    if (errorMessage && errorMessage.includes('❌')) {
+      const errors = errorMessage.replace('❌ Có lỗi khi kiểm tra đơn hàng: ', '').split('; ')
+      validationErrors.value = errors.filter(e => e.trim())
+    } else {
+      validationErrors.value = [errorMessage || 'Có lỗi khi kiểm tra đơn hàng']
     }
   }
 }
+
+const setupValidationTimer = () => {
+  validationTimer = setInterval(async () => {
+    if (session.value && session.value.isActive) {
+      await validateSession()
+    }
+  }, 30000)
+}
+
+const processPayment = async () => {
+  if (!agreed.value) {
+    showToast('warning', 'Vui lòng đồng ý với điều khoản và điều kiện!')
+    return
+  }
+  if (!session.value || !session.value.isActive) {
+    showToast('error', 'Phiên thanh toán không hợp lệ hoặc đã hết hạn')
+    return
+  }
+  if (validationErrors.value.length > 0) {
+    showToast('warning', 'Vui lòng kiểm tra và sửa các lỗi trước khi đặt hàng')
+    return
+  }
+  try {
+    orderLoading.value = true
+    const userId = getUserId()
+    await validateSession()
+    if (validationErrors.value.length > 0) {
+      showToast('error', 'Có lỗi trong đơn hàng. Vui lòng kiểm tra lại.')
+      return
+    }
+    const response = await createOrderFromSession(sessionId.value, userId)
+    if (response.status === 201 && response.data) {
+      const orderId = response.data
+      showToast('success', `Đặt hàng thành công! Mã đơn hàng: ${orderId}`)
+      router.push(`/order/success/${orderId}`)
+    } else {
+      throw new Error('Invalid response from order creation')
+    }
+  } catch (err) {
+    console.error('Error creating order:', err)
+    const errorMessage = err.response?.data?.message || err.message
+    if (err.response?.status === 400) {
+      if (errorMessage.includes('hết hàng')) {
+        showToast('error', 'Một số sản phẩm đã hết hàng. Vui lòng cập nhật lại giỏ hàng.')
+      } else if (errorMessage.includes('flash sale')) {
+        showToast('error', 'Flash sale đã kết thúc. Giá sản phẩm có thể đã thay đổi.')
+      } else if (errorMessage.includes('voucher')) {
+        showToast('error', 'Voucher không hợp lệ hoặc đã hết hạn.')
+      } else if (errorMessage.includes('hết hạn')) {
+        showToast('error', 'Phiên thanh toán đã hết hạn. Vui lòng tạo phiên mới.')
+        router.push('/cart')
+      } else {
+        showToast('error', errorMessage)
+      }
+      await loadLatestSession(getUserId())
+    } else if (err.response?.status === 401) {
+      showToast('error', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
+      router.push('/login')
+    } else {
+      showToast('error', 'Lỗi hệ thống. Vui lòng thử lại sau.')
+    }
+  } finally {
+    orderLoading.value = false
+  }
+}
+
+const recalculateOrder = async () => {
+  try {
+    const userId = getUserId()
+    const response = await recalculateSessionPricing(sessionId.value, userId)
+    if (response.status === 200 && response.data) {
+      session.value = response.data
+      showToast('success', 'Đã cập nhật lại giá đơn hàng')
+    }
+  } catch (err) {
+    console.error('Error recalculating order:', err)
+    showToast('error', 'Không thể cập nhật lại giá đơn hàng')
+  }
+}
+
+// Address functions
+const loadAddresses = async () => {
+  try {
+    addressLoading.value = true
+    const userId = getUserId()
+    if (!userId) return
+    
+    const addressData = await getAddresses(userId)
+    if (addressData.success && addressData.data) {
+      addresses.value = addressData.data
+      // Tìm địa chỉ mặc định hoặc lấy địa chỉ đầu tiên
+      selectedAddress.value = addressData.data.find(addr => addr.isDefault) || addressData.data[0] || null
+    }
+  } catch (err) {
+    console.error('Error loading addresses:', err)
+    // Không hiển thị toast error vì có thể user chưa có địa chỉ nào
+  } finally {
+    addressLoading.value = false
+  }
+}
+
+const formatFullAddress = (address) => {
+  if (!address) return ''
+  const parts = [
+    address.addressDetail,
+    address.wardName,
+    address.districtName,
+    address.provinceName
+  ].filter(Boolean)
+  return parts.join(', ')
+}
+
+const applyCoupon = () => {
+  if (!couponCode.value.trim()) {
+    showToast('warning', 'Vui lòng nhập mã khuyến mãi')
+    return
+  }
+  // TODO: Implement coupon application logic
+  showToast('info', 'Chức năng áp dụng mã khuyến mãi sẽ được triển khai sớm')
+}
+
+const selectAddress = (address) => {
+  selectedAddress.value = address
+}
+
+// Lắng nghe sự kiện storage để reload giữa các tab
+// ...existing code...
+
+onMounted(async () => {
+  const userId = getUserId()
+  if (!userId) {
+    error.value = 'Vui lòng đăng nhập để tiếp tục.'
+    loading.value = false
+    router.push('/login')
+    return
+  }
+  
+  // Load checkout session và addresses song song
+  await Promise.all([
+    loadLatestSession(userId),
+    loadAddresses()
+  ])
+  
+  setupValidationTimer()
+})
 </script>
 
 <style scoped>
@@ -517,6 +755,30 @@ export default {
 .btn-danger:hover {
   background-color: #c82333;
   border-color: #bd2130;
+}
+
+.modal {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal.show {
+  display: block !important;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1040;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000;
+  opacity: 0.5;
+}
+
+.border-primary {
+  border-color: #0d6efd !important;
+  background-color: rgba(13, 110, 253, 0.05);
 }
 
 .text-warning {

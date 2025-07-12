@@ -50,9 +50,22 @@ export const removeCartItem = async (cartItemId) => {
   }
 }
 
+// Update selected state for cart item
+// Toggle selected state for cart item
+export const selectCartItem = async (cartItemId) => {
+  try {
+    const response = await axiosClient.put(`/api/carts/items/${cartItemId}/select`)
+    return response
+  } catch (error) {
+    console.error('Error updating selected state:', error)
+    throw error
+  }
+}
+
 export default {
   addToCart,
   getCartItems,
   updateCartItem,
-  removeCartItem
+  removeCartItem,
+  selectCartItem
 }

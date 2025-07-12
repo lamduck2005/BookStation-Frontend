@@ -292,7 +292,9 @@
 <script>
 import { getBookDetail } from '@/services/client/book.js'
 import { addToCart as addToCartAPI } from '@/services/client/cart.js'
+import { createSessionFromCart } from '@/services/client/checkout.js'
 import { showToast } from '@/utils/swalHelper.js'
+import { getUserId } from '@/utils/utils.js'
 import { createFlashSaleCountdown, formatCountdownTime } from '@/utils/flashSaleUtils.js'
 
 export default {
@@ -419,8 +421,67 @@ export default {
         return
       }
       
-      // Thêm vào giỏ hàng trước, sau đó chuyển hướng sang checkout
-      this.addToCart(true)
+      // Kiểm tra đăng nhập
+      const userId = getUserId()
+      if (!userId) {
+        showToast('error', 'Vui lòng đăng nhập để mua hàng')
+        this.$router.push('/auth')
+        return
+      }
+      
+      // Mua ngay: tạo checkout session từ cart và redirect thẳng đến checkout
+      this.buyNowDirect()
+    },
+    
+    async buyNowDirect() {
+      try {
+        this.addingToCart = true
+        
+        const userId = getUserId()
+        
+        // Bước 1: Thêm sản phẩm vào giỏ hàng
+        const cartData = {
+          userId: userId,
+          bookId: this.book.id,
+          quantity: this.quantity
+        }
+        
+        const addCartResponse = await addToCartAPI(cartData)
+        
+        if (addCartResponse.status === 200) {
+          // Bước 2: Tạo checkout session từ cart
+          const sessionResponse = await createSessionFromCart(userId)
+          
+          if (sessionResponse.status === 201) {
+            const sessionId = sessionResponse.data.id
+            
+            // Bước 3: Redirect thẳng đến checkout page
+            showToast('success', 'Đang chuyển đến trang thanh toán...')
+            setTimeout(() => {
+              this.$router.push(`/checkout/${sessionId}`)
+            }, 300)
+          } else {
+            throw new Error('Không thể tạo phiên checkout')
+          }
+        } else {
+          throw new Error('Không thể thêm sản phẩm vào giỏ hàng')
+        }
+        
+      } catch (error) {
+        console.error('Error in buy now process:', error)
+        
+        let errorMessage = 'Có lỗi xảy ra khi mua hàng'
+        
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message
+        } else if (error.message) {
+          errorMessage = error.message
+        }
+        
+        showToast('error', errorMessage)
+      } finally {
+        this.addingToCart = false
+      }
     },
     
     async addToCart(isBuyNow = false) {
@@ -428,12 +489,19 @@ export default {
         return
       }
       
+      // Kiểm tra đăng nhập
+      const userId = getUserId()
+      if (!userId) {
+        showToast('error', 'Vui lòng đăng nhập để thêm vào giỏ hàng')
+        this.$router.push('/auth')
+        return
+      }
+      
       try {
         this.addingToCart = true
         
-        // Tạm thời sử dụng userId = 1, sau này sẽ lấy từ auth
         const cartData = {
-          userId: 1, // TODO: Lấy từ user authentication
+          userId: userId,
           bookId: this.book.id,
           quantity: this.quantity
         }
@@ -442,21 +510,27 @@ export default {
         
         if (response.status === 200) {
           // Hiển thị thông báo thành công
-          showToast('success', response.data.message || 'Thêm sản phẩm vào giỏ hàng thành công!')
+          showToast('success', response.data.message || 'Thêm sản phẩm vào giỏ hàng thành công!', 'top-end', true, 1000)
           
           // Nếu có flash sale, hiển thị số tiền tiết kiệm
-          if (response.data.data?.savedAmount > 0) {
-            setTimeout(() => {
-              showToast('info', `Bạn đã tiết kiệm ${this.formatPrice(response.data.data.savedAmount)}!`)
-            }, 2000)
+              if (response.data.data?.savedAmount > 0) {
+                setTimeout(() => {
+                  showToast('info', `Bạn đã tiết kiệm ${this.formatPrice(response.data.data.savedAmount)}!`, 'center', true, 300)
+                }, 300)
           }
-          
-          // CHỈ khi là mua ngay mới chuyển hướng sang checkout
-          if (isBuyNow) {
+        // Nếu có thông báo hết hàng flash sale
+        if (response.data.data?.flashSaleStockLeft !== undefined && response.data.data?.flashSaleStockLeft !== null) {
+          // Nếu đã có đủ số lượng trong giỏ, flash sale không đủ hàng
+          if (response.data.data.flashSaleStockLeft === 0 && response.data.data.cartQuantity) {
             setTimeout(() => {
-              this.$router.push('/checkout')
-            }, 1500)
+              showToast('warning', `Bạn đã có ${response.data.data.cartQuantity} trong giỏ. Flash sale không đủ hàng. Còn lại: ${response.data.data.cartQuantity}`, 'top-end', true, 1000)
+            }, 300)
+          } else if (response.data.data.flashSaleStockLeft > 0 && response.data.data.cartQuantity) {
+            setTimeout(() => {
+              showToast('warning', `Bạn đã có ${response.data.data.cartQuantity} trong giỏ. Flash sale không đủ hàng. Còn lại: ${response.data.data.flashSaleStockLeft}`, 'top-end', true, 1000)
+            }, 300)
           }
+        }
         }
       } catch (error) {
         console.error('Error adding to cart:', error)
