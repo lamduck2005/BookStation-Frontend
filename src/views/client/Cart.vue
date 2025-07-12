@@ -19,10 +19,11 @@
         <div v-else-if="cartItems.length === 0" class="text-center py-5">
           <i class="fa fa-shopping-cart text-muted" style="font-size: 4rem;"></i>
           <h4 class="mt-3 text-muted">Giỏ hàng trống</h4>
-          <p class="text-muted">Thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm</p>
-          <button class="btn btn-primary" @click="$router.push('/')">
-            Tiếp tục mua sắm
-          </button>
+          <p class="text-muted">
+            <span v-if="!getUserId()">Vui lòng <button class="btn btn-link p-0" @click="$router.push('/login')">đăng nhập</button> để mua hàng</span>
+            <span v-else>Thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm</span>
+          </p>
+          <button v-if="getUserId()" class="btn btn-primary" @click="$router.push('/')">Tiếp tục mua sắm</button>
         </div>
         
         <!-- Cart items -->
@@ -207,6 +208,7 @@
 <script>
 import { ref } from 'vue'
 import { getCartItems, updateCartItem, removeCartItem } from '@/services/client/cart.js'
+import { getUserId } from '@/utils/utils.js'
 import { showNotification } from '@/utils/notification.js'
 import { showQuickConfirm, showToast } from '@/utils/swalHelper.js'
 import { createFlashSaleManager, formatCountdownTime } from '@/utils/flashSaleUtils.js'
@@ -276,24 +278,23 @@ export default {
     async loadCartItems() {
       try {
         this.loading = true
-        // Tạm thời sử dụng userId = 1, sau này sẽ lấy từ auth
-        const response = await getCartItems(1)
-        
+        const userId = getUserId()
+        if (!userId) {
+          // Chưa đăng nhập, giỏ hàng trống
+          this.cartItems = []
+          this.selectedItems = []
+          return
+        }
+        const response = await getCartItems(userId)
         if (response.status === 200) {
           this.cartItems = response.data.data || []
-          
           // Đảm bảo các sản phẩm có đầy đủ thông tin cần thiết
-          this.cartItems = this.cartItems.map(item => {
-            return {
-              ...item,
-              // Mặc định cho phép tăng giảm số lượng nếu không có thông tin giới hạn
-              maxAvailableQuantity: item.maxAvailableQuantity || 99
-            }
-          })
-          
+          this.cartItems = this.cartItems.map(item => ({
+            ...item,
+            maxAvailableQuantity: item.maxAvailableQuantity || 99
+          }))
           // Mặc định chọn tất cả items
           this.selectedItems = this.cartItems.map(item => item.id)
-          
           // Setup countdown cho flash sales
           this.setupFlashSaleCountdowns()
         }
