@@ -1,0 +1,26 @@
+import client from "../../utils/axios.js";
+import { getUserId } from "../../utils/utils.js";
+
+export const getAddresses = async () => {
+  const userId = getUserId();
+  return client.get(`/api/addresses`, { params: { userId } });
+};
+
+export const getAddress = async (id) => client.get(`/api/addresses/${id}`);
+
+export const addAddress = async (data) => {
+  const userId = getUserId();
+  return client.post(`/api/addresses`, { ...data, userId });
+};
+
+export const updateAddress = async (id, data) => client.put(`/api/addresses/${id}`, data);
+
+export const deleteAddress = async (id) => client.delete(`/api/addresses/${id}`);
+
+export default {
+  getAddresses,
+  getAddress,
+  addAddress,
+  updateAddress,
+  deleteAddress,
+};

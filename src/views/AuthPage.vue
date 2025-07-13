@@ -1,8 +1,8 @@
 <script setup>
 import router from '@/router'
-import { showToast } from '@/utils/swalHelper'
+import { showAlert, showToast } from '@/utils/swalHelper'
 import { ref } from 'vue'
-import { register, login } from '@/services/auth'
+import { register, login, forgotPassword } from '@/services/auth'
 
 // Reactive data cho form đăng nhập
 const loginForm = ref({
@@ -183,30 +183,37 @@ const handleRegister = async (e) => {
 }
 
 // Hàm xử lý quên mật khẩu
-const handleForgotPassword = (e) => {
-    e.preventDefault()
+const handleForgotPassword = async (e) => {
     
+    e.preventDefault()
+
+    const email = forgotPasswordForm.value.email.trim()
+
     // Validation
-    if (!forgotPasswordForm.value.email) {
+    if (!email) {
         showToast('error', 'Vui lòng nhập email!')
         return
     }
-    
-    // Kiểm tra email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(forgotPasswordForm.value.email)) {
+
+    // Kiểm tra email format (chỉ cho phép chữ, số, dấu chấm, gạch dưới)
+    const emailRegex = /^[a-zA-Z0-9._]+@[a-zA-Z0-9.-]+\.[A-Za-z]{1,}$/
+    if (!emailRegex.test(email)) {
         showToast('error', 'Email không hợp lệ!')
         return
     }
-    
-    // TODO: Gọi API quên mật khẩu ở đây
-    console.log('Forgot password data:', forgotPasswordForm.value)
-    
-    showToast('success', 'Link khôi phục đã được gửi đến email của bạn!')
-    
-    // Reset form và quay lại trang đăng nhập
-    forgotPasswordForm.value.email = ''
-    isContainerFlipped.value = false
+
+    try {
+        const res = await forgotPassword(email)
+
+        // Hiển thị thông báo với message trả về hoặc mặc định
+        showAlert('Thông báo', res?.data?.message || 'Link khôi phục đã được gửi đến email của bạn!')
+
+        // Reset form và có thể flip về đăng nhập
+        forgotPasswordForm.value.email = ''
+        // isContainerFlipped.value = false
+    } catch (error) {
+        showToast('error', error?.response?.data?.message || 'Gửi link khôi phục thất bại!')
+    }
 }
 
 </script>
@@ -392,6 +399,7 @@ const handleForgotPassword = (e) => {
                                             type="email" 
                                             placeholder="Nhập email để khôi phục" 
                                             v-model="forgotPasswordForm.email"
+
                                             required
                                         >
                                     </div>
@@ -399,7 +407,7 @@ const handleForgotPassword = (e) => {
                                         Chúng tôi sẽ gửi link khôi phục mật khẩu đến email của bạn
                                     </div>
                                     <div class="button input-box">
-                                        <input type="submit" value="Gửi link khôi phục">
+                                        <input type="submit" value="Gửi link khôi phục" @click="handleForgotPassword">
                                     </div>
                                     <div class="text back-to-login">
                                         <a href="#" @click.prevent="showForgotPassword">← Quay lại đăng nhập</a>
