@@ -14,8 +14,8 @@
 
     <!-- Voucher Tabs -->
     <div class="voucher-tabs mb-4">
-      <button 
-        v-for="tab in voucherTabs" 
+      <button
+        v-for="tab in voucherTabs"
         :key="tab.key"
         class="voucher-tab"
         :class="{ active: activeTab === tab.key }"
@@ -27,6 +27,9 @@
 
     <!-- Vouchers List -->
     <div class="vouchers-list">
+      <div v-if="loading" class="text-center my-4">Đang tải voucher...</div>
+      <div v-if="error" class="alert alert-danger">{{ error }}</div>
+
       <div v-if="filteredVouchers.length === 0" class="no-vouchers">
         <div class="empty-state">
           <i class="bi bi-ticket-perforated text-muted"></i>
@@ -35,8 +38,15 @@
       </div>
 
       <div v-else class="row">
-        <div v-for="voucher in filteredVouchers" :key="voucher.id" class="col-lg-6 mb-4">
-          <div class="voucher-card" :class="{ expired: voucher.status === 'expired' }">
+        <div
+          v-for="voucher in filteredVouchers"
+          :key="voucher.id"
+          class="col-lg-6 mb-4"
+        >
+          <div
+            class="voucher-card"
+            :class="{ expired: voucher.status === 'expired' }"
+          >
             <!-- Voucher Icon -->
             <div class="voucher-icon">
               <div class="icon-bg" :class="voucher.type">
@@ -48,26 +58,31 @@
             <div class="voucher-content">
               <h5 class="voucher-title">{{ voucher.title }}</h5>
               <p class="voucher-description">{{ voucher.description }}</p>
-              
+
               <div class="voucher-code">
                 <span class="code-label">
                   <i class="bi bi-upc-scan me-1"></i>
                   {{ voucher.code }}
                 </span>
               </div>
-              
+
               <div class="voucher-expiry">
-                <small class="text-muted">HSD: {{ formatDate(voucher.expiryDate) }}</small>
+                <small class="text-muted"
+                  >HSD: {{ formatDate(voucher.expiryDate) }}</small
+                >
               </div>
             </div>
 
             <!-- Voucher Actions -->
             <div class="voucher-actions">
-              <button class="btn btn-sm btn-primary" @click="viewVoucherDetails(voucher)">
+              <button
+                class="btn btn-sm btn-primary"
+                @click="viewVoucherDetails(voucher)"
+              >
                 Chi tiết
               </button>
-              <button 
-                class="btn btn-sm btn-outline-secondary" 
+              <button
+                class="btn btn-sm btn-outline-secondary"
                 @click="copyVoucherCode(voucher.code)"
               >
                 Copy mã
@@ -77,142 +92,135 @@
         </div>
       </div>
     </div>
+
+    <!-- Voucher Detail Form Modal -->
+    <div v-if="showDetail" class="voucher-detail-modal">
+      <div class="voucher-detail-content">
+        <h4>Chi tiết voucher</h4>
+        <div><strong>Tên:</strong> {{ selectedVoucher.title }}</div>
+        <div><strong>Mã:</strong> {{ selectedVoucher.code }}</div>
+        <div><strong>Mô tả:</strong> {{ selectedVoucher.description }}</div>
+        <div>
+          <strong>HSD:</strong> {{ formatDate(selectedVoucher.expiryDate) }}
+        </div>
+        <button class="btn btn-secondary mt-3" @click="closeDetail">
+          Đóng
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from "vue";
+import { getUserId } from "@/utils/utils";
+import { getVoucherWithNewUserId,getUserVoucher } from "@/services/client/userVoucher";
 
-const activeTab = ref('available')
-
+const activeTab = ref("available");
 const voucherTabs = [
-  { key: 'available', label: 'Voucher của tôi' },
-  { key: 'partner', label: 'Voucher đối tác' }
-]
+  { key: "available", label: "Voucher của tôi" },
+  { key: "partner", label: "Voucher đối tác" },
+];
+const voucherChannel = new BroadcastChannel('voucher-status');
 
-// Fake vouchers data
-const vouchers = ref([
-  {
-    id: 1,
-    title: 'Mã Giảm 10K - Toàn Sàn',
-    description: 'Đơn hàng từ 130k - Không bao gồm giá ưu đãi của các sản phẩm sau Manga, Ngoại Văn...',
-    code: 'FHS10KT07',
-    expiryDate: '2025-07-31',
-    type: 'discount',
-    category: 'available',
-    status: 'active'
-  },
-  {
-    id: 2,
-    title: 'Mã Giảm 20K - Toàn Sàn',
-    description: 'Đơn hàng từ 249k - Không bao gồm giá ưu đãi của các sản phẩm sau Manga, Ngoại Văn...',
-    code: 'FHS20KT07',
-    expiryDate: '2025-07-31',
-    type: 'discount',
-    category: 'available',
-    status: 'active'
-  },
-  {
-    id: 3,
-    title: 'Mã Giảm 40K - Toàn Sàn',
-    description: 'Đơn hàng từ 499k - Không bao gồm giá ưu đãi của các sản phẩm sau Manga, Ngoại Văn...',
-    code: 'FHS40KT07',
-    expiryDate: '2025-07-31',
-    type: 'discount',
-    category: 'available',
-    status: 'active'
-  },
-  {
-    id: 4,
-    title: 'Mã Giảm 80K - Toàn Sàn',
-    description: 'Đơn hàng từ 999k - Không bao gồm giá ưu đãi của các sản phẩm sau Manga, Ngoại...',
-    code: 'FHS80KT07',
-    expiryDate: '2025-07-31',
-    type: 'discount',
-    category: 'available',
-    status: 'active'
-  },
-  {
-    id: 5,
-    title: 'Mã Giảm 10% - VPP & DCHS',
-    description: 'Giảm tối đa 50K cho ĐH từ 100k',
-    code: 'VPP10PCT07',
-    expiryDate: '2025-07-31',
-    type: 'percent',
-    category: 'available',
-    status: 'active'
-  },
-  {
-    id: 6,
-    title: 'Mã Giảm 20K - Sách Thiếu Nhi',
-    description: 'Đơn hàng từ 210k',
-    code: 'STN20KT07',
-    expiryDate: '2025-07-31',
-    type: 'discount',
-    category: 'available',
-    status: 'active'
-  },
-  // Partner vouchers
-  {
-    id: 7,
-    title: 'Voucher Shopee - Giảm 15K',
-    description: 'Áp dụng cho đơn hàng từ 200k trên Shopee',
-    code: 'SHOPEE15K',
-    expiryDate: '2025-08-15',
-    type: 'partner',
-    category: 'partner',
-    status: 'active'
-  },
-  {
-    id: 8,
-    title: 'Voucher Grab - Miễn phí vận chuyển',
-    description: 'Miễn phí giao hàng cho đơn hàng sách',
-    code: 'GRABFREE',
-    expiryDate: '2025-07-20',
-    type: 'freeship',
-    category: 'partner',
-    status: 'active'
+const vouchers = ref([]);
+const loading = ref(false);
+const error = ref(null);
+
+// Lấy voucher từ API khi mounted
+onMounted(async () => {
+  loading.value = true;
+  try {
+    const res = await getUserVoucher(getUserId());
+    let data = Array.isArray(res.data) ? res.data : [];
+    // Gán thêm các trường cần thiết cho UI
+    data = data.map((voucher) => ({
+      ...voucher,
+      title: voucher.name, // dùng name làm title
+      expiryDate: voucher.endTime, // dùng endTime làm expiryDate
+      category: "available", // hoặc "partner" nếu là voucher đối tác
+      status: voucher.status === 1 ? "active" : "expired",
+    }));
+    vouchers.value = data;
+  } catch (err) {
+    error.value = "Không thể tải voucher.";
+  } finally {
+    loading.value = false;
   }
-])
+});
 
-// Computed filtered vouchers
-const filteredVouchers = computed(() => {
-  return vouchers.value.filter(voucher => voucher.category === activeTab.value)
-})
+voucherChannel.onmessage = (event) => {
+  if (event.data === 'updated') {
+    fetchVouchers();
+    console.log('Đã nhận sự kiện voucher-status-updated qua BroadcastChannel');
+  }
+};
+const filteredVouchers = computed(() =>
+  vouchers.value.filter((voucher) => voucher.category === activeTab.value)
+);
 
-// Format date
-const formatDate = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('vi-VN')
-}
+const formatDate = (dateValue) => {
+  const date = new Date(Number(dateValue));
+  return date.toLocaleDateString("vi-VN");
+};
 
-// Get empty message
 const getEmptyMessage = () => {
-  return activeTab.value === 'available' 
-    ? 'Bạn chưa có voucher nào.' 
-    : 'Không có voucher đối tác nào khả dụng.'
-}
+  return activeTab.value === "available"
+    ? "Bạn chưa có voucher nào."
+    : "Không có voucher đối tác nào khả dụng.";
+};
 
 // Copy voucher code
 const copyVoucherCode = (code) => {
-  navigator.clipboard.writeText(code).then(() => {
-    alert(`Đã copy mã voucher: ${code}`)
-  }).catch(() => {
-    // Fallback for older browsers
-    const textArea = document.createElement('textarea')
-    textArea.value = code
-    document.body.appendChild(textArea)
-    textArea.select()
-    document.execCommand('copy')
-    document.body.removeChild(textArea)
-    alert(`Đã copy mã voucher: ${code}`)
-  })
-}
+  navigator.clipboard
+    .writeText(code)
+    .then(() => {
+      alert(`Đã copy mã voucher: ${code}`);
+    })
+    .catch(() => {
+      const textArea = document.createElement("textarea");
+      textArea.value = code;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      alert(`Đã copy mã voucher: ${code}`);
+    });
+};
 
-// View voucher details
+// Hiển thị form chi tiết voucher
+const showDetail = ref(false);
+const selectedVoucher = ref(null);
+
 const viewVoucherDetails = (voucher) => {
-  alert(`Chi tiết voucher: ${voucher.title}\nMã: ${voucher.code}\nMô tả: ${voucher.description}`)
-}
+  selectedVoucher.value = voucher;
+  showDetail.value = true;
+};
+
+const closeDetail = () => {
+  showDetail.value = false;
+  selectedVoucher.value = null;
+};
+
+const fetchVouchers = async () => {
+  loading.value = true;
+  try {
+    const res = await getUserVoucher(getUserId());
+    let data = Array.isArray(res.data) ? res.data : [];
+    data = data.map((voucher) => ({
+      ...voucher,
+      title: voucher.name,
+      expiryDate: voucher.endTime,
+      category: "available",
+      status: voucher.status === 1 ? "active" : "expired",
+    }));
+    vouchers.value = data;
+  } catch (err) {
+    error.value = "Không thể tải voucher.";
+  } finally {
+    loading.value = false;
+  }
+};
 </script>
 
 <style scoped>
@@ -284,7 +292,7 @@ const viewVoucherDetails = (voucher) => {
   border: 1px solid #e9ecef;
   border-radius: 8px;
   transition: all 0.2s ease;
-  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
   color: white;
   height: 100%;
 }
@@ -359,7 +367,7 @@ const viewVoucherDetails = (voucher) => {
   border-radius: 4px;
   font-size: 12px;
   font-weight: 600;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
 }
 
 .voucher-expiry {
@@ -411,17 +419,38 @@ const viewVoucherDetails = (voucher) => {
   color: white;
 }
 
+.voucher-detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.voucher-detail-content {
+  background: #fff;
+  padding: 32px 24px;
+  border-radius: 8px;
+  min-width: 320px;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.2);
+}
+
 @media (max-width: 768px) {
   .profile-vouchers {
     padding: 16px;
   }
-  
+
   .voucher-card {
     flex-direction: column;
     text-align: center;
     gap: 16px;
   }
-  
+
   .voucher-actions {
     flex-direction: row;
     justify-content: center;

@@ -50,6 +50,8 @@ export const upStatusVouchers = async (id, status, updatedBy) => {
     const response = await client.patch(`/api/vouchers/status`, null, {
       params: { id, status, updatedBy },
     });
+    // Sau khi cập nhật trạng thái voucher thành công
+    window.dispatchEvent(new Event("voucher-status-updated"));
     return response.data;
   } catch (error) {
     console.error("Lỗi khi cập nhật trạng thái vouchers:", error);
