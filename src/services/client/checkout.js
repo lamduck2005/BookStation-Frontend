@@ -11,7 +11,7 @@ import axiosClient from '@/utils/axios'
  */
 
 /**
- * Tạo checkout session từ cart
+ * Tạo checkout session từ cart - API mới theo documentation
  * @param {number} userId - ID của user
  * @returns {Promise} Response chứa checkout session
  */
@@ -28,14 +28,23 @@ export const createSessionFromCart = async (userId) => {
 }
 
 /**
- * Tạo checkout session custom
- * @param {Object} sessionData - Dữ liệu checkout session
+ * Tạo checkout session với dữ liệu tùy chỉnh - Theo API documentation mới
+ * @param {Object} sessionData - Dữ liệu checkout session với các trường:
+ *   - items: [{bookId, quantity}] (required)
+ *   - addressId: number (optional)
+ *   - shippingMethod: string (optional) - "STANDARD", "EXPRESS"
+ *   - estimatedDeliveryFrom: number (optional) - timestamp
+ *   - estimatedDeliveryTo: number (optional) - timestamp
+ *   - paymentMethod: string (optional) - "COD", "BANK_TRANSFER", "VNPAY"
+ *   - selectedVoucherIds: number[] (optional) - tối đa 2
+ *   - notes: string (optional)
+ * @param {number} userId - ID của user
  * @returns {Promise} Response chứa checkout session
  */
-export const createCheckoutSession = async (sessionData) => {
+export const createCheckoutSession = async (sessionData, userId) => {
   try {
     console.log('Creating custom checkout session:', sessionData)
-    const response = await axiosClient.post('/api/checkout-sessions', sessionData)
+    const response = await axiosClient.post(`/api/checkout-sessions?userId=${userId}`, sessionData)
     console.log('Create custom session response:', response)
     return response
   } catch (error) {
@@ -45,15 +54,24 @@ export const createCheckoutSession = async (sessionData) => {
 }
 
 /**
- * Cập nhật checkout session (địa chỉ, voucher, payment method, etc.)
+ * Cập nhật checkout session - Tất cả trường đều optional theo documentation
  * @param {number} sessionId - ID của checkout session
- * @param {Object} updateData - Dữ liệu cập nhật
+ * @param {number} userId - ID của user
+ * @param {Object} updateData - Dữ liệu cập nhật (tất cả trường optional):
+ *   - items: [{bookId, quantity}] (optional)
+ *   - addressId: number (optional) 
+ *   - shippingMethod: string (optional) - "STANDARD", "EXPRESS"
+ *   - estimatedDeliveryFrom: number (optional) - timestamp
+ *   - estimatedDeliveryTo: number (optional) - timestamp
+ *   - paymentMethod: string (optional) - "COD", "BANK_TRANSFER", "VNPAY"
+ *   - selectedVoucherIds: number[] (optional) - tối đa 2
+ *   - notes: string (optional)
  * @returns {Promise} Response chứa checkout session đã cập nhật
  */
-export const updateCheckoutSession = async (sessionId, updateData) => {
+export const updateCheckoutSession = async (sessionId, userId, updateData) => {
   try {
-    console.log(`Updating checkout session ${sessionId}:`, updateData)
-    const response = await axiosClient.put(`/api/checkout-sessions/${sessionId}`, updateData)
+    console.log(`Updating checkout session ${sessionId} for user ${userId}:`, updateData)
+    const response = await axiosClient.put(`/api/checkout-sessions/${sessionId}?userId=${userId}`, updateData)
     console.log('Update session response:', response)
     return response
   } catch (error) {

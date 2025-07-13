@@ -111,135 +111,84 @@
             <h6 class="mb-0 text-uppercase fw-bold">Phương thức thanh toán</h6>
           </div>
           <div class="card-body py-3">
-            <!-- ZaloPay -->
-            <div class="d-flex align-items-center mb-2 p-2 border rounded">
+            <!-- Thanh toán khi nhận hàng (COD) - Mặc định -->
+            <div class="d-flex align-items-center mb-2 p-2 border rounded" :class="{ 'border-primary bg-light': session?.paymentMethod === 'COD' || !session?.paymentMethod }">
               <div class="form-check me-2">
-                <input class="form-check-input" type="radio" name="payment" id="zalopay" checked>
-                <label class="form-check-label" for="zalopay"></label>
+                <input 
+                  class="form-check-input" 
+                  type="radio" 
+                  name="payment" 
+                  id="cod" 
+                  :checked="session?.paymentMethod === 'COD' || !session?.paymentMethod"
+                  @change="updateSessionPaymentMethod('COD')"
+                >
+                <label class="form-check-label" for="cod"></label>
               </div>
               <div class="d-flex align-items-center flex-grow-1">
-                <img src="https://stcd02206177151.cloud.edgevnpay.vn/assets/images/logo-icon/zalopay.png" alt="ZaloPay" class="me-2" style="width: 30px; height: 30px; border: 1px solid #ddd; border-radius: 3px; padding: 3px;">
+                <div class="me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; border: 1px solid #ddd; border-radius: 3px; background-color: #28a745;">
+                  <i class="fas fa-money-bill-wave" style="font-size: 14px; color: white;"></i>
+                </div>
                 <div>
                   <div class="small">
-                    <strong>Ví ZaloPay</strong> 
-                    <span class="text-primary ms-1" style="font-size: 11px;">Chi tiết</span>
+                    <strong>Thanh toán khi nhận hàng (COD)</strong>
+                    <span class="badge bg-success ms-2" style="font-size: 10px;">Mặc định</span>
                   </div>
-                  <div class="text-warning" style="font-size: 11px;">
-                    <strong>Nhập mã: ZLPFHS - Giảm 20K cho đơn hàng từ 300K</strong>
+                  <div class="text-muted" style="font-size: 11px;">
+                    Thanh toán bằng tiền mặt khi nhận hàng
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chuyển khoản ngân hàng -->
+            <div class="d-flex align-items-center mb-2 p-2 border rounded" :class="{ 'border-primary bg-light': session?.paymentMethod === 'BANK_TRANSFER' }">
+              <div class="form-check me-2">
+                <input 
+                  class="form-check-input" 
+                  type="radio" 
+                  name="payment" 
+                  id="bank" 
+                  :checked="session?.paymentMethod === 'BANK_TRANSFER'"
+                  @change="updateSessionPaymentMethod('BANK_TRANSFER')"
+                >
+                <label class="form-check-label" for="bank"></label>
+              </div>
+              <div class="d-flex align-items-center flex-grow-1">
+                <div class="me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; border: 1px solid #ddd; border-radius: 3px; background-color: #007bff;">
+                  <i class="fas fa-university" style="font-size: 14px; color: white;"></i>
+                </div>
+                <div>
+                  <div class="small">
+                    <strong>Chuyển khoản ngân hàng</strong>
+                  </div>
+                  <div class="text-muted" style="font-size: 11px;">
+                    Chuyển khoản trước khi giao hàng
                   </div>
                 </div>
               </div>
             </div>
 
             <!-- VNPay -->
-            <div class="d-flex align-items-center mb-2 p-2 border rounded">
+            <div class="d-flex align-items-center mb-2 p-2 border rounded" :class="{ 'border-primary bg-light': session?.paymentMethod === 'VNPAY' }">
               <div class="form-check me-2">
-                <input class="form-check-input" type="radio" name="payment" id="vnpay">
+                <input 
+                  class="form-check-input" 
+                  type="radio" 
+                  name="payment" 
+                  id="vnpay" 
+                  :checked="session?.paymentMethod === 'VNPAY'"
+                  @change="updateSessionPaymentMethod('VNPAY')"
+                >
                 <label class="form-check-label" for="vnpay"></label>
               </div>
               <div class="d-flex align-items-center flex-grow-1">
                 <img src="https://vnpay.vn/s1/statics.vnpay.vn/2023/9/06ncktiwd6dc1694418196384.png" alt="VNPay" class="me-2" style="width: 30px; height: 30px; border: 1px solid #ddd; border-radius: 3px; padding: 3px;">
                 <div>
                   <div class="small">
-                    <strong>VNPAY</strong> 
-                    <span class="text-primary ms-1" style="font-size: 11px;">Chi tiết</span>
+                    <strong>Ví điện tử VNPAY</strong>
                   </div>
-                  <div class="text-warning" style="font-size: 11px;">
-                    <strong>Nhập mã: VNPAYFHS - Giảm 40K cho đơn hàng từ 200K</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- ShopeePay -->
-            <div class="d-flex align-items-center mb-2 p-2 border rounded">
-              <div class="form-check me-2">
-                <input class="form-check-input" type="radio" name="payment" id="shopeepay">
-                <label class="form-check-label" for="shopeepay"></label>
-              </div>
-              <div class="d-flex align-items-center flex-grow-1">
-                <img src="https://down-vn.img.susercontent.com/file/d4bbea4570b93bfd5fc652ca82a262a8" alt="ShopeePay" class="me-2" style="width: 30px; height: 30px; border: 1px solid #ddd; border-radius: 3px; padding: 3px;">
-                <div>
-                  <div class="small">
-                    <strong>Ví ShopeePay</strong> 
-                    <span class="text-primary ms-1" style="font-size: 11px;">Chi tiết</span>
-                  </div>
-                  <div class="text-warning" style="font-size: 11px;">
-                    <strong>Nhập mã: SPPFHS0725 - Giảm ngay 20K cho đơn hàng từ 30K trên Ví ShopeePay</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Momo -->
-            <div class="d-flex align-items-center mb-2 p-2 border rounded">
-              <div class="form-check me-2">
-                <input class="form-check-input" type="radio" name="payment" id="momo">
-                <label class="form-check-label" for="momo"></label>
-              </div>
-              <div class="d-flex align-items-center flex-grow-1">
-                <img src="https://developers.momo.vn/v3/assets/images/square-logo.svg" alt="Momo" class="me-2" style="width: 30px; height: 30px; border: 1px solid #ddd; border-radius: 3px; padding: 3px;">
-                <div>
-                  <div class="small">
-                    <strong>Ví Momo</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- ATM / Internet Banking -->
-            <div class="d-flex align-items-center mb-2 p-2 border rounded">
-              <div class="form-check me-2">
-                <input class="form-check-input" type="radio" name="payment" id="atm">
-                <label class="form-check-label" for="atm"></label>
-              </div>
-              <div class="d-flex align-items-center flex-grow-1">
-                <div class="me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; border: 1px solid #ddd; border-radius: 3px; background-color: #f8f9fa;">
-                  <i class="fas fa-university" style="font-size: 14px; color: #6c757d;"></i>
-                </div>
-                <div>
-                  <div class="small">
-                    <strong>ATM / Internet Banking</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Visa / Master / JCB -->
-            <div class="d-flex align-items-center mb-2 p-2 border rounded">
-              <div class="form-check me-2">
-                <input class="form-check-input" type="radio" name="payment" id="visa">
-                <label class="form-check-label" for="visa"></label>
-              </div>
-              <div class="d-flex align-items-center flex-grow-1">
-                <div class="me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; border: 1px solid #ddd; border-radius: 3px; background-color: #f8f9fa;">
-                  <i class="fas fa-credit-card" style="font-size: 14px; color: #6c757d;"></i>
-                </div>
-                <div>
-                  <div class="small">
-                    <strong>Visa / Master / JCB</strong> 
-                    <span class="text-primary ms-1" style="font-size: 11px;">Chi tiết</span>
-                  </div>
-                  <div class="text-warning" style="font-size: 11px;">
-                    <strong>Nhập mã: VPBFHS50K - Giảm Ngay 50K cho ĐH từ 400K khi thanh toán bằng thẻ tín dụng VPBank</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Thanh toán bằng tiền mặt khi nhận hàng -->
-            <div class="d-flex align-items-center mb-2 p-2 border rounded">
-              <div class="form-check me-2">
-                <input class="form-check-input" type="radio" name="payment" id="cod">
-                <label class="form-check-label" for="cod"></label>
-              </div>
-              <div class="d-flex align-items-center flex-grow-1">
-                <div class="me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; border: 1px solid #ddd; border-radius: 3px; background-color: #f8f9fa;">
-                  <i class="fas fa-money-bill-wave" style="font-size: 14px; color: #6c757d;"></i>
-                </div>
-                <div>
-                  <div class="small">
-                    <strong>Thanh toán bằng tiền mặt khi nhận hàng</strong>
+                  <div class="text-muted" style="font-size: 11px;">
+                    Thanh toán online qua VNPAY
                   </div>
                 </div>
               </div>
@@ -383,6 +332,26 @@
           </div>
         </div>
 
+        <!-- Ghi chú đơn hàng -->
+        <div class="card mb-3">
+          <div class="card-header bg-white py-2">
+            <h6 class="mb-0 text-uppercase fw-bold">Ghi chú cho đơn hàng</h6>
+          </div>
+          <div class="card-body py-3">
+            <textarea 
+              class="form-control" 
+              rows="3" 
+              placeholder="Nhập ghi chú cho đơn hàng (tùy chọn)..."
+              :value="session?.notes || ''"
+              @blur="updateSessionNotes($event.target.value)"
+            ></textarea>
+            <div class="small text-muted mt-2">
+              <i class="fas fa-info-circle me-1"></i>
+              Ghi chú sẽ được gửi đến người bán để hỗ trợ giao hàng tốt hơn
+            </div>
+          </div>
+        </div>
+
         <!-- Đồng ý điều khoản -->
         <!-- Đã chuyển xuống thanh dưới -->
       </div>
@@ -496,7 +465,8 @@ import {
   getLatestCheckoutSession,
   validateCheckoutSession,
   createOrderFromSession,
-  recalculateSessionPricing
+  recalculateSessionPricing,
+  updateCheckoutSession
 } from '@/services/client/checkout.js'
 import { getDefaultAddress, getAddresses } from '@/services/client/address.js'
 import { getUserId } from '@/utils/utils.js'
@@ -532,20 +502,31 @@ const loadLatestSession = async (userId) => {
     error.value = null
     const response = await getLatestCheckoutSession(userId)
     if (response.status === 200 && response.data) {
-      session.value = response.data.data // <-- đúng cấu trúc
+      session.value = response.data.data
       sessionId.value = response.data.data.id
-       console.log(
-    'session:', session.value,
-    'checkoutItems:', session.value?.checkoutItems,
-    'length:', session.value?.checkoutItems?.length,
-    'condition:', !!(session.value && session.value.checkoutItems && session.value.checkoutItems.length > 0)
-  )
+      
+      console.log('✅ Latest session loaded:', {
+        sessionId: sessionId.value,
+        session: session.value,
+        checkoutItems: session.value?.checkoutItems,
+        length: session.value?.checkoutItems?.length,
+        isActive: session.value?.isActive
+      })
+      
+      // Lấy địa chỉ từ session nếu có, nếu không thì lấy địa chỉ mặc định
+      if (session.value.address) {
+        selectedAddress.value = session.value.address
+      } else {
+        // Nếu session chưa có địa chỉ, tự động cập nhật với địa chỉ mặc định
+        await setDefaultAddressToSession()
+      }
+      
       await validateSession()
     } else {
       throw new Error('Không tìm thấy phiên thanh toán mới nhất.')
     }
   } catch (err) {
-    console.error('Error loading latest checkout session:', err)
+    console.error('❌ Error loading latest checkout session:', err)
     const errorMessage = err.response?.data?.message || err.message
     if (err.response?.status === 404) {
       error.value = 'Không có phiên thanh toán nào. Vui lòng quay lại giỏ hàng.'
@@ -605,44 +586,67 @@ const processPayment = async () => {
     showToast('warning', 'Vui lòng kiểm tra và sửa các lỗi trước khi đặt hàng')
     return
   }
+  
   try {
     orderLoading.value = true
     const userId = getUserId()
+    
+    // Validate session một lần nữa trước khi tạo đơn hàng
+    console.log('🔍 Final validation before order creation...')
     await validateSession()
     if (validationErrors.value.length > 0) {
       showToast('error', 'Có lỗi trong đơn hàng. Vui lòng kiểm tra lại.')
       return
     }
+    
+    // Đảm bảo có phương thức thanh toán, mặc định là COD
+    if (!session.value.paymentMethod) {
+      console.log('💳 Setting default payment method to COD...')
+      await updateSessionPaymentMethod('COD')
+    }
+    
+    // Tạo đơn hàng từ session
+    console.log('📝 Creating order from session...')
     const response = await createOrderFromSession(sessionId.value, userId)
+    
     if (response.status === 201 && response.data) {
       const orderId = response.data
+      console.log('🎉 Order created successfully:', orderId)
       showToast('success', `Đặt hàng thành công! Mã đơn hàng: ${orderId}`)
+      
+      // Chuyển đến trang thành công
       router.push(`/order/success/${orderId}`)
     } else {
       throw new Error('Invalid response from order creation')
     }
   } catch (err) {
-    console.error('Error creating order:', err)
+    console.error('❌ Error creating order:', err)
     const errorMessage = err.response?.data?.message || err.message
+    
     if (err.response?.status === 400) {
       if (errorMessage.includes('hết hàng')) {
         showToast('error', 'Một số sản phẩm đã hết hàng. Vui lòng cập nhật lại giỏ hàng.')
-      } else if (errorMessage.includes('flash sale')) {
+      } else if (errorMessage.includes('flash sale') || errorMessage.includes('Flash sale')) {
         showToast('error', 'Flash sale đã kết thúc. Giá sản phẩm có thể đã thay đổi.')
-      } else if (errorMessage.includes('voucher')) {
-        showToast('error', 'Voucher không hợp lệ hoặc đã hết hạn.')
+        // Reload session để cập nhật giá mới
+        await loadLatestSession(getUserId())
+      } else if (errorMessage.includes('voucher') || errorMessage.includes('Voucher')) {
+        showToast('error', 'Voucher có vấn đề. ' + errorMessage)
+        // Reload session để cập nhật trạng thái voucher
+        await loadLatestSession(getUserId())
       } else if (errorMessage.includes('hết hạn')) {
-        showToast('error', 'Phiên thanh toán đã hết hạn. Vui lòng tạo phiên mới.')
+        showToast('error', 'Phiên thanh toán đã hết hạn. Vui lòng tạo lại từ giỏ hàng.')
         router.push('/cart')
       } else {
-        showToast('error', errorMessage)
+        showToast('error', errorMessage || 'Có lỗi khi tạo đơn hàng.')
+        // Reload session để cập nhật trạng thái
+        await loadLatestSession(getUserId())
       }
-      await loadLatestSession(getUserId())
     } else if (err.response?.status === 401) {
       showToast('error', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
       router.push('/login')
     } else {
-      showToast('error', 'Lỗi hệ thống. Vui lòng thử lại sau.')
+      showToast('error', errorMessage || 'Có lỗi khi tạo đơn hàng.')
     }
   } finally {
     orderLoading.value = false
@@ -670,14 +674,25 @@ const loadAddresses = async () => {
     const userId = getUserId()
     if (!userId) return
     
-    const addressData = await getAddresses(userId)
-    if (addressData.success && addressData.data) {
-      addresses.value = addressData.data
-      // Tìm địa chỉ mặc định hoặc lấy địa chỉ đầu tiên
-      selectedAddress.value = addressData.data.find(addr => addr.isDefault) || addressData.data[0] || null
+    const response = await getAddresses()
+    if (response.status === 200 && response.data?.data) {
+      addresses.value = response.data.data
+      console.log('✅ Addresses loaded:', addresses.value)
+      
+      // Tìm và set địa chỉ mặc định nếu chưa có selectedAddress
+      if (!selectedAddress.value) {
+        const defaultAddr = addresses.value.find(addr => addr.isDefault)
+        if (defaultAddr) {
+          selectedAddress.value = defaultAddr
+          console.log('✅ Default address found:', defaultAddr)
+        } else if (addresses.value.length > 0) {
+          selectedAddress.value = addresses.value[0]
+          console.log('✅ Using first address as default:', addresses.value[0])
+        }
+      }
     }
   } catch (err) {
-    console.error('Error loading addresses:', err)
+    console.error('❌ Error loading addresses:', err)
     // Không hiển thị toast error vì có thể user chưa có địa chỉ nào
   } finally {
     addressLoading.value = false
@@ -704,26 +719,142 @@ const applyCoupon = () => {
   showToast('info', 'Chức năng áp dụng mã khuyến mãi sẽ được triển khai sớm')
 }
 
-const selectAddress = (address) => {
+const selectAddress = async (address) => {
   selectedAddress.value = address
+  showAddressModal.value = false
+  
+  // Cập nhật địa chỉ vào session
+  if (sessionId.value && address?.id) {
+    await updateSessionAddress(address.id)
+  }
+}
+
+// Function để set địa chỉ mặc định vào session
+const setDefaultAddressToSession = async () => {
+  try {
+    // Tìm địa chỉ mặc định trong danh sách địa chỉ
+    const defaultAddr = addresses.value.find(addr => addr.isDefault)
+    if (defaultAddr && sessionId.value) {
+      const userId = getUserId()
+      const response = await updateCheckoutSession(sessionId.value, userId, {
+        addressId: defaultAddr.id
+      })
+      if (response.status === 200 && response.data?.data) {
+        session.value = response.data.data
+        selectedAddress.value = response.data.data.address
+        console.log('✅ Default address set to session:', defaultAddr.id)
+      }
+    }
+  } catch (error) {
+    console.error('❌ Error setting default address to session:', error)
+  }
+}
+
+// Function để cập nhật địa chỉ giao hàng
+const updateSessionAddress = async (addressId) => {
+  try {
+    const userId = getUserId()
+    if (!sessionId.value || !userId) return
+    
+    const response = await updateCheckoutSession(sessionId.value, userId, {
+      addressId: addressId
+    })
+    
+    if (response.status === 200 && response.data?.data) {
+      session.value = response.data.data
+      selectedAddress.value = response.data.data.address
+      showToast('success', 'Địa chỉ giao hàng đã được cập nhật')
+    }
+  } catch (error) {
+    console.error('❌ Error updating session address:', error)
+    showToast('error', 'Không thể cập nhật địa chỉ giao hàng')
+  }
+}
+
+// Function để cập nhật phương thức thanh toán  
+const updateSessionPaymentMethod = async (paymentMethod) => {
+  try {
+    const userId = getUserId()
+    if (!sessionId.value || !userId) return
+    
+    const response = await updateCheckoutSession(sessionId.value, userId, {
+      paymentMethod: paymentMethod
+    })
+    
+    if (response.status === 200 && response.data?.data) {
+      session.value = response.data.data
+      showToast('success', 'Phương thức thanh toán đã được cập nhật')
+    }
+  } catch (error) {
+    console.error('❌ Error updating payment method:', error)
+    showToast('error', 'Không thể cập nhật phương thức thanh toán')
+  }
+}
+
+// Function để cập nhật voucher
+const updateSessionVouchers = async (voucherIds) => {
+  try {
+    const userId = getUserId()
+    if (!sessionId.value || !userId) return
+    
+    const response = await updateCheckoutSession(sessionId.value, userId, {
+      selectedVoucherIds: voucherIds
+    })
+    
+    if (response.status === 200 && response.data?.data) {
+      session.value = response.data.data
+      showToast('success', 'Voucher đã được cập nhật')
+    }
+  } catch (error) {
+    console.error('❌ Error updating vouchers:', error)
+    showToast('error', 'Không thể cập nhật voucher')
+  }
+}
+
+// Function để cập nhật ghi chú
+const updateSessionNotes = async (notes) => {
+  try {
+    const userId = getUserId()
+    if (!sessionId.value || !userId) return
+    
+    const response = await updateCheckoutSession(sessionId.value, userId, {
+      notes: notes
+    })
+    
+    if (response.status === 200 && response.data?.data) {
+      session.value = response.data.data
+      showToast('success', 'Ghi chú đã được cập nhật')
+    }
+  } catch (error) {
+    console.error('❌ Error updating notes:', error)
+    showToast('error', 'Không thể cập nhật ghi chú')
+  }
 }
 
 // Lắng nghe sự kiện storage để reload giữa các tab
-// ...existing code...
+window.addEventListener('storage', (event) => {
+  if (event.key === 'checkoutSession' || event.key === 'userInfo') {
+    console.log('🔄 Reloading due to storage event:', event.key)
+    location.reload()
+  }
+})
 
 onMounted(async () => {
   const userId = getUserId()
   if (!userId) {
     error.value = 'Vui lòng đăng nhập để tiếp tục.'
     loading.value = false
+    showToast('error', 'Vui lòng đăng nhập để tiếp tục')
     router.push('/login')
     return
   }
   
-  // Load checkout session và addresses song song
+  console.log('🚀 Loading checkout page for user:', userId)
+  
+  // Load addresses và checkout session song song
   await Promise.all([
-    loadLatestSession(userId),
-    loadAddresses()
+    loadAddresses(),
+    loadLatestSession(userId)
   ])
   
   setupValidationTimer()

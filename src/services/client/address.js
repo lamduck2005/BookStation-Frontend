@@ -1,9 +1,17 @@
 import client from "../../utils/axios.js";
 import { getUserId } from "../../utils/utils.js";
 
+
 export const getAddresses = async () => {
   const userId = getUserId();
   return client.get(`/api/addresses`, { params: { userId } });
+};
+
+// Hàm lấy địa chỉ mặc định của user
+export const getDefaultAddress = async () => {
+  const userId = getUserId();
+  // Giả sử API trả về địa chỉ mặc định ở endpoint này
+  return client.get(`/api/addresses/default`, { params: { userId } });
 };
 
 export const getAddress = async (id) => client.get(`/api/addresses/${id}`);
