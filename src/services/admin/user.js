@@ -38,3 +38,6 @@ export function updateProfile(id,data) {
 export function userpos(text) {
   return axios.get(`/api/users/userpos`, { params: { text } });
 }
+export function addretailer(data) {
+  return axios.post('/api/users/addretail', data);
+}

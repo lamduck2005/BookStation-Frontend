@@ -24,12 +24,12 @@
     <!-- Form nhập thông tin khách lẻ -->
     <div v-if="!showSearch && !selectedCustomer" class="guest-form">
       <input
-        v-model="guestName"
+        v-model="userretail.fullName"
         class="guest-input"
         placeholder="Nhập họ và tên khách lẻ"
       />
       <input
-        v-model="guestPhone"
+        v-model="userretail.phoneNumber"
         class="guest-input"
         placeholder="Nhập số điện thoại khách lẻ"
       />
@@ -90,7 +90,7 @@
 </template>
 
 <script setup>
-import { userpos } from "@/services/admin/user";
+import { addretailer, userpos } from "@/services/admin/user";
 import { ref, computed, onMounted, watch } from "vue";
 
 const showSearch = ref(false);
@@ -99,7 +99,7 @@ const guestName = ref("");
 const guestPhone = ref("");
 const selectedCustomer = ref(null);
 const users = ref([]);
-
+const userretail = ref({ fullName: "", phoneNumber: "" });
 // Gọi API mỗi khi search thay đổi
 watch(search, () => {
   fetchUsers();
@@ -130,14 +130,15 @@ function getInitials(name) {
     .slice(0, 2);
 }
 
-function saveGuest() {
-  if (!guestName.value.trim() || !guestPhone.value.trim()) return;
+async function saveGuest() {
+  await addretailer(userretail.value);
   selectedCustomer.value = {
-    name: guestName.value,
-    phone: guestPhone.value,
+    name: userretail.value.fullName,
+    phone: userretail.value.phoneNumber,
     isGuest: true,
   };
   showSearch.value = false;
+  userretail.value = { fullName: "", phoneNumber: "" }; // Reset form
 }
 
 function selectCustomer(c) {
