@@ -35,3 +35,6 @@ export function getProfile() {
 export function updateProfile(id,data) {
   return axios.put(`/api/users/profile/${id}`, data);
 }
+export function userpos(text) {
+  return axios.get(`/api/users/userpos`, { params: { text } });
+}

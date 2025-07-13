@@ -81,6 +81,12 @@ const sidebarLinks = [
     icon: "bi bi-box",
     label: "Đơn hàng",
   },
+   {
+    type: "link",
+    to: "/admin/pos-view",
+    icon: "bi bi-cart",
+    label: "Bán hàng tại quầy",
+  },
   {
     type: "submenu",
     icon: "bi bi-gear",

@@ -120,3 +120,14 @@ export const getBooksClient = async (params = {}) => {
     throw error;
   }
 };
+export const getBookByIdCategory = async (id, text) => {
+  try {
+    const response = await client.get(`/api/books/bycategoryid/${id}`, {
+      params: { text }
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách sách:', error);
+    throw error;
+  }
+}

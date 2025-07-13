@@ -57,6 +57,7 @@ import ProductCatalog from "@/views/client/ProductCatalog.vue";
 
 import AuthPage from "@/views/AuthPage.vue";
 import { showToast } from "@/utils/swalHelper";
+import POSVIew from "@/views/client/POSVIew.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -319,6 +320,11 @@ const router = createRouter({
           path: "event-history",
           name: "event-history",
           component: EventHistory,
+        },
+         {
+          path: "pos-view",
+          name: "pos-view",
+          component: POSVIew,
         },
       ],
       // End - Admin routes

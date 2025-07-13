@@ -146,4 +146,13 @@ export const getAllCategoriesByParentId = async (parentId) => {
     throw error;
   }
 };
+export const getAllCategoriesParentNotNull = async () => {
+  try {
+    const response = await client.get("/api/categories/parent-not-null");
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching categories with parent null:", error);
+    throw error;
+  }
+};
 

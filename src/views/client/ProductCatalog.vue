@@ -65,8 +65,8 @@
 </template>
 
 <script setup>
-import FiterProduct from "./ProductCatalog/FiterProduct.vue";
-import ProductGrid from "./ProductCatalog/ProductGrid.vue";
+import FiterProduct from "./productcatalog/FiterProduct.vue";
+import ProductGrid from "./productcatalog/ProductGrid.vue";
 import { ref, reactive, watch, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import { getBooksClient } from "@/services/admin/book.js";
