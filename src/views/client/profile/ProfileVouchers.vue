@@ -114,14 +114,18 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { getUserId } from "@/utils/utils";
-import { getVoucherWithNewUserId,getUserVoucher } from "@/services/client/userVoucher";
+import {
+  getVoucherWithNewUserId,
+  getUserVoucher,
+} from "@/services/client/userVoucher";
+import { showToast } from "@/utils/swalHelper";
 
 const activeTab = ref("available");
 const voucherTabs = [
   { key: "available", label: "Voucher của tôi" },
   { key: "partner", label: "Voucher đối tác" },
 ];
-const voucherChannel = new BroadcastChannel('voucher-status');
+const voucherChannel = new BroadcastChannel("voucher-status");
 
 const vouchers = ref([]);
 const loading = ref(false);
@@ -150,9 +154,9 @@ onMounted(async () => {
 });
 
 voucherChannel.onmessage = (event) => {
-  if (event.data === 'updated') {
+  if (event.data === "updated") {
     fetchVouchers();
-    console.log('Đã nhận sự kiện voucher-status-updated qua BroadcastChannel');
+    console.log("Đã nhận sự kiện voucher-status-updated qua BroadcastChannel");
   }
 };
 const filteredVouchers = computed(() =>
@@ -175,7 +179,7 @@ const copyVoucherCode = (code) => {
   navigator.clipboard
     .writeText(code)
     .then(() => {
-      alert(`Đã copy mã voucher: ${code}`);
+      showToast("success", `Đã copy mã voucher: ${code}`);
     })
     .catch(() => {
       const textArea = document.createElement("textarea");
@@ -184,7 +188,7 @@ const copyVoucherCode = (code) => {
       textArea.select();
       document.execCommand("copy");
       document.body.removeChild(textArea);
-      alert(`Đã copy mã voucher: ${code}`);
+      showToast("success", `Đã copy mã voucher: ${code}`);
     });
 };
 
