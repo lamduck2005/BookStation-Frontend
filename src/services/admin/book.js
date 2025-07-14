@@ -44,6 +44,48 @@ export const getSuppliersDropdown = async () => {
   }
 };
 
+// Lấy danh sách books dropdown (id, name) cho order
+export const getBooksDropdown = async () => {
+  try {
+    const response = await client.get('/api/books/dropdown');
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách books dropdown:', error);
+    throw error;
+  }
+};
+
+// Lấy danh sách books dropdown (for order creation)
+export const getBooksForOrder = async () => {
+  try {
+    const response = await client.get('/api/books');
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách books cho order:', error);
+    throw error;
+  }
+};
+
+// Fallback getBooksDropdown nếu API chưa sẵn sàng
+export const getBooksDropdownFallback = async () => {
+  return Promise.resolve({
+    status: 200,
+    message: "Thành công",
+    data: [
+      { id: 1, title: 'Clean Code', price: 350000, isFlashSale: false },
+      { id: 2, title: 'Design Patterns', price: 420000, isFlashSale: true },
+      { id: 3, title: 'Refactoring', price: 380000, isFlashSale: false },
+      { id: 4, title: 'The Pragmatic Programmer', price: 450000, isFlashSale: false },
+      { id: 5, title: 'Effective Java', price: 390000, isFlashSale: true },
+      { id: 6, title: 'JavaScript: The Good Parts', price: 320000, isFlashSale: false },
+      { id: 7, title: 'You Don\'t Know JS', price: 280000, isFlashSale: true },
+      { id: 8, title: 'Eloquent JavaScript', price: 300000, isFlashSale: false },
+      { id: 9, title: 'Head First Design Patterns', price: 400000, isFlashSale: false },
+      { id: 10, title: 'Spring Boot in Action', price: 480000, isFlashSale: false }
+    ]
+  });
+};
+
 // Tạo sách mới
 export const createBook = async (bookData) => {
   try {
