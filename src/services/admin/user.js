@@ -13,6 +13,18 @@ export function fetchUserDetail(id) {
 export function getUserRank(userID) {
   return axios.get("/api/users/userRank", { params: { userID } });
 }
+// cập nhật mat khẩu người dùng
+
+export function updateUserPass(id, passCu, passMoi) {
+  return axios.put("/api/users/userPass", null, {
+    params: {
+      id: id,
+      passCu: passCu,
+      passMoi: passMoi,
+    },
+  });
+}
+
 // Tạo mới người dùng
 export function createUser(data) {
   return axios.post("/api/users", data);

@@ -100,7 +100,7 @@
               <th>Ngày bắt đầu</th>
               <th>Ngày kết thúc</th>
               <th>Trạng thái</th>
-              <th>Người tạo</th>
+              <th>Lần dùng còn lại</th>
               <th colspan="3">Chức năng</th>
             </tr>
           </thead>
@@ -146,7 +146,12 @@
                   @click.stop
                 />
               </td>
-              <td>{{ voucher.createdBy }}</td>
+              <td>
+                <span v-if="voucher.soLanDungConLai > 0">
+                  {{ voucher.soLanDungConLai }}
+                </span>
+                <span v-else class="text-danger fw-bold">Hết lượt</span>
+              </td>
               <td>
                 <div @click.stop>
                   <EditButton
@@ -162,238 +167,230 @@
             </tr>
           </tbody>
         </table>
-        </div>
-        <!-- Pagination -->
-        <Pagination
-          :page-number="currentPage"
-          :total-pages="totalPages"
-          :is-last-page="isLastPage"
-          :page-size="pageSize"
-          :items-per-page-options="itemsPerPageOptions"
-          :total-elements="totalElements"
-          @prev="prevPage"
-          @next="nextPage"
-          @update:pageSize="handlePageSizeChange"
-        />
       </div>
+      <!-- Pagination -->
+      <Pagination
+        :page-number="currentPage"
+        :total-pages="totalPages"
+        :is-last-page="isLastPage"
+        :page-size="pageSize"
+        :items-per-page-options="itemsPerPageOptions"
+        :total-elements="totalElements"
+        @prev="prevPage"
+        @next="nextPage"
+        @update:pageSize="handlePageSizeChange"
+      />
     </div>
+  </div>
 
-    <!-- Modal chi tiết voucher -->
-    <div
-      v-if="showDetailModal"
-      class="modal fade show"
-      style="display: block; background: rgba(0, 0, 0, 0.3)"
-      tabindex="-1"
-    >
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Chi tiết voucher</h5>
-          </div>
-          <div class="modal-body" v-if="selectedVoucher">
-            <p><strong>Mã voucher:</strong> {{ selectedVoucher.code }}</p>
-            <p>
-              <strong>Phần trăm giảm:</strong>
-              {{ selectedVoucher.discountPercentage }}%
-            </p>
-            <p>
-              <strong>Ngày bắt đầu:</strong> {{ selectedVoucher.start_time }}
-            </p>
-            <p>
-              <strong>Ngày kết thúc:</strong> {{ selectedVoucher.end_time }}
-            </p>
-            <p>
-              <strong>Giá trị đơn tối thiểu:</strong>
-              {{ selectedVoucher.minOrderValue?.toLocaleString() }} đ
-            </p>
-            <p>
-              <strong>Giá trị giảm tối đa:</strong>
-              {{ selectedVoucher.maxDiscountValue?.toLocaleString() }} đ
-            </p>
-            <p>
-              <strong>Trạng thái:</strong>
-              {{
-                selectedVoucher.status == 1 ? "Hoạt động" : "Không hoạt động"
-              }}
-            </p>
-            <p><strong>Người tạo:</strong> {{ selectedVoucher.createdBy }}</p>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" @click="closeDetailModal">
-              Đóng
-            </button>
-          </div>
+  <!-- Modal chi tiết voucher -->
+  <div
+    v-if="showDetailModal"
+    class="modal fade show"
+    style="display: block; background: rgba(0, 0, 0, 0.3)"
+    tabindex="-1"
+  >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Chi tiết voucher</h5>
+        </div>
+        <div class="modal-body" v-if="selectedVoucher">
+          <p><strong>Mã voucher:</strong> {{ selectedVoucher.code }}</p>
+          <p>
+            <strong>Phần trăm giảm:</strong>
+            {{ selectedVoucher.discountPercentage }}%
+          </p>
+          <p><strong>Ngày bắt đầu:</strong> {{ selectedVoucher.start_time }}</p>
+          <p><strong>Ngày kết thúc:</strong> {{ selectedVoucher.end_time }}</p>
+          <p>
+            <strong>Giá trị đơn tối thiểu:</strong>
+            {{ selectedVoucher.minOrderValue?.toLocaleString() }} đ
+          </p>
+          <p>
+            <strong>Giá trị giảm tối đa:</strong>
+            {{ selectedVoucher.maxDiscountValue?.toLocaleString() }} đ
+          </p>
+          <p>
+            <strong>Trạng thái:</strong>
+            {{ selectedVoucher.status == 1 ? "Hoạt động" : "Không hoạt động" }}
+          </p>
+          <p><strong>Người tạo:</strong> {{ selectedVoucher.createdBy }}</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="closeDetailModal">
+            Đóng
+          </button>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Modal Thêm/Cập nhật Voucher -->
-    <div
-      class="modal fade show"
-      tabindex="-1"
-      style="display: block; background: rgba(0, 0, 0, 0.3)"
-      v-if="showFormModal"
-    >
-      <div class="modal-dialog modal-dialog-centered custom-modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header" style="background-color: #ecae9e">
-            <h5 class="modal-title">
-              {{ isEdit ? "Cập nhật voucher" : "Thêm voucher mới" }}
-            </h5>
-            <button
-              type="button"
-              class="custom-close-btn"
-              @click="closeFormModal"
-              aria-label="Đóng"
-              title="Đóng"
-            >
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <form @submit.prevent="submitVoucher">
-              <div class="row">
-                <div class="mb-2 col-6">
-                  <label class="form-label">
-                    Mã voucher <span style="color: red">*</span>
-                  </label>
-                  <input
-                    v-model="formVoucher.code"
-                    class="form-control"
-                    placeholder="Nhập mã voucher"
-                  />
-                </div>
-                <div class="mb-2 col-6">
-                  <label class="form-label">
-                    Tên voucher <span style="color: red">*</span></label
-                  >
-                  <input
-                    v-model="formVoucher.name"
-                    class="form-control"
-                    placeholder="Nhập tên voucher"
-                  />
-                </div>
-                <div class="mb-2 col-6">
-                  <label class="form-label">
-                    Loại voucher <span style="color: red">*</span>
-                  </label>
-                  <select v-model="formVoucher.voucherType" class="form-select">
-                    <option value="">Chọn loại voucher</option>
-                    <option value="PERCENTAGE">Phần trăm</option>
-                    <option value="FIXED_AMOUNT">Số tiền</option>
-                  </select>
-                </div>
-                <div class="mb-2 col-6">
-                  <label class="form-label"
-                    ><span style="color: red">*</span> Phần trăm giảm (%)</label
-                  >
-                  <input
-                    v-model="formVoucher.discountPercentage"
-                    type="number"
-                    min="1"
-                    max="100"
-                    class="form-control"
-                    :disabled="formVoucher.voucherType !== 'PERCENTAGE'"
-                  />
-                </div>
-                <div class="mb-2 col-6">
-                  <label class="form-label"
-                    ><span style="color: red">*</span> Số tiền giảm</label
-                  >
-                  <input
-                    v-model="formVoucher.discountAmount"
-                    type="number"
-                    min="0"
-                    class="form-control"
-                    :disabled="formVoucher.voucherType !== 'FIXED_AMOUNT'"
-                  />
-                </div>
-                <div class="mb-2 col-6">
-                  <label class="form-label">
-                    <span style="color: red">*</span> Ngày bắt đầu
-                  </label>
-                  <input
-                    v-model="formVoucher.startTime"
-                    type="datetime-local"
-                    class="form-control"
-                  />
-                </div>
-                <div class="mb-2 col-6">
-                  <label class="form-label">
-                    <span style="color: red">*</span> Ngày kết thúc
-                  </label>
-                  <input
-                    v-model="formVoucher.endTime"
-                    type="datetime-local"
-                    class="form-control"
-                  />
-                </div>
-                <div class="mb-2 col-6">
-                  <label class="form-label">
-                    <span style="color: red">*</span> Giá trị đơn tối thiểu
-                  </label>
-                  <input
-                    v-model="formVoucher.minOrderValue"
-                    type="number"
-                    min="0"
-                    class="form-control"
-                  />
-                </div>
-                <div class="mb-2 col-6">
-                  <label class="form-label"
-                    ><span style="color: red">*</span> Giá trị giảm tối đa
-                  </label>
-                  <input
-                    v-model="formVoucher.maxDiscountValue"
-                    type="number"
-                    min="0"
-                    class="form-control"
-                  />
-                </div>
-                <div class="mb-2 col-6">
-                  <label class="form-label"
-                    ><span style="color: red">*</span> Giới hạn lượt dùng</label
-                  >
-                  <input
-                    v-model="formVoucher.usageLimit"
-                    type="number"
-                    min="0"
-                    class="form-control"
-                  />
-                </div>
-                <div class="mb-2 col-6">
-                  <label class="form-label"
-                    ><span style="color: red">*</span> Giới hạn/người</label
-                  >
-                  <input
-                    v-model="formVoucher.usageLimitPerUser"
-                    type="number"
-                    min="0"
-                    class="form-control"
-                  />
-                </div>
-                <div class="mb-2 col-12">
-                  <label class="form-label">Mô tả</label>
-                  <textarea
-                    v-model="formVoucher.description"
-                    class="form-control"
-                    rows="2"
-                    placeholder="Nhập mô tả voucher"
-                  ></textarea>
-                </div>
-                <div class="modal-footer col-12">
-                  <button type="submit" class="btn btn-primary">
-                    {{ isEdit ? "Cập nhật" : "Thêm mới" }}
-                  </button>
-                </div>
+  <!-- Modal Thêm/Cập nhật Voucher -->
+  <div
+    class="modal fade show"
+    tabindex="-1"
+    style="display: block; background: rgba(0, 0, 0, 0.3)"
+    v-if="showFormModal"
+  >
+    <div class="modal-dialog modal-dialog-centered custom-modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header" style="background-color: #ecae9e">
+          <h5 class="modal-title">
+            {{ isEdit ? "Cập nhật voucher" : "Thêm voucher mới" }}
+          </h5>
+          <button
+            type="button"
+            class="custom-close-btn"
+            @click="closeFormModal"
+            aria-label="Đóng"
+            title="Đóng"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="submitVoucher">
+            <div class="row">
+              <div class="mb-2 col-6">
+                <label class="form-label">
+                  Mã voucher <span style="color: red">*</span>
+                </label>
+                <input
+                  v-model="formVoucher.code"
+                  class="form-control"
+                  placeholder="Nhập mã voucher"
+                />
               </div>
-            </form>
-          </div>
+              <div class="mb-2 col-6">
+                <label class="form-label">
+                  Tên voucher <span style="color: red">*</span></label
+                >
+                <input
+                  v-model="formVoucher.name"
+                  class="form-control"
+                  placeholder="Nhập tên voucher"
+                />
+              </div>
+              <div class="mb-2 col-6">
+                <label class="form-label">
+                  Loại voucher <span style="color: red">*</span>
+                </label>
+                <select v-model="formVoucher.voucherType" class="form-select">
+                  <option value="">Chọn loại voucher</option>
+                  <option value="PERCENTAGE">Phần trăm</option>
+                  <option value="FIXED_AMOUNT">Số tiền</option>
+                </select>
+              </div>
+              <div class="mb-2 col-6">
+                <label class="form-label"
+                  ><span style="color: red">*</span> Phần trăm giảm (%)</label
+                >
+                <input
+                  v-model="formVoucher.discountPercentage"
+                  type="number"
+                  min="1"
+                  max="100"
+                  class="form-control"
+                  :disabled="formVoucher.voucherType !== 'PERCENTAGE'"
+                />
+              </div>
+              <div class="mb-2 col-6">
+                <label class="form-label"
+                  ><span style="color: red">*</span> Số tiền giảm</label
+                >
+                <input
+                  v-model="formVoucher.discountAmount"
+                  type="number"
+                  min="0"
+                  class="form-control"
+                  :disabled="formVoucher.voucherType !== 'FIXED_AMOUNT'"
+                />
+              </div>
+              <div class="mb-2 col-6">
+                <label class="form-label">
+                  <span style="color: red">*</span> Ngày bắt đầu
+                </label>
+                <input
+                  v-model="formVoucher.startTime"
+                  type="datetime-local"
+                  class="form-control"
+                />
+              </div>
+              <div class="mb-2 col-6">
+                <label class="form-label">
+                  <span style="color: red">*</span> Ngày kết thúc
+                </label>
+                <input
+                  v-model="formVoucher.endTime"
+                  type="datetime-local"
+                  class="form-control"
+                />
+              </div>
+              <div class="mb-2 col-6">
+                <label class="form-label">
+                  <span style="color: red">*</span> Giá trị đơn tối thiểu
+                </label>
+                <input
+                  v-model="formVoucher.minOrderValue"
+                  type="number"
+                  min="0"
+                  class="form-control"
+                />
+              </div>
+              <div class="mb-2 col-6">
+                <label class="form-label"
+                  ><span style="color: red">*</span> Giá trị giảm tối đa
+                </label>
+                <input
+                  v-model="formVoucher.maxDiscountValue"
+                  type="number"
+                  min="0"
+                  class="form-control"
+                />
+              </div>
+              <div class="mb-2 col-6">
+                <label class="form-label"
+                  ><span style="color: red">*</span> Giới hạn lượt dùng</label
+                >
+                <input
+                  v-model="formVoucher.usageLimit"
+                  type="number"
+                  min="0"
+                  class="form-control"
+                />
+              </div>
+              <div class="mb-2 col-6">
+                <label class="form-label"
+                  ><span style="color: red">*</span> Giới hạn/người</label
+                >
+                <input
+                  v-model="formVoucher.usageLimitPerUser"
+                  type="number"
+                  min="0"
+                  class="form-control"
+                />
+              </div>
+              <div class="mb-2 col-12">
+                <label class="form-label">Mô tả</label>
+                <textarea
+                  v-model="formVoucher.description"
+                  class="form-control"
+                  rows="2"
+                  placeholder="Nhập mô tả voucher"
+                ></textarea>
+              </div>
+              <div class="modal-footer col-12">
+                <button type="submit" class="btn btn-primary">
+                  {{ isEdit ? "Cập nhật" : "Thêm mới" }}
+                </button>
+              </div>
+            </div>
+          </form>
         </div>
       </div>
     </div>
- 
-  
+  </div>
 </template>
 
 <script>
@@ -401,7 +398,7 @@ import EditButton from "@/components/common/EditButton.vue";
 import DeleteButton from "@/components/common/DeleteButton.vue";
 import ToggleStatus from "@/components/common/ToggleStatus.vue";
 import Pagination from "@/components/common/Pagination.vue";
-import { getUserId,getUserFullName } from "@/utils/utils";
+import { getUserId, getUserFullName } from "@/utils/utils";
 import { Modal } from "bootstrap";
 import { ref, computed, watch, onMounted } from "vue";
 import {
@@ -430,7 +427,7 @@ export default {
     const isLastPage = computed(
       () => currentPage.value >= totalPages.value - 1
     );
-    const voucherChannel = new BroadcastChannel('voucher-status');
+    const voucherChannel = new BroadcastChannel("voucher-status");
 
     const itemsPerPageOptions = ref([5, 10, 20, 50]);
 
@@ -486,26 +483,28 @@ export default {
               : 0,
         });
 
-        listVoucher.value = res.content.map((v) => ({
-          id: v.id,
-          code: v.code,
-          name: v.name,
-          description: v.description,
-          voucherType: v.voucherType,
-          discountPercentage: v.discountPercentage,
-          discountAmount: v.discountAmount,
-          start_time: formatDate(v.startTime),
-          end_time: formatDate(v.endTime),
-          startTime: v.startTime,
-          endTime: v.endTime,
-          minOrderValue: v.minOrderValue,
-          maxDiscountValue: v.maxDiscountValue,
-          usageLimit: v.usageLimit,
-          usedCount: v.usedCount,
-          usageLimitPerUser: v.usageLimitPerUser,
-          status: v.status,
-          createdBy: v.createdBy,
-          updatedBy: v.updatedBy,
+        listVoucher.value = res.content.map((voucher) => ({
+          id: voucher.id,
+          code: voucher.code,
+          name: voucher.name,
+          description: voucher.description,
+          voucherType: voucher.voucherType,
+          discountPercentage: voucher.discountPercentage,
+          discountAmount: voucher.discountAmount,
+          start_time: formatDate(voucher.startTime),
+          end_time: formatDate(voucher.endTime),
+          startTime: voucher.startTime,
+          endTime: voucher.endTime,
+          minOrderValue: voucher.minOrderValue,
+          maxDiscountValue: voucher.maxDiscountValue,
+          usageLimit: voucher.usageLimit,
+          usedCount: voucher.usedCount,
+          usageLimitPerUser: voucher.usageLimitPerUser,
+          status: voucher.status,
+          createdBy: voucher.createdBy,
+          updatedBy: voucher.updatedBy,
+          // Tính số lần dùng còn lại
+          soLanDungConLai: Math.max(voucher.usageLimit - voucher.usedCount, 0),
         }));
 
         totalElements.value = res.totalElements;
@@ -752,7 +751,7 @@ export default {
       try {
         if (isEdit.value) {
           await updateVouchers(payload);
-          voucherChannel.postMessage('updated');
+          voucherChannel.postMessage("updated");
           showToast("success", "Cập nhật voucher thành công!");
         } else {
           await createVouchers(payload);
@@ -796,9 +795,9 @@ export default {
         await upStatusVouchers(
           voucher.id,
           newStatus,
-          voucher.createdBy || "getUserFullName()",
+          voucher.createdBy || "getUserFullName()"
         );
-        voucherChannel.postMessage('updated');
+        voucherChannel.postMessage("updated");
         showToast("success", "Cập nhật trạng thái thành công!");
         fetchVouchers();
       } catch (error) {
