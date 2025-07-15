@@ -200,10 +200,14 @@ export const getOrdersDropdown = async () => {
 // Lấy dropdown địa chỉ user
 export const getUserAddressesDropdown = async (userId) => {
   try {
-    const response = await client.get(`/api/addresses/user/${userId}/dropdown`);
-    return response.data;
+    // Thay đổi endpoint để lấy toàn bộ địa chỉ của user theo tài liệu mới
+    const response = await client.get('/api/addresses', {
+      params: { userId }
+    });
+    // API mới trả về { status, message, data: [] } → chỉ cần mảng data
+    return response.data?.data || [];
   } catch (error) {
-    console.error('Lỗi khi lấy dropdown địa chỉ user:', error);
+    console.error('Lỗi khi lấy danh sách địa chỉ user:', error);
     throw error;
   }
 };

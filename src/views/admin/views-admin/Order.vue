@@ -289,6 +289,7 @@
                     v-model="newOrder.addressId"
                     :disabled="!newOrder.userId"
                     required
+                    @change="onAddressChange"
                   >
                     <option value="">-- Chọn địa chỉ giao hàng --</option>
                     <option v-for="address in userAddresses" :key="address.id" :value="address.id">
@@ -448,7 +449,7 @@
                     >
                       <option value="">-- Chọn sách --</option>
                       <option v-for="book in books" :key="book.id" :value="book.id">
-                        {{ book.title }} - {{ formatCurrency(book.price) }}
+                        {{ book.title }}
                         {{ book.isFlashSale ? '🔥' : '' }}
                       </option>
                     </select>
@@ -868,6 +869,7 @@ import {
 import { getUsersForOrder } from '@/services/admin/user';
 import { getBooksForOrder, getBooksDropdown } from '@/services/admin/book';
 import Swal from 'sweetalert2';
+import { ghn } from '@/utils/giaohangnhanh';
 
 // Search and filter states
 const searchCode = ref('');
@@ -894,6 +896,8 @@ const books = ref([]);
 const userAddresses = ref([]);
 const userVouchers = ref([]);
 const allVouchers = ref([]);
+// Thêm ref lưu địa chỉ hiện tại để tính phí ship sau này
+const currentAddress = ref(null);
 const selectedOrder = ref(null);
 const orderCalculation = ref(null);
 const isCalculating = ref(false);
@@ -1285,34 +1289,44 @@ const onUserChange = async () => {
 const loadUserAddresses = async (userId) => {
   try {
     const response = await getUserAddressesDropdown(userId);
-    userAddresses.value = response.data || [];
+    // response từ service đã trả về mảng địa chỉ theo API mới
+    const addresses = response || [];
+
+    // Hàm format hiển thị địa chỉ
+    const formatAddress = (addr) => {
+      // recipientName - addressDetail, ward, district, province
+      const parts = [];
+      if (addr.recipientName) parts.push(addr.recipientName);
+      if (addr.addressDetail) parts.push(addr.addressDetail);
+      if (addr.wardName) parts.push(addr.wardName);
+      if (addr.districtName) parts.push(addr.districtName);
+      if (addr.provinceName) parts.push(addr.provinceName);
+      if(addr.isDefault) parts.push('(Mặc định)');
+      return parts.join(', ');
+    };
+
+    userAddresses.value = addresses.map(addr => ({
+      id: addr.id,
+      name: formatAddress(addr),
+      isDefault: addr.isDefault,
+      raw: addr
+    }));
     // Auto-select default address
     const defaultAddress = userAddresses.value.find(addr => addr.isDefault);
     if (defaultAddress && !newOrder.value.addressId) {
       newOrder.value.addressId = defaultAddress.id;
-    }
+      currentAddress.value = defaultAddress; // Cập nhật địa chỉ hiện tại
+    } 
   } catch (error) {
-    console.error('Lỗi khi lấy địa chỉ user:', error);
-    // Fallback data cho địa chỉ
-    userAddresses.value = [
-      {
-        id: 1,
-        name: '123 Đường ABC, Phường DEF, Quận GHI, TP.HCM',
-        isDefault: true
-      },
-      {
-        id: 2,
-        name: '456 Đường XYZ, Phường UVW, Quận RST, TP.HCM',
-        isDefault: false
-      }
-    ];
-    // Auto-select default address
-    if (!newOrder.value.addressId) {
-      newOrder.value.addressId = 1;
-    }
-    showToast('warning', 'Đang sử dụng địa chỉ mẫu. Vui lòng kiểm tra kết nối backend!');
+    showToast('error', 'Lỗi khi lấy địa chỉ user!');
   }
 };
+
+const onAddressChange = () => {
+  currentAddress.value = userAddresses.value.find(addr => addr.id == newOrder.value.addressId) || null;
+  calculateShippingFee()
+}
+
 
 const loadUserVouchers = async (userId) => {
   try {
@@ -1366,6 +1380,7 @@ const onBookChange = (detail, index) => {
   if (selectedBook) {
     detail.unitPrice = selectedBook.price;
     detail.isFlashSale = selectedBook.isFlashSale || false;
+    calculateShippingFee()
     calculateDetailTotal(detail);
   }
 };
@@ -1385,6 +1400,7 @@ const calculateDetailTotal = (detail) => {
   
   // Trigger order calculation if we have enough data
   if (newOrder.value.userId && newOrder.value.items.length > 0) {
+    calculateShippingFee()
     calculateOrderPreview();
   }
 };
@@ -1450,6 +1466,29 @@ const calculateOrderPreview = async () => {
     isCalculating.value = false;
   }
 };
+
+const calculateShippingFee = async () => {
+  const selectedAddress = currentAddress.value.raw
+  const orderItems = newOrder.value.items
+  // Mỗi quyển sách tính 200g, tổng cân nặng = tổng số lượng * 200
+  const totalBooks = orderItems.reduce((sum, item) => sum + (item.quantity || 0), 0)
+  const totalWeight = totalBooks * 200
+
+  if(!selectedAddress || totalWeight <= 0){
+    newOrder.value.shippingFee = 0
+    return
+  }
+
+  const res = await ghn.calculateFee.calculateShippingFee({
+    service_type_id : 2,
+    to_ward_code : selectedAddress.wardCode,
+    to_district_id : selectedAddress.districtId,
+    weight : totalWeight
+  })
+  console.log("🚀 ~ calculateShippingFee ~ res:", res)
+  newOrder.value.shippingFee = res.total || 30000
+}
+
 
 const handleSubmitOrder = async () => {
   if (!canSubmitOrder.value) {
@@ -1698,6 +1737,7 @@ watch([
 watch([currentPage, pageSize], () => {
   fetchOrders();
 });
+
 </script>
 
 <style scoped>
