@@ -192,12 +192,14 @@
                 <th style="width: 70px; min-width: 60px; text-align: center;">ID</th>
                 <th style="width: 180px; min-width: 120px;">Ảnh</th>
                 <th>Tên sách</th>
-                <th>Mã sách</th>
-                <th>Giá</th>
-                <th>Số lượng</th>
+                <th>Mã sách & ISBN</th>
+                <th>Giá & Giảm giá</th>
+                <th>Số lượng & Đã bán</th>
+                <th>Flash Sale</th>
                 <th>Thể loại</th>
                 <th>Nhà cung cấp</th>
                 <th>Nhà xuất bản</th>
+                <th>Thông tin bổ sung</th>
                 <th>Trạng thái</th>
                 <th>Tác giả</th>
                 <th>Hành động</th>
@@ -205,7 +207,7 @@
             </thead>
             <tbody>
               <tr v-if="books.length === 0">
-                <td colspan="13" class="text-center py-4 text-muted">
+                <td colspan="15" class="text-center py-4 text-muted">
                   <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                   Không có dữ liệu
                 </td>
@@ -214,6 +216,7 @@
                 <td style="text-align: center;">{{ currentPage * pageSize + index + 1 }}</td>
                 <td style="text-align: center;">{{ book.id }}</td>
                 <td>
+                  <!-- 🔥 HIỂN THỊ ẢNH TỪ TRƯỜNG IMAGES (MẢNG URL) - THEO TÀI LIỆU API -->
                   <div style="display: flex; flex-wrap: wrap; gap: 4px;">
                     <template v-if="book.images && book.images.length">
                       <img
@@ -241,19 +244,59 @@
                   </div>
                 </td>
                 <td>
-                  <code class="text-primary">{{ book.bookCode }}</code>
+                  <div>
+                    <code class="text-primary d-block">{{ book.bookCode }}</code>
+                    <small v-if="book.isbn" class="text-muted">ISBN: {{ book.isbn }}</small>
+                    <small v-else class="text-muted">Chưa có ISBN</small>
+                  </div>
                 </td>
                 <td>
-                  <strong class="text-success">
-                    {{ formatCurrency(book.price) }}
-                  </strong>
+                  <div>
+                    <strong class="text-success d-block">
+                      {{ formatCurrency(book.price) }}
+                    </strong>
+                    <div v-if="book.discountValue || book.discountPercent" class="small">
+                      <span v-if="book.discountValue" class="badge bg-warning text-dark">
+                        -{{ formatCurrency(book.discountValue) }}
+                      </span>
+                      <span v-if="book.discountPercent" class="badge bg-warning text-dark">
+                        -{{ book.discountPercent }}%
+                      </span>
+                    </div>
+                    <small v-else class="text-muted">Không giảm giá</small>
+                  </div>
                 </td>
                 <td>
-                  <span 
-                    :class="book.stockQuantity === 0 ? 'badge bg-danger' : (book.stockQuantity < 10 ? 'badge bg-warning text-dark' : 'text-dark')"
-                  >
-                    {{ book.stockQuantity }}
-                  </span>
+                  <div>
+                    <span 
+                      :class="book.stockQuantity === 0 ? 'badge bg-danger' : (book.stockQuantity < 10 ? 'badge bg-warning text-dark' : 'text-dark fw-bold')"
+                      class="d-block"
+                    >
+                      Tồn: {{ book.stockQuantity }}
+                    </span>
+                    <small class="text-info">
+                      Đã bán: {{ book.soldCount || 0 }}
+                    </small>
+                  </div>
+                </td>
+                <td>
+                  <div v-if="book.isInFlashSale" class="text-center">
+                    <button 
+                      class="btn btn-danger btn-sm mb-1" 
+                      @click="goToFlashSaleManagement(book.id)"
+                      title="Xem Flash Sale"
+                    >
+                      <i class="bi bi-lightning-fill"></i> FLASH SALE
+                    </button>
+                    <div class="small">
+                      <div class="text-danger fw-bold">{{ formatCurrency(book.flashSalePrice) }}</div>
+                      <div class="text-muted">Đã bán: {{ book.flashSaleSoldCount || 0 }}</div>
+                      <div v-if="book.flashSaleEndTime" class="text-muted">
+                        Kết thúc: {{ formatDateTime(book.flashSaleEndTime) }}
+                      </div>
+                    </div>
+                  </div>
+                  <span v-else class="text-muted small">Không có Flash Sale</span>
                 </td>
                 <td>
                   <span class="badge bg-info text-dark">
@@ -269,6 +312,28 @@
                   <span class="badge bg-secondary">
                     {{ book.publisherName || 'Chưa có nhà xuất bản' }}
                   </span>
+                </td>
+                <td>
+                  <div class="small">
+                    <div v-if="book.language">
+                      <strong>Ngôn ngữ:</strong> {{ book.language }}
+                    </div>
+                    <div v-if="book.pageCount">
+                      <strong>Số trang:</strong> {{ book.pageCount }}
+                    </div>
+                    <div v-if="book.weight">
+                      <strong>Trọng lượng:</strong> {{ book.weight }}g
+                    </div>
+                    <div v-if="book.dimensions">
+                      <strong>Kích thước:</strong> {{ book.dimensions }}
+                    </div>
+                    <div v-if="book.translator">
+                      <strong>Dịch giả:</strong> {{ book.translator }}
+                    </div>
+                    <div v-if="book.publicationDate">
+                      <strong>Ngày XB:</strong> {{ formatDate(book.publicationDate) }}
+                    </div>
+                  </div>
                 </td>
                 <td>
                   <StatusLabel
@@ -842,6 +907,13 @@ const fetchBooks = async () => {
     totalPages.value = data.data.totalPages || 1;
     totalElements.value = data.data.totalElements || 0;
     isLastPage.value = data.data.last ?? (currentPage.value >= totalPages.value - 1);
+    
+    // 🔥 DEBUG: Kiểm tra API có trả về đúng trường images không
+    if (books.value.length > 0) {
+      console.log('=== DEBUG: First book data ===');
+      console.log('book.images:', books.value[0].images);
+      console.log('book.coverImageUrl:', books.value[0].coverImageUrl);
+    }
   } catch (error) {
     console.error('Lỗi khi lấy danh sách sách:', error);
     Swal.fire({
@@ -952,7 +1024,8 @@ const openAddModal = () => {
 const openEditModal = (book, index) => {
   isEditMode.value = true;
   editIndex.value = index;
-  // Luôn lấy bookImages từ book.images (mảng URL), không lấy coverImageUrl nếu không có ảnh
+  // 🔥 QUAN TRỌNG: Luôn lấy bookImages từ book.images (mảng URL) - THEO TÀI LIỆU API
+  // KHÔNG lấy từ coverImageUrl vì đây chỉ là ảnh bìa nhỏ cho thumbnail
   let bookImages = Array.isArray(book.images) ? [...book.images] : [];
   newBook.value = {
     id: book.id,
@@ -1038,9 +1111,7 @@ const handleSubmitBook = async () => {
       imagesArr = imagesArr.map(img => img.url);
     }
     if (!Array.isArray(imagesArr)) imagesArr = [];
-    // Nếu xóa hết ảnh thì imagesArr là [] và coverImageUrl là ''
-    if (!imagesArr || imagesArr.length === 0) imagesArr = [];
-    const coverImageUrl = imagesArr.length > 0 ? imagesArr[0] : '';
+    
     const bookData = {
       bookName: newBook.value.bookName.trim(),
       description: newBook.value.description?.trim() || '',
@@ -1053,8 +1124,7 @@ const handleSubmitBook = async () => {
       bookCode: newBook.value.bookCode?.trim() || '',
       status: parseInt(newBook.value.status),
       authorIds: newBook.value.authorIds,
-      images: imagesArr, // luôn gửi đúng mảng URL
-      coverImageUrl, // luôn đồng bộ với imagesArr
+      images: imagesArr, // 🔥 CHỈ GỬI TRƯỜNG IMAGES - THEO TÀI LIỆU API
       dimensions: newBook.value.dimensions,
       weight: newBook.value.weight,
       language: newBook.value.language,
@@ -1065,7 +1135,6 @@ const handleSubmitBook = async () => {
 
     console.log('=== DEBUG: Submitting book data ===');
     console.log('bookData.images:', bookData.images);
-    console.log('bookData.coverImageUrl:', bookData.coverImageUrl);
 
     if (isEditMode.value) {
       // Update book
@@ -1415,8 +1484,7 @@ const fillFakeData = () => {
     pageCount: 320,
     isbn: '978-604-2-12345-6',
     translator: 'Nguyễn Văn A',
-    bookImages: fakeImages, // đồng bộ với MultiImageUpload
-    coverImageUrl: 'https://cdn.example.com/cover_new.jpg' // luôn có trường này
+    bookImages: fakeImages // đồng bộ với MultiImageUpload
   };
   
   // Show success message
@@ -1439,6 +1507,44 @@ const openImagePreview = (url) => {
 const closeImagePreview = () => {
   showImagePreview.value = false;
   previewImageUrl.value = '';
+};
+
+// Format date function
+const formatDate = (timestamp) => {
+  if (!timestamp) return 'Chưa có';
+  const date = new Date(timestamp);
+  return date.toLocaleDateString('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+};
+
+// Format datetime function
+const formatDateTime = (timestamp) => {
+  if (!timestamp) return 'Chưa có';
+  const date = new Date(timestamp);
+  return date.toLocaleString('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+// Navigate to flash sale management
+const goToFlashSaleManagement = (bookId) => {
+  // Có thể điều hướng đến trang quản lý flash sale với bookId
+  console.log('Navigate to flash sale management for book:', bookId);
+  // router.push({ name: 'admin-flash-sale', query: { bookId } });
+  // Tạm thời alert thông báo
+  Swal.fire({
+    title: 'Thông báo',
+    text: `Chuyển đến quản lý Flash Sale cho sách ID: ${bookId}`,
+    icon: 'info',
+    confirmButtonText: 'OK'
+  });
 };
 </script>
 
@@ -1826,7 +1932,7 @@ const closeImagePreview = () => {
 }
 
 .table-responsive table {
-  min-width: 1200px; /* Ensure table has minimum width for proper scrolling */
+  min-width: 1600px; /* Tăng từ 1200px để phù hợp với nhiều cột hơn */
 }
 
 .table-responsive::-webkit-scrollbar {

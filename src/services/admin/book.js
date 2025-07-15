@@ -70,7 +70,16 @@ export const createBook = async (bookData) => {
 // Cập nhật sách
 export const updateBook = async (id, bookData) => {
   try {
+    console.log('=== DEBUG: Updating book with ID:', id);
+    console.log('Update data:', bookData);
+    console.log('Update data.images:', bookData.images);
+    
     const response = await client.put(`/api/books/${id}`, bookData);
+    
+    console.log('=== DEBUG: Update response ===');
+    console.log('Response data:', response.data);
+    console.log('Response data.images:', response.data?.images);
+    
     return response.data;
   } catch (error) {
     console.error('Lỗi khi cập nhật sách:', error);
