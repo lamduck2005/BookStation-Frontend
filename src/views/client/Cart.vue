@@ -396,7 +396,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { getCartItems, updateCartItem, removeCartItem, selectCartItem } from '@/services/client/cart.js'
+import { getCartItems, updateCartItem, removeCartItem, selectCartItem, validateCart } from '@/services/client/cart.js'
 import { createSessionFromCart } from '@/services/client/checkout.js'
 import { getUserId } from '@/utils/utils.js'
 import { showNotification } from '@/utils/notification.js'
@@ -451,14 +451,20 @@ const loadCartItems = async () => {
     const response = await getCartItems(userId)
     if (response.status === 200 && response.data?.data) {
       cartItems.value = response.data.data
-      // Auto select all items
-      selectedItems.value = cartItems.value.map(item => item.id)
+      
+      // Tự động chọn các items đã được selected từ backend
+      selectedItems.value = cartItems.value
+        .filter(item => item.selected)
+        .map(item => item.id)
+      
       console.log('✅ Cart items loaded:', cartItems.value)
+      console.log('✅ Selected items:', selectedItems.value)
       
       // Setup flash sale countdowns
       setupFlashSaleCountdowns()
     } else {
       cartItems.value = []
+      selectedItems.value = []
     }
   } catch (error) {
     console.error('❌ Error loading cart items:', error)
@@ -468,11 +474,33 @@ const loadCartItems = async () => {
   }
 }
 
-const toggleSelectAll = () => {
-  if (allSelected.value) {
-    selectedItems.value = []
-  } else {
-    selectedItems.value = cartItems.value.map(item => item.id)
+const toggleSelectAll = async () => {
+  try {
+    const userId = getUserId()
+    if (!userId) return
+    
+    const newSelectedState = !allSelected.value
+    
+    // Update từng item một cách tuần tự
+    for (const item of cartItems.value) {
+      await selectCartItem(item.id, newSelectedState)
+    }
+    
+    // Cập nhật UI
+    if (newSelectedState) {
+      selectedItems.value = cartItems.value.map(item => item.id)
+    } else {
+      selectedItems.value = []
+    }
+    
+    // Cập nhật selected state trong cartItems
+    cartItems.value.forEach(item => {
+      item.selected = newSelectedState
+    })
+    
+  } catch (error) {
+    console.error('❌ Error toggling select all:', error)
+    showToast('error', 'Không thể cập nhật lựa chọn')
   }
 }
 
@@ -482,15 +510,23 @@ const toggleItemSelection = async (itemId) => {
   
   try {
     const isSelected = selectedItems.value.includes(itemId)
-    await selectCartItem(itemId, !isSelected)
+    const newSelectedState = !isSelected
     
-    if (isSelected) {
-      selectedItems.value = selectedItems.value.filter(id => id !== itemId)
-    } else {
+    await selectCartItem(itemId, newSelectedState)
+    
+    // Cập nhật UI
+    if (newSelectedState) {
       selectedItems.value.push(itemId)
+    } else {
+      selectedItems.value = selectedItems.value.filter(id => id !== itemId)
     }
+    
+    // Cập nhật selected state trong item
+    item.selected = newSelectedState
+    
   } catch (err) {
     console.error('❌ Error toggling item selection:', err)
+    showToast('error', 'Không thể cập nhật lựa chọn sản phẩm')
   }
 }
 
@@ -647,7 +683,7 @@ const reloadCartAfterFlashSaleExpired = async (expiredItemId) => {
   }
 }
 
-// Main checkout function - only called when user clicks checkout button
+// Main checkout function - theo document cần validate cart trước
 const goToCheckout = async () => {
   const userId = getUserId()
   if (!userId) {
@@ -663,12 +699,21 @@ const goToCheckout = async () => {
   
   try {
     sessionCreating.value = true
-    console.log('🛒 Creating checkout session for selected items:', selectedItems.value)
+    console.log('🛒 Starting checkout process for selected items:', selectedItems.value)
     
-    // Create checkout session with selected items and shipping fee
+    // Bước 1: Validate cart trước khi checkout
+    console.log('🔍 Validating cart...')
+    const validateResponse = await validateCart(userId)
+    
+    if (validateResponse.status !== 200) {
+      throw new Error('Giỏ hàng có sản phẩm không hợp lệ')
+    }
+    
+    // Bước 2: Tạo checkout session từ cart  
+    console.log('📝 Creating checkout session from cart...')
     const response = await createSessionFromCart(userId)
     
-    if (response.status === 201 && response.data?.data) {
+    if ((response.status === 201 || response.status === 200) && response.data?.data) {
       console.log('✅ Checkout session created:', response.data.data)
       showToast('success', 'Đã tạo phiên thanh toán!')
       
@@ -679,7 +724,21 @@ const goToCheckout = async () => {
     }
   } catch (error) {
     console.error('❌ Error creating checkout session:', error)
-    showToast('error', error.message || 'Không thể tạo phiên thanh toán. Vui lòng thử lại.')
+    
+    let errorMessage = error.message || 'Không thể tạo phiên thanh toán. Vui lòng thử lại.'
+    
+    // Xử lý các lỗi đặc biệt theo document
+    if (error.message?.includes('trống')) {
+      errorMessage = 'Giỏ hàng trống, không thể thanh toán'
+    } else if (error.message?.includes('không có sản phẩm nào được chọn')) {
+      errorMessage = 'Không có sản phẩm nào được chọn để checkout'
+    } else if (error.message?.includes('hết hàng')) {
+      errorMessage = 'Có sản phẩm đã hết hàng, vui lòng cập nhật giỏ hàng'
+      // Reload cart to update stock status
+      await loadCartItems()
+    }
+    
+    showToast('error', errorMessage)
   } finally {
     sessionCreating.value = false
   }

@@ -608,7 +608,7 @@ import {
   recalculateSessionPricing,
   updateCheckoutSession
 } from '@/services/client/checkout.js'
-import { getDefaultAddress, getAddresses } from '@/services/client/address.js'
+import { getAddresses } from '@/services/client/address.js'
 import { getUserId } from '@/utils/utils.js'
 import { showToast } from '@/utils/swalHelper.js'
 
@@ -629,6 +629,12 @@ const addresses = ref([])
 const addressLoading = ref(false)
 const showAddressModal = ref(false)
 
+// Voucher related states
+const showVoucherList = ref(false)
+const voucherSearch = ref('')
+const selectedVouchers = ref([])
+const filteredVouchers = ref([])
+
 let validationTimer = null
 
 const formatPrice = (price) => {
@@ -641,11 +647,15 @@ const loadLatestSession = async (userId) => {
     loading.value = true
     error.value = null
     const response = await getLatestCheckoutSession(userId)
-    if (response.status === 200 && response.data) {
+    
+    console.log('🔍 Response from getLatestCheckoutSession:', response)
+    
+    // Fix: Kiểm tra đúng cấu trúc response
+    if (response.status === 200 && response.data?.data) {
       session.value = response.data.data
       sessionId.value = response.data.data.id
       
-      console.log('✅ Latest session loaded:', {
+      console.log('✅ Latest session loaded hi:', {
         sessionId: sessionId.value,
         session: session.value,
         checkoutItems: session.value?.checkoutItems,
@@ -654,14 +664,23 @@ const loadLatestSession = async (userId) => {
       })
       
       // Lấy địa chỉ từ session nếu có, nếu không thì lấy địa chỉ mặc định
-      if (session.value.address) {
-        selectedAddress.value = session.value.address
+      if (session.value.addressId) {
+        // Tìm địa chỉ trong danh sách addresses đã load
+        const foundAddress = addresses.value.find(addr => addr.id === session.value.addressId)
+        if (foundAddress) {
+          selectedAddress.value = foundAddress
+        }
       } else {
         // Nếu session chưa có địa chỉ, tự động cập nhật với địa chỉ mặc định
         await setDefaultAddressToSession()
       }
       
-      await validateSession()
+      // Fix: Validate session nhưng không để nó block loading
+      try {
+        await validateSession()
+      } catch (validateError) {
+        console.warn('⚠️ Validation error (non-blocking):', validateError)
+      }
     } else {
       throw new Error('Không tìm thấy phiên thanh toán mới nhất.')
     }
@@ -684,9 +703,13 @@ const validateSession = async () => {
     const id = session.value?.id
     if (!userId || !id) return
     const response = await validateCheckoutSession(id, userId)
+    
+    console.log('🔍 Validate session response:', response)
+    
     if (response.status === 200) {
       validationErrors.value = []
-      if (response.data) {
+      // Fix: Kiểm tra đúng structure response.data?.data
+      if (response.data?.data) {
         session.value = response.data.data
         sessionId.value = response.data.data.id
       }
@@ -869,6 +892,19 @@ const selectAddress = async (address) => {
   }
 }
 
+// Helper function để lấy items từ session hiện tại - LUÔN LUÔN CẦN THIẾT khi update session
+const getCurrentSessionItems = () => {
+  if (!session.value?.checkoutItems) {
+    console.warn('⚠️ No checkout items found in session')
+    return []
+  }
+  
+  return session.value.checkoutItems.map(item => ({
+    bookId: item.bookId,
+    quantity: item.quantity
+  }))
+}
+
 // Function để set địa chỉ mặc định vào session
 const setDefaultAddressToSession = async () => {
   try {
@@ -876,12 +912,19 @@ const setDefaultAddressToSession = async () => {
     const defaultAddr = addresses.value.find(addr => addr.isDefault)
     if (defaultAddr && sessionId.value) {
       const userId = getUserId()
-      const response = await updateCheckoutSession(sessionId.value, userId, {
+      
+      // QUAN TRỌNG: Phải truyền items theo document
+      const updateData = {
+        items: getCurrentSessionItems(),
         addressId: defaultAddr.id
-      })
+      }
+      
+      console.log('📝 Updating session with default address:', updateData)
+      const response = await updateCheckoutSession(sessionId.value, userId, updateData)
+      
       if (response.status === 200 && response.data?.data) {
         session.value = response.data.data
-        selectedAddress.value = response.data.data.address
+        selectedAddress.value = defaultAddr // Fix: Dùng defaultAddr thay vì response.data.data.address
         console.log('✅ Default address set to session:', defaultAddr.id)
       }
     }
@@ -896,13 +939,19 @@ const updateSessionAddress = async (addressId) => {
     const userId = getUserId()
     if (!sessionId.value || !userId) return
     
-    const response = await updateCheckoutSession(sessionId.value, userId, {
+    // QUAN TRỌNG: Phải truyền items theo document
+    const updateData = {
+      items: getCurrentSessionItems(),
       addressId: addressId
-    })
+    }
+    
+    console.log('📝 Updating session address:', updateData)
+    const response = await updateCheckoutSession(sessionId.value, userId, updateData)
     
     if (response.status === 200 && response.data?.data) {
       session.value = response.data.data
-      selectedAddress.value = response.data.data.address
+      // Fix: Tìm địa chỉ trong danh sách addresses thay vì dùng response.data.data.address
+      selectedAddress.value = addresses.value.find(addr => addr.id === addressId)
       showToast('success', 'Địa chỉ giao hàng đã được cập nhật')
     }
   } catch (error) {
@@ -917,9 +966,14 @@ const updateSessionPaymentMethod = async (paymentMethod) => {
     const userId = getUserId()
     if (!sessionId.value || !userId) return
     
-    const response = await updateCheckoutSession(sessionId.value, userId, {
+    // QUAN TRỌNG: Phải truyền items theo document
+    const updateData = {
+      items: getCurrentSessionItems(),
       paymentMethod: paymentMethod
-    })
+    }
+    
+    console.log('📝 Updating session payment method:', updateData)
+    const response = await updateCheckoutSession(sessionId.value, userId, updateData)
     
     if (response.status === 200 && response.data?.data) {
       session.value = response.data.data
@@ -937,9 +991,14 @@ const updateSessionVouchers = async (voucherIds) => {
     const userId = getUserId()
     if (!sessionId.value || !userId) return
     
-    const response = await updateCheckoutSession(sessionId.value, userId, {
+    // QUAN TRỌNG: Phải truyền items theo document
+    const updateData = {
+      items: getCurrentSessionItems(),
       selectedVoucherIds: voucherIds
-    })
+    }
+    
+    console.log('📝 Updating session vouchers:', updateData)
+    const response = await updateCheckoutSession(sessionId.value, userId, updateData)
     
     if (response.status === 200 && response.data?.data) {
       session.value = response.data.data
@@ -957,9 +1016,14 @@ const updateSessionNotes = async (notes) => {
     const userId = getUserId()
     if (!sessionId.value || !userId) return
     
-    const response = await updateCheckoutSession(sessionId.value, userId, {
+    // QUAN TRỌNG: Phải truyền items theo document
+    const updateData = {
+      items: getCurrentSessionItems(),
       notes: notes
-    })
+    }
+    
+    console.log('📝 Updating session notes:', updateData)
+    const response = await updateCheckoutSession(sessionId.value, userId, updateData)
     
     if (response.status === 200 && response.data?.data) {
       session.value = response.data.data
@@ -969,6 +1033,21 @@ const updateSessionNotes = async (notes) => {
     console.error('❌ Error updating notes:', error)
     showToast('error', 'Không thể cập nhật ghi chú')
   }
+}
+
+// Voucher functions
+const toggleVoucher = (voucher) => {
+  const index = selectedVouchers.value.findIndex(v => v.code === voucher.code)
+  if (index > -1) {
+    selectedVouchers.value.splice(index, 1)
+  } else {
+    selectedVouchers.value.push(voucher)
+  }
+  // TODO: Update session vouchers when implemented
+}
+
+const selectGift = () => {
+  showToast('info', 'Chức năng chọn quà sẽ được triển khai sớm')
 }
 
 // Lắng nghe sự kiện storage để reload giữa các tab

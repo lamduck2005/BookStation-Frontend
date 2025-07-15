@@ -287,7 +287,7 @@
 <script>
 import { getBookDetail } from '@/services/client/book.js'
 import { addToCart as addToCartAPI } from '@/services/client/cart.js'
-import { createSessionFromCart } from '@/services/client/checkout.js'
+import { createCheckoutSession } from '@/services/client/checkout.js'
 import { showToast } from '@/utils/swalHelper.js'
 import { getUserId } from '@/utils/utils.js'
 import { createFlashSaleCountdown, formatCountdownTime } from '@/utils/flashSaleUtils.js'
@@ -435,32 +435,28 @@ export default {
         
         const userId = getUserId()
         
-        // Bước 1: Thêm sản phẩm vào giỏ hàng
-        const cartData = {
-          userId: userId,
-          bookId: this.book.id,
-          quantity: this.quantity
+        // Theo document: Tạo checkout session trực tiếp từ items, không cần thêm vào cart trước
+        const sessionData = {
+          items: [
+            {
+              bookId: this.book.id,
+              quantity: this.quantity
+            }
+          ]
         }
         
-        const addCartResponse = await addToCartAPI(cartData)
+        console.log('🚀 Creating direct checkout session:', sessionData)
+        const sessionResponse = await createCheckoutSession(sessionData, userId)
         
-        if (addCartResponse.status === 200) {
-          // Bước 2: Tạo checkout session từ cart
-          const sessionResponse = await createSessionFromCart(userId)
+        if (sessionResponse.status === 201) {
+          const sessionId = sessionResponse.data.data.id
           
-          if (sessionResponse.status === 201) {
-            const sessionId = sessionResponse.data.id
-            
-            // Bước 3: Redirect thẳng đến checkout page
-            showToast('success', 'Đang chuyển đến trang thanh toán...')
-            setTimeout(() => {
-              this.$router.push(`/checkout/${sessionId}`)
-            }, 300)
-          } else {
-            throw new Error('Không thể tạo phiên checkout')
-          }
+          showToast('success', 'Đang chuyển đến trang thanh toán...')
+          setTimeout(() => {
+            this.$router.push(`/checkout`)
+          }, 300)
         } else {
-          throw new Error('Không thể thêm sản phẩm vào giỏ hàng')
+          throw new Error(sessionResponse.message || 'Không thể tạo phiên checkout')
         }
         
       } catch (error) {
@@ -472,6 +468,13 @@ export default {
           errorMessage = error.response.data.message
         } else if (error.message) {
           errorMessage = error.message
+        }
+        
+        // Xử lý lỗi theo document
+        if (errorMessage.includes('hết hàng')) {
+          errorMessage = `Sách '${this.book.name}' đã hết hàng`
+        } else if (errorMessage.includes('Flash sale')) {
+          errorMessage = 'Flash sale đã kết thúc hoặc hết hàng'
         }
         
         showToast('error', errorMessage)
