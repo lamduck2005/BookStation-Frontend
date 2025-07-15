@@ -52,11 +52,13 @@ import EventGift from "@/views/admin/views-admin/EventGift.vue";
 import EventParticipant from "@/views/admin/views-admin/EventParticipant.vue";
 import EventGiftClaim from "@/views/admin/views-admin/EventGiftClaim.vue";
 import EventHistory from "@/views/admin/views-admin/EventHistory.vue";
+import ProductCatalog from "@/views/client/ProductCatalog.vue";
 
 
 import AuthPage from "@/views/AuthPage.vue";
 import { showToast } from "@/utils/swalHelper";
 import ResetPassword from "@/views/ResetPassword.vue";
+import POSVIew from "@/views/client/POSVIew.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -175,6 +177,12 @@ const router = createRouter({
             },
           ],
         },
+        {
+          path: "/products",
+          name: "product-catalog",
+          component: ProductCatalog,
+        },
+
       ],
     },
     // Trang auth, không thuộc parent nào
@@ -318,6 +326,11 @@ const router = createRouter({
           path: "event-history",
           name: "event-history",
           component: EventHistory,
+        },
+         {
+          path: "pos-view",
+          name: "pos-view",
+          component: POSVIew,
         },
       ],
       // End - Admin routes

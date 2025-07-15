@@ -66,3 +66,16 @@ export const updatePublisherStatus = async (id, status, updatedBy) => {
     throw error;
   }
 };
+export const getAllPublishers = async () => {
+try {
+const response = await client.get('/api/publishers/getall');
+console.log("Response from getAllPublishers:", response.data);
+    return response.data.data; // Assuming the data is in the 'data' field of the response
+}catch (error) {
+
+    console.error("Error fetching publishers:", error);
+    throw error;
+  }
+
+
+}

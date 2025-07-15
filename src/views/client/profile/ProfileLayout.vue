@@ -24,7 +24,7 @@ import ProfileSidebar from '@/components/profile/ProfileSidebar.vue'
 
 <style scoped>
 .profile-layout {
-  background-color: #e3f2fd;
+  background-color: #ccd5db;
   min-height: 100vh;
 }
 
