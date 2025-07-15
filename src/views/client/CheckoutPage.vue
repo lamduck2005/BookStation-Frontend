@@ -200,19 +200,27 @@
         <!-- Thành viên BookStation -->
         <div class="card mb-3">
           <div class="card-header bg-white py-2">
-            <h6 class="mb-0 text-uppercase fw-bold text-primary">Thành viên BookStation</h6>
+            <h6 class="mb-0 text-uppercase fw-bold text-primary">
+              Thành viên BookStation
+            </h6>
           </div>
           <div class="card-body py-3">
             <!-- B-Point -->
             <div class="mb-3">
-              <div class="d-flex align-items-center justify-content-between mb-2">
+              <div
+                class="d-flex align-items-center justify-content-between mb-2"
+              >
                 <div class="small">
-                  <strong>Số B-Point hiện có:</strong> 
+                  <strong>Số B-Point hiện có:</strong>
                   <span class="text-warning ms-1">0</span>
                 </div>
               </div>
               <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="usePoints">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="usePoints"
+                />
                 <label class="form-check-label small" for="usePoints">
                   Sử dụng B-point để thanh toán
                 </label>
@@ -221,14 +229,20 @@
 
             <!-- Freeship -->
             <div class="mb-3">
-              <div class="d-flex align-items-center justify-content-between mb-2">
+              <div
+                class="d-flex align-items-center justify-content-between mb-2"
+              >
                 <div class="small">
-                  <strong>Số lần freeship:</strong> 
+                  <strong>Số lần freeship:</strong>
                   <span class="text-warning ms-1">0 lần</span>
                 </div>
               </div>
               <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="useFreeship">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="useFreeship"
+                />
                 <label class="form-check-label small" for="useFreeship">
                   Sử dụng freeship
                 </label>
@@ -240,51 +254,165 @@
         <!-- Mã khuyến mãi/Mã quà tặng -->
         <div class="card mb-3">
           <div class="card-header bg-white py-2">
-            <h6 class="mb-0 text-uppercase fw-bold">Mã khuyến mãi/Mã quà tặng</h6>
+            <h6 class="mb-0 text-uppercase fw-bold">
+              Mã khuyến mãi/Mã quà tặng
+            </h6>
           </div>
           <div class="card-body py-3">
             <div class="row">
               <div class="col-8">
-                <input 
-                  type="text" 
-                  class="form-control form-control-sm" 
+                <input
+                  type="text"
+                  class="form-control form-control-sm"
                   placeholder="Nhập mã khuyến mãi/Quà tặng"
                   v-model="couponCode"
-                  style="font-size: 14px;"
-                >
+                  style="font-size: 14px"
+                />
               </div>
               <div class="col-4">
-                <button 
-                  class="btn btn-primary btn-sm w-100" 
+                <button
+                  class="btn btn-primary btn-sm w-100"
                   @click="applyCoupon"
-                  style="font-size: 14px;"
+                  style="font-size: 14px"
                 >
                   Áp dụng
                 </button>
               </div>
             </div>
             <div class="mt-2">
-              <button class="btn btn-link p-0 text-primary text-decoration-none small">
+              <button
+                class="btn btn-link p-0 text-primary text-decoration-none small"
+                @click="showVoucherList = true"
+              >
                 Chọn mã khuyến mãi
               </button>
+            </div>
+            <!-- Modal chọn voucher -->
+            <div v-if="showVoucherList" class="voucher-modal-overlay">
+              <div class="voucher-modal card shadow p-3">
+                <div class="d-flex align-items-center mb-3">
+                  <span class="fw-bold text-primary me-2"
+                    ><i class="fas fa-ticket-alt"></i> CHỌN MÃ KHUYẾN MÃI</span
+                  >
+                  <span class="small text-muted"
+                    >Có thể áp dụng đồng thời nhiều mã</span
+                  >
+                  <button
+                    class="btn btn-sm btn-outline-secondary ms-auto"
+                    @click="showVoucherList = false"
+                  >
+                    Đóng
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  class="form-control form-control-sm mb-2"
+                  v-model="voucherSearch"
+                  placeholder="Tìm kiếm mã..."
+                />
+                <div v-if="filteredVouchers.length > 0">
+                  <div
+                    v-for="voucher in filteredVouchers"
+                    :key="voucher.id || voucher.code"
+                    class="voucher-item border rounded p-2 mb-2 d-flex align-items-center justify-content-between"
+                    :style="{
+                      background: selectedVouchers.some(
+                        (v) => v.code === voucher.code
+                      )
+                        ? '#e3f2fd'
+                        : '#fff',
+                    }"
+                  >
+                    <div>
+                      <div class="fw-bold">
+                        {{ voucher.name || voucher.code }}
+                      </div>
+                      <div class="small text-muted">
+                        {{ voucher.description }}
+                      </div>
+                      <div class="small">
+                        HSD:
+                        {{
+                          new Date(voucher.endTime).toLocaleDateString("vi-VN")
+                        }}
+                      </div>
+                    </div>
+                    <button
+                      class="btn btn-sm"
+                      :class="
+                        selectedVouchers.some((v) => v.code === voucher.code)
+                          ? 'btn-danger'
+                          : 'btn-primary'
+                      "
+                      @click="toggleVoucher(voucher)"
+                    >
+                      {{
+                        selectedVouchers.some((v) => v.code === voucher.code)
+                          ? "Bỏ chọn"
+                          : "Chọn"
+                      }}
+                    </button>
+                  </div>
+                </div>
+                <div v-else class="text-muted small">
+                  Không tìm thấy mã phù hợp
+                </div>
+                <div class="mt-3 text-end">
+                  <button
+                    class="btn btn-primary"
+                    @click="showVoucherList = false"
+                  >
+                    Áp dụng
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- Hiển thị list voucher đã chọn -->
+            <div v-if="selectedVouchers.length > 0" class="mt-2">
+              <div class="fw-bold small mb-1">Voucher đã chọn:</div>
+              <div class="d-flex flex-wrap gap-2">
+                <span
+                  v-for="voucher in selectedVouchers"
+                  :key="voucher.code"
+                  class="badge bg-primary text-white d-flex align-items-center"
+                >
+                  {{ voucher.code }}
+                  <button
+                    class="btn btn-sm btn-link text-white ms-1 p-0"
+                    style="font-size: 13px"
+                    @click="toggleVoucher(voucher)"
+                  >
+                    <i class="fas fa-times"></i>
+                  </button>
+                </span>
+              </div>
             </div>
             <div class="text-muted small mt-1">
               Có thể áp dụng đồng thời nhiều mã
             </div>
-            
+
             <!-- Nhận quà section -->
-            <div class="mt-3 p-2" style="background-color: #f8f9fa; border-radius: 6px;">
+            <div
+              class="mt-3 p-2"
+              style="background-color: #f8f9fa; border-radius: 6px"
+            >
               <div class="d-flex align-items-center">
                 <i class="fas fa-gift text-primary me-2"></i>
                 <div class="flex-grow-1">
                   <div class="small fw-bold text-primary">Nhận quà</div>
-                  <div class="text-muted" style="font-size: 12px;">
+                  <div class="text-muted" style="font-size: 12px">
                     Đơn hàng của bạn chưa đủ điều kiện nhận quà
                   </div>
                 </div>
-                <button class="btn btn-outline-primary btn-sm">
-                  <span style="font-size: 12px;">Chọn quà</span>
-                  <i class="fas fa-chevron-right ms-1" style="font-size: 10px;"></i>
+                <button
+                  class="btn btn-outline-primary btn-sm"
+                  @click="selectGift"
+                >
+                  <span style="font-size: 12px">Chọn quà</span>
+                  <i
+                    class="fas fa-chevron-right ms-1"
+                    style="font-size: 10px"
+                  ></i>
                 </button>
               </div>
             </div>
@@ -365,7 +493,9 @@
         <div class="row justify-content-end mb-2">
           <div class="col-auto">
             <div class="text-end">
-              <div class="d-flex justify-content-between align-items-center mb-1">
+              <div
+                class="d-flex justify-content-between align-items-center mb-1"
+              >
                 <span class="small text-muted me-3">Thành tiền</span>
                 <span class="fw-bold small">{{ formatPrice(session?.subtotal || 0) }}</span>
               </div>
@@ -380,23 +510,33 @@
             </div>
           </div>
         </div>
-        
+
         <!-- Đường kẻ ngăn cách -->
-        <hr class="my-2" style="border-color: #dee2e6;">
-        
+        <hr class="my-2" style="border-color: #dee2e6" />
+
         <!-- Phần điều khoản và nút thanh toán ở dưới -->
         <div class="row align-items-center">
           <div class="col-12 col-md-6">
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" id="agree" checked>
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="agree"
+                checked
+              />
               <label class="form-check-label small" for="agree">
-                Bằng việc tiến hành Mua hàng, bạn đã đồng ý với 
-                <a href="#" class="text-primary">Điều khoản & Điều kiện của BookStation.com</a>
+                Bằng việc tiến hành Mua hàng, bạn đã đồng ý với
+                <a href="#" class="text-primary"
+                  >Điều khoản & Điều kiện của BookStation.com</a
+                >
               </label>
             </div>
           </div>
           <div class="col-12 col-md-6 text-center text-md-end">
-            <button class="btn btn-danger px-4 py-2 fw-bold" @click="processPayment">
+            <button
+              class="btn btn-danger px-4 py-2 fw-bold"
+              @click="processPayment"
+            >
               Xác nhận thanh toán
             </button>
           </div>
@@ -865,7 +1005,7 @@ onMounted(async () => {
 .card {
   border: 1px solid #e0e0e0;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .card-header {
@@ -932,28 +1072,28 @@ onMounted(async () => {
   .container-fluid {
     padding: 0.5rem;
   }
-  
+
   .card-body {
     padding: 0.5rem;
   }
-  
+
   .fixed-bottom .row:first-child {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .fixed-bottom .row:last-child {
     flex-direction: column;
   }
-  
+
   .fixed-bottom .col-md-6:first-child {
     margin-bottom: 0.5rem;
   }
-  
+
   .fixed-bottom {
     padding: 0.75rem 0;
   }
-  
+
   .fixed-bottom .d-flex {
     flex-direction: column;
     gap: 0.5rem;
@@ -1024,5 +1164,35 @@ onMounted(async () => {
 /* Card header with primary color */
 .card-header h6.text-primary {
   color: #007bff !important;
+}
+
+/* Voucher modal styling */
+.voucher-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.voucher-modal {
+  max-width: 500px;
+  width: 100%;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+}
+
+.voucher-item {
+  transition: background 0.2s;
+}
+
+.voucher-item:hover {
+  background: #f1f8ff;
 }
 </style>
