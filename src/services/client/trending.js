@@ -19,16 +19,16 @@ export const getTrendingBooks = async (trendingRequest) => {
   }
 };
 
-// Preview mode - Hiển thị vài sách đầu (5 items)
+// Preview mode - Hiển thị vài sách đầu (10 items cho homepage)
 export const getTrendingPreview = async (type = 'DAILY_TRENDING') => {
   return await getTrendingBooks({
     type: type,
     page: 0,
-    size: 5
+    size: 10 // Tăng từ 5 lên 10 để hiển thị đủ sản phẩm
   });
 };
 
-// Full list mode - Hiển thị danh sách đầy đủ
+// Full list mode - Hiển thị danh sách đầy đủ (pagination)
 export const getTrendingFullList = async (type = 'DAILY_TRENDING', page = 0, size = 20) => {
   return await getTrendingBooks({
     type: type,
@@ -37,34 +37,31 @@ export const getTrendingFullList = async (type = 'DAILY_TRENDING', page = 0, siz
   });
 };
 
-// Hot discount với filters
-export const getHotDiscountWithFilters = async (filters = {}) => {
+// Hot discount với filters (không còn filters theo tài liệu mới)
+export const getHotDiscountWithFilters = async (page = 0, size = 20) => {
   const request = {
     type: 'HOT_DISCOUNT',
-    page: 0,
-    size: 20,
-    ...filters
+    page: page,
+    size: size
   };
   return await getTrendingBooks(request);
 };
 
-// Daily trending với filters
-export const getDailyTrendingWithFilters = async (filters = {}) => {
+// Daily trending (không còn filters theo tài liệu mới)
+export const getDailyTrendingWithFilters = async (page = 0, size = 20) => {
   const request = {
     type: 'DAILY_TRENDING',
-    page: 0,
-    size: 20,
-    ...filters
+    page: page,
+    size: size
   };
   return await getTrendingBooks(request);
 };
 
-// Load more / Pagination
-export const loadMoreTrending = async (type, currentPage, itemsPerPage = 10, filters = {}) => {
+// Load more / Pagination (chỉ type, page, size)
+export const loadMoreTrending = async (type, currentPage, itemsPerPage = 10) => {
   return await getTrendingBooks({
     type: type,
     page: currentPage,
-    size: itemsPerPage,
-    ...filters
+    size: itemsPerPage
   });
 };

@@ -185,32 +185,55 @@
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
-          <table class="table table-hover mb-0">
+          <table class="table table-bordered table-hover align-middle">
             <thead class="table-light">
               <tr>
-                <th style="width: 5%">#</th>
-                <th style="width: 10%">Mã sách</th>
-                <th style="width: 20%">Tên sách</th>
-                <th style="width: 15%">Tác giả</th>
-                <th style="width: 12%">Danh mục</th>
-                <th style="width: 12%">Nhà cung cấp</th>
-                <th style="width: 8%">Giá</th>
-                <th style="width: 6%">Tồn kho</th>
-                <th style="width: 6%">Trạng thái</th>
-                <th style="width: 8%">Thao tác</th>
+                <th style="width: 20px; min-width: 20px; text-align: center;">STT</th>
+                <th style="width: 70px; min-width: 60px; text-align: center;">ID</th>
+                <th style="width: 180px; min-width: 120px;">Ảnh</th>
+                <th>Tên sách</th>
+                <th>Mã sách & ISBN</th>
+                <th>Giá & Giảm giá</th>
+                <th>Số lượng & Đã bán</th>
+                <th>Flash Sale</th>
+                <th>Thể loại</th>
+                <th>Nhà cung cấp</th>
+                <th>Nhà xuất bản</th>
+                <th>Thông tin bổ sung</th>
+                <th>Trạng thái</th>
+                <th>Tác giả</th>
+                <th>Hành động</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="books.length === 0">
-                <td colspan="10" class="text-center py-4 text-muted">
+                <td colspan="15" class="text-center py-4 text-muted">
                   <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                   Không có dữ liệu
                 </td>
               </tr>
               <tr v-for="(book, index) in books" :key="book.id">
-                <td>{{ currentPage * pageSize + index + 1 }}</td>
+                <td style="text-align: center;">{{ currentPage * pageSize + index + 1 }}</td>
+                <td style="text-align: center;">{{ book.id }}</td>
                 <td>
-                  <code class="text-primary">{{ book.bookCode }}</code>
+                  <!-- 🔥 HIỂN THỊ ẢNH TỪ TRƯỜNG IMAGES (MẢNG URL) - THEO TÀI LIỆU API -->
+                  <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                    <template v-if="book.images && book.images.length">
+                      <img
+                        v-for="(img, idx) in book.images"
+                        :key="idx"
+                        :src="img"
+                        alt="Ảnh sách"
+                        style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; margin: 2px; cursor: pointer; transition: box-shadow 0.2s;"
+                        @click="openImagePreview(img)"
+                        @mouseover="event.target.style.boxShadow = '0 0 0 2px #ff7e5f'"
+                        @mouseleave="event.target.style.boxShadow = ''"
+                      />
+                    </template>
+                    <template v-else>
+                      <span class="text-muted small">Không có ảnh</span>
+                    </template>
+                  </div>
                 </td>
                 <td>
                   <div>
@@ -221,16 +244,59 @@
                   </div>
                 </td>
                 <td>
-                  <div v-if="book.authors && book.authors.length > 0">
-                    <span 
-                      v-for="(author, index) in book.authors" 
-                      :key="author.id"
-                      class="badge bg-primary me-1 mb-1"
-                    >
-                      {{ author.authorName }}
-                    </span>
+                  <div>
+                    <code class="text-primary d-block">{{ book.bookCode }}</code>
+                    <small v-if="book.isbn" class="text-muted">ISBN: {{ book.isbn }}</small>
+                    <small v-else class="text-muted">Chưa có ISBN</small>
                   </div>
-                  <span v-else class="text-muted small">Chưa có tác giả</span>
+                </td>
+                <td>
+                  <div>
+                    <strong class="text-success d-block">
+                      {{ formatCurrency(book.price) }}
+                    </strong>
+                    <div v-if="book.discountValue || book.discountPercent" class="small">
+                      <span v-if="book.discountValue" class="badge bg-warning text-dark">
+                        -{{ formatCurrency(book.discountValue) }}
+                      </span>
+                      <span v-if="book.discountPercent" class="badge bg-warning text-dark">
+                        -{{ book.discountPercent }}%
+                      </span>
+                    </div>
+                    <small v-else class="text-muted">Không giảm giá</small>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <span 
+                      :class="book.stockQuantity === 0 ? 'badge bg-danger' : (book.stockQuantity < 10 ? 'badge bg-warning text-dark' : 'text-dark fw-bold')"
+                      class="d-block"
+                    >
+                      Tồn: {{ book.stockQuantity }}
+                    </span>
+                    <small class="text-info">
+                      Đã bán: {{ book.soldCount || 0 }}
+                    </small>
+                  </div>
+                </td>
+                <td>
+                  <div v-if="book.isInFlashSale" class="text-center">
+                    <button 
+                      class="btn btn-danger btn-sm mb-1" 
+                      @click="goToFlashSaleManagement(book.id)"
+                      title="Xem Flash Sale"
+                    >
+                      <i class="bi bi-lightning-fill"></i> FLASH SALE
+                    </button>
+                    <div class="small">
+                      <div class="text-danger fw-bold">{{ formatCurrency(book.flashSalePrice) }}</div>
+                      <div class="text-muted">Đã bán: {{ book.flashSaleSoldCount || 0 }}</div>
+                      <div v-if="book.flashSaleEndTime" class="text-muted">
+                        Kết thúc: {{ formatDateTime(book.flashSaleEndTime) }}
+                      </div>
+                    </div>
+                  </div>
+                  <span v-else class="text-muted small">Không có Flash Sale</span>
                 </td>
                 <td>
                   <span class="badge bg-info text-dark">
@@ -243,16 +309,31 @@
                   </span>
                 </td>
                 <td>
-                  <strong class="text-success">
-                    {{ formatCurrency(book.price) }}
-                  </strong>
+                  <span class="badge bg-secondary">
+                    {{ book.publisherName || 'Chưa có nhà xuất bản' }}
+                  </span>
                 </td>
                 <td>
-                  <span 
-                    :class="book.stockQuantity === 0 ? 'badge bg-danger' : (book.stockQuantity < 10 ? 'badge bg-warning text-dark' : 'text-dark')"
-                  >
-                    {{ book.stockQuantity }}
-                  </span>
+                  <div class="small">
+                    <div v-if="book.language">
+                      <strong>Ngôn ngữ:</strong> {{ book.language }}
+                    </div>
+                    <div v-if="book.pageCount">
+                      <strong>Số trang:</strong> {{ book.pageCount }}
+                    </div>
+                    <div v-if="book.weight">
+                      <strong>Trọng lượng:</strong> {{ book.weight }}g
+                    </div>
+                    <div v-if="book.dimensions">
+                      <strong>Kích thước:</strong> {{ book.dimensions }}
+                    </div>
+                    <div v-if="book.translator">
+                      <strong>Dịch giả:</strong> {{ book.translator }}
+                    </div>
+                    <div v-if="book.publicationDate">
+                      <strong>Ngày XB:</strong> {{ formatDate(book.publicationDate) }}
+                    </div>
+                  </div>
                 </td>
                 <td>
                   <StatusLabel
@@ -262,6 +343,18 @@
                     :clickable="true"
                     @toggle="handleToggleStatus(book.id, index)"
                   />
+                </td>
+                <td>
+                  <div v-if="book.authors && book.authors.length">
+                    <span 
+                      v-for="(author, index) in book.authors" 
+                      :key="author.id"
+                      class="badge bg-primary me-1 mb-1"
+                    >
+                      {{ author.authorName }}
+                    </span>
+                  </div>
+                  <span v-else class="text-muted small">Chưa có tác giả</span>
                 </td>
                 <td>
                   <div class="d-flex gap-1">
@@ -557,6 +650,103 @@
                 </div>
               </div>
             </div>
+
+            <!-- Thêm MultiImageUpload vào modal Book -->
+            <div class="form-section">
+              <div class="section-header">
+                <div class="section-icon">
+                  <i class="bi bi-images"></i>
+                </div>
+                <h6 class="section-title">Hình ảnh sách</h6>
+              </div>
+              <div class="row">
+                <div class="col-12">
+                  <MultiImageUpload
+                    v-model="bookImagesUrls"
+                    label="Hình ảnh sách (Tối đa 5 ảnh)"
+                    upload-endpoint="product-images"
+                    :max-files="5"
+                    :max-size="5 * 1024 * 1024"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Thông tin bổ sung về sách -->
+            <div class="form-section">
+              <div class="section-header">
+                <div class="section-icon">
+                  <i class="bi bi-clipboard-data"></i>
+                </div>
+                <h6 class="section-title">Thông tin bổ sung</h6>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label for="dimensions" class="form-label enhanced-label">Kích thước</label>
+                  <input
+                    type="text"
+                    class="form-control enhanced-input"
+                    id="dimensions"
+                    v-model="newBook.dimensions"
+                    placeholder="VD: 20x13x2"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label for="weight" class="form-label enhanced-label">Trọng lượng (gram)</label>
+                  <input
+                    type="number"
+                    class="form-control enhanced-input"
+                    id="weight"
+                    v-model="newBook.weight"
+                    placeholder="VD: 400"
+                    min="0"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label for="language" class="form-label enhanced-label">Ngôn ngữ</label>
+                  <input
+                    type="text"
+                    class="form-control enhanced-input"
+                    id="language"
+                    v-model="newBook.language"
+                    placeholder="VD: Tiếng Việt"
+                  />
+                </div>
+              </div>
+              <div class="row g-3 mt-2">
+                <div class="col-md-4">
+                  <label for="pageCount" class="form-label enhanced-label">Số trang</label>
+                  <input
+                    type="number"
+                    class="form-control enhanced-input"
+                    id="pageCount"
+                    v-model="newBook.pageCount"
+                    placeholder="VD: 320"
+                    min="0"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label for="isbn" class="form-label enhanced-label">ISBN</label>
+                  <input
+                    type="text"
+                    class="form-control enhanced-input"
+                    id="isbn"
+                    v-model="newBook.isbn"
+                    placeholder="VD: 978-604-2-12345-6"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label for="translator" class="form-label enhanced-label">Người dịch</label>
+                  <input
+                    type="text"
+                    class="form-control enhanced-input"
+                    id="translator"
+                    v-model="newBook.translator"
+                    placeholder="VD: Nguyễn Văn A"
+                  />
+                </div>
+              </div>
+            </div>
           </form>
         </div>
         <div class="modal-footer enhanced-footer">
@@ -588,6 +778,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Image Preview Modal -->
+  <ImagePreviewModal :show="showImagePreview" :image-url="previewImageUrl" @close="closeImagePreview" />
 </template>
 
 <script setup>
@@ -595,6 +788,8 @@ import EditButton from '@/components/common/EditButton.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import AddButton from '@/components/common/AddButton.vue';
 import StatusLabel from '@/components/common/StatusLabel.vue';
+import MultiImageUpload from '@/components/common/MultiImageUpload.vue';
+import ImagePreviewModal from '@/components/common/ImagePreviewModal.vue';
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { Modal } from 'bootstrap';
 import { getBooks, createBook, updateBook, getAuthorsDropdown, getCategoriesDropdown, getSuppliersDropdown, toggleBookStatus, deleteBook } from '@/services/admin/book';
@@ -624,7 +819,15 @@ const newBook = ref({
   publisherId: '',
   bookCode: '',
   status: 1,
-  authorIds: [] // BẮT BUỘC - Danh sách ID tác giả
+  authorIds: [], // BẮT BUỘC - Danh sách ID tác giả
+  bookImages: [],
+  // Trường mới
+  dimensions: '',
+  weight: '',
+  language: '',
+  pageCount: '',
+  isbn: '',
+  translator: ''
 });
 
 // Computed property for date formatting
@@ -704,6 +907,13 @@ const fetchBooks = async () => {
     totalPages.value = data.data.totalPages || 1;
     totalElements.value = data.data.totalElements || 0;
     isLastPage.value = data.data.last ?? (currentPage.value >= totalPages.value - 1);
+    
+    // 🔥 DEBUG: Kiểm tra API có trả về đúng trường images không
+    if (books.value.length > 0) {
+      console.log('=== DEBUG: First book data ===');
+      console.log('book.images:', books.value[0].images);
+      console.log('book.coverImageUrl:', books.value[0].coverImageUrl);
+    }
   } catch (error) {
     console.error('Lỗi khi lấy danh sách sách:', error);
     Swal.fire({
@@ -790,9 +1000,18 @@ const openAddModal = () => {
     publicationDate: '',
     categoryId: '',
     supplierId: '',
+    publisherId: '',
     bookCode: '',
     status: 1,
-    authorIds: [] // Reset authorIds
+    authorIds: [],
+    bookImages: [],
+    // Trường mới
+    dimensions: '',
+    weight: '',
+    language: '',
+    pageCount: '',
+    isbn: '',
+    translator: ''
   };
   
   console.log('=== DEBUG: Opening Add Modal ===');
@@ -805,7 +1024,9 @@ const openAddModal = () => {
 const openEditModal = (book, index) => {
   isEditMode.value = true;
   editIndex.value = index;
-  
+  // 🔥 QUAN TRỌNG: Luôn lấy bookImages từ book.images (mảng URL) - THEO TÀI LIỆU API
+  // KHÔNG lấy từ coverImageUrl vì đây chỉ là ảnh bìa nhỏ cho thumbnail
+  let bookImages = Array.isArray(book.images) ? [...book.images] : [];
   newBook.value = {
     id: book.id,
     bookName: book.bookName,
@@ -818,7 +1039,15 @@ const openEditModal = (book, index) => {
     publisherId: book.publisherId || '',
     bookCode: book.bookCode,
     status: book.status,
-    authorIds: book.authors ? book.authors.map(author => author.id) : [] // Map authors to authorIds
+    authorIds: book.authors ? book.authors.map(author => author.id) : [],
+    bookImages, // luôn đồng bộ với images
+    // Trường mới
+    dimensions: book.dimensions || '',
+    weight: book.weight || '',
+    language: book.language || '',
+    pageCount: book.pageCount || '',
+    isbn: book.isbn || '',
+    translator: book.translator || ''
   };
   
   console.log('=== DEBUG: Opening Edit Modal ===');
@@ -874,9 +1103,15 @@ const handleSubmitBook = async () => {
     });
     return;
   }
-
+  // Bỏ validation ảnh, ảnh không bắt buộc
   try {
-    // Prepare data for API
+    let imagesArr = newBook.value.bookImages || [];
+    // Luôn ép kiểu về mảng string (url)
+    if (imagesArr.length > 0 && typeof imagesArr[0] === 'object' && imagesArr[0].url) {
+      imagesArr = imagesArr.map(img => img.url);
+    }
+    if (!Array.isArray(imagesArr)) imagesArr = [];
+    
     const bookData = {
       bookName: newBook.value.bookName.trim(),
       description: newBook.value.description?.trim() || '',
@@ -885,13 +1120,21 @@ const handleSubmitBook = async () => {
       publicationDate: newBook.value.publicationDate || null,
       categoryId: newBook.value.categoryId || null,
       supplierId: newBook.value.supplierId || null,
+      publisherId: newBook.value.publisherId || null,
       bookCode: newBook.value.bookCode?.trim() || '',
       status: parseInt(newBook.value.status),
-      authorIds: newBook.value.authorIds // 🔥 BẮT BUỘC - Thêm authorIds
+      authorIds: newBook.value.authorIds,
+      images: imagesArr, // 🔥 CHỈ GỬI TRƯỜNG IMAGES - THEO TÀI LIỆU API
+      dimensions: newBook.value.dimensions,
+      weight: newBook.value.weight,
+      language: newBook.value.language,
+      pageCount: newBook.value.pageCount,
+      isbn: newBook.value.isbn,
+      translator: newBook.value.translator
     };
 
     console.log('=== DEBUG: Submitting book data ===');
-    console.log('bookData:', bookData);
+    console.log('bookData.images:', bookData.images);
 
     if (isEditMode.value) {
       // Update book
@@ -1082,7 +1325,15 @@ const resetBookModal = () => {
     publisherId: '',
     bookCode: '',
     status: 1,
-    authorIds: [] // Reset authorIds
+    authorIds: [],
+    bookImages: [],
+    // Trường mới
+    dimensions: '',
+    weight: '',
+    language: '',
+    pageCount: '',
+    isbn: '',
+    translator: ''
   };
 };
 
@@ -1100,6 +1351,40 @@ onMounted(() => {
 onUnmounted(() => {
   if (modalElement) {
     modalElement.removeEventListener('hidden.bs.modal', resetBookModal);
+  }
+});
+
+// Đảm bảo MultiImageUpload luôn trả về mảng URL
+const bookImagesUrls = computed({
+  get() {
+    const arr = newBook.value.bookImages || [];
+    // Nếu là object (có .url) thì map sang url
+    if (arr.length > 0 && typeof arr[0] === 'object' && arr[0].url) {
+      return arr.map(img => img.url);
+    }
+    // Nếu là string thì trả về luôn
+    if (arr.length === 0) return [];
+    if (typeof arr[0] === 'string') return arr;
+    return [];
+  },
+  set(val) {
+    // Luôn ép kiểu về mảng string (url)
+    if (!val || !Array.isArray(val)) {
+      newBook.value.bookImages = [];
+    } else {
+      newBook.value.bookImages = val.map(img => typeof img === 'object' && img.url ? img.url : img);
+    }
+    // Log để debug
+    console.log('bookImagesUrls setter:', newBook.value.bookImages);
+  }
+});
+
+// Watch để log khi thay đổi ảnh
+watch(() => bookImagesUrls.value, (val) => {
+  console.log('bookImagesUrls changed:', val);
+  // Nếu xóa hết ảnh thì đảm bảo bookImages là []
+  if (!val || val.length === 0) {
+    newBook.value.bookImages = [];
   }
 });
 
@@ -1186,6 +1471,22 @@ const fillFakeData = () => {
     authorIds: randomAuthorIds // 🔥 BẮT BUỘC - Random authorIds
   };
   
+  // Thêm dữ liệu mẫu cho các trường bổ sung
+  const fakeImages = [
+    'https://cdn.example.com/new1.jpg',
+    'https://cdn.example.com/new2.jpg'
+  ];
+  newBook.value = {
+    ...newBook.value,
+    dimensions: '20x13x2',
+    weight: 400,
+    language: 'Tiếng Việt',
+    pageCount: 320,
+    isbn: '978-604-2-12345-6',
+    translator: 'Nguyễn Văn A',
+    bookImages: fakeImages // đồng bộ với MultiImageUpload
+  };
+  
   // Show success message
   Swal.fire({
     icon: 'success',
@@ -1193,6 +1494,56 @@ const fillFakeData = () => {
     text: 'Dữ liệu mẫu đã được điền vào form',
     timer: 1500,
     timerProgressBar: true
+  });
+};
+
+// State for image preview modal
+const previewImageUrl = ref('');
+const showImagePreview = ref(false);
+const openImagePreview = (url) => {
+  previewImageUrl.value = url;
+  showImagePreview.value = true;
+};
+const closeImagePreview = () => {
+  showImagePreview.value = false;
+  previewImageUrl.value = '';
+};
+
+// Format date function
+const formatDate = (timestamp) => {
+  if (!timestamp) return 'Chưa có';
+  const date = new Date(timestamp);
+  return date.toLocaleDateString('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+};
+
+// Format datetime function
+const formatDateTime = (timestamp) => {
+  if (!timestamp) return 'Chưa có';
+  const date = new Date(timestamp);
+  return date.toLocaleString('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+// Navigate to flash sale management
+const goToFlashSaleManagement = (bookId) => {
+  // Có thể điều hướng đến trang quản lý flash sale với bookId
+  console.log('Navigate to flash sale management for book:', bookId);
+  // router.push({ name: 'admin-flash-sale', query: { bookId } });
+  // Tạm thời alert thông báo
+  Swal.fire({
+    title: 'Thông báo',
+    text: `Chuyển đến quản lý Flash Sale cho sách ID: ${bookId}`,
+    icon: 'info',
+    confirmButtonText: 'OK'
   });
 };
 </script>
@@ -1581,7 +1932,7 @@ const fillFakeData = () => {
 }
 
 .table-responsive table {
-  min-width: 1200px; /* Ensure table has minimum width for proper scrolling */
+  min-width: 1600px; /* Tăng từ 1200px để phù hợp với nhiều cột hơn */
 }
 
 .table-responsive::-webkit-scrollbar {

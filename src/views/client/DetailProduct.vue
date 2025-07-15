@@ -13,34 +13,29 @@
         <div class="product-image-section">
           <div class="main-image-container">
             <img
-              :src="book.coverImageUrl || 'https://via.placeholder.com/400x500?text=No+Image'"
+              :src="(book.images && book.images.length > 0) ? book.images[mainImageIndex] : (book.coverImageUrl || 'https://via.placeholder.com/400x500?text=No+Image')"
               :alt="book.bookName"
               class="main-image"
             />
-            
             <!-- Gift Badge -->
             <div class="gift-badge">
               <span class="gift-text">QUÀ TẶNG</span>
               <span class="gift-text">GIẤY KHEN</span>
             </div>
           </div>
-          
           <!-- Thumbnail Images -->
           <div class="thumbnail-container">
-            <div class="thumbnail-item active">
-              <img :src="book.coverImageUrl || 'https://via.placeholder.com/80x100'" alt="Thumbnail 1" />
+            <div
+              v-for="(img, idx) in book.images"
+              :key="img"
+              class="thumbnail-item"
+              :class="{ active: mainImageIndex === idx }"
+              @click="mainImageIndex = idx"
+            >
+              <img :src="img" :alt="'Thumbnail ' + (idx + 1)" />
             </div>
-            <div class="thumbnail-item">
-              <img :src="book.coverImageUrl || 'https://via.placeholder.com/80x100'" alt="Thumbnail 2" />
-            </div>
-            <div class="thumbnail-item">
-              <img :src="book.coverImageUrl || 'https://via.placeholder.com/80x100'" alt="Thumbnail 3" />
-            </div>
-            <div class="thumbnail-item">
-              <img :src="book.coverImageUrl || 'https://via.placeholder.com/80x100'" alt="Thumbnail 4" />
-            </div>
-            <div class="thumbnail-more">
-              <span>+8</span>
+            <div v-if="!book.images || book.images.length === 0" class="thumbnail-item active">
+              <img :src="book.coverImageUrl || 'https://via.placeholder.com/80x100'" alt="Thumbnail" />
             </div>
           </div>
           
@@ -307,7 +302,8 @@ export default {
       flashSaleCountdown: null,
       countdownDisplay: 'Hết hạn',
       quantity: 1,
-      addingToCart: false
+      addingToCart: false,
+      mainImageIndex: 0 // Thêm state để chọn ảnh chính
     }
   },
   computed: {
