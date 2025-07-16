@@ -1,7 +1,7 @@
 <template>
   <div class="pos-header">
     <select v-model="selectedCategory" class="pos-warehouse">
-      <option value="">Chọn danh mục</option>
+      <option :value="0">Chọn danh mục</option>
       <option v-for="c in categories" :key="c.id" :value="c.id">
         {{ c.categoryName }}
       </option>
@@ -66,7 +66,7 @@ import { onMounted, ref, watch } from "vue";
 import BarcodeScanner from "./BarcodeScanner.vue";
 
 const categories = ref([]);
-const selectedCategory = ref(null);
+const selectedCategory = ref(null); // Thay vì ref("")
 
 const products = ref([]);
 const productSearch = ref("");
