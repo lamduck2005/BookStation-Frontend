@@ -150,9 +150,13 @@ onMounted(async () => {
         </div>
       </div>
     </section>
+    <Trend id="Trend"/>
 
+    <div class="container mt-5">
+      <CategoryClient id="category-client"/>
+      <FlashSaleProduct id="flashsale-product"/>
+    </div>
     <!-- Trend section -->
-    <Trend />
   </div>
 </template>
 

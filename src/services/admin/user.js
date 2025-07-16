@@ -29,8 +29,15 @@ export function deleteUser(id) {
 export function toggleUserStatus(id) {
   return axios.patch(`/api/users/${id}/toggle-status`);
 }
-
-// Lấy danh sách users để chọn trong form tạo đơn hàng
-export function getUsersForOrder() {
-  return axios.get('/api/users/dropdown');
+export function getProfile() {
+  return axios.get('/api/users/profile');
+}
+export function updateProfile(id,data) {
+  return axios.put(`/api/users/profile/${id}`, data);
+}
+export function userpos(text) {
+  return axios.get(`/api/users/userpos`, { params: { text } });
+}
+export function addretailer(data) {
+  return axios.post('/api/users/addretail', data);
 }

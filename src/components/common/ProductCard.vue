@@ -86,11 +86,11 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed } from "vue";
+import { useRouter } from "vue-router";
 
 // Router
-const router = useRouter()
+const router = useRouter();
 
 // Props
 const props = defineProps({
@@ -149,12 +149,14 @@ const getDisplayLabel = () => {
 }
 
 const formatPrice = (price) => {
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-        minimumFractionDigits: 0
-    }).format(price || 0).replace('₫', 'đ')
-}
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    minimumFractionDigits: 0,
+  })
+    .format(price || 0)
+    .replace("₫", "đ");
+};
 
 const getCategoryBadgeClass = () => {
     // Dựa vào categoryName hoặc type
@@ -183,52 +185,52 @@ const goToProductDetail = () => {
 }
 
 const getSalesProgress = () => {
-    const sold = props.product.soldQuantity || props.product.sold || 0
-    const total = props.product.stockQuantity || props.product.total || 200
-    
-    if (total === 0) return 0
-    return Math.min((sold / total) * 100, 100)
-}
+  const sold = props.product.soldQuantity || props.product.sold || 0;
+  const total = props.product.stockQuantity || props.product.total || 200;
+
+  if (total === 0) return 0;
+  return Math.min((sold / total) * 100, 100);
+};
 </script>
 
 <style scoped>
 .product-card {
-    transition: all 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .cursor-pointer {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .product-card:hover {
-    transform: translateY(-5px);
+  transform: translateY(-5px);
 }
 
 .product-card:hover .card {
-    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
 
 .product-image-container {
-    height: 180px;
-    overflow: hidden;
-    position: relative;
+  height: 180px;
+  overflow: hidden;
+  position: relative;
 }
 
 .product-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
 }
 
 .product-card:hover .product-image {
-    transform: scale(1.05);
+  transform: scale(1.05);
 }
 
 .sale-badge {
-    z-index: 2;
-    font-size: 0.8rem;
-    padding: 0.3rem 0.6rem;
+  z-index: 2;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
 }
 
 .flash-sale-badge {
@@ -251,53 +253,54 @@ const getSalesProgress = () => {
 }
 
 .product-name {
-    font-size: 0.9rem;
-    line-height: 1.3;
-    height: 36px;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    text-overflow: ellipsis;
-    word-break: break-word;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  min-height: 36px;
+  max-height: 2.6em; /* Giới hạn tối đa 2 dòng, tự động xuống dòng */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Hiển thị tối đa 2 dòng */
+  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  white-space: normal; /* Cho phép xuống dòng */
 }
 
 .current-price {
-    font-size: 1.1rem;
+  font-size: 1.1rem;
 }
 
 .original-price {
-    font-size: 0.8rem;
+  font-size: 0.8rem;
 }
 
 .discount-badge {
-    font-size: 0.75rem;
+  font-size: 0.75rem;
 }
 
 .product-category .badge {
-    font-size: 0.7rem;
+  font-size: 0.7rem;
 }
 
 .z-index-1 {
-    z-index: 1;
+  z-index: 1;
 }
 
 @media (max-width: 576px) {
-    .product-image-container {
-        height: 150px;
-    }
-    
-    .product-name {
-        font-size: 0.75rem;
-    }
-    
-    .current-price {
-        font-size: 0.9rem;
-    }
-    
-    .card-body {
-        padding: 0.75rem !important;
-    }
+  .product-image-container {
+    height: 150px;
+  }
+
+  .product-name {
+    font-size: 0.75rem;
+  }
+
+  .current-price {
+    font-size: 0.9rem;
+  }
+
+  .card-body {
+    padding: 0.75rem !important;
+  }
 }
 </style>

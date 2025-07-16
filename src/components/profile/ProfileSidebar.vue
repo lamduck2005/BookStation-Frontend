@@ -4,11 +4,7 @@
     <div class="user-info-card">
       <div class="user-avatar">
         <div class="crown-icon">
-          <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="28" cy="28" r="26" fill="#F4F6F8" stroke="#D1D5DB" stroke-width="2"/>
-            <path d="M28 16L32 28H24L28 16Z" fill="#B0B6BE"/>
-            <circle cx="28" cy="36" r="6" fill="#B0B6BE"/>
-          </svg>
+         <i class='bxr  bx-crown' style="font-size: 48px;"></i> 
         </div>
       </div>
       <div class="user-name">Vũ Linh</div>

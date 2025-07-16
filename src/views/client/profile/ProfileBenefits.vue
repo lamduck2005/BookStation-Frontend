@@ -12,10 +12,23 @@
         <div class="d-flex align-items-center">
           <div class="member-avatar me-3">
             <div class="crown-icon">
-              <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="28" cy="28" r="26" fill="#F4F6F8" stroke="#D1D5DB" stroke-width="2"/>
-                <path d="M28 16L32 28H24L28 16Z" fill="#B0B6BE"/>
-                <circle cx="28" cy="36" r="6" fill="#B0B6BE"/>
+              <svg
+                width="56"
+                height="56"
+                viewBox="0 0 56 56"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="28"
+                  cy="28"
+                  r="26"
+                  fill="#F4F6F8"
+                  stroke="#D1D5DB"
+                  stroke-width="2"
+                />
+                <path d="M28 16L32 28H24L28 16Z" fill="#B0B6BE" />
+                <circle cx="28" cy="36" r="6" fill="#B0B6BE" />
               </svg>
             </div>
           </div>
@@ -29,8 +42,8 @@
           </div>
         </div>
       </div>
-
-      <!-- Membership Tiers -->
+<!-- 
+     
       <div class="membership-tiers">
         <h3 class="section-title mb-4">Quyền lợi thành viên tại Fahasa.com</h3>
         
@@ -64,7 +77,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <!-- Benefits Summary -->
       <div class="benefits-summary mt-5">
@@ -103,45 +116,47 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref } from "vue";
 
-const activeTier = ref('silver')
+const activeTier = ref("silver");
 
 const membershipTiers = [
   {
-    id: 'bronze',
-    name: 'Hạng Bạc',
-    icon: 'bi bi-circle-fill text-secondary',
+    id: "bronze",
+    name: "Hạng Bạc",
+    icon: "bi bi-circle-fill text-secondary",
     benefits: [
-      'Quà tặng sinh nhật: ✗',
-      'Ưu đãi freeship và mã giảm giá: ✗',
-      'Tỉ lệ tích lũy F-Point trên giá trị đơn hàng: 0,5%'
+      "Quà tặng sinh nhật: ✗",
+      "Ưu đãi freeship và mã giảm giá: ✗",
+      "Tỉ lệ tích lũy F-Point trên giá trị đơn hàng: 0,5%",
     ],
-    requirements: 'Đăng ký tài khoản tại Fahasa.com'
+    requirements: "Đăng ký tài khoản tại Fahasa.com",
   },
   {
-    id: 'silver',
-    name: 'Hạng Vàng',
-    icon: 'bi bi-circle-fill text-warning',
+    id: "silver",
+    name: "Hạng Vàng",
+    icon: "bi bi-circle-fill text-warning",
     benefits: [
-      'Quà tặng sinh nhật: ✓',
-      'Ưu đãi freeship và mã giảm giá: ✓',
-      'Tỉ lệ tích lũy F-Point trên giá trị đơn hàng: 0,5%'
+      "Quà tặng sinh nhật: ✓",
+      "Ưu đãi freeship và mã giảm giá: ✓",
+      "Tỉ lệ tích lũy F-Point trên giá trị đơn hàng: 0,5%",
     ],
-    requirements: 'Tổng giá trị đơn hàng đã mua từ 500.000đ trở lên trong vòng 12 tháng'
+    requirements:
+      "Tổng giá trị đơn hàng đã mua từ 500.000đ trở lên trong vòng 12 tháng",
   },
   {
-    id: 'gold',
-    name: 'Kim cương',
-    icon: 'bi bi-gem text-primary',
+    id: "gold",
+    name: "Kim cương",
+    icon: "bi bi-gem text-primary",
     benefits: [
-      'Quà tặng sinh nhật: ✓',
-      'Ưu đãi freeship và mã giảm giá: ✓',
-      'Tỉ lệ tích lũy F-Point trên giá trị đơn hàng: 1%'
+      "Quà tặng sinh nhật: ✓",
+      "Ưu đãi freeship và mã giảm giá: ✓",
+      "Tỉ lệ tích lũy F-Point trên giá trị đơn hàng: 1%",
     ],
-    requirements: 'Tổng giá trị đơn hàng đã mua từ 2.000.000đ trở lên trong vòng 12 tháng'
-  }
-]
+    requirements:
+      "Tổng giá trị đơn hàng đã mua từ 2.000.000đ trở lên trong vòng 12 tháng",
+  },
+];
 </script>
 
 <style scoped>
@@ -265,9 +280,9 @@ const membershipTiers = [
 
 .tier-requirements {
   padding: 16px;
-  background: #e3f2fd;
+  background: white;
   border-radius: 8px;
-  border-left: 4px solid #2196f3;
+  border-left: 4px solid #d2e2ee;
 }
 
 .tier-requirements h5 {
@@ -284,7 +299,7 @@ const membershipTiers = [
 }
 
 .benefits-summary {
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid white;
   padding-top: 32px;
 }
 
@@ -325,23 +340,23 @@ const membershipTiers = [
   .profile-benefits {
     padding: 16px;
   }
-  
+
   .tier-tabs {
     flex-direction: column;
     gap: 0;
   }
-  
+
   .tier-tab {
     border-bottom: 1px solid #e9ecef;
     border-radius: 0;
     justify-content: flex-start;
   }
-  
+
   .tier-tab.active {
     background: #f8f9fa;
     border-left: 4px solid #dc3545;
   }
-  
+
   .benefit-card {
     margin-bottom: 16px;
   }
