@@ -1,9 +1,9 @@
 <template>
   <div class="container-fluid py-4">
-    <!-- Breadcrumb -->
-    <div class="mb-3">
+   
+    <!-- <div class="mb-3">
       <h6 class="text-muted">Quản lý / <strong>Phiếu giảm giá</strong></h6>
-    </div>
+    </div> -->
     <!-- Bộ lọc -->
     <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">
       <div
@@ -130,7 +130,12 @@
               class="cursor-pointer"
             >
               <td>{{ currentPage * pageSize + index + 1 }}</td>
-              <td>{{ voucher.code }}</td>
+              <td @click.stop>
+                <router-link :to="`/admin/userVoucher/${voucher.id}`" class="text-decoration-none"
+   >
+                  {{ voucher.code }}
+                </router-link>
+              </td>
               <td>{{ voucher.discountPercentage }}%</td>
               <td>{{ voucher.start_time }}</td>
               <td>{{ voucher.end_time }}</td>

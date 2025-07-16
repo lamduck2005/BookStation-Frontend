@@ -59,6 +59,7 @@ import AuthPage from "@/views/AuthPage.vue";
 import { showToast } from "@/utils/swalHelper";
 import ResetPassword from "@/views/ResetPassword.vue";
 import POSVIew from "@/views/client/POSVIew.vue";
+import UserVoucher from "@/views/admin/views-admin/UserVoucher.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -182,7 +183,6 @@ const router = createRouter({
           name: "product-catalog",
           component: ProductCatalog,
         },
-
       ],
     },
     // Trang auth, không thuộc parent nào
@@ -267,6 +267,12 @@ const router = createRouter({
           component: Voucher,
         },
         {
+          path: "userVoucher/:id",
+          name: "Voucher của người dùng",
+          component: UserVoucher,
+          props: true,
+        },
+        {
           path: "supplier",
           name: "Supplier",
           component: Supplier,
@@ -274,7 +280,7 @@ const router = createRouter({
         {
           path: "publisher",
           name: "Publisher",
-          component: () => import('@/views/admin/views-admin/Publisher.vue'),
+          component: () => import("@/views/admin/views-admin/Publisher.vue"),
         },
         {
           path: "rank",
@@ -327,7 +333,7 @@ const router = createRouter({
           name: "event-history",
           component: EventHistory,
         },
-         {
+        {
           path: "pos-view",
           name: "pos-view",
           component: POSVIew,
