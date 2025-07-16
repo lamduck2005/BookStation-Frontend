@@ -10,6 +10,8 @@ import {
 
 import Swal from "sweetalert2";
 import { showToast } from "@/utils/swalHelper";
+import CategoryClient from "./CategoryClient.vue";
+import FlashSaleProduct from "./FlashSaleProduct.vue";
 
 const voucher = ref(null);
 
