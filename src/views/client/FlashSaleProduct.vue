@@ -26,6 +26,7 @@ import { fetchFlashSaleProducts } from "@/services/admin/book";
 const products = ref([]);
 onMounted(async () => {
   products.value = await fetchFlashSaleProducts();
+  console.log("Flash Sale Products:", products.value);
 });
 </script>
 
