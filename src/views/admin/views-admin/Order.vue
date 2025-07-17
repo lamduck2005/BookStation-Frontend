@@ -131,10 +131,9 @@
                   </div>
                 </td>
                 <td>
-                  <div class="small" v-if="order.address">
-                    {{ order.address.name || 'Chưa có địa chỉ' }}
+                  <div class="small">
+                    {{ order.addressDetail || 'Chưa có địa chỉ' }}
                   </div>
-                  <div class="small text-muted" v-else>Chưa có địa chỉ</div>
                 </td>
                 <td>
                   <span class="badge bg-info">{{ formatOrderType(order.orderType) }}</span>
@@ -155,11 +154,53 @@
                   <strong class="text-success">{{ formatCurrency(order.finalTotal || order.totalAmount) }}</strong>
                 </td>
                 <td>
-                  <StatusLabel 
-                    :status="order.orderStatus" 
-                    :statusText="formatOrderStatus(order.orderStatus)"
-                    :statusClass="getOrderStatusClass(order.orderStatus)"
-                  />
+                  <span
+                    class="badge rounded-pill px-2 py-1 d-inline-flex align-items-center"
+                    :class="getOrderStatusClass(order.orderStatus)"
+                    style="font-size: 0.82em; font-weight: 600; letter-spacing: 0.5px; min-width: 110px; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.07);"
+                  >
+                    <template v-if="order.orderStatus === 'PENDING'">
+                      <i class="bi bi-hourglass-split me-1" style="font-size: 1em;"></i> Chờ xử lý
+                    </template>
+                    <template v-else-if="order.orderStatus === 'CONFIRMED'">
+                      <i class="bi bi-check2-circle me-1" style="font-size: 1em;"></i> Đã xác nhận
+                    </template>
+                    <template v-else-if="order.orderStatus === 'SHIPPED'">
+                      <i class="bi bi-truck me-1" style="font-size: 1em;"></i> Đang giao hàng
+                    </template>
+                    <template v-else-if="order.orderStatus === 'DELIVERED'">
+                      <i class="bi bi-box-seam me-1" style="font-size: 1em;"></i> Đã giao hàng
+                    </template>
+                    <template v-else-if="order.orderStatus === 'CANCELED'">
+                      <i class="bi bi-x-circle me-1" style="font-size: 1em;"></i> Đã hủy
+                    </template>
+                    <template v-else-if="order.orderStatus === 'RETURNED'">
+                      <i class="bi bi-arrow-counterclockwise me-1" style="font-size: 1em;"></i> Đã trả hàng
+                    </template>
+                    <template v-else-if="order.orderStatus === 'REFUNDING'">
+                      <i class="bi bi-cash-coin me-1" style="font-size: 1em;"></i> Đang hoàn tiền
+                    </template>
+                    <template v-else-if="order.orderStatus === 'REFUNDED'">
+                      <i class="bi bi-cash-stack me-1" style="font-size: 1em;"></i> Đã hoàn tiền
+                    </template>
+                    <template v-else-if="order.orderStatus === 'PARTIALLY_REFUNDED'">
+                      <i class="bi bi-cash me-1" style="font-size: 1em;"></i> Hoàn tiền một phần
+                    </template>
+                    <template v-else>
+                      {{ formatOrderStatus(order.orderStatus) }}
+                    </template>
+                  </span>
+                  <select
+                    class="form-select form-select-sm mt-1"
+                    :class="getOrderStatusClass(order.orderStatus)"
+                    v-model="order.orderStatus"
+                    @change="updateOrderStatus(order.id, order.orderStatus)"
+                    style="min-width: 110px; font-size: 0.82em; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 1px 4px rgba(0,0,0,0.07);"
+                  >
+                    <option v-for="status in orderStatuses" :key="status.value" :value="status.value">
+                      {{ status.displayName }}
+                    </option>
+                  </select>
                 </td>
                 <td>
                   <div class="small">
@@ -856,6 +897,7 @@ import {
   getOrderById,
   calculateOrder,
   validateOrder,
+  validatePrices, // ✅ THÊM VALIDATE PRICES
   updateOrderStatus as updateOrderStatusAPI,
   cancelOrder as cancelOrderAPI,
   getOrderStatuses, 
@@ -1002,17 +1044,21 @@ const initializeData = async () => {
     if (booksResponse.data && booksResponse.data.content) {
       books.value = booksResponse.data.content.map(book => ({
         id: book.id,
-        title: book.title || book.name || 'Unknown',
+        title: book.title || book.name || book.bookName || 'Unknown',
         price: book.price || 0,
-        isFlashSale: book.isFlashSale || false
+        isFlashSale: book.isFlashSale || false,
+        flashSalePrice: book.flashSalePrice || null, // ✅ THÊM FLASH SALE PRICE
+        flashSaleId: book.flashSaleId || null // ✅ THÊM FLASH SALE ID
       }));
     } else if (booksResponse.data && Array.isArray(booksResponse.data)) {
       // Fallback nếu API trả về array trực tiếp
       books.value = booksResponse.data.map(book => ({
         id: book.id,
-        title: book.title || book.name || 'Unknown',
+        title: book.title || book.name || book.bookName || 'Unknown',
         price: book.price || 0,
-        isFlashSale: book.isFlashSale || false
+        isFlashSale: book.isFlashSale || false,
+        flashSalePrice: book.flashSalePrice || null, // ✅ THÊM FLASH SALE PRICE
+        flashSaleId: book.flashSaleId || null // ✅ THÊM FLASH SALE ID
       }));
     } else {
       console.warn('Unexpected books API response:', booksResponse);
@@ -1056,9 +1102,11 @@ const loadUsersAndBooks = async () => {
     if (booksResponse.data && Array.isArray(booksResponse.data)) {
       books.value = booksResponse.data.map(book => ({
         id: book.id,
-        title: book.name,
+        title: book.name || book.title || book.bookName || 'Unknown',
         price: book.price || 0,
-        isFlashSale: book.isFlashSale || false
+        isFlashSale: book.isFlashSale || false,
+        flashSalePrice: book.flashSalePrice || null, // ✅ THÊM FLASH SALE PRICE
+        flashSaleId: book.flashSaleId || null // ✅ THÊM FLASH SALE ID
       }));
     } else {
       console.warn('Unexpected books API response:', booksResponse);
@@ -1266,6 +1314,7 @@ const resetForm = () => {
   userAddresses.value = [];
   userVouchers.value = [];
   orderCalculation.value = null;
+  currentAddress.value = null; // ✅ RESET CURRENT ADDRESS
   isCalculating.value = false;
   editIndex.value = -1;
 };
@@ -1367,7 +1416,11 @@ const addProductRow = () => {
     quantity: 1,
     unitPrice: 0,
     totalPrice: 0,
-    isFlashSale: false
+    isFlashSale: false,
+    // ✅ THÊM FIELDS VALIDATION GIÁ
+    frontendPrice: 0,
+    frontendFlashSalePrice: null,
+    frontendFlashSaleId: null
   });
 };
 
@@ -1378,8 +1431,27 @@ const removeProductRow = (index) => {
 const onBookChange = (detail, index) => {
   const selectedBook = books.value.find(book => book.id == detail.bookId);
   if (selectedBook) {
-    detail.unitPrice = selectedBook.price;
+    console.log('=== DEBUG: onBookChange ===');
+    console.log('Selected book:', selectedBook);
+    
+    // Xác định giá hiện tại (flash sale price nếu có, nếu không thì regular price)
+    const currentPrice = selectedBook.isFlashSale && selectedBook.flashSalePrice ? 
+                        selectedBook.flashSalePrice : selectedBook.price;
+    
+    detail.unitPrice = currentPrice;
     detail.isFlashSale = selectedBook.isFlashSale || false;
+    
+    // ✅ LƯU GIÁ FRONTEND ĐỂ VALIDATION - THEO TÀI LIỆU
+    detail.frontendPrice = selectedBook.price; // Giá gốc của sách
+    detail.frontendFlashSalePrice = selectedBook.isFlashSale ? selectedBook.flashSalePrice : null;
+    detail.frontendFlashSaleId = selectedBook.isFlashSale ? selectedBook.flashSaleId : null;
+    
+    console.log('=== DEBUG: Updated detail ===');
+    console.log('detail.frontendPrice:', detail.frontendPrice);
+    console.log('detail.frontendFlashSalePrice:', detail.frontendFlashSalePrice);
+    console.log('detail.frontendFlashSaleId:', detail.frontendFlashSaleId);
+    console.log('detail.unitPrice:', detail.unitPrice);
+    
     calculateShippingFee()
     calculateDetailTotal(detail);
   }
@@ -1497,24 +1569,30 @@ const handleSubmitOrder = async () => {
   }
 
   try {
-    // Chuẩn bị dữ liệu gửi lên backend theo tài liệu API
+    // ✅ CHUẨN BỊ DỮ LIỆU VỚI PRICE VALIDATION - THEO TÀI LIỆU MỚI
     const orderData = {
       userId: newOrder.value.userId,
       staffId: getCurrentStaffId(),
       addressId: newOrder.value.addressId,
       shippingFee: newOrder.value.shippingFee,
-      orderType: newOrder.value.orderType, // ⚠️ BẮT BUỘC theo tài liệu
+      orderType: newOrder.value.orderType,
       voucherIds: newOrder.value.voucherIds,
       notes: newOrder.value.notes,
       orderDetails: newOrder.value.items.map(item => ({
         bookId: item.bookId,
         quantity: item.quantity,
-        unitPrice: item.unitPrice
+        unitPrice: item.unitPrice,
+        frontendPrice: item.unitPrice
       }))
     };
 
-    console.log('=== DEBUG: Submitting order data ===');
+    console.log('=== DEBUG: Submitting order data with price validation ===');
     console.log('Order data:', orderData);
+
+    // ✅ VALIDATE GIÁ TRƯỚC KHI TẠO ĐƠN HÀNG
+    console.log('=== Validating prices before order creation ===');
+    await validatePrices(orderData);
+    console.log('=== Price validation passed ===');
 
     let response;
     if (isEditMode.value) {
@@ -1538,6 +1616,38 @@ const handleSubmitOrder = async () => {
     let errorMessage = 'Lỗi khi xử lý đơn hàng!';
     if (error.response && error.response.data && error.response.data.message) {
       errorMessage = error.response.data.message;
+      
+      // ✅ XỬ LÝ RIÊNG LỖI PRICE VALIDATION
+      if (error.response.status === 400 && errorMessage.includes('thay đổi')) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Giá sản phẩm đã thay đổi!',
+          html: `<div style="text-align: left; white-space: pre-line;">${errorMessage}</div>`,
+          confirmButtonText: 'Cập nhật giá mới',
+          showCancelButton: true,
+          cancelButtonText: 'Đóng'
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            // Chỉ reload lại danh sách sản phẩm và tính toán lại đơn hàng
+            await loadUsersAndBooks();
+            // Nếu đang mở modal thêm/sửa đơn thì giữ nguyên form, chỉ cập nhật lại books
+            // Cập nhật lại giá cho từng sản phẩm trong đơn
+            newOrder.value.items.forEach((detail, idx) => {
+              const selectedBook = books.value.find(book => book.id == detail.bookId);
+              if (selectedBook) {
+                // Cập nhật lại đơn giá theo giá mới
+                const currentPrice = selectedBook.isFlashSale && selectedBook.flashSalePrice ? selectedBook.flashSalePrice : selectedBook.price;
+                detail.unitPrice = currentPrice;
+                detail.isFlashSale = selectedBook.isFlashSale || false;
+                detail.frontendPrice = currentPrice;
+              }
+            });
+            // Tính toán lại đơn hàng
+            calculateOrderPreview();
+          }
+        });
+        return;
+      }
     }
     
     showToast('error', errorMessage);
@@ -1561,18 +1671,42 @@ const updateOrderStatus = async (orderId, newStatus) => {
   try {
     const result = await Swal.fire({
       title: 'Xác nhận cập nhật trạng thái',
-      text: `Bạn có chắc chắn muốn cập nhật trạng thái đơn hàng?`,
+      html: `
+        <div class="text-start">
+          <p>Bạn có chắc chắn muốn cập nhật trạng thái đơn hàng?</p>
+          <div class="alert alert-info mt-3">
+            <small>
+              <strong>Lưu ý:</strong> Hệ thống sẽ tự động:
+              <ul class="mb-0 mt-2">
+                <li>Tích điểm khi chuyển sang DELIVERED</li>
+                <li>Hoàn voucher khi CANCELED/RETURNED</li>
+                <li>Trừ điểm khi hủy đơn đã tích điểm</li>
+              </ul>
+            </small>
+          </div>
+        </div>
+      `,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#6c757d',
       confirmButtonText: 'Xác nhận',
       cancelButtonText: 'Hủy'
     });
-    
+
     if (result.isConfirmed) {
-      await updateOrderStatusAPI(orderId, newStatus);
-      showToast('success', 'Cập nhật trạng thái thành công!');
+      // ✅ GỬI STAFF ID THEO TÀI LIỆU MỚI
+      await updateOrderStatusAPI(orderId, newStatus, getCurrentStaffId());
+      
+      // ✅ HIỂN THỊ THÔNG BÁO CHI TIẾT THEO BUSINESS LOGIC
+      const statusMessages = {
+        'DELIVERED': 'Đơn hàng đã được giao thành công! Điểm thưởng đã được tích vào tài khoản khách hàng.',
+        'CANCELED': 'Đơn hàng đã được hủy! Voucher và điểm đã được xử lý tự động.',
+        'RETURNED': 'Đơn hàng đã được trả về! Voucher và điểm đã được hoàn lại.'
+      };
+      
+      const message = statusMessages[newStatus] || 'Cập nhật trạng thái thành công!';
+      showToast('success', message);
       await fetchOrders();
     }
   } catch (error) {

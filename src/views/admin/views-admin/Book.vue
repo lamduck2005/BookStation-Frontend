@@ -195,7 +195,7 @@
                 <th>Mã sách & ISBN</th>
                 <th>Giá & Giảm giá</th>
                 <th>Số lượng & Đã bán</th>
-                <th>Flash Sale</th>
+                <th>Hình thức & Flash Sale</th>
                 <th>Thể loại</th>
                 <th>Nhà cung cấp</th>
                 <th>Nhà xuất bản</th>
@@ -207,7 +207,7 @@
             </thead>
             <tbody>
               <tr v-if="books.length === 0">
-                <td colspan="15" class="text-center py-4 text-muted">
+                <td colspan="14" class="text-center py-4 text-muted">
                   <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                   Không có dữ liệu
                 </td>
@@ -280,23 +280,32 @@
                   </div>
                 </td>
                 <td>
-                  <div v-if="book.isInFlashSale" class="text-center">
-                    <button 
-                      class="btn btn-danger btn-sm mb-1" 
-                      @click="goToFlashSaleManagement(book.id)"
-                      title="Xem Flash Sale"
-                    >
-                      <i class="bi bi-lightning-fill"></i> FLASH SALE
-                    </button>
-                    <div class="small">
-                      <div class="text-danger fw-bold">{{ formatCurrency(book.flashSalePrice) }}</div>
-                      <div class="text-muted">Đã bán: {{ book.flashSaleSoldCount || 0 }}</div>
-                      <div v-if="book.flashSaleEndTime" class="text-muted">
-                        Kết thúc: {{ formatDateTime(book.flashSaleEndTime) }}
+                  <div>
+                    <!-- Book Format -->
+                    <div class="mb-2">
+                      <span class="badge" :class="getBookFormatClass(book.bookFormat)">
+                        {{ getBookFormatText(book.bookFormat) }}
+                      </span>
+                    </div>
+                    <!-- Flash Sale Info -->
+                    <div v-if="book.isInFlashSale" class="text-center">
+                      <button 
+                        class="btn btn-danger btn-sm mb-1" 
+                        @click="goToFlashSaleManagement(book.id)"
+                        title="Xem Flash Sale"
+                      >
+                        <i class="bi bi-lightning-fill"></i> FLASH SALE
+                      </button>
+                      <div class="small">
+                        <div class="text-danger fw-bold">{{ formatCurrency(book.flashSalePrice) }}</div>
+                        <div class="text-muted">Đã bán: {{ book.flashSaleSoldCount || 0 }}</div>
+                        <div v-if="book.flashSaleEndTime" class="text-muted">
+                          Kết thúc: {{ formatDateTime(book.flashSaleEndTime) }}
+                        </div>
                       </div>
                     </div>
+                    <span v-else class="text-muted small">Không có Flash Sale</span>
                   </div>
-                  <span v-else class="text-muted small">Không có Flash Sale</span>
                 </td>
                 <td>
                   <span class="badge bg-info text-dark">
@@ -359,13 +368,6 @@
                 <td>
                   <div class="d-flex gap-1">
                     <EditButton @click="openEditModal(book, index)" />
-                    <button
-                      class="btn btn-outline-danger btn-sm"
-                      @click="handleDeleteBook(book.id, index)"
-                      title="Xóa sách"
-                    >
-                      <i class="bi bi-trash"></i>
-                    </button>
                   </div>
                 </td>
               </tr>          </tbody>
@@ -580,6 +582,28 @@
 
               <div class="row g-3 mt-2">
                 <div class="col-md-4">
+                  <label for="bookFormat" class="form-label enhanced-label">
+                    Hình thức sách <span class="text-danger">*</span>
+                  </label>
+                  <select
+                    class="form-select enhanced-input"
+                    id="bookFormat"
+                    v-model="newBook.bookFormat"
+                    required
+                  >
+                    <option value="HARDCOVER">Bìa cứng</option>
+                    <option value="PAPERBACK">Bìa mềm</option>
+                    <option value="AUDIOBOOK">Sách nói</option>
+                    <option value="EBOOK">Sách điện tử</option>
+                    <option value="MAGAZINE">Tạp chí</option>
+                    <option value="COMIC">Truyện tranh</option>
+                    <option value="TEXTBOOK">Sách giáo khoa</option>
+                    <option value="NOTEBOOK">Sổ tay</option>
+                    <option value="JOURNAL">Nhật ký</option>
+                    <option value="WORKBOOK">Sách bài tập</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
                   <label for="price" class="form-label enhanced-label">
                     Giá bán <span class="text-danger">*</span>
                   </label>
@@ -611,7 +635,10 @@
                     required
                   />
                 </div>
-                <div class="col-md-4">
+              </div>
+
+              <div class="row g-3 mt-2">
+                <div class="col-md-12">
                   <label for="publicationDate" class="form-label enhanced-label">
                     Ngày xuất bản
                   </label>
@@ -792,7 +819,7 @@ import MultiImageUpload from '@/components/common/MultiImageUpload.vue';
 import ImagePreviewModal from '@/components/common/ImagePreviewModal.vue';
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { Modal } from 'bootstrap';
-import { getBooks, createBook, updateBook, getAuthorsDropdown, getCategoriesDropdown, getSuppliersDropdown, toggleBookStatus, deleteBook } from '@/services/admin/book';
+import { getBooks, createBook, updateBook, getAuthorsDropdown, getCategoriesDropdown, getSuppliersDropdown, toggleBookStatus } from '@/services/admin/book';
 import { getPublishersDropdown } from '@/services/admin/publisher';
 import Swal from 'sweetalert2';
 
@@ -822,6 +849,7 @@ const newBook = ref({
   authorIds: [], // BẮT BUỘC - Danh sách ID tác giả
   bookImages: [],
   // Trường mới
+  bookFormat: 'PAPERBACK', // ✅ THÊM BOOK FORMAT - ENUM MỚI
   dimensions: '',
   weight: '',
   language: '',
@@ -985,6 +1013,39 @@ const getStatusClass = (status) => {
   return status === 1 ? 'status-active' : 'status-inactive';
 };
 
+// ✅ BookFormat helper functions
+const getBookFormatText = (format) => {
+  const formatMap = {
+    'HARDCOVER': 'Bìa cứng',
+    'PAPERBACK': 'Bìa mềm',
+    'AUDIOBOOK': 'Sách nói',
+    'EBOOK': 'Sách điện tử',
+    'MAGAZINE': 'Tạp chí',
+    'COMIC': 'Truyện tranh',
+    'TEXTBOOK': 'Sách giáo khoa',
+    'NOTEBOOK': 'Sổ tay',
+    'JOURNAL': 'Nhật ký',
+    'WORKBOOK': 'Sách bài tập'
+  };
+  return formatMap[format] || format || 'Bìa mềm';
+};
+
+const getBookFormatClass = (format) => {
+  const classMap = {
+    'HARDCOVER': 'bg-primary',
+    'PAPERBACK': 'bg-success',
+    'AUDIOBOOK': 'bg-warning text-dark',
+    'EBOOK': 'bg-info text-dark',
+    'MAGAZINE': 'bg-secondary',
+    'COMIC': 'bg-danger',
+    'TEXTBOOK': 'bg-dark',
+    'NOTEBOOK': 'bg-light text-dark',
+    'JOURNAL': 'bg-purple',
+    'WORKBOOK': 'bg-orange'
+  };
+  return classMap[format] || 'bg-success';
+};
+
 // Modal functions
 const openAddModal = () => {
   isEditMode.value = false;
@@ -1042,6 +1103,7 @@ const openEditModal = (book, index) => {
     authorIds: book.authors ? book.authors.map(author => author.id) : [],
     bookImages, // luôn đồng bộ với images
     // Trường mới
+    bookFormat: book.bookFormat || 'PAPERBACK', // ✅ THÊM BOOK FORMAT
     dimensions: book.dimensions || '',
     weight: book.weight || '',
     language: book.language || '',
@@ -1125,6 +1187,7 @@ const handleSubmitBook = async () => {
       status: parseInt(newBook.value.status),
       authorIds: newBook.value.authorIds,
       images: imagesArr, // 🔥 CHỈ GỬI TRƯỜNG IMAGES - THEO TÀI LIỆU API
+      bookFormat: newBook.value.bookFormat, // ✅ THÊM BOOK FORMAT
       dimensions: newBook.value.dimensions,
       weight: newBook.value.weight,
       language: newBook.value.language,
@@ -1216,41 +1279,6 @@ const handleToggleStatus = async (bookId, index) => {
 };
 
 // Delete book function
-const handleDeleteBook = async (bookId, index) => {
-  const result = await Swal.fire({
-    title: 'Xác nhận xóa',
-    text: 'Bạn có chắc chắn muốn xóa sách này không?',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#d33',
-    cancelButtonColor: '#3085d6',
-    confirmButtonText: 'Xóa',
-    cancelButtonText: 'Hủy'
-  });
-
-  if (result.isConfirmed) {
-    try {
-      await deleteBook(bookId);
-      Swal.fire({
-        icon: 'success',
-        title: 'Thành công!',
-        text: 'Xóa sách thành công',
-        timer: 2000,
-        timerProgressBar: true
-      });
-      await fetchBooks();
-    } catch (error) {
-      console.error('Lỗi khi xóa sách:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Lỗi!',
-        text: 'Không thể xóa sách',
-        timer: 2000,
-        timerProgressBar: true
-      });
-    }
-  }
-};
 
 // Filter functions
 const applyFilters = () => {
@@ -1328,6 +1356,7 @@ const resetBookModal = () => {
     authorIds: [],
     bookImages: [],
     // Trường mới
+    bookFormat: 'PAPERBACK', // ✅ RESET BOOK FORMAT  
     dimensions: '',
     weight: '',
     language: '',
@@ -1468,7 +1497,8 @@ const fillFakeData = () => {
     publisherId: randomPublisherId,
     bookCode: `BOOK${timestamp}`,
     status: randomStatus,
-    authorIds: randomAuthorIds // 🔥 BẮT BUỘC - Random authorIds
+    authorIds: randomAuthorIds, // 🔥 BẮT BUỘC - Random authorIds
+    bookFormat: ['HARDCOVER', 'PAPERBACK', 'AUDIOBOOK', 'EBOOK'][Math.floor(Math.random() * 4)] // ✅ Random format
   };
   
   // Thêm dữ liệu mẫu cho các trường bổ sung
@@ -1855,6 +1885,17 @@ const goToFlashSaleManagement = (bookId) => {
 .badge.bg-primary .bi-x-circle:hover {
   color: #ffdddd;
   transform: scale(1.2);
+}
+
+/* BookFormat badge colors */
+.bg-purple {
+  background-color: #6f42c1 !important;
+  color: white;
+}
+
+.bg-orange {
+  background-color: #fd7e14 !important;
+  color: white;
 }
 
 /* Responsive adjustments */

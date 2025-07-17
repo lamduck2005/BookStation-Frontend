@@ -30,6 +30,23 @@ export const validateOrder = async (orderData) => {
   }
 };
 
+// ✅ API validate giá sản phẩm - THEO TÀI LIỆU MỚI
+export const validatePrices = async (orderData) => {
+  try {
+    console.log('=== DEBUG: Validating prices ===');
+    console.log('Order data for validation:', orderData);
+    
+    const response = await client.post('/api/orders/validate-prices', orderData);
+    console.log('=== DEBUG: Price validation response ===');
+    console.log('Response:', response.data);
+    
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi validate giá sản phẩm:', error);
+    throw error;
+  }
+};
+
 // ===== ORDER CRUD APIs =====
 
 // Lấy danh sách đơn hàng với filter và pagination

@@ -86,6 +86,22 @@ export const getBooksDropdownFallback = async () => {
   });
 };
 
+// ✅ Lấy danh sách BookFormat enum values
+export const getBookFormats = () => {
+  return [
+    { value: 'HARDCOVER', label: 'Bìa cứng' },
+    { value: 'PAPERBACK', label: 'Bìa mềm' },
+    { value: 'AUDIOBOOK', label: 'Sách nói' },
+    { value: 'EBOOK', label: 'Sách điện tử' },
+    { value: 'MAGAZINE', label: 'Tạp chí' },
+    { value: 'COMIC', label: 'Truyện tranh' },
+    { value: 'TEXTBOOK', label: 'Sách giáo khoa' },
+    { value: 'NOTEBOOK', label: 'Sổ tay' },
+    { value: 'JOURNAL', label: 'Nhật ký' },
+    { value: 'WORKBOOK', label: 'Sách bài tập' }
+  ];
+};
+
 // Tạo sách mới
 export const createBook = async (bookData) => {
   try {
@@ -129,16 +145,6 @@ export const updateBook = async (id, bookData) => {
   }
 };
 
-// Xóa sách
-export const deleteBook = async (id) => {
-  try {
-    const response = await client.delete(`/api/books/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Lỗi khi xóa sách:', error);
-    throw error;
-  }
-};
 
 // Lấy chi tiết sách
 export const getBookById = async (id) => {
