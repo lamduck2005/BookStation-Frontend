@@ -294,7 +294,7 @@
         <div class="modal-header gradient-header">
           <h5 class="modal-title" id="addOrderModalLabel">
             <i class="bi bi-cart-plus me-2"></i>
-            {{ isEditMode ? 'Sửa đơn hàng' : 'Tạo đơn hàng mới' }}
+            Tạo đơn hàng mới
           </h5>
           <button type="button" class="custom-close-btn" data-bs-dismiss="modal" aria-label="Close">
             <i class="bi bi-x-lg"></i>
@@ -501,7 +501,7 @@
                       type="number" 
                       class="form-control" 
                       v-model="detail.quantity"
-                      @change="calculateDetailTotal(detail)"
+                      @change="onQuantityChange(detail)"
                       min="1"
                       required
                     />
@@ -512,7 +512,6 @@
                       type="number" 
                       class="form-control" 
                       v-model="detail.unitPrice"
-                      @change="calculateDetailTotal(detail)"
                       min="0"
                       step="1000"
                       readonly
@@ -668,12 +667,20 @@
           </button>
           <button 
             type="button" 
+            class="btn btn-warning me-2" 
+            @click="reloadBookPricesFromDropdown"
+          >
+            <i class="bi bi-arrow-repeat me-1"></i>
+            Cập nhật giá mới
+          </button>
+          <button 
+            type="button" 
             class="btn btn-primary btn-submit" 
             @click="handleSubmitOrder"
             :disabled="!canSubmitOrder"
           >
             <i class="bi bi-check-circle me-1"></i>
-            {{ isEditMode ? 'Cập nhật' : 'Tạo đơn hàng' }}
+            Tạo đơn hàng
           </button>
         </div>
       </div>
@@ -893,7 +900,6 @@ import { Modal } from 'bootstrap';
 import { 
   getOrders, 
   createOrder, 
-  updateOrder, 
   getOrderById,
   calculateOrder,
   validateOrder,
@@ -909,7 +915,7 @@ import {
   getOrderStatusClass
 } from '@/services/admin/order';
 import { getUsersForOrder } from '@/services/admin/user';
-import { getBooksForOrder, getBooksDropdown } from '@/services/admin/book';
+import { getBooksForOrder, getBooksDropdown, validateQuantity } from '@/services/admin/book';
 import Swal from 'sweetalert2';
 import { ghn } from '@/utils/giaohangnhanh';
 
@@ -945,8 +951,6 @@ const orderCalculation = ref(null);
 const isCalculating = ref(false);
 
 // Modal states
-const isEditMode = ref(false);
-const editIndex = ref(-1);
 let addOrderModal = null;
 let orderDetailModal = null;
 
@@ -1045,20 +1049,18 @@ const initializeData = async () => {
       books.value = booksResponse.data.content.map(book => ({
         id: book.id,
         title: book.title || book.name || book.bookName || 'Unknown',
-        price: book.price || 0,
-        isFlashSale: book.isFlashSale || false,
-        flashSalePrice: book.flashSalePrice || null, // ✅ THÊM FLASH SALE PRICE
-        flashSaleId: book.flashSaleId || null // ✅ THÊM FLASH SALE ID
+        normalPrice: book.normalPrice || book.price || 0,
+        flashSalePrice: book.flashSalePrice || null,
+        isFlashSale: book.isFlashSale || false
       }));
     } else if (booksResponse.data && Array.isArray(booksResponse.data)) {
       // Fallback nếu API trả về array trực tiếp
       books.value = booksResponse.data.map(book => ({
         id: book.id,
         title: book.title || book.name || book.bookName || 'Unknown',
-        price: book.price || 0,
-        isFlashSale: book.isFlashSale || false,
-        flashSalePrice: book.flashSalePrice || null, // ✅ THÊM FLASH SALE PRICE
-        flashSaleId: book.flashSaleId || null // ✅ THÊM FLASH SALE ID
+        normalPrice: book.normalPrice || book.price || 0,
+        flashSalePrice: book.flashSalePrice || null,
+        isFlashSale: book.isFlashSale || false
       }));
     } else {
       console.warn('Unexpected books API response:', booksResponse);
@@ -1098,15 +1100,14 @@ const loadUsersAndBooks = async () => {
       users.value = [];
     }
     
-    // Process books từ API /api/books/dropdown
+    // Process books từ API /api/books/dropdown với structure mới
     if (booksResponse.data && Array.isArray(booksResponse.data)) {
       books.value = booksResponse.data.map(book => ({
         id: book.id,
-        title: book.name || book.title || book.bookName || 'Unknown',
-        price: book.price || 0,
-        isFlashSale: book.isFlashSale || false,
-        flashSalePrice: book.flashSalePrice || null, // ✅ THÊM FLASH SALE PRICE
-        flashSaleId: book.flashSaleId || null // ✅ THÊM FLASH SALE ID
+        title: book.name || book.title || 'Unknown',
+        normalPrice: book.normalPrice || 0,
+        flashSalePrice: book.flashSalePrice || null,
+        isFlashSale: book.isFlashSale || false
       }));
     } else {
       console.warn('Unexpected books API response:', booksResponse);
@@ -1248,7 +1249,6 @@ const clearFilters = () => {
 
 const openAddModal = async () => {
   resetForm();
-  isEditMode.value = false;
   
   // Load fresh data for the modal
   await loadUsersAndBooks();
@@ -1256,47 +1256,7 @@ const openAddModal = async () => {
   addOrderModal.show();
 };
 
-const openEditModal = async (order, index) => {
-  try {
-    // Load fresh data for the modal first
-    await loadUsersAndBooks();
-    
-    const response = await getOrderById(order.id);
-    if (response && response.data) {
-      const orderData = response.data;
-      
-      newOrder.value = {
-        id: orderData.id,
-        userId: orderData.user?.id || '',
-        staffId: orderData.staffId || '',
-        addressId: orderData.addressId || '',
-        shippingFee: orderData.shippingFee || 0,
-        paymentMethod: orderData.paymentMethod || 'COD',
-        notes: orderData.notes || '',
-        voucherIds: orderData.vouchers ? orderData.vouchers.map(v => v.id) : [],
-        items: orderData.orderDetails ? orderData.orderDetails.map(detail => ({
-          bookId: detail.bookId,
-          quantity: detail.quantity,
-          unitPrice: detail.unitPrice,
-          totalPrice: detail.totalPrice,
-          isFlashSale: !!detail.flashSaleItemId
-        })) : []
-      };
-      
-      if (newOrder.value.userId) {
-        await loadUserAddresses(newOrder.value.userId);
-        await loadUserVouchers(newOrder.value.userId);
-      }
-      
-      isEditMode.value = true;
-      editIndex.value = index;
-      addOrderModal.show();
-    }
-  } catch (error) {
-    console.error('Lỗi khi lấy chi tiết đơn hàng:', error);
-    showToast('error', 'Lỗi khi lấy chi tiết đơn hàng!');
-  }
-};
+
 
 const resetForm = () => {
   newOrder.value = {
@@ -1316,7 +1276,6 @@ const resetForm = () => {
   orderCalculation.value = null;
   currentAddress.value = null; // ✅ RESET CURRENT ADDRESS
   isCalculating.value = false;
-  editIndex.value = -1;
 };
 
 const onUserChange = async () => {
@@ -1417,10 +1376,8 @@ const addProductRow = () => {
     unitPrice: 0,
     totalPrice: 0,
     isFlashSale: false,
-    // ✅ THÊM FIELDS VALIDATION GIÁ
     frontendPrice: 0,
-    frontendFlashSalePrice: null,
-    frontendFlashSaleId: null
+    frontendFlashSalePrice: null
   });
 };
 
@@ -1428,33 +1385,31 @@ const removeProductRow = (index) => {
   newOrder.value.items.splice(index, 1);
 };
 
-const onBookChange = (detail, index) => {
+const onBookChange = async (detail, index) => {
   const selectedBook = books.value.find(book => book.id == detail.bookId);
-  if (selectedBook) {
-    console.log('=== DEBUG: onBookChange ===');
-    console.log('Selected book:', selectedBook);
-    
-    // Xác định giá hiện tại (flash sale price nếu có, nếu không thì regular price)
-    const currentPrice = selectedBook.isFlashSale && selectedBook.flashSalePrice ? 
-                        selectedBook.flashSalePrice : selectedBook.price;
-    
-    detail.unitPrice = currentPrice;
-    detail.isFlashSale = selectedBook.isFlashSale || false;
-    
-    // ✅ LƯU GIÁ FRONTEND ĐỂ VALIDATION - THEO TÀI LIỆU
-    detail.frontendPrice = selectedBook.price; // Giá gốc của sách
-    detail.frontendFlashSalePrice = selectedBook.isFlashSale ? selectedBook.flashSalePrice : null;
-    detail.frontendFlashSaleId = selectedBook.isFlashSale ? selectedBook.flashSaleId : null;
-    
-    console.log('=== DEBUG: Updated detail ===');
-    console.log('detail.frontendPrice:', detail.frontendPrice);
-    console.log('detail.frontendFlashSalePrice:', detail.frontendFlashSalePrice);
-    console.log('detail.frontendFlashSaleId:', detail.frontendFlashSaleId);
-    console.log('detail.unitPrice:', detail.unitPrice);
-    
-    calculateShippingFee()
-    calculateDetailTotal(detail);
+  if (!selectedBook) {
+    detail.unitPrice = 0;
+    detail.isFlashSale = false;
+    showToast('error', 'Sản phẩm không tồn tại hoặc đã hết hàng!');
+    return;
   }
+  
+  // Sử dụng API dropdown mới: ưu tiên flashSalePrice nếu có flash sale
+  const currentPrice = selectedBook.isFlashSale && selectedBook.flashSalePrice ? 
+                      selectedBook.flashSalePrice : selectedBook.normalPrice;
+  
+  detail.unitPrice = currentPrice;
+  detail.isFlashSale = selectedBook.isFlashSale || false;
+  detail.frontendPrice = selectedBook.normalPrice;
+  detail.frontendFlashSalePrice = selectedBook.flashSalePrice;
+  
+  console.log('=== DEBUG: onBookChange với API mới ===');
+  console.log('Selected book:', selectedBook);
+  console.log('Current price:', currentPrice);
+  console.log('Is flash sale:', detail.isFlashSale);
+  
+  calculateShippingFee();
+  await calculateDetailTotal(detail);
 };
 
 // Watch for voucher changes to recalculate
@@ -1467,14 +1422,34 @@ const onShippingFeeChange = () => {
   calculateOrderPreview();
 };
 
-const calculateDetailTotal = (detail) => {
+const calculateDetailTotal = async (detail) => {
   detail.totalPrice = (detail.quantity || 0) * (detail.unitPrice || 0);
+  
+  // Validate quantity khi có đủ thông tin
+  if (detail.bookId && detail.quantity > 0) {
+    try {
+      const validateResponse = await validateQuantity(detail.bookId, detail.quantity);
+      if (validateResponse.data && !validateResponse.data.valid) {
+        showToast('error', validateResponse.data.message || 'Số lượng không hợp lệ');
+        return; // Dừng lại nếu validate thất bại
+      }
+    } catch (error) {
+      console.error('Lỗi khi validate quantity:', error);
+      showToast('error', 'Lỗi khi kiểm tra số lượng sản phẩm');
+      return;
+    }
+  }
   
   // Trigger order calculation if we have enough data
   if (newOrder.value.userId && newOrder.value.items.length > 0) {
-    calculateShippingFee()
+    calculateShippingFee();
     calculateOrderPreview();
   }
+};
+
+// Wrapper function cho template
+const onQuantityChange = async (detail) => {
+  await calculateDetailTotal(detail);
 };
 
 // Tính toán đơn hàng tự động khi có thay đổi
@@ -1540,26 +1515,36 @@ const calculateOrderPreview = async () => {
 };
 
 const calculateShippingFee = async () => {
-  const selectedAddress = currentAddress.value.raw
-  const orderItems = newOrder.value.items
+  if (!currentAddress.value?.raw) {
+    newOrder.value.shippingFee = 30000; // Default shipping fee
+    return;
+  }
+  
+  const selectedAddress = currentAddress.value.raw;
+  const orderItems = newOrder.value.items;
   // Mỗi quyển sách tính 200g, tổng cân nặng = tổng số lượng * 200
-  const totalBooks = orderItems.reduce((sum, item) => sum + (item.quantity || 0), 0)
-  const totalWeight = totalBooks * 200
+  const totalBooks = orderItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const totalWeight = totalBooks * 200;
 
-  if(!selectedAddress || totalWeight <= 0){
-    newOrder.value.shippingFee = 0
-    return
+  if (!selectedAddress || totalWeight <= 0) {
+    newOrder.value.shippingFee = 30000;
+    return;
   }
 
-  const res = await ghn.calculateFee.calculateShippingFee({
-    service_type_id : 2,
-    to_ward_code : selectedAddress.wardCode,
-    to_district_id : selectedAddress.districtId,
-    weight : totalWeight
-  })
-  console.log("🚀 ~ calculateShippingFee ~ res:", res)
-  newOrder.value.shippingFee = res.total || 30000
-}
+  try {
+    const res = await ghn.calculateFee.calculateShippingFee({
+      service_type_id: 2,
+      to_ward_code: selectedAddress.wardCode,
+      to_district_id: selectedAddress.districtId,
+      weight: totalWeight
+    });
+    console.log("🚀 ~ calculateShippingFee ~ res:", res);
+    newOrder.value.shippingFee = res.total || 30000;
+  } catch (error) {
+    console.error('Lỗi khi tính phí ship:', error);
+    newOrder.value.shippingFee = 30000; // Fallback
+  }
+};
 
 
 const handleSubmitOrder = async () => {
@@ -1568,8 +1553,17 @@ const handleSubmitOrder = async () => {
     return;
   }
 
+  // Validate all prices in the order using the new API
+  // Chỉ gửi mảng [{bookId, frontendPrice}] cho validatePrices
+  const pricePayload = newOrder.value.items.map(item => ({
+    bookId: item.bookId,
+    frontendPrice: item.unitPrice
+  }));
+  const isValid = await validateAllPrices();
+  if (!isValid) return;
+
   try {
-    // ✅ CHUẨN BỊ DỮ LIỆU VỚI PRICE VALIDATION - THEO TÀI LIỆU MỚI
+    // CHUẨN BỊ DỮ LIỆU ĐÚNG CHO TẠO ĐƠN HÀNG
     const orderData = {
       userId: newOrder.value.userId,
       staffId: getCurrentStaffId(),
@@ -1586,22 +1580,12 @@ const handleSubmitOrder = async () => {
       }))
     };
 
-    console.log('=== DEBUG: Submitting order data with price validation ===');
+    console.log('=== DEBUG: Submitting order data ===');
     console.log('Order data:', orderData);
 
-    // ✅ VALIDATE GIÁ TRƯỚC KHI TẠO ĐƠN HÀNG
-    console.log('=== Validating prices before order creation ===');
-    await validatePrices(orderData);
-    console.log('=== Price validation passed ===');
-
     let response;
-    if (isEditMode.value) {
-      response = await updateOrder(newOrder.value.id, orderData);
-      showToast('success', 'Cập nhật đơn hàng thành công!');
-    } else {
-      response = await createOrder(orderData);
-      showToast('success', `Tạo đơn hàng thành công! Mã đơn: ${response.data?.orderCode || ''}`);
-    }
+    response = await createOrder(orderData);
+    showToast('success', `Tạo đơn hàng thành công! Mã đơn: ${response.data?.orderCode || ''}`);
 
     console.log('=== DEBUG: Order submit response ===');
     console.log('Response:', response);
@@ -1617,7 +1601,7 @@ const handleSubmitOrder = async () => {
     if (error.response && error.response.data && error.response.data.message) {
       errorMessage = error.response.data.message;
       
-      // ✅ XỬ LÝ RIÊNG LỖI PRICE VALIDATION
+      // XỬ LÝ RIÊNG LỖI PRICE VALIDATION
       if (error.response.status === 400 && errorMessage.includes('thay đổi')) {
         Swal.fire({
           icon: 'warning',
@@ -1628,28 +1612,22 @@ const handleSubmitOrder = async () => {
           cancelButtonText: 'Đóng'
         }).then(async (result) => {
           if (result.isConfirmed) {
-            // Chỉ reload lại danh sách sản phẩm và tính toán lại đơn hàng
             await loadUsersAndBooks();
-            // Nếu đang mở modal thêm/sửa đơn thì giữ nguyên form, chỉ cập nhật lại books
-            // Cập nhật lại giá cho từng sản phẩm trong đơn
             newOrder.value.items.forEach((detail, idx) => {
               const selectedBook = books.value.find(book => book.id == detail.bookId);
               if (selectedBook) {
-                // Cập nhật lại đơn giá theo giá mới
                 const currentPrice = selectedBook.isFlashSale && selectedBook.flashSalePrice ? selectedBook.flashSalePrice : selectedBook.price;
                 detail.unitPrice = currentPrice;
                 detail.isFlashSale = selectedBook.isFlashSale || false;
                 detail.frontendPrice = currentPrice;
               }
             });
-            // Tính toán lại đơn hàng
             calculateOrderPreview();
           }
         });
         return;
       }
     }
-    
     showToast('error', errorMessage);
   }
 };
@@ -1855,6 +1833,69 @@ const formatOrderType = (type) => {
   return typeMap[type] || type;
 };
 
+// Add this method to handle 'Cập nhật giá mới' (Update Prices) action
+const reloadBookPricesFromDropdown = async () => {
+  // Reload books dropdown
+  await loadUsersAndBooks();
+  // For each item in the order, update price from dropdown
+  newOrder.value.items.forEach(detail => {
+    const selectedBook = books.value.find(book => book.id == detail.bookId);
+    if (selectedBook) {
+      detail.unitPrice = selectedBook.isFlashSale && selectedBook.flashSalePrice ? selectedBook.flashSalePrice : selectedBook.normalPrice;
+      detail.isFlashSale = selectedBook.isFlashSale || false;
+      detail.frontendPrice = selectedBook.normalPrice;
+      detail.frontendFlashSalePrice = selectedBook.flashSalePrice;
+      detail.totalPrice = (detail.quantity || 0) * (detail.unitPrice || 0);
+    }
+  });
+  // Optionally, recalculate order preview
+  calculateOrderPreview();
+};
+
+// Validate all prices in the order using the new API
+const validateAllPrices = async () => {
+  // Build array from current items, only bookId and frontendPrice
+  const payload = newOrder.value.items.map(detail => ({
+    bookId: detail.bookId,
+    frontendPrice: detail.unitPrice // always from dropdown
+  }));
+  try {
+    const response = await validatePrices(payload); // send array directly
+    // Nếu API trả về data là "valid" (string) hoặc response.data.valid === true thì hợp lệ
+    if (
+      response &&
+      response.data &&
+      (response.data === "valid" || response.data.valid === true)
+    ) {
+      return true;
+    }
+    // Nếu không hợp lệ, hiển thị thông báo lỗi giá
+    Swal.fire({
+      icon: 'error',
+      title: 'Lỗi giá sản phẩm',
+      text: response.data.message || 'Có sản phẩm có giá không hợp lệ!'
+    });
+    return false;
+  } catch (error) {
+    // Nếu lỗi trả về từ backend là lỗi số lượng thì báo đúng message
+    const errMsg = error?.response?.data?.message;
+    if (errMsg && errMsg.toLowerCase().includes('số lượng')) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi số lượng sản phẩm',
+        text: errMsg
+      });
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi xác thực giá',
+        text: errMsg || 'Không thể xác thực giá sản phẩm!'
+      });
+    }
+    return false;
+  }
+};
+
 // Watch for changes to trigger order calculation
 watch([
   () => newOrder.value.userId,
@@ -1900,7 +1941,7 @@ watch([currentPage, pageSize], () => {
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
   border-radius: 50%;
-  width: 35px;
+  width:  35px;
   height: 35px;
   display: flex;
   align-items: center;

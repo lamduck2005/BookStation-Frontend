@@ -197,3 +197,17 @@ export const fetchFlashSaleProducts = async () => {
     throw error;
   }
 }
+
+// ✅ Validate quantity - API mới
+export const validateQuantity = async (bookId, quantity) => {
+  try {
+    const response = await client.post('/api/books/validate-quantity', {
+      bookId,
+      quantity
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi validate quantity:', error);
+    throw error;
+  }
+}

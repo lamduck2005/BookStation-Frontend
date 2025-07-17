@@ -88,16 +88,6 @@ export const createOrder = async (orderData) => {
   }
 };
 
-// Cập nhật đơn hàng
-export const updateOrder = async (id, orderData) => {
-  try {
-    const response = await client.put(`/api/orders/${id}`, orderData);
-    return response.data;
-  } catch (error) {
-    console.error('Lỗi khi cập nhật đơn hàng:', error);
-    throw error;
-  }
-};
 
 // Cập nhật trạng thái đơn hàng
 export const updateOrderStatus = async (id, newStatus, staffId = null) => {
