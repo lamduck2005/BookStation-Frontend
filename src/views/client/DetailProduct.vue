@@ -13,34 +13,29 @@
         <div class="product-image-section">
           <div class="main-image-container">
             <img
-              :src="book.coverImageUrl || 'https://via.placeholder.com/400x500?text=No+Image'"
+              :src="(book.images && book.images.length > 0) ? book.images[mainImageIndex] : (book.coverImageUrl || 'https://via.placeholder.com/400x500?text=No+Image')"
               :alt="book.bookName"
               class="main-image"
             />
-            
             <!-- Gift Badge -->
             <div class="gift-badge">
               <span class="gift-text">QUÀ TẶNG</span>
               <span class="gift-text">GIẤY KHEN</span>
             </div>
           </div>
-          
           <!-- Thumbnail Images -->
           <div class="thumbnail-container">
-            <div class="thumbnail-item active">
-              <img :src="book.coverImageUrl || 'https://via.placeholder.com/80x100'" alt="Thumbnail 1" />
+            <div
+              v-for="(img, idx) in book.images"
+              :key="img"
+              class="thumbnail-item"
+              :class="{ active: mainImageIndex === idx }"
+              @click="mainImageIndex = idx"
+            >
+              <img :src="img" :alt="'Thumbnail ' + (idx + 1)" />
             </div>
-            <div class="thumbnail-item">
-              <img :src="book.coverImageUrl || 'https://via.placeholder.com/80x100'" alt="Thumbnail 2" />
-            </div>
-            <div class="thumbnail-item">
-              <img :src="book.coverImageUrl || 'https://via.placeholder.com/80x100'" alt="Thumbnail 3" />
-            </div>
-            <div class="thumbnail-item">
-              <img :src="book.coverImageUrl || 'https://via.placeholder.com/80x100'" alt="Thumbnail 4" />
-            </div>
-            <div class="thumbnail-more">
-              <span>+8</span>
+            <div v-if="!book.images || book.images.length === 0" class="thumbnail-item active">
+              <img :src="book.coverImageUrl || 'https://via.placeholder.com/80x100'" alt="Thumbnail" />
             </div>
           </div>
           
@@ -292,7 +287,9 @@
 <script>
 import { getBookDetail } from '@/services/client/book.js'
 import { addToCart as addToCartAPI } from '@/services/client/cart.js'
+import { createCheckoutSession } from '@/services/client/checkout.js'
 import { showToast } from '@/utils/swalHelper.js'
+import { getUserId } from '@/utils/utils.js'
 import { createFlashSaleCountdown, formatCountdownTime } from '@/utils/flashSaleUtils.js'
 
 export default {
@@ -305,7 +302,8 @@ export default {
       flashSaleCountdown: null,
       countdownDisplay: 'Hết hạn',
       quantity: 1,
-      addingToCart: false
+      addingToCart: false,
+      mainImageIndex: 0 // Thêm state để chọn ảnh chính
     }
   },
   computed: {
@@ -419,8 +417,70 @@ export default {
         return
       }
       
-      // Thêm vào giỏ hàng trước, sau đó chuyển hướng sang checkout
-      this.addToCart(true)
+      // Kiểm tra đăng nhập
+      const userId = getUserId()
+      if (!userId) {
+        showToast('error', 'Vui lòng đăng nhập để mua hàng')
+        this.$router.push('/auth')
+        return
+      }
+      
+      // Mua ngay: tạo checkout session từ cart và redirect thẳng đến checkout
+      this.buyNowDirect()
+    },
+    
+    async buyNowDirect() {
+      try {
+        this.addingToCart = true
+        
+        const userId = getUserId()
+        
+        // Theo document: Tạo checkout session trực tiếp từ items, không cần thêm vào cart trước
+        const sessionData = {
+          items: [
+            {
+              bookId: this.book.id,
+              quantity: this.quantity
+            }
+          ]
+        }
+        
+        console.log('🚀 Creating direct checkout session:', sessionData)
+        const sessionResponse = await createCheckoutSession(sessionData, userId)
+        
+        if (sessionResponse.status === 201) {
+          const sessionId = sessionResponse.data.data.id
+          
+          showToast('success', 'Đang chuyển đến trang thanh toán...')
+          setTimeout(() => {
+            this.$router.push(`/checkout`)
+          }, 300)
+        } else {
+          throw new Error(sessionResponse.message || 'Không thể tạo phiên checkout')
+        }
+        
+      } catch (error) {
+        console.error('Error in buy now process:', error)
+        
+        let errorMessage = 'Có lỗi xảy ra khi mua hàng'
+        
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message
+        } else if (error.message) {
+          errorMessage = error.message
+        }
+        
+        // Xử lý lỗi theo document
+        if (errorMessage.includes('hết hàng')) {
+          errorMessage = `Sách '${this.book.name}' đã hết hàng`
+        } else if (errorMessage.includes('Flash sale')) {
+          errorMessage = 'Flash sale đã kết thúc hoặc hết hàng'
+        }
+        
+        showToast('error', errorMessage)
+      } finally {
+        this.addingToCart = false
+      }
     },
     
     async addToCart(isBuyNow = false) {
@@ -428,12 +488,19 @@ export default {
         return
       }
       
+      // Kiểm tra đăng nhập
+      const userId = getUserId()
+      if (!userId) {
+        showToast('error', 'Vui lòng đăng nhập để thêm vào giỏ hàng')
+        this.$router.push('/auth')
+        return
+      }
+      
       try {
         this.addingToCart = true
         
-        // Tạm thời sử dụng userId = 1, sau này sẽ lấy từ auth
         const cartData = {
-          userId: 1, // TODO: Lấy từ user authentication
+          userId: userId,
           bookId: this.book.id,
           quantity: this.quantity
         }
@@ -442,21 +509,27 @@ export default {
         
         if (response.status === 200) {
           // Hiển thị thông báo thành công
-          showToast('success', response.data.message || 'Thêm sản phẩm vào giỏ hàng thành công!')
+          showToast('success', response.data.message || 'Thêm sản phẩm vào giỏ hàng thành công!', 'top-end', true, 1000)
           
           // Nếu có flash sale, hiển thị số tiền tiết kiệm
-          if (response.data.data?.savedAmount > 0) {
-            setTimeout(() => {
-              showToast('info', `Bạn đã tiết kiệm ${this.formatPrice(response.data.data.savedAmount)}!`)
-            }, 2000)
+              if (response.data.data?.savedAmount > 0) {
+                setTimeout(() => {
+                  showToast('info', `Bạn đã tiết kiệm ${this.formatPrice(response.data.data.savedAmount)}!`, 'center', true, 300)
+                }, 300)
           }
-          
-          // CHỈ khi là mua ngay mới chuyển hướng sang checkout
-          if (isBuyNow) {
+        // Nếu có thông báo hết hàng flash sale
+        if (response.data.data?.flashSaleStockLeft !== undefined && response.data.data?.flashSaleStockLeft !== null) {
+          // Nếu đã có đủ số lượng trong giỏ, flash sale không đủ hàng
+          if (response.data.data.flashSaleStockLeft === 0 && response.data.data.cartQuantity) {
             setTimeout(() => {
-              this.$router.push('/checkout')
-            }, 1500)
+              showToast('warning', `Bạn đã có ${response.data.data.cartQuantity} trong giỏ. Flash sale không đủ hàng. Còn lại: ${response.data.data.cartQuantity}`, 'top-end', true, 1000)
+            }, 300)
+          } else if (response.data.data.flashSaleStockLeft > 0 && response.data.data.cartQuantity) {
+            setTimeout(() => {
+              showToast('warning', `Bạn đã có ${response.data.data.cartQuantity} trong giỏ. Flash sale không đủ hàng. Còn lại: ${response.data.data.flashSaleStockLeft}`, 'top-end', true, 1000)
+            }, 300)
           }
+        }
         }
       } catch (error) {
         console.error('Error adding to cart:', error)

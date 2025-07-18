@@ -190,9 +190,9 @@
                         title="Sửa"
                       />
                       <DeleteButton
-                          @click="handleDeleteCategory(category.id)"
-                          title="Xóa"
-                        />
+                        @click="handleDeleteCategory(category.id)"
+                        title="Xóa"
+                      />
                     </div>
                   </td>
                 </tr>
@@ -255,7 +255,7 @@
                           @click="editCategory(child.id)"
                           title="Sửa"
                         />
-                       <DeleteButton
+                        <DeleteButton
                           @click="handleDeleteCategory(child.id)"
                           title="Xóa"
                         />
@@ -475,6 +475,16 @@
                 placeholder="Nhập mô tả"
               ></textarea>
             </div>
+            <!-- ✅ THÊM FIELD TRẠNG THÁI -->
+            <div class="mb-3">
+              <label class="form-label"
+                >Trạng thái <span class="text-danger">*</span></label
+              >
+              <select v-model="editData.status" class="form-select" required>
+                <option :value="1">Hoạt động</option>
+                <option :value="0">Không hoạt động</option>
+              </select>
+            </div>
           </form>
         </div>
         <div class="modal-footer">
@@ -560,11 +570,15 @@ const totalElements = ref(0);
 const itemsPerPageOptions = ref([5, 10, 25, 50]);
 const isLastPage = ref(false);
 
+const loading = ref(false);
+const error = ref(null);
+
 const toggleCollapse = (category) => {
   category.isOpen = !category.isOpen;
 };
 const fetchCategory = async () => {
   try {
+    loading.value = true;
     const getAll = await getAllCategoriesParentNull();
     dataGetAll.value = getAll;
 
@@ -601,6 +615,9 @@ const fetchCategory = async () => {
     console.log("Danh sách danh mục sau khi xử lý:", categories.value);
   } catch (error) {
     console.error("Lỗi khi tải danh sách danh mục:", error);
+    error.value = "Không thể tải danh sách danh mục.";
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -626,15 +643,142 @@ const closeModal = () => {
   showModal.value = false;
 };
 
+// Thêm validation functions
+const validateCategoryForm = () => {
+  // Validate tên danh mục (bắt buộc)
+  if (
+    !category.value.categoryName ||
+    category.value.categoryName.trim() === ""
+  ) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Vui lòng nhập tên danh mục",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // Validate độ dài tên danh mục
+  if (category.value.categoryName.trim().length < 2) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tên danh mục phải có ít nhất 2 ký tự",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  if (category.value.categoryName.trim().length > 100) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tên danh mục không được vượt quá 100 ký tự",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // Validate mô tả (nếu có)
+  if (category.value.description && category.value.description.length > 500) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Mô tả không được vượt quá 500 ký tự",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // Validate trạng thái
+  if (category.value.status !== 0 && category.value.status !== 1) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Trạng thái không hợp lệ",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  return true;
+};
+
+const validateEditForm = () => {
+  // Validate tên danh mục (bắt buộc)
+  if (
+    !editData.value.categoryName ||
+    editData.value.categoryName.trim() === ""
+  ) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Vui lòng nhập tên danh mục",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // Validate độ dài tên danh mục
+  if (editData.value.categoryName.trim().length < 2) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tên danh mục phải có ít nhất 2 ký tự",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  if (editData.value.categoryName.trim().length > 100) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tên danh mục không được vượt quá 100 ký tự",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // Validate mô tả (nếu có)
+  if (editData.value.description && editData.value.description.length > 500) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Mô tả không được vượt quá 500 ký tự",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  return true;
+};
+
+// Sửa lại hàm add
 const add = async () => {
-  if (!category.value.categoryName) {
-    alert("Vui lòng nhập tên danh mục");
+  // Validate form trước khi submit
+  if (!validateCategoryForm()) {
     return;
   }
 
   // Tạo payload chỉ chứa ID của parentCategory
   const payload = {
-    ...category.value,
+    categoryName: category.value.categoryName.trim(),
+    description: category.value.description?.trim() || "",
+    status: parseInt(category.value.status),
+    parentCategory: {
+      id: category.value.parentCategory.id || null,
+    },
   };
 
   try {
@@ -653,47 +797,44 @@ const add = async () => {
     });
   } catch (error) {
     console.error("Lỗi khi thêm danh mục:", error);
+
+    // Xử lý lỗi chi tiết từ server
+    let errorMessage = "Không thể thêm danh mục.";
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.response?.data?.errors) {
+      errorMessage = Object.values(error.response.data.errors).join(", ");
+    }
+
     Swal.fire({
       icon: "error",
       title: "Thêm thất bại!",
-      text: "Không thể thêm danh mục.",
+      text: errorMessage,
       toast: true,
       position: "top-end",
       showConfirmButton: false,
-      timer: 2000,
+      timer: 3000,
       timerProgressBar: true,
     });
   }
 };
-const resetForm = () => {
-  category.value = {
-    categoryName: "",
-    parentCategory: {
-      id: null,
-      categoryName: "",
-      description: "",
-    },
-    description: "",
-  };
-};
 
-const closeDetailModal = () => {
-  showDetailModal.value = false;
-};
-const editCategory = async (id) => {
-  try {
-    dataGetAll.value = await getAllExceptId(id);
-    editData.value = await getCategoryById(id);
-    console.log("Edit Data:", editData.value);
-    showEditModal.value = true;
-  } catch (error) {
-    console.error("Lỗi khi lấy thông tin danh mục:", error);
+// Sửa lại hàm handleUpdateCategory
+const handleUpdateCategory = async (id, categoryData) => {
+  // Validate form trước khi submit
+  if (!validateEditForm()) {
+    return;
   }
-};
 
-const handleUpdateCategory = async (id, category) => {
   try {
-    await updateCategory(id, category);
+    const payload = {
+      categoryName: categoryData.categoryName.trim(),
+      description: categoryData.description?.trim() || "",
+      parentCategory: categoryData.parentCategory || null,
+      status: categoryData.status, // Thêm status vào payload
+    };
+
+    await updateCategory(id, payload);
     fetchCategory();
     showEditModal.value = false;
     Swal.fire({
@@ -707,17 +848,80 @@ const handleUpdateCategory = async (id, category) => {
     });
   } catch (error) {
     console.error("Lỗi khi cập nhật danh mục:", error);
+
+    // Xử lý lỗi chi tiết từ server
+    let errorMessage = "Không thể cập nhật danh mục.";
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.response?.data?.errors) {
+      errorMessage = Object.values(error.response.data.errors).join(", ");
+    }
+
     Swal.fire({
       icon: "error",
       title: "Cập nhật thất bại!",
-      text: "Không thể cập nhật danh mục.",
+      text: errorMessage,
       toast: true,
       position: "top-end",
       showConfirmButton: false,
-      timer: 2000,
+      timer: 3000,
       timerProgressBar: true,
     });
   }
+};
+
+// Thêm hàm để điền dữ liệu mẫu (giống Book)
+const fillFakeData = () => {
+  const timestamp = Date.now();
+  const categoryNames = [
+    "Văn học",
+    "Kinh tế",
+    "Thiếu nhi",
+    "Khoa học",
+    "Lịch sử",
+    "Ngoại ngữ",
+    "Kỹ năng sống",
+    "Tâm lý học",
+  ];
+
+  const descriptions = [
+    "Danh mục chứa các sách hay và bổ ích",
+    "Tập hợp những cuốn sách chất lượng cao",
+    "Phù hợp cho mọi lứa tuổi",
+    "Nội dung giáo dục và giải trí",
+    "Kiến thức chuyên sâu và thực tiễn",
+  ];
+
+  const randomCategoryName =
+    categoryNames[Math.floor(Math.random() * categoryNames.length)];
+  const randomDescription =
+    descriptions[Math.floor(Math.random() * descriptions.length)];
+  const randomStatus = Math.random() > 0.2 ? 1 : 0; // 80% active
+
+  // Random parent category
+  const randomParentId =
+    dataGetAll.value.length > 0 && Math.random() > 0.5
+      ? dataGetAll.value[Math.floor(Math.random() * dataGetAll.value.length)].id
+      : null;
+
+  category.value = {
+    categoryName: `${randomCategoryName} #${timestamp}`,
+    description: randomDescription,
+    status: randomStatus,
+    parentCategory: {
+      id: randomParentId,
+      categoryName: "",
+      description: "",
+    },
+  };
+
+  Swal.fire({
+    icon: "success",
+    title: "Đã điền dữ liệu mẫu!",
+    text: "Dữ liệu mẫu đã được điền vào form",
+    timer: 1500,
+    timerProgressBar: true,
+  });
 };
 
 const handleDeleteCategory = async (id) => {
@@ -807,6 +1011,92 @@ const handleNext = () => {
 const handlePageSizeChange = (newSize) => {
   pageSize.value = newSize;
   currentPage.value = 0;
+};
+
+// Thêm hàm resetForm vào script
+const resetForm = () => {
+  category.value = {
+    categoryName: "",
+    description: "",
+    status: 1, // Mặc định là hoạt động
+    parentCategory: {
+      id: null,
+      categoryName: "",
+      description: "",
+    },
+  };
+};
+
+// Cũng thêm hàm reset cho edit form
+const resetEditForm = () => {
+  editData.value = {
+    id: "",
+    categoryName: "",
+    description: "",
+    parentCategory: null,
+    status: 1, // Mặc định là hoạt động
+  };
+};
+
+// Thêm hàm editCategory vào script
+const editCategory = async (id) => {
+  try {
+    resetEditForm(); // Reset trước khi load data
+    const data = await getCategoryById(id);
+    editData.value = {
+      id: data.id,
+      categoryName: data.categoryName,
+      description: data.description,
+      parentCategory: data.parentCategory,
+      status: data.status, // Thêm status vào edit data
+    };
+    showEditModal.value = true;
+  } catch (error) {
+    console.error("Lỗi khi lấy thông tin danh mục để sửa:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Lỗi!",
+      text: "Không thể lấy thông tin danh mục để chỉnh sửa.",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+  }
+};
+
+const closeDetailModal = () => {
+  showDetailModal.value = false;
+  // Reset detail data nếu cần
+  detailCategory.value = {
+    id: "",
+    categoryName: "",
+    description: "",
+    parentCategory: "",
+    createdAt: "",
+    updatedAt: "",
+    createdBy: "",
+    updatedBy: "",
+  };
+};
+
+// Sửa lại hàm reloadPage (nếu chưa có)
+const reloadPage = () => {
+  currentPage.value = 0;
+  searchQuery.value = "";
+  selectedStatus.value = "";
+  fetchCategory();
+};
+
+// Thêm hàm searchWithFilter và clearFilters (nếu chưa có)
+const searchWithFilter = () => {
+  currentPage.value = 0; // Reset về trang đầu khi search
+  fetchCategory();
+};
+
+const clearFilters = () => {
+  searchQuery.value = "";
+  selectedStatus.value = "";
+  currentPage.value = 0;
+  fetchCategory();
 };
 </script>
 

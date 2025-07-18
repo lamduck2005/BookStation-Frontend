@@ -140,7 +140,7 @@
                 >
                   {{ author.biography }}
                 </td>
-                <td class="py-3">{{author.birthDate}}</td>
+                <td class="py-3">{{ author.birthDate }}</td>
                 <td class="py-3">
                   <ToggleStatus
                     :id="author.id"
@@ -214,14 +214,15 @@
           <div class="modal-body">
             <form @submit.prevent="add">
               <div class="mb-3">
-                <label class="form-label"
-                  >Tên tác giả <span class="text-danger">*</span></label
-                >
+                <label class="form-label">
+                  Tên tác giả <span class="text-danger">*</span>
+                </label>
                 <input
                   v-model="author.authorName"
                   class="form-control"
                   required
-                  placeholder="Nhập tên tác giả"
+                  placeholder="Nhập tên tác giả (2-100 ký tự)"
+                  maxlength="100"
                 />
               </div>
               <div class="mb-3">
@@ -229,15 +230,14 @@
                 <textarea
                   v-model="author.biography"
                   class="form-control"
-                  placeholder="Nhập tiểu sử"
+                  placeholder="Nhập tiểu sử (tối đa 1000 ký tự)"
+                  maxlength="1000"
+                  rows="4"
                 ></textarea>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Trạng thái</label>
-                <select v-model="author.status" class="form-select">
-                  <option :value="1">Hoạt động</option>
-                  <option :value="0">Không hoạt động</option>
-                </select>
+                <div class="form-text">
+                  {{ author.biography ? author.biography.length : 0 }}/1000 ký
+                  tự
+                </div>
               </div>
               <div class="mb-3">
                 <label class="form-label">Ngày sinh</label>
@@ -245,7 +245,16 @@
                   v-model="author.birthDate"
                   type="date"
                   class="form-control"
+                  :max="new Date().toISOString().split('T')[0]"
+                  min="1900-01-01"
                 />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Trạng thái</label>
+                <select v-model="author.status" class="form-select">
+                  <option :value="1">Hoạt động</option>
+                  <option :value="0">Không hoạt động</option>
+                </select>
               </div>
             </form>
           </div>
@@ -372,7 +381,8 @@
                   v-model="editData.authorName"
                   class="form-control"
                   required
-                  placeholder="Nhập tên tác giả"
+                  placeholder="Nhập tên tác giả (2-100 ký tự)"
+                  maxlength="100"
                 />
               </div>
               <div class="mb-3">
@@ -380,15 +390,14 @@
                 <textarea
                   v-model="editData.biography"
                   class="form-control"
-                  placeholder="Nhập tiểu sử"
+                  placeholder="Nhập tiểu sử (tối đa 1000 ký tự)"
+                  maxlength="1000"
+                  rows="4"
                 ></textarea>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Trạng thái</label>
-                <select v-model="editData.status" class="form-select">
-                  <option :value="1">Hoạt động</option>
-                  <option :value="0">Không hoạt động</option>
-                </select>
+                <div class="form-text">
+                  {{ editData.biography ? editData.biography.length : 0 }}/1000
+                  ký tự
+                </div>
               </div>
               <div class="mb-3">
                 <label class="form-label">Ngày sinh</label>
@@ -396,7 +405,16 @@
                   v-model="editData.birthDate"
                   type="date"
                   class="form-control"
+                  :max="new Date().toISOString().split('T')[0]"
+                  min="1900-01-01"
                 />
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Trạng thái</label>
+                <select v-model="editData.status" class="form-select">
+                  <option :value="1">Hoạt động</option>
+                  <option :value="0">Không hoạt động</option>
+                </select>
               </div>
             </form>
           </div>
@@ -523,17 +541,11 @@ function closeModal() {
 }
 
 const add = async () => {
-  if (!author.value.authorName) {
-    Swal.fire({
-      icon: "warning",
-      title: "Vui lòng nhập tên tác giả",
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 2000,
-    });
+  // Validate form trước khi submit
+  if (!validateAuthorForm()) {
     return;
   }
+
   try {
     await addAuthor(author.value);
     fetchAuthors();
@@ -549,76 +561,101 @@ const add = async () => {
     });
   } catch (error) {
     console.error("Lỗi khi thêm tác giả:", error);
+
+    // Xử lý lỗi chi tiết từ server
+    let errorMessage = "Không thể thêm tác giả.";
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.response?.data?.errors) {
+      errorMessage = Object.values(error.response.data.errors).join(", ");
+    }
+
     Swal.fire({
       icon: "error",
-      title: "Thêm tác giả thất bại!",
+      title: "Thêm thất bại!",
+      text: errorMessage,
       toast: true,
       position: "top-end",
       showConfirmButton: false,
-      timer: 2000,
+      timer: 3000,
+      timerProgressBar: true,
     });
   }
 };
 
-function resetForm() {
+// Thêm các hàm còn thiếu vào script
+const resetForm = () => {
   author.value = {
     authorName: "",
     biography: "",
     birthDate: "",
-    status: 1, // luôn mặc định là 1
+    status: 1, // mặc định là hoạt động
   };
-}
+};
 
-function closeDetailModal() {
-  showDetailModal.value = false;
-}
+const resetEditForm = () => {
+  editData.value = {
+    id: "",
+    authorName: "",
+    biography: "",
+    birthDate: "",
+    status: 1,
+  };
+};
 
 const editAuthor = async (id) => {
   try {
-    editData.value = await getAuthorById(id);
+    resetEditForm(); // Reset trước khi load data
+    const data = await getAuthorById(id);
+    editData.value = {
+      id: data.id,
+      authorName: data.authorName,
+      biography: data.biography,
+      birthDate: data.birthDate,
+      status: data.status,
+    };
     showEditModal.value = true;
   } catch (error) {
-    console.error("Lỗi khi lấy thông tin tác giả:", error);
-  }
-};
-
-const handleUpdateAuthor = async (id, author) => {
-  try {
-    await updateAuthor(id, author);
-    fetchAuthors();
-    showEditModal.value = false;
-    Swal.fire({
-      icon: "success",
-      title: "Cập nhật tác giả thành công!",
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true,
-    });
-  } catch (error) {
-    console.error("Lỗi khi cập nhật tác giả:", error);
+    console.error("Lỗi khi lấy thông tin tác giả để sửa:", error);
     Swal.fire({
       icon: "error",
-      title: "Cập nhật thất bại!",
-      text: "Không thể cập nhật tác giả.",
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
+      title: "Lỗi!",
+      text: "Không thể lấy thông tin tác giả để chỉnh sửa.",
       timer: 2000,
       timerProgressBar: true,
     });
   }
 };
 
+const closeDetailModal = () => {
+  showDetailModal.value = false;
+  // Reset detail data nếu cần
+  detailAuthor.value = {
+    id: "",
+    authorName: "",
+    biography: "",
+    birthDate: "",
+    status: 1,
+    createdAt: "",
+    updatedAt: "",
+    createdBy: "",
+    updatedBy: "",
+  };
+};
+
+// Thêm hàm xử lý delete và toggle status nếu chưa có
 const handleDeleteAuthor = async (id) => {
   const result = await Swal.fire({
-    title: "Bạn có chắc chắn muốn xóa tác giả này?",
+    title: "Bạn có chắc chắn?",
+    text: "Tác giả này sẽ bị xóa vĩnh viễn!",
     icon: "warning",
     showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
     confirmButtonText: "Xóa",
     cancelButtonText: "Hủy",
   });
+
   if (result.isConfirmed) {
     try {
       await deleteAuthor(id);
@@ -637,10 +674,7 @@ const handleDeleteAuthor = async (id) => {
       Swal.fire({
         icon: "error",
         title: "Xóa thất bại!",
-        text: "Không thể xóa tác giả.",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
+        text: "Không thể xóa tác giả này.",
         timer: 2000,
         timerProgressBar: true,
       });
@@ -648,15 +682,13 @@ const handleDeleteAuthor = async (id) => {
   }
 };
 
-// Hàm xử lý toggle status
-const handleToggleStatus = async (id, status) => {
+const handleToggleStatus = async (id, newStatus) => {
   try {
-    await toggleStatus(id);
-    // Refresh lại danh sách để đảm bảo đồng bộ
+    await toggleStatus(id, newStatus);
     fetchAuthors();
     Swal.fire({
       icon: "success",
-      title: `Đã ${status === 1 ? "kích hoạt" : "tắt"} trạng thái!`,
+      title: "Cập nhật trạng thái thành công!",
       toast: true,
       position: "top-end",
       showConfirmButton: false,
@@ -664,22 +696,296 @@ const handleToggleStatus = async (id, status) => {
       timerProgressBar: true,
     });
   } catch (error) {
-    console.error("Lỗi khi thay đổi trạng thái:", error);
-    // Refresh lại để khôi phục trạng thái cũ
-    fetchAuthors();
+    console.error("Lỗi khi cập nhật trạng thái:", error);
     Swal.fire({
       icon: "error",
-      title: "Thay đổi trạng thái thất bại!",
-      text: "Không thể thay đổi trạng thái tác giả.",
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
+      title: "Cập nhật thất bại!",
+      text: "Không thể cập nhật trạng thái.",
       timer: 2000,
       timerProgressBar: true,
     });
   }
 };
 
+// Thêm hàm validateAuthorForm
+const validateAuthorForm = () => {
+  // 1. Validate tên tác giả (bắt buộc)
+  if (!author.value.authorName || author.value.authorName.trim() === "") {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Vui lòng nhập tên tác giả",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // 2. Validate độ dài tên tác giả
+  const authorName = author.value.authorName.trim();
+  if (authorName.length < 2) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tên tác giả phải có ít nhất 2 ký tự",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  if (authorName.length > 100) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tên tác giả không được vượt quá 100 ký tự",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // 3. Validate ký tự đặc biệt (chỉ cho phép chữ, số, khoảng trắng, dấu chấm)
+  const nameRegex = /^[a-zA-ZÀ-ỹ0-9\s\.\-]+$/;
+  if (!nameRegex.test(authorName)) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tên tác giả chỉ được chứa chữ cái, số, khoảng trắng, dấu chấm và dấu gạch ngang",
+      timer: 3000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // 4. Validate tiểu sử (nếu có)
+  if (author.value.biography && author.value.biography.trim().length > 1000) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tiểu sử không được vượt quá 1000 ký tự",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // 5. Validate ngày sinh (nếu có)
+  if (author.value.birthDate) {
+    const birthDate = new Date(author.value.birthDate);
+    const currentDate = new Date();
+    const minDate = new Date("1900-01-01");
+
+    if (birthDate > currentDate) {
+      Swal.fire({
+        icon: "warning",
+        title: "Cảnh báo!",
+        text: "Ngày sinh không thể là ngày trong tương lai",
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return false;
+    }
+
+    if (birthDate < minDate) {
+      Swal.fire({
+        icon: "warning",
+        title: "Cảnh báo!",
+        text: "Ngày sinh không hợp lệ",
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return false;
+    }
+
+    // Kiểm tra tuổi hợp lý (không quá 150 tuổi)
+    const age = currentDate.getFullYear() - birthDate.getFullYear();
+    if (age > 150) {
+      Swal.fire({
+        icon: "warning",
+        title: "Cảnh báo!",
+        text: "Tuổi tác giả không hợp lý",
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return false;
+    }
+  }
+
+  // 6. Validate trạng thái
+  if (author.value.status !== 0 && author.value.status !== 1) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Trạng thái không hợp lệ",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  return true;
+};
+
+// Sửa lại hàm handleUpdateAuthor để có validation
+const handleUpdateAuthor = async (id, authorData) => {
+  // Validate form trước khi submit
+  if (!validateEditAuthorForm()) {
+    return;
+  }
+
+  try {
+    const payload = {
+      authorName: authorData.authorName.trim(),
+      biography: authorData.biography?.trim() || "",
+      birthDate: authorData.birthDate || null,
+      status: parseInt(authorData.status),
+    };
+
+    await updateAuthor(id, payload);
+    fetchAuthors();
+    showEditModal.value = false;
+    Swal.fire({
+      icon: "success",
+      title: "Cập nhật tác giả thành công!",
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    });
+  } catch (error) {
+    console.error("Lỗi khi cập nhật tác giả:", error);
+
+    let errorMessage = "Không thể cập nhật tác giả.";
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.response?.data?.errors) {
+      errorMessage = Object.values(error.response.data.errors).join(", ");
+    }
+
+    Swal.fire({
+      icon: "error",
+      title: "Cập nhật thất bại!",
+      text: errorMessage,
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+    });
+  }
+};
+
+// Thêm hàm validateEditAuthorForm
+const validateEditAuthorForm = () => {
+  // 1. Validate tên tác giả (bắt buộc)
+  if (!editData.value.authorName || editData.value.authorName.trim() === "") {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Vui lòng nhập tên tác giả",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // 2. Validate độ dài tên tác giả
+  const authorName = editData.value.authorName.trim();
+  if (authorName.length < 2) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tên tác giả phải có ít nhất 2 ký tự",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  if (authorName.length > 100) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tên tác giả không được vượt quá 100 ký tự",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // 3. Validate ký tự đặc biệt
+  const nameRegex = /^[a-zA-ZÀ-ỹ0-9\s\.\-]+$/;
+  if (!nameRegex.test(authorName)) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tên tác giả chỉ được chứa chữ cái, số, khoảng trắng, dấu chấm và dấu gạch ngang",
+      timer: 3000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // 4. Validate tiểu sử (nếu có)
+  if (
+    editData.value.biography &&
+    editData.value.biography.trim().length > 1000
+  ) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tiểu sử không được vượt quá 1000 ký tự",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // 5. Validate ngày sinh (nếu có)
+  if (editData.value.birthDate) {
+    const birthDate = new Date(editData.value.birthDate);
+    const currentDate = new Date();
+    const minDate = new Date("1900-01-01");
+
+    if (birthDate > currentDate) {
+      Swal.fire({
+        icon: "warning",
+        title: "Cảnh báo!",
+        text: "Ngày sinh không thể là ngày trong tương lai",
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return false;
+    }
+
+    if (birthDate < minDate) {
+      Swal.fire({
+        icon: "warning",
+        title: "Cảnh báo!",
+        text: "Ngày sinh không hợp lệ",
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return false;
+    }
+
+    const age = currentDate.getFullYear() - birthDate.getFullYear();
+    if (age > 150) {
+      Swal.fire({
+        icon: "warning",
+        title: "Cảnh báo!",
+        text: "Tuổi tác giả không hợp lý",
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return false;
+    }
+  }
+
+  return true;
+};
 
 // Hàm lấy danh sách tác giả có phân trang
 const fetchAuthors = async () => {

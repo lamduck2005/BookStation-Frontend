@@ -293,6 +293,7 @@
                     min="1"
                     max="100"
                     class="form-control"
+                    :disabled="formVoucher.voucherType !== 'PERCENTAGE'"
                   />
                 </div>
                 <div class="mb-2 col-6">
@@ -304,6 +305,7 @@
                     type="number"
                     min="0"
                     class="form-control"
+                    :disabled="formVoucher.voucherType !== 'FIXED_AMOUNT'"
                   />
                 </div>
                 <div class="mb-2 col-6">
@@ -399,6 +401,7 @@ import EditButton from "@/components/common/EditButton.vue";
 import DeleteButton from "@/components/common/DeleteButton.vue";
 import ToggleStatus from "@/components/common/ToggleStatus.vue";
 import Pagination from "@/components/common/Pagination.vue";
+import { getUserId,getUserFullName } from "@/utils/utils";
 import { Modal } from "bootstrap";
 import { ref, computed, watch, onMounted } from "vue";
 import {
@@ -427,6 +430,8 @@ export default {
     const isLastPage = computed(
       () => currentPage.value >= totalPages.value - 1
     );
+    const voucherChannel = new BroadcastChannel('voucher-status');
+
     const itemsPerPageOptions = ref([5, 10, 20, 50]);
 
     const listVoucher = ref([]);
@@ -631,7 +636,7 @@ export default {
         usedCount: "",
         usageLimitPerUser: "",
         status: 1,
-        createdBy: "admin",
+        createdBy: getUserFullName(),
         updatedBy: "",
       };
       showFormModal.value = true;
@@ -662,6 +667,14 @@ export default {
         return;
       }
       if (
+        formVoucher.value.voucherType === "FIXED_AMOUNT" &&
+        (isNaN(formVoucher.value.discountAmount) ||
+          Number(formVoucher.value.discountAmount) < 1)
+      ) {
+        showToast("error", "Số tiền giảm phải lớn hơn 0!");
+        return;
+      }
+      if (
         formVoucher.value.minOrderValue !== "" &&
         (isNaN(formVoucher.value.minOrderValue) ||
           Number(formVoucher.value.minOrderValue) < 0)
@@ -677,18 +690,18 @@ export default {
         showToast("error", "Giá trị giảm tối đa phải >= 0!");
         return;
       }
-      if (
-        formVoucher.value.maxDiscountValue !== "" &&
-        formVoucher.value.minOrderValue !== "" &&
-        Number(formVoucher.value.maxDiscountValue) >
-          Number(formVoucher.value.minOrderValue)
-      ) {
-        showToast(
-          "error",
-          "Giá trị giảm tối đa không được lớn hơn giá trị đơn tối thiểu!"
-        );
-        return;
-      }
+      // if (
+      //   formVoucher.value.maxDiscountValue !== "" &&
+      //   formVoucher.value.minOrderValue !== "" &&
+      //   Number(formVoucher.value.maxDiscountValue) >
+      //     Number(formVoucher.value.minOrderValue)
+      // ) {
+      //   showToast(
+      //     "error",
+      //     "Giá trị giảm tối đa không được lớn hơn giá trị đơn tối thiểu!"
+      //   );
+      //   return;
+      // }
 
       // Validate ngày
       const start = new Date(formVoucher.value.startTime);
@@ -730,7 +743,7 @@ export default {
         usageLimitPerUser: toNumberOrNull(formVoucher.value.usageLimitPerUser),
         status: toNumberOrNull(formVoucher.value.status),
         createdBy: formVoucher.value.createdBy,
-        updatedBy: toStringOrNull(formVoucher.value.updatedBy),
+        updatedBy: getUserFullName(),
       };
       if (isEdit.value) {
         payload.id = formVoucher.value.id;
@@ -739,6 +752,7 @@ export default {
       try {
         if (isEdit.value) {
           await updateVouchers(payload);
+          voucherChannel.postMessage('updated');
           showToast("success", "Cập nhật voucher thành công!");
         } else {
           await createVouchers(payload);
@@ -759,7 +773,7 @@ export default {
       }
     }
 
-    // Xóa voucher
+    // // Xóa voucher
     async function deleteVoucher(voucher) {
       if (
         confirm(
@@ -782,8 +796,9 @@ export default {
         await upStatusVouchers(
           voucher.id,
           newStatus,
-          voucher.createdBy || "admin"
+          voucher.createdBy || "getUserFullName()",
         );
+        voucherChannel.postMessage('updated');
         showToast("success", "Cập nhật trạng thái thành công!");
         fetchVouchers();
       } catch (error) {

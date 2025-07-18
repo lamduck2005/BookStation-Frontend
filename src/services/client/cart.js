@@ -50,9 +50,35 @@ export const removeCartItem = async (cartItemId) => {
   }
 }
 
+// Update selected state for cart item - theo document
+export const selectCartItem = async (cartItemId, isSelected) => {
+  try {
+    const response = await axiosClient.put(`/api/carts/items/${cartItemId}/select`, {
+      selected: isSelected
+    })
+    return response
+  } catch (error) {
+    console.error('Error updating selected state:', error)
+    throw error
+  }
+}
+
+// Validate cart trước khi checkout - theo document 
+export const validateCart = async (userId) => {
+  try {
+    const response = await axiosClient.post(`/api/carts/user/${userId}/validate`)
+    return response
+  } catch (error) {
+    console.error('Error validating cart:', error)
+    throw error
+  }
+}
+
 export default {
   addToCart,
   getCartItems,
   updateCartItem,
-  removeCartItem
+  removeCartItem,
+  selectCartItem,
+  validateCart
 }

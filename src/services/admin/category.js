@@ -156,3 +156,15 @@ export const getAllCategoriesParentNotNull = async () => {
   }
 };
 
+// ✅ ĐÚNG - Có 2 cách truyền id:
+
+// Cách 1: Truyền id qua URL path
+export const getAllCategoriesParentExcepNotNull = async (id) => {
+  try {
+    const response = await client.get(`/api/categories/parent-excep-not-null/${id}`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching categories with parent null:", error);
+    throw error;
+  }
+};

@@ -139,7 +139,7 @@
 
           <!-- Search bar (nền xám) -->
           <div
-            class="col bg-light d-flex align-items-center px-3"
+            class="col bg-light d-flex align-items-center px-3 position-relative"
             style="height: 60px"
           >
             <div class="input-group w-100">
@@ -150,6 +150,8 @@
                 placeholder="Tìm kiếm sách, tác giả..."
                 style="box-shadow: none"
                 @keyup.enter="handleSearch"
+                @focus="showSearchResults = true"
+                @blur="hideSearchResults"
               />
               <button
                 class="btn btn-danger px-4"
@@ -158,6 +160,58 @@
               >
                 <i class="bi bi-search"></i>
               </button>
+            </div>
+
+            <!-- Search Results Dropdown -->
+            <div
+              v-if="showSearchResults && bookSearch.length > 0"
+              class="search-results-dropdown position-absolute bg-white shadow-lg border"
+            >
+              <!-- Sản phẩm -->
+              <div class="search-products p-3">
+                <h6 class="text-muted mb-3">
+                  <i class="bi bi-book me-2"></i>Sản phẩm
+                </h6>
+                <div class="product-results">
+                  <div
+                    v-for="book in bookSearch.slice(0, 6)"
+                    :key="book.id"
+                    class="product-item d-flex align-items-center p-2 rounded mb-2"
+                    @click="goToProduct(book.bookId)"
+                  >
+                    <img
+                      :src="
+                        book.images?.[0] ||
+                        book.imageUrl ||
+                        '/placeholder-book.jpg'
+                      "
+                      :alt="book.bookName"
+                      class="product-thumb me-3"
+                    />
+                    <div class="product-info flex-grow-1">
+                      <div class="product-name fw-medium">
+                        {{ book.bookName }}
+                      </div>
+                      <div class="product-price text-danger fw-bold">
+                        {{ formatPrice(book.price) }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Xem thêm -->
+                <div
+                  class="text-center pt-2 border-top"
+                  v-if="bookSearch.length > 6"
+                >
+                  <button
+                    class="btn btn-outline-danger btn-sm"
+                    @click="viewAllResults"
+                  >
+                    Xem thêm {{ bookSearch.length - 6 }} kết quả
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -254,13 +308,17 @@
               >
             </li>
             <li class="nav-item">
-              <a class="nav-link text-dark" href="#Trend">Xu hướng mua sẵm -Sách hot</a>
+              <a class="nav-link text-dark" href="#Trend"
+                >Xu hướng mua sẵm -Sách hot</a
+              >
             </li>
             <li class="nav-item">
               <a class="nav-link text-dark" href="#category-client">Danh mục</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link text-dark" href="#flashsale-product">Flash Sale</a>
+              <a class="nav-link text-dark" href="#flashsale-product"
+                >Flash Sale</a
+              >
             </li>
             <li class="nav-item">
               <a class="nav-link text-dark" href="#">Khuyến mãi</a>
@@ -284,10 +342,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import NotificationComponent from "@/components/common/NotificationComponent.vue";
 import { getAllCategoriesForUser } from "@/services/admin/category";
+import { fetchBookSearch } from "@/services/admin/book"; // ✅ Import đúng
 import { showQuickConfirm, showToast } from "@/utils/swalHelper";
 import { clearAuth } from "@/utils/utils";
 
@@ -298,13 +357,43 @@ const router = useRouter();
 const showCategoryMenu = ref(false);
 const categories = ref([]);
 const searchText = ref("");
+const bookSearch = ref([]);
+const showSearchResults = ref(false);
+
+// ✅ Sửa lại hàm fetchBookSearch (đổi tên để tránh conflict)
+const searchBooks = async (searchTerm) => {
+  if (!searchTerm || searchTerm.trim() === "") {
+    bookSearch.value = [];
+    return;
+  }
+
+  try {
+    const response = await fetchBookSearch(searchTerm.trim());
+    console.log("Kết quả tìm kiếm:", response);
+    bookSearch.value = response || [];
+  } catch (error) {
+    console.error("Lỗi khi tìm kiếm sách:", error);
+    bookSearch.value = [];
+  }
+};
+
+// ✅ Watch để theo dõi searchText
+watch(
+  searchText,
+  (newValue) => {
+    // Debounce: chờ 500ms sau khi user ngừng gõ mới search
+    clearTimeout(searchBooks.timeoutId);
+    searchBooks.timeoutId = setTimeout(() => {
+      searchBooks(newValue);
+    }, 500);
+  },
+  { immediate: false }
+);
 
 // Lifecycle hook
 onMounted(() => {
   fetchCategory();
 });
-
-// API Functions
 const fetchCategory = async () => {
   try {
     const response = await getAllCategoriesForUser();
@@ -316,7 +405,6 @@ const fetchCategory = async () => {
   }
 };
 
-// Utility Functions
 const getColumnClass = (index) => {
   const totalCategories = categories.value.length;
   if (totalCategories <= 4) {
@@ -397,6 +485,46 @@ const handleLogout = async () => {
     clearAuth();
     router.push("/auth");
   }
+};
+
+const hideSearchResults = () => {
+  // 200ms delay to allow click event to register
+  setTimeout(() => {
+    showSearchResults.value = false;
+  }, 200);
+};
+
+const selectSuggestion = (suggestion) => {
+  searchText.value = suggestion;
+  handleSearch();
+};
+
+const viewAllResults = () => {
+  showSearchResults.value = false;
+  router.push({
+    path: "/products",
+    query: { search: btoa(encodeURIComponent(searchText.value.trim())) },
+  });
+};
+
+const formatPrice = (price) => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    minimumFractionDigits: 0,
+  })
+    .format(price || 0)
+    .replace("₫", "đ");
+};
+
+const goToProduct = (productId) => {
+    console.log("Navigating to product:", productId); // ✅ Debug
+
+  showSearchResults.value = false;
+  router.push({
+    name: "product-detail",
+    params: { id: productId },
+  });
 };
 </script>
 
@@ -675,5 +803,58 @@ const handleLogout = async () => {
 .d-flex.flex-column small {
   margin-top: 2px;
   font-size: 11px;
+}
+
+/* ========== SEARCH RESULTS DROPDOWN STYLING ========== */
+.search-results-dropdown {
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  border-radius: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+  animation: fadeInDown 0.2s ease-out;
+}
+
+.product-item {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-radius: 4px;
+  min-height: 60px; /* Đặt chiều cao tối thiểu */
+}
+
+.product-item:hover {
+  background-color: #f8f9fa;
+}
+
+.product-thumb {
+  width: 45px;
+  height: 55px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0; /* Không cho ảnh co lại */
+}
+
+.product-info {
+  min-width: 0; /* Cho phép text wrap */
+  overflow: hidden;
+}
+
+.product-name {
+  font-size: 0.9rem;
+  line-height: 1.3;
+  margin-bottom: 4px;
+  max-height: 2.6em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-wrap: break-word;
+}
+
+.product-price {
+  font-size: 0.85rem;
+  white-space: nowrap;
 }
 </style>

@@ -1,43 +1,48 @@
-import axios from '@/utils/axios';
+import client from '@/utils/axios';
 
 // Lấy danh sách người dùng (có phân trang, lọc)
 export function fetchUsers(params) {
-  return axios.get('/api/users', { params });
+  return client.get('/api/users', { params });
 }
 
 // Lấy chi tiết người dùng
 export function fetchUserDetail(id) {
-  return axios.get(`/api/users/${id}`);
+  return client.get(`/api/users/${id}`);
 }
 
 // Tạo mới người dùng
 export function createUser(data) {
-  return axios.post('/api/users', data);
+  return client.post('/api/users', data);
 }
 
 // Cập nhật người dùng
 export function updateUser(id, data) {
-  return axios.put(`/api/users/${id}`, data);
+  return client.put(`/api/users/${id}`, data);
 }
 
 // Xóa người dùng
 export function deleteUser(id) {
-  return axios.delete(`/api/users/${id}`);
+  return client.delete(`/api/users/${id}`);
 }
 
 // Đổi trạng thái người dùng
 export function toggleUserStatus(id) {
-  return axios.patch(`/api/users/${id}/toggle-status`);
+  return client.patch(`/api/users/${id}/toggle-status`);
+}
+
+// Lấy danh sách users để chọn trong form tạo đơn hàng
+export function getUsersForOrder() {
+  return client.get('/api/users/dropdown');
 }
 export function getProfile() {
-  return axios.get('/api/users/profile');
+  return client.get('/api/users/profile');
 }
 export function updateProfile(id,data) {
-  return axios.put(`/api/users/profile/${id}`, data);
+  return client.put(`/api/users/profile/${id}`, data);
 }
 export function userpos(text) {
-  return axios.get(`/api/users/userpos`, { params: { text } });
+  return client.get(`/api/users/userpos`, { params: { text } });
 }
 export function addretailer(data) {
-  return axios.post('/api/users/addretail', data);
+  return client.post('/api/users/addretail', data);
 }

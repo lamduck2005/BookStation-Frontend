@@ -9,6 +9,7 @@ import HomePage from "@/views/client/HomePage.vue";
 import NotificationsPage from "@/views/client/NotificationsPage.vue";
 import DemoPage from "@/views/client/DemoPage.vue";
 import CheckoutPage from "@/views/client/CheckoutPage.vue";
+import OrderSuccess from "@/views/client/OrderSuccess.vue";
 import Cart from "@/views/client/Cart.vue";
 import DetailProduct from "@/views/client/DetailProduct.vue";
 import Trend from "@/views/client/Trend.vue";
@@ -86,7 +87,19 @@ const router = createRouter({
         {
           path: "checkout",
           name: "checkout",
+          component: CheckoutPage
+        },
+        {
+          path: "checkout/:sessionId",
+          name: "checkout-session",
           component: CheckoutPage,
+          props: true,
+        },
+        {
+          path: "order/success/:orderId",
+          name: "order-success",
+          component: OrderSuccess,
+          props: true,
         },
         {
           path: "cart",
