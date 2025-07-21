@@ -81,6 +81,12 @@ const sidebarLinks = [
     icon: "bi bi-box",
     label: "Đơn hàng",
   },
+  {
+    type: "link",
+    to: "/admin/refund-management",
+    icon: "bi bi-arrow-return-left",
+    label: "Quản lý hoàn tiền",
+  },
    {
     type: "link",
     to: "/admin/pos-view",

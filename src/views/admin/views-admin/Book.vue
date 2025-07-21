@@ -196,9 +196,8 @@
                 <th>Giá & Giảm giá</th>
                 <th>Số lượng & Đã bán</th>
                 <th>Hình thức & Flash Sale</th>
-                <th>Thể loại</th>
+                <th>Thể loại & NXB</th>
                 <th>Nhà cung cấp</th>
-                <th>Nhà xuất bản</th>
                 <th>Thông tin bổ sung</th>
                 <th>Trạng thái</th>
                 <th>Tác giả</th>
@@ -207,7 +206,7 @@
             </thead>
             <tbody>
               <tr v-if="books.length === 0">
-                <td colspan="14" class="text-center py-4 text-muted">
+                <td colspan="13" class="text-center py-4 text-muted">
                   <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                   Không có dữ liệu
                 </td>
@@ -252,18 +251,33 @@
                 </td>
                 <td>
                   <div>
-                    <strong class="text-success d-block">
-                      {{ formatCurrency(book.price) }}
-                    </strong>
-                    <div v-if="book.discountValue || book.discountPercent" class="small">
-                      <span v-if="book.discountValue" class="badge bg-warning text-dark">
-                        -{{ formatCurrency(book.discountValue) }}
-                      </span>
-                      <span v-if="book.discountPercent" class="badge bg-warning text-dark">
-                        -{{ book.discountPercent }}%
-                      </span>
-                    </div>
-                    <small v-else class="text-muted">Không giảm giá</small>
+                    <!-- Nếu có giảm giá (discountActive = true) -->
+                    <template v-if="book.discountActive && (book.discountValue > 0 || book.discountPercent > 0)">
+                      <strong class="text-danger d-block">
+                        Giá gốc: <span style="text-decoration: line-through;">{{ formatCurrency(book.price) }}</span>
+                      </strong>
+                      <strong class="text-success d-block">
+                        Giá đang bán: {{ formatCurrency(book.calculatedFinalPrice || book.finalPrice || book.price) }}
+                      </strong>
+                      <div class="small mt-1">
+                        <span v-if="book.discountValue && book.discountValue > 0" class="badge bg-warning text-dark">
+                          Giảm: {{ formatCurrency(book.discountValue) }}
+                        </span>
+                        <span v-if="book.discountPercent && book.discountPercent > 0" class="badge bg-warning text-dark mx-1">
+                          Giảm: {{ book.discountPercent }}%
+                        </span>
+                        <span class="badge bg-success ms-1">
+                          Đang giảm giá
+                        </span>
+                      </div>
+                    </template>
+                    <!-- Nếu không có giảm giá -->
+                    <template v-else>
+                      <strong class="text-success d-block">
+                        {{ formatCurrency(book.price) }}
+                      </strong>
+                      <small class="text-muted">Không giảm giá</small>
+                    </template>
                   </div>
                 </td>
                 <td>
@@ -308,18 +322,22 @@
                   </div>
                 </td>
                 <td>
-                  <span class="badge bg-info text-dark">
-                    {{ book.categoryName || 'Chưa phân loại' }}
-                  </span>
+                  <div>
+                    <div class="mb-1">
+                      <span class="badge bg-info text-dark">
+                        {{ book.categoryName || 'Chưa phân loại' }}
+                      </span>
+                    </div>
+                    <div>
+                      <span class="badge bg-secondary">
+                        {{ book.publisherName || 'Chưa có NXB' }}
+                      </span>
+                    </div>
+                  </div>
                 </td>
                 <td>
                   <span class="badge bg-secondary">
                     {{ book.supplierName || 'Chưa có nhà cung cấp' }}
-                  </span>
-                </td>
-                <td>
-                  <span class="badge bg-secondary">
-                    {{ book.publisherName || 'Chưa có nhà xuất bản' }}
                   </span>
                 </td>
                 <td>
@@ -637,6 +655,131 @@
                 </div>
               </div>
 
+              <!-- Discount Section -->
+              <div class="row g-3 mt-2">
+                <div class="col-md-3">
+                  <label class="form-label enhanced-label">
+                    Loại giảm giá
+                  </label>
+                  <select 
+                    class="form-select enhanced-input" 
+                    v-model="discountType"
+                    @change="onDiscountTypeChange"
+                  >
+                    <option value="">Không giảm giá</option>
+                    <option value="amount">Giảm theo số tiền</option>
+                    <option value="percent">Giảm theo phần trăm</option>
+                  </select>
+                </div>
+                <div class="col-md-3" v-if="discountType === 'amount'">
+                  <label for="discountValue" class="form-label enhanced-label">
+                    Giảm giá (VNĐ)
+                  </label>
+                  <div class="input-group">
+                    <input
+                      type="number"
+                      class="form-control enhanced-input"
+                      id="discountValue"
+                      v-model="newBook.discountValue"
+                      @input="onDiscountValueChange"
+                      placeholder="0"
+                      min="0"
+                      step="1000"
+                    />
+                    <span class="input-group-text">VNĐ</span>
+                  </div>
+                </div>
+                <div class="col-md-3" v-if="discountType === 'percent'">
+                  <label for="discountPercent" class="form-label enhanced-label">
+                    Giảm giá (%)
+                  </label>
+                  <div class="input-group">
+                    <input
+                      type="number"
+                      class="form-control enhanced-input"
+                      id="discountPercent"
+                      v-model="newBook.discountPercent"
+                      @input="onDiscountPercentChange"
+                      placeholder="0"
+                      min="0"
+                      max="100"
+                      step="1"
+                    />
+                    <span class="input-group-text">%</span>
+                  </div>
+                </div>
+                <div class="col-md-3" v-if="discountType">
+                  <label for="discountActive" class="form-label enhanced-label">
+                    Kích hoạt giảm giá
+                  </label>
+                  <div class="form-check form-switch mt-2">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="discountActive"
+                      v-model="newBook.discountActive"
+                    />
+                    <label class="form-check-label" for="discountActive">
+                      {{ newBook.discountActive ? 'Đang giảm giá' : 'Không giảm giá' }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ✅ Price Calculation Result Section -->
+              <div class="row g-3 mt-3" v-if="isEditMode && (discountType === 'amount' || discountType === 'percent')">
+                <div class="col-md-12">
+                  <div class="card border-info" v-if="isCalculatingPrice">
+                    <div class="card-body text-center">
+                      <div class="spinner-border text-info me-2" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                      <span>Đang tính toán giá...</span>
+                    </div>
+                  </div>
+                  
+                  <div class="card border-success" v-else-if="calculatedPrice">
+                    <div class="card-header bg-success text-white">
+                      <h6 class="mb-0">
+                        <i class="bi bi-calculator me-2"></i>
+                        Kết quả tính giá
+                      </h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-md-6">
+                          <strong>Giá gốc:</strong> {{ formatCurrency(calculatedPrice.originalPrice) }}
+                        </div>
+                        <div class="col-md-6">
+                          <strong class="text-success">Giá sau giảm:</strong> {{ formatCurrency(calculatedPrice.finalPrice) }}
+                        </div>
+                      </div>
+                      <div class="row mt-2">
+                        <div class="col-md-6">
+                          <span class="text-info">Số tiền giảm:</span> {{ formatCurrency(calculatedPrice.discountAmount) }}
+                        </div>
+                        <div class="col-md-6 ">
+                          <span class="text-info">Phần trăm giảm:</span> {{ calculatedPrice.discountPercent }}%
+                        </div>
+                      </div>
+                      <div class="row mt-2" v-if="calculatedPrice.hasFlashSale">
+                        <div class="col-12">
+                          <div class="alert alert-warning mb-0">
+                            <strong>⚠️ Thông báo:</strong> Sách này đang có Flash Sale với giá {{ formatCurrency(calculatedPrice.flashSalePrice) }}
+                            (tiết kiệm {{ formatCurrency(calculatedPrice.flashSavings) }})
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="alert alert-info" v-else-if="newBook.discountActive && discountType">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Nhập giá trị giảm giá để xem kết quả tính toán
+                  </div>
+                </div>
+              </div>
+
               <div class="row g-3 mt-2">
                 <div class="col-md-12">
                   <label for="publicationDate" class="form-label enhanced-label">
@@ -819,7 +962,7 @@ import MultiImageUpload from '@/components/common/MultiImageUpload.vue';
 import ImagePreviewModal from '@/components/common/ImagePreviewModal.vue';
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { Modal } from 'bootstrap';
-import { getBooks, createBook, updateBook, getAuthorsDropdown, getCategoriesDropdown, getSuppliersDropdown, toggleBookStatus } from '@/services/admin/book';
+import { getBooks, createBook, updateBook, getAuthorsDropdown, getCategoriesDropdown, getSuppliersDropdown, toggleBookStatus, calculatePrice } from '@/services/admin/book';
 import { getPublishersDropdown } from '@/services/admin/publisher';
 import Swal from 'sweetalert2';
 
@@ -848,14 +991,18 @@ const newBook = ref({
   status: 1,
   authorIds: [], // BẮT BUỘC - Danh sách ID tác giả
   bookImages: [],
-  // Trường mới
+  // Trường mới theo API
   bookFormat: 'PAPERBACK', // ✅ THÊM BOOK FORMAT - ENUM MỚI
   dimensions: '',
   weight: '',
   language: '',
   pageCount: '',
   isbn: '',
-  translator: ''
+  translator: '',
+  // Discount fields theo tài liệu
+  discountValue: '', // Giảm tiền cố định
+  discountPercent: '', // Giảm theo %
+  discountActive: false // Bật/tắt giảm giá
 });
 
 // Computed property for date formatting
@@ -883,6 +1030,13 @@ const publishers = ref([]);
 // Track edit mode and index
 const isEditMode = ref(false);
 const editIndex = ref(null);
+
+// Discount type ref
+const discountType = ref('');
+
+// ✅ Thêm state cho price calculation
+const calculatedPrice = ref(null);
+const isCalculatingPrice = ref(false);
 
 // Pagination state
 const currentPage = ref(0);
@@ -936,6 +1090,9 @@ const fetchBooks = async () => {
     totalElements.value = data.data.totalElements || 0;
     isLastPage.value = data.data.last ?? (currentPage.value >= totalPages.value - 1);
     
+    // 🔥 GỌI API TÍNH GIÁ CHO TỪNG SÁCH CÓ GIẢM GIÁ
+    await calculatePricesForBooks();
+    
     // 🔥 DEBUG: Kiểm tra API có trả về đúng trường images không
     if (books.value.length > 0) {
       console.log('=== DEBUG: First book data ===');
@@ -951,6 +1108,39 @@ const fetchBooks = async () => {
       timer: 2000,
       timerProgressBar: true
     });
+  }
+};
+
+// 🔥 FUNCTION MỚI: Tính giá cho tất cả sách có giảm giá
+const calculatePricesForBooks = async () => {
+  try {
+    for (let i = 0; i < books.value.length; i++) {
+      const book = books.value[i];
+      
+      // Chỉ gọi API nếu sách có giảm giá active
+      if (book.discountActive && (book.discountValue > 0 || book.discountPercent > 0)) {
+        try {
+          const response = await calculatePrice(
+            book.id,
+            book.discountValue || null,
+            book.discountPercent || null,
+            book.discountActive
+          );
+          
+          if (response.status === 200 && response.data) {
+            // Cập nhật giá tính được từ API vào book
+            books.value[i].calculatedFinalPrice = response.data.finalPrice;
+            books.value[i].calculatedDiscountAmount = response.data.discountAmount;
+          }
+        } catch (error) {
+          console.error(`Lỗi khi tính giá cho sách ID ${book.id}:`, error);
+          // Nếu API lỗi, giữ nguyên giá gốc
+          books.value[i].calculatedFinalPrice = book.price;
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Lỗi khi tính giá cho danh sách sách:', error);
   }
 };
 
@@ -1052,6 +1242,9 @@ const openAddModal = () => {
   console.log('=== DEBUG: openAddModal called ===');
   console.log('isEditMode.value:', isEditMode.value);
   
+  // Reset discount type
+  discountType.value = '';
+  
   newBook.value = {
     id: '',
     bookName: '',
@@ -1067,12 +1260,17 @@ const openAddModal = () => {
     authorIds: [],
     bookImages: [],
     // Trường mới
+    bookFormat: 'PAPERBACK',
     dimensions: '',
     weight: '',
     language: '',
     pageCount: '',
     isbn: '',
-    translator: ''
+    translator: '',
+    // Discount fields
+    discountValue: '',
+    discountPercent: '',
+    discountActive: false
   };
   
   console.log('=== DEBUG: Opening Add Modal ===');
@@ -1109,14 +1307,38 @@ const openEditModal = (book, index) => {
     language: book.language || '',
     pageCount: book.pageCount || '',
     isbn: book.isbn || '',
-    translator: book.translator || ''
+    translator: book.translator || '',
+    // Discount fields
+    discountValue: book.discountValue || '',
+    discountPercent: book.discountPercent || '',
+    discountActive: book.discountActive || false
   };
+  
+  // Set discountType based on existing discount values
+  if (book.discountValue && book.discountValue > 0) {
+    discountType.value = 'amount';
+  } else if (book.discountPercent && book.discountPercent > 0) {
+    discountType.value = 'percent';
+  } else {
+    discountType.value = '';
+  }
+  
+  // ✅ Reset calculated price state
+  calculatedPrice.value = null;
+  isCalculatingPrice.value = false;
   
   console.log('=== DEBUG: Opening Edit Modal ===');
   
   const modalElement = document.getElementById('addBookModal');
   const modal = Modal.getOrCreateInstance(modalElement);
   modal.show();
+  
+  // ✅ Gọi API tính giá nếu có discount
+  if (newBook.value.discountActive && (newBook.value.discountValue > 0 || newBook.value.discountPercent > 0)) {
+    setTimeout(() => {
+      calculateBookPrice();
+    }, 500); // Delay nhỏ để modal hiển thị trước
+  }
 };
 
 const handleSubmitBook = async () => {
@@ -1193,7 +1415,11 @@ const handleSubmitBook = async () => {
       language: newBook.value.language,
       pageCount: newBook.value.pageCount,
       isbn: newBook.value.isbn,
-      translator: newBook.value.translator
+      translator: newBook.value.translator,
+      // ✅ THÊM DISCOUNT FIELDS VÀO PAYLOAD
+      discountValue: discountType.value === 'amount' ? parseFloat(newBook.value.discountValue) || null : null,
+      discountPercent: discountType.value === 'percent' ? parseFloat(newBook.value.discountPercent) || null : null,
+      discountActive: newBook.value.discountActive || false
     };
 
     console.log('=== DEBUG: Submitting book data ===');
@@ -1251,6 +1477,83 @@ const getAuthorNameById = (authorId) => {
 
 const removeAuthor = (authorId) => {
   newBook.value.authorIds = newBook.value.authorIds.filter(id => id !== authorId);
+};
+
+// Discount type handler
+const onDiscountTypeChange = () => {
+  // Reset discount values when type changes
+  newBook.value.discountValue = '';
+  newBook.value.discountPercent = '';
+  newBook.value.discountActive = false;
+  
+  // Reset calculated price
+  calculatedPrice.value = null;
+  
+  if (!discountType.value) {
+    newBook.value.discountActive = false;
+  }
+};
+
+// ✅ Function để gọi API tính giá
+const calculateBookPrice = async () => {
+  if (!newBook.value.id || isEditMode.value === false) {
+    console.log('Không thể tính giá: cần bookId và phải ở chế độ edit');
+    return;
+  }
+  
+  if (!newBook.value.discountActive) {
+    calculatedPrice.value = null;
+    return;
+  }
+  
+  try {
+    isCalculatingPrice.value = true;
+    
+    const response = await calculatePrice(
+      newBook.value.id,
+      discountType.value === 'amount' ? newBook.value.discountValue : null,
+      discountType.value === 'percent' ? newBook.value.discountPercent : null,
+      newBook.value.discountActive
+    );
+    
+    if (response.status === 200) {
+      calculatedPrice.value = response.data;
+      console.log('✅ Price calculation result:', calculatedPrice.value);
+    }
+  } catch (error) {
+    console.error('❌ Lỗi khi tính giá sách:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Lỗi!',
+      text: 'Không thể tính giá sách. Vui lòng thử lại.',
+      timer: 3000,
+      timerProgressBar: true
+    });
+  } finally {
+    isCalculatingPrice.value = false;
+  }
+};
+
+// ✅ Function để handle khi thay đổi discount value
+const onDiscountValueChange = () => {
+  if (newBook.value.discountValue && parseFloat(newBook.value.discountValue) > 0) {
+    newBook.value.discountActive = true;
+    calculateBookPrice();
+  } else {
+    newBook.value.discountActive = false;
+    calculatedPrice.value = null;
+  }
+};
+
+// ✅ Function để handle khi thay đổi discount percent
+const onDiscountPercentChange = () => {
+  if (newBook.value.discountPercent && parseFloat(newBook.value.discountPercent) > 0) {
+    newBook.value.discountActive = true;
+    calculateBookPrice();
+  } else {
+    newBook.value.discountActive = false;
+    calculatedPrice.value = null;
+  }
 };
 
 // Toggle status function
@@ -1341,6 +1644,12 @@ const handlePageSizeChange = (newSize) => {
 const resetBookModal = () => {
   isEditMode.value = false;
   editIndex.value = null;
+  
+  // ✅ Reset calculated price states
+  calculatedPrice.value = null;
+  isCalculatingPrice.value = false;
+  discountType.value = '';
+  
   newBook.value = {
     id: '',
     bookName: '',
@@ -1362,7 +1671,11 @@ const resetBookModal = () => {
     language: '',
     pageCount: '',
     isbn: '',
-    translator: ''
+    translator: '',
+    // Discount fields
+    discountValue: '',
+    discountPercent: '',
+    discountActive: false
   };
 };
 

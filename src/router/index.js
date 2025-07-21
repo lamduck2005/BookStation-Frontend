@@ -41,6 +41,7 @@ import Dashboard from "@/views/admin/set-up/Dashboard.vue";
 import Account from "@/views/admin/set-up/Account.vue";
 import Notifications from "@/views/admin/set-up/Notifications.vue";
 import Order from "@/views/admin/views-admin/Order.vue";
+import RefundManagement from "@/views/admin/views-admin/RefundManagement.vue";
 import Supplier from "@/views/admin/views-admin/Supplier.vue";
 import Rank from "@/views/admin/views-admin/Rank.vue";
 import Point from "@/views/admin/views-admin/Point.vue";
@@ -227,6 +228,11 @@ const router = createRouter({
           path: "order",
           name: "Order",
           component: Order,
+        },
+        {
+          path: "refund-management",
+          name: "RefundManagement",
+          component: RefundManagement,
         },
         {
           path: "account",

@@ -211,3 +211,26 @@ export const validateQuantity = async (bookId, quantity) => {
     throw error;
   }
 }
+
+// ✅ API Tính giá sách theo tài liệu BOOK_PRICE_CALCULATION_API.md
+export const calculatePrice = async (bookId, discountValue = null, discountPercent = null, discountActive = false) => {
+  try {
+    const payload = {
+      bookId,
+      discountActive
+    };
+    
+    // Chỉ gửi 1 trong 2: discountValue hoặc discountPercent
+    if (discountValue !== null && discountValue !== '' && discountValue > 0) {
+      payload.discountValue = parseFloat(discountValue);
+    } else if (discountPercent !== null && discountPercent !== '' && discountPercent > 0) {
+      payload.discountPercent = parseFloat(discountPercent);
+    }
+    
+    const response = await client.post('/api/books/calculate-price', payload);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi tính giá sách:', error);
+    throw error;
+  }
+}

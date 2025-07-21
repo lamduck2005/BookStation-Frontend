@@ -164,30 +164,10 @@
             
             <!-- Stock Info -->
             <div class="stock-info">
-              <span class="stock-text text-primary">{{ book.stockQuantity || 0 }} nhà sách còn hàng</span>
-            </div>
-          </div>
-          
-          <!-- Promotions -->
-          <div class="promotions-section">
-            <h6 class="section-title">Ưu đãi liên quan</h6>
-            <div class="promo-grid">
-              <div class="promo-item">
-                <i class="fa fa-percent text-warning"></i>
-                <span>Mã giảm 10k - to...</span>
-              </div>
-              <div class="promo-item">
-                <i class="fa fa-percent text-warning"></i>
-                <span>Mã giảm 20k - to...</span>
-              </div>
-              <div class="promo-item">
-                <i class="fa fa-credit-card text-primary"></i>
-                <span>Vpbank: giảm 50...</span>
-              </div>
-              <div class="promo-item">
-                <i class="fa fa-credit-card text-primary"></i>
-                <span>Shopeepay: giảm...</span>
-              </div>
+              <span class="stock-text text-primary">
+                <template v-if="book.stockQuantity === 0">Đã hết hàng</template>
+                <template v-else>chỉ còn {{ book.stockQuantity }} sản phẩm</template>
+              </span>
             </div>
           </div>
           

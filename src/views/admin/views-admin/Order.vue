@@ -106,13 +106,13 @@
                 <th style="min-width: 50px;">STT</th>
                 <th style="min-width: 150px;">Mã đơn hàng</th>
                 <th style="min-width: 200px;">Khách hàng</th>
+                <th style="min-width: 120px;">Trạng thái</th>
                 <th style="min-width: 150px;">Địa chỉ</th>
                 <th style="min-width: 120px;">Loại đơn</th>
                 <th style="min-width: 120px;">Tạm tính</th>
                 <th style="min-width: 120px;">Phí ship</th>
                 <th style="min-width: 120px;">Giảm giá</th>
                 <th style="min-width: 120px;">Tổng tiền</th>
-                <th style="min-width: 120px;">Trạng thái</th>
                 <th style="min-width: 150px;">Ngày tạo</th>
                 <th style="min-width: 150px;">Staff</th>
                 <th style="min-width: 200px;">Thao tác</th>
@@ -129,6 +129,19 @@
                     <strong>{{ order.userName }}</strong>
                     <div class="text-muted small">{{ order.userEmail }}</div>
                   </div>
+                </td>
+                <td>
+                  <select
+                    class="form-select form-select-sm"
+                    :class="getOrderStatusClass(order.orderStatus)"
+                    :value="order.orderStatus"
+                    @change="handleStatusChange(order, $event)"
+                    style="min-width: 110px; font-size: 0.82em; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 1px 4px rgba(0,0,0,0.07);"
+                  >
+                    <option v-for="status in orderStatuses" :key="status.value" :value="status.value">
+                      {{ status.displayName }}
+                    </option>
+                  </select>
                 </td>
                 <td>
                   <div class="small">
@@ -152,55 +165,6 @@
                 </td>
                 <td>
                   <strong class="text-success">{{ formatCurrency(order.finalTotal || order.totalAmount) }}</strong>
-                </td>
-                <td>
-                  <span
-                    class="badge rounded-pill px-2 py-1 d-inline-flex align-items-center"
-                    :class="getOrderStatusClass(order.orderStatus)"
-                    style="font-size: 0.82em; font-weight: 600; letter-spacing: 0.5px; min-width: 110px; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.07);"
-                  >
-                    <template v-if="order.orderStatus === 'PENDING'">
-                      <i class="bi bi-hourglass-split me-1" style="font-size: 1em;"></i> Chờ xử lý
-                    </template>
-                    <template v-else-if="order.orderStatus === 'CONFIRMED'">
-                      <i class="bi bi-check2-circle me-1" style="font-size: 1em;"></i> Đã xác nhận
-                    </template>
-                    <template v-else-if="order.orderStatus === 'SHIPPED'">
-                      <i class="bi bi-truck me-1" style="font-size: 1em;"></i> Đang giao hàng
-                    </template>
-                    <template v-else-if="order.orderStatus === 'DELIVERED'">
-                      <i class="bi bi-box-seam me-1" style="font-size: 1em;"></i> Đã giao hàng
-                    </template>
-                    <template v-else-if="order.orderStatus === 'CANCELED'">
-                      <i class="bi bi-x-circle me-1" style="font-size: 1em;"></i> Đã hủy
-                    </template>
-                    <template v-else-if="order.orderStatus === 'RETURNED'">
-                      <i class="bi bi-arrow-counterclockwise me-1" style="font-size: 1em;"></i> Đã trả hàng
-                    </template>
-                    <template v-else-if="order.orderStatus === 'REFUNDING'">
-                      <i class="bi bi-cash-coin me-1" style="font-size: 1em;"></i> Đang hoàn tiền
-                    </template>
-                    <template v-else-if="order.orderStatus === 'REFUNDED'">
-                      <i class="bi bi-cash-stack me-1" style="font-size: 1em;"></i> Đã hoàn tiền
-                    </template>
-                    <template v-else-if="order.orderStatus === 'PARTIALLY_REFUNDED'">
-                      <i class="bi bi-cash me-1" style="font-size: 1em;"></i> Hoàn tiền một phần
-                    </template>
-                    <template v-else>
-                      {{ formatOrderStatus(order.orderStatus) }}
-                    </template>
-                  </span>
-                  <select
-                    class="form-select form-select-sm mt-1"
-                    :class="getOrderStatusClass(order.orderStatus)"
-                    v-model="order.orderStatus"
-                    @change="updateOrderStatus(order.id, order.orderStatus)"
-                    style="min-width: 110px; font-size: 0.82em; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 1px 4px rgba(0,0,0,0.07);"
-                  >
-                    <option v-for="status in orderStatuses" :key="status.value" :value="status.value">
-                      {{ status.displayName }}
-                    </option>
-                  </select>
                 </td>
                 <td>
                   <div class="small">
@@ -243,7 +207,7 @@
                           <a 
                             class="dropdown-item" 
                             href="#"
-                            @click.prevent="updateOrderStatus(order.id, status.value)"
+                            @click.prevent="handleStatusChangeFromAction(order, status.value)"
                           >
                             <span class="badge me-2" :class="getOrderStatusClass(status.value)">
                               {{ status.displayName }}
@@ -366,11 +330,16 @@
                   <select 
                     class="form-select enhanced-input" 
                     v-model="newOrder.orderType"
+                    @change="onOrderTypeChange"
                   >
                     <option v-for="type in orderTypes" :key="type.value" :value="type.value">
                       {{ type.displayName }}
                     </option>
                   </select>
+                  <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    {{ newOrder.orderType === 'COUNTER' ? 'Đơn tại quầy' : 'Đơn online' }}
+                  </small>
                 </div>
                 <div class="col-md-3">
                   <label class="form-label enhanced-label">Trạng thái</label>
@@ -388,7 +357,7 @@
                   <input 
                     type="text" 
                     class="form-control enhanced-input" 
-                    :value="getCurrentStaffId()"
+                    :value="getUserId()"
                     placeholder="Auto-fill từ session"
                     readonly
                   />
@@ -687,6 +656,7 @@
     </div>
   </div>
 
+
   <!-- Order Detail Modal -->
   <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -897,13 +867,14 @@ import AddButton from '@/components/common/AddButton.vue';
 import StatusLabel from '@/components/common/StatusLabel.vue';
 import { ref, onMounted, computed, watch } from 'vue';
 import { Modal } from 'bootstrap';
-import { 
+import {
   getOrders, 
   createOrder, 
   getOrderById,
   calculateOrder,
   validateOrder,
   validatePrices, // ✅ THÊM VALIDATE PRICES
+  updateOrderStatusTransition, // ✅ THÊM API CHUYỂN TRẠNG THÁI MỚI
   updateOrderStatus as updateOrderStatusAPI,
   cancelOrder as cancelOrderAPI,
   getOrderStatuses, 
@@ -912,12 +883,23 @@ import {
   getUserAvailableVouchers,
   getVouchersDropdown,
   formatOrderStatus,
-  getOrderStatusClass
+  getOrderStatusClass,
+  // ✅ THÊM REFUND APIs
+  uploadRefundImages,
+  uploadRefundVideos, 
+  uploadRefundMixedEvidence,
+  requestRefund,
+  adminApproveRefund,
+  adminRejectRefund,
+  partialRefund,
+  fullRefund,
+  getPendingRefunds
 } from '@/services/admin/order';
 import { getUsersForOrder } from '@/services/admin/user';
 import { getBooksForOrder, getBooksDropdown, validateQuantity } from '@/services/admin/book';
 import Swal from 'sweetalert2';
 import { ghn } from '@/utils/giaohangnhanh';
+import { getUserId } from '@/utils/utils.js';
 
 // Search and filter states
 const searchCode = ref('');
@@ -961,7 +943,7 @@ const newOrder = ref({
   staffId: '',
   addressId: '',
   shippingFee: 30000,
-  orderType: 'NORMAL',
+  orderType: window.location.pathname.includes('pos') ? 'COUNTER' : 'ONLINE', // Set mặc định theo context
   orderStatus: 'PENDING',
   notes: '',
   voucherIds: [],
@@ -1253,19 +1235,35 @@ const openAddModal = async () => {
   // Load fresh data for the modal
   await loadUsersAndBooks();
   
+  // Set loại đơn hàng dựa trên context hiện tại
+  const isInPOSMode = window.location.pathname.includes('pos') || 
+                      window.location.hash.includes('pos') ||
+                      document.title.includes('POS') ||
+                      document.querySelector('.pos-indicator') // nếu có indicator element
+  
+  newOrder.value.orderType = isInPOSMode ? 'COUNTER' : 'ONLINE'
+  
+  console.log('=== Order Type Set ===')
+  console.log('Current URL:', window.location.pathname)
+  console.log('Is POS Mode:', isInPOSMode)
+  console.log('Order Type:', newOrder.value.orderType)
+  
   addOrderModal.show();
 };
 
 
 
 const resetForm = () => {
+  // Xác định loại đơn hàng mặc định theo context
+  const defaultOrderType = window.location.pathname.includes('pos') ? 'COUNTER' : 'ONLINE'
+  
   newOrder.value = {
     id: '',
     userId: '',
     staffId: '',
     addressId: '',
     shippingFee: 30000,
-    orderType: 'NORMAL',
+    orderType: defaultOrderType, // Sử dụng loại đơn động
     orderStatus: 'PENDING',
     notes: '',
     voucherIds: [],
@@ -1292,6 +1290,20 @@ const onUserChange = async () => {
   }
   newOrder.value.addressId = '';
   newOrder.value.voucherIds = [];
+};
+
+const onOrderTypeChange = () => {
+  console.log('=== Order Type Changed ===')
+  console.log('New order type:', newOrder.value.orderType)
+  
+  // Hiển thị thông báo cho user
+  const typeText = newOrder.value.orderType === 'COUNTER' ? 'tại quầy' : 'online'
+  showToast('Đã chuyển sang đơn ' + typeText, 'info')
+  
+  // Có thể trigger calculation lại nếu cần
+  if (newOrder.value.items.length > 0) {
+    calculateOrderPreview()
+  }
 };
 
 const loadUserAddresses = async (userId) => {
@@ -1566,7 +1578,7 @@ const handleSubmitOrder = async () => {
     // CHUẨN BỊ DỮ LIỆU ĐÚNG CHO TẠO ĐƠN HÀNG
     const orderData = {
       userId: newOrder.value.userId,
-      staffId: getCurrentStaffId(),
+      staffId: getUserId(),
       addressId: newOrder.value.addressId,
       shippingFee: newOrder.value.shippingFee,
       orderType: newOrder.value.orderType,
@@ -1645,20 +1657,74 @@ const viewOrderDetail = async (order) => {
   }
 };
 
-const updateOrderStatus = async (orderId, newStatus) => {
+// ✅ Hàm xử lý khi thay đổi trạng thái trong dropdown 
+const handleStatusChange = async (order, event) => {
+  const newStatus = event.target.value;
+  const originalStatus = order.orderStatus;
+  
+  // Nếu không thay đổi thì return
+  if (newStatus === originalStatus) {
+    return;
+  }
+  
+  // Gọi API update status
+  const success = await updateOrderStatus(order.id, newStatus, originalStatus);
+  
+  // Nếu thất bại, reset lại dropdown về trạng thái cũ
+  if (!success) {
+    // Force update DOM để reset dropdown
+    event.target.value = originalStatus;
+  }
+};
+
+// ✅ Hàm xử lý khi click từ action dropdown
+const handleStatusChangeFromAction = async (order, newStatus) => {
+  const originalStatus = order.orderStatus;
+  
+  // Nếu không thay đổi thì return
+  if (newStatus === originalStatus) {
+    return;
+  }
+  
+  // Gọi API update status - không cần reset vì không có dropdown cần reset
+  await updateOrderStatus(order.id, newStatus, originalStatus);
+};
+
+const updateOrderStatus = async (orderId, newStatus, originalStatusParam = null) => {
+  const orderIndex = orders.value.findIndex(order => order.id === orderId);
+  const currentOriginalStatus = originalStatusParam || (orderIndex !== -1 ? orders.value[orderIndex].orderStatus : null);
+  
   try {
+    // Lấy thông tin admin hiện tại
+    const currentStaffId = getUserId();
+    if (!currentStaffId) {
+      Swal.fire('Lỗi', 'Không thể xác định thông tin admin', 'error');
+      return false;
+    }
+
+    // Fetch trạng thái đơn hàng mới nhất từ backend
+    const orderDetailRes = await getOrderById(orderId);
+    const currentOrder = orderDetailRes?.data;
+    if (!currentOrder) {
+      Swal.fire('Lỗi', 'Không tìm thấy đơn hàng', 'error');
+      return false;
+    }
+
+    // Xác nhận trước khi chuyển trạng thái
     const result = await Swal.fire({
-      title: 'Xác nhận cập nhật trạng thái',
+      title: 'Xác nhận chuyển trạng thái',
       html: `
         <div class="text-start">
-          <p>Bạn có chắc chắn muốn cập nhật trạng thái đơn hàng?</p>
+          <p>Bạn có chắc chắn muốn chuyển đơn hàng từ <strong>"${formatOrderStatus(currentOrder.orderStatus)}"</strong> thành <strong>"${formatOrderStatus(newStatus)}"</strong>?</p>
           <div class="alert alert-info mt-3">
             <small>
               <strong>Lưu ý:</strong> Hệ thống sẽ tự động:
               <ul class="mb-0 mt-2">
                 <li>Tích điểm khi chuyển sang DELIVERED</li>
-                <li>Hoàn voucher khi CANCELED/RETURNED</li>
-                <li>Trừ điểm khi hủy đơn đã tích điểm</li>
+                <li>Hoàn stock khi CANCELED (KHÔNG hoàn voucher)</li>
+                <li>Hoàn stock + voucher khi hoàn trả REFUNDED</li>
+                <li>Trừ điểm khi hoàn trả REFUNDED</li>
+                <li>Cập nhật rank khách hàng tự động</li>
               </ul>
             </small>
           </div>
@@ -1672,30 +1738,77 @@ const updateOrderStatus = async (orderId, newStatus) => {
       cancelButtonText: 'Hủy'
     });
 
-    if (result.isConfirmed) {
-      // ✅ GỬI STAFF ID THEO TÀI LIỆU MỚI
-      await updateOrderStatusAPI(orderId, newStatus, getCurrentStaffId());
-      
-      // ✅ HIỂN THỊ THÔNG BÁO CHI TIẾT THEO BUSINESS LOGIC
-      const statusMessages = {
-        'DELIVERED': 'Đơn hàng đã được giao thành công! Điểm thưởng đã được tích vào tài khoản khách hàng.',
-        'CANCELED': 'Đơn hàng đã được hủy! Voucher và điểm đã được xử lý tự động.',
-        'RETURNED': 'Đơn hàng đã được trả về! Voucher và điểm đã được hoàn lại.'
-      };
-      
-      const message = statusMessages[newStatus] || 'Cập nhật trạng thái thành công!';
-      showToast('success', message);
-      await fetchOrders();
+    if (!result.isConfirmed) {
+      return false;
     }
+
+    // Chuẩn bị dữ liệu transition theo tài liệu
+    const transitionData = {
+      orderId: orderId,
+      currentStatus: currentOrder.orderStatus,
+      newStatus: newStatus,
+      performedBy: currentStaffId, // id admin thực hiện
+      reason: `Chuyển trạng thái từ ${formatOrderStatus(currentOrder.orderStatus)} thành ${formatOrderStatus(newStatus)}`,
+      notes: `Thực hiện bởi admin ID: ${currentStaffId}`,
+      staffId: currentStaffId
+    };
+
+    // Thêm tracking number nếu chuyển sang SHIPPED
+    // Không cần nhập mã vận đơn khi chuyển trạng thái SHIPPED
+
+    console.log('=== DEBUG: Updating order status ===');
+    console.log('Order ID:', orderId);
+    console.log('Transition data:', transitionData);
+
+    // Gọi API chuyển trạng thái mới theo tài liệu
+    const response = await updateOrderStatusTransition(orderId, transitionData);
+    
+    console.log('=== DEBUG: Status transition response ===');
+    console.log('Response:', response);
+
+    // Hiển thị thông báo thành công với business impact
+    let successMessage = `Chuyển trạng thái đơn hàng thành công!`;
+    if (response.data?.businessImpact) {
+      const impact = response.data.businessImpact;
+      if (impact.pointImpact?.pointsAwarded > 0) {
+        successMessage += ` | +${impact.pointImpact.pointsAwarded} điểm`;
+      }
+      if (impact.pointImpact?.pointsDeducted > 0) {
+        successMessage += ` | -${impact.pointImpact.pointsDeducted} điểm`;
+      }
+      if (impact.stockImpact?.itemsRestored?.length > 0) {
+        successMessage += ` | Hoàn kho: ${impact.stockImpact.itemsRestored.length}`;
+      }
+      if (impact.voucherImpact?.vouchersRestored?.length > 0) {
+        successMessage += ` | Hoàn voucher: ${impact.voucherImpact.vouchersRestored.length}`;
+      }
+    }
+    // Hiển thị toast nhỏ góc phải, tự động tắt sau 2 giây
+    showToast('success', successMessage);
+
+    // ✅ Chỉ update UI khi API thành công
+    if (orderIndex !== -1) {
+      orders.value[orderIndex].orderStatus = newStatus;
+    }
+
+    // Refresh danh sách đơn hàng
+    await fetchOrders();
+    
+    return true; // ✅ Return success
+    
   } catch (error) {
     console.error('Lỗi khi cập nhật trạng thái:', error);
     
-    let errorMessage = 'Lỗi khi cập nhật trạng thái!';
-    if (error.response && error.response.data && error.response.data.message) {
-      errorMessage = error.response.data.message;
-    }
+    const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái đơn hàng';
     
-    showToast('error', errorMessage);
+    await Swal.fire({
+      title: 'Lỗi!',
+      text: errorMessage,
+      icon: 'error',
+      confirmButtonText: 'OK'
+    });
+    
+    return false; // ✅ Return failure
   }
 };
 
@@ -1703,24 +1816,62 @@ const cancelOrder = async (order) => {
   try {
     const { value: reason } = await Swal.fire({
       title: 'Hủy đơn hàng',
-      text: 'Nhập lý do hủy đơn hàng:',
-      input: 'textarea',
-      inputPlaceholder: 'Lý do hủy đơn hàng...',
+      html: `
+        <div class="text-start">
+          <p><strong>Mã đơn hàng:</strong> ${order.code}</p>
+          <p><strong>Khách hàng:</strong> ${order.customerName}</p>
+          <div class="alert alert-warning mt-3">
+            <strong><i class="bi bi-exclamation-triangle"></i> Lưu ý quan trọng:</strong>
+            <ul class="mb-0 mt-2">
+              <li>Hủy đơn hàng sẽ hoàn lại số lượng sách vào kho</li>
+              <li><strong>KHÔNG hoàn lại voucher đã sử dụng</strong></li>
+              <li>Chỉ hoàn trả hàng mới được hoàn voucher</li>
+              <li>Thao tác này không thể hoàn tác</li>
+            </ul>
+          </div>
+          <div class="mt-3">
+            <label class="form-label"><strong>Lý do hủy đơn hàng:</strong></label>
+            <textarea id="cancelReason" class="form-control" placeholder="Nhập lý do hủy đơn hàng..." rows="3"></textarea>
+          </div>
+        </div>
+      `,
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Hủy đơn hàng',
+      confirmButtonText: 'Xác nhận hủy',
       cancelButtonText: 'Không hủy',
-      inputValidator: (value) => {
-        if (!value) {
-          return 'Vui lòng nhập lý do hủy đơn hàng!';
+      preConfirm: () => {
+        const reason = document.getElementById('cancelReason').value;
+        if (!reason.trim()) {
+          Swal.showValidationMessage('Vui lòng nhập lý do hủy đơn hàng!');
+          return false;
         }
+        return reason.trim();
       }
     });
     
     if (reason) {
       await cancelOrderAPI(order.id, reason, order.userId);
-      showToast('success', 'Hủy đơn hàng thành công!');
+      
+      await Swal.fire({
+        title: 'Hủy đơn hàng thành công!',
+        html: `
+          <div class="text-start">
+            <p><strong>Đơn hàng ${order.code} đã được hủy thành công</strong></p>
+            <div class="alert alert-success mt-3">
+              <strong><i class="bi bi-check-circle"></i> Hệ thống đã tự động:</strong>
+              <ul class="mb-0 mt-2">
+                <li>✅ Hoàn lại số lượng sách vào kho</li>
+                <li>❌ <strong>KHÔNG hoàn voucher</strong> (theo chính sách)</li>
+                <li>📝 Lưu lý do hủy: "${reason}"</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        icon: 'success',
+        confirmButtonText: 'Đã hiểu'
+      });
+      
       await fetchOrders();
     }
   } catch (error) {
@@ -1736,17 +1887,18 @@ const cancelOrder = async (order) => {
 };
 
 const getAvailableStatusTransitions = (currentStatus) => {
-  // Business rules theo tài liệu backend mới
+  // Business rules theo tài liệu backend mới - Luồng chuyển trạng thái chuẩn
   const transitions = {
-    'PENDING': ['CONFIRMED', 'CANCELED'],
-    'CONFIRMED': ['SHIPPED', 'CANCELED'], 
-    'SHIPPED': ['DELIVERED'],
-    'DELIVERED': ['RETURNED', 'REFUNDING'],
-    'REFUNDING': ['REFUNDED', 'PARTIALLY_REFUNDED'],
-    'RETURNED': ['REFUNDING'],
-    'CANCELED': [], // Không thể chuyển trạng thái từ CANCELED
-    'REFUNDED': [], // Không thể chuyển trạng thái từ REFUNDED
-    'PARTIALLY_REFUNDED': ['REFUNDED'] // Có thể hoàn tiền toàn bộ
+    'PENDING': ['CONFIRMED', 'CANCELED'], // Chờ xác nhận → Đã xác nhận hoặc Hủy
+    'CONFIRMED': ['SHIPPED', 'CANCELED'], // Đã xác nhận → Đang giao hàng hoặc Hủy (trong một số trường hợp)
+    'SHIPPED': ['DELIVERED'], // Đang giao hàng → Đã giao hàng
+    'DELIVERED': ['REFUND_REQUESTED'], // Đã giao hàng → Yêu cầu hoàn trả (do khách hàng)
+    'REFUND_REQUESTED': ['REFUNDING', 'DELIVERED'], // Admin xử lý: Chấp nhận hoàn trả hoặc Từ chối
+    'REFUNDING': ['REFUNDED', 'PARTIALLY_REFUNDED'], // Đang hoàn trả → Hoàn trả toàn bộ hoặc một phần
+    'CANCELED': [], // Đã hủy - trạng thái cuối
+    'REFUNDED': [], // Đã hoàn trả toàn bộ - trạng thái cuối  
+    'PARTIALLY_REFUNDED': ['REFUNDED'], // Hoàn trả một phần → Có thể hoàn trả thêm
+    'RETURNED': [] // Đã trả hàng - trạng thái cuối
   };
   
   const availableStatuses = transitions[currentStatus] || [];
@@ -1775,11 +1927,7 @@ const handlePageSizeChange = (newPageSize) => {
 };
 
 // Utility methods
-const getCurrentStaffId = () => {
-  // Lấy ID của admin đang đăng nhập từ localStorage hoặc store
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  return user.id || null;
-};
+// Đã thay thế getCurrentStaffId bằng getUserId từ utils.js
 
 const formatDate = (timestamp) => {
   if (!timestamp) return '';
@@ -1826,6 +1974,8 @@ const showToast = (icon, title) => {
 const formatOrderType = (type) => {
   const typeMap = {
     'NORMAL': 'Thường',
+    'ONLINE': 'Đơn online',
+    'COUNTER': 'Đơn tại quầy',
     'EVENT_GIFT': 'Quà sự kiện',
     'PROMOTIONAL': 'Khuyến mãi',
     'SAMPLE': 'Mẫu'
