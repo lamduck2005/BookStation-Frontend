@@ -203,14 +203,14 @@
               <!-- Reason -->
               <div class="mb-3">
                 <label for="refundReason" class="form-label">Lý do hoàn hàng</label>
-                <select class="form-select" v-model="refundForm.reason" id="refundReason" required>
+                <select class="form-select" v-model="refundForm.reason" @change="updateReasonDisplay" id="refundReason" required>
                   <option value="">Chọn lý do</option>
-                  <option value="Sản phẩm bị lỗi">Sản phẩm bị lỗi</option>
-                  <option value="Sản phẩm không đúng mô tả">Sản phẩm không đúng mô tả</option>
-                  <option value="Sản phẩm bị hư hỏng">Sản phẩm bị hư hỏng</option>
-                  <option value="Nhận nhầm sản phẩm">Nhận nhầm sản phẩm</option>
-                  <option value="Không hài lòng với sản phẩm">Không hài lòng với sản phẩm</option>
-                  <option value="Khác">Khác</option>
+                  <option value="PRODUCT_DEFECT">Sản phẩm bị lỗi</option>
+                  <option value="NOT_AS_DESCRIBED">Không đúng mô tả</option>
+                  <option value="DAMAGED_SHIPPING">Hư hỏng trong vận chuyển</option>
+                  <option value="WRONG_ITEM">Gửi sai sản phẩm</option>
+                  <option value="QUALITY_ISSUE">Vấn đề chất lượng</option>
+                  <option value="OTHER">Khác</option>
                 </select>
               </div>
 
@@ -327,6 +327,7 @@ export default {
       selectedBookIds: [],
       refundItems: [],
       reason: '',
+      reasonDisplay: '',
       customerNote: '',
       evidenceImageFiles: [],
       evidenceVideoFiles: []
@@ -584,6 +585,18 @@ export default {
       }
     }
 
+    const updateReasonDisplay = () => {
+      const reasonMap = {
+        'PRODUCT_DEFECT': 'Sản phẩm bị lỗi',
+        'NOT_AS_DESCRIBED': 'Không đúng mô tả', 
+        'DAMAGED_SHIPPING': 'Hư hỏng trong vận chuyển',
+        'WRONG_ITEM': 'Gửi sai sản phẩm',
+        'QUALITY_ISSUE': 'Vấn đề chất lượng',
+        'OTHER': 'Khác'
+      }
+      refundForm.reasonDisplay = reasonMap[refundForm.reason] || ''
+    }
+
     const getRefundQuantity = (bookId) => {
       const item = refundForm.refundItems.find(item => item.bookId === bookId)
       return item ? item.refundQuantity : 1
@@ -636,8 +649,15 @@ export default {
       
       refundForm.evidenceImageFiles.push(...files)
       
-      // Upload ngay lập tức để lấy URLs
-      await uploadImmediateImages(files)
+      // Thông báo đã chọn files thành công (không upload ngay)
+      Swal.fire({
+        icon: 'success',
+        title: 'Đã chọn ảnh!',
+        text: `Đã chọn ${files.length} ảnh minh chứng. Ảnh sẽ được upload khi gửi yêu cầu.`,
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false
+      })
     }
 
     const handleEvidenceVideosChange = async (event) => {
@@ -687,8 +707,15 @@ export default {
       
       refundForm.evidenceVideoFiles.push(...files)
       
-      // Upload ngay lập tức để lấy URLs
-      await uploadImmediateVideos(files)
+      // Thông báo đã chọn files thành công (không upload ngay)
+      Swal.fire({
+        icon: 'success',
+        title: 'Đã chọn video!',
+        text: `Đã chọn ${files.length} video minh chứng. Video sẽ được upload khi gửi yêu cầu.`,
+        timer: 2000,
+        timerProgressBar: true,
+        showConfirmButton: false
+      })
     }
 
     const removeEvidenceImage = (index) => {
@@ -720,104 +747,23 @@ export default {
     }
 
     // Upload ảnh ngay lập tức khi user chọn
-    const uploadImmediateImages = async (files) => {
-      try {
-        console.log('=== UPLOADING IMAGES IMMEDIATELY ===')
-        console.log('Files to upload:', files.length)
-        
-        const response = await orderService.uploadRefundImages(files)
-        const imageUrls = response.data || []
-        
-        console.log('=== UPLOAD SUCCESS ===')
-        console.log('Image URLs:', imageUrls)
-        
-        // Hiển thị thông báo với URLs
-        await Swal.fire({
-          icon: 'success',
-          title: 'Upload ảnh thành công!',
-          html: `
-            <p>Đã upload thành công ${imageUrls.length} ảnh:</p>
-            <div style="max-height: 200px; overflow-y: auto; text-align: left; font-size: 12px; background: #f8f9fa; padding: 10px; border-radius: 5px;">
-              ${imageUrls.map(url => `<div>✅ ${url}</div>`).join('')}
-            </div>
-          `,
-          confirmButtonText: 'OK'
-        })
-        
-        // Lưu URLs vào refundForm để dùng khi submit
-        if (!refundForm.uploadedImageUrls) refundForm.uploadedImageUrls = []
-        refundForm.uploadedImageUrls.push(...imageUrls)
-        
-      } catch (error) {
-        console.error('=== UPLOAD FAILED ===')
-        console.error('Error:', error)
-        
-        Swal.fire({
-          icon: 'error', 
-          title: 'Upload thất bại',
-          text: error.response?.data?.message || 'Không thể upload ảnh lên server',
-          confirmButtonText: 'OK'
-        })
-        
-        // Remove files from form nếu upload failed
-        const startIndex = refundForm.evidenceImageFiles.length - files.length
-        refundForm.evidenceImageFiles.splice(startIndex, files.length)
-      }
-    }
-
-    // Upload video ngay lập tức khi user chọn  
-    const uploadImmediateVideos = async (files) => {
-      try {
-        console.log('=== UPLOADING VIDEOS IMMEDIATELY ===')
-        console.log('Files to upload:', files.length)
-        
-        const response = await orderService.uploadRefundVideos(files)
-        const videoUrls = response.data || []
-        
-        console.log('=== UPLOAD SUCCESS ===')
-        console.log('Video URLs:', videoUrls)
-        
-        // Hiển thị thông báo với URLs
-        await Swal.fire({
-          icon: 'success',
-          title: 'Upload video thành công!',
-          html: `
-            <p>Đã upload thành công ${videoUrls.length} video:</p>
-            <div style="max-height: 200px; overflow-y: auto; text-align: left; font-size: 12px; background: #f8f9fa; padding: 10px; border-radius: 5px;">
-              ${videoUrls.map(url => `<div>✅ ${url}</div>`).join('')}
-            </div>
-          `,
-          confirmButtonText: 'OK'
-        })
-        
-        // Lưu URLs vào refundForm để dùng khi submit
-        if (!refundForm.uploadedVideoUrls) refundForm.uploadedVideoUrls = []
-        refundForm.uploadedVideoUrls.push(...videoUrls)
-        
-      } catch (error) {
-        console.error('=== UPLOAD FAILED ===')
-        console.error('Error:', error)
-        
-        Swal.fire({
-          icon: 'error',
-          title: 'Upload thất bại', 
-          text: error.response?.data?.message || 'Không thể upload video lên server',
-          confirmButtonText: 'OK'
-        })
-        
-        // Remove files from form nếu upload failed
-        const startIndex = refundForm.evidenceVideoFiles.length - files.length
-        refundForm.evidenceVideoFiles.splice(startIndex, files.length)
-      }
-    }
-
     const submitRefundRequest = async () => {
       try {
         submittingRefund.value = true
 
-        // Validate form
+        // Validate form cơ bản
         if (!refundForm.reason) {
           Swal.fire('Lỗi', 'Vui lòng chọn lý do hoàn hàng', 'error')
+          return
+        }
+
+        if (!refundForm.customerNote || refundForm.customerNote.length < 10) {
+          Swal.fire('Lỗi', 'Ghi chú chi tiết phải có ít nhất 10 ký tự', 'error')
+          return
+        }
+
+        if (refundForm.customerNote.length > 1000) {
+          Swal.fire('Lỗi', 'Ghi chú chi tiết không được vượt quá 1000 ký tự', 'error')
           return
         }
 
@@ -841,78 +787,64 @@ export default {
 
         console.log('DEBUG: Order details found:', selectedOrderForRefund.value.orderDetails.length, 'items')
 
-        // Sử dụng URLs đã upload trước đó thay vì upload lại
-        let evidenceImages = refundForm.uploadedImageUrls || []
-        let evidenceVideos = refundForm.uploadedVideoUrls || []
+        // Upload minh chứng nếu có - sử dụng mixed evidence API theo tài liệu
+        let evidenceImages = []
+        let evidenceVideos = []
 
-        console.log('=== USING PRE-UPLOADED FILES ===')
-        console.log('Pre-uploaded images:', evidenceImages)
-        console.log('Pre-uploaded videos:', evidenceVideos)
-
-        // Nếu còn files chưa upload, upload chúng (fallback)
-        if (refundForm.evidenceImageFiles.length > evidenceImages.length) {
-          console.log('=== UPLOADING REMAINING IMAGES ===')
-          const remainingImages = refundForm.evidenceImageFiles.slice(evidenceImages.length)
+        if (refundForm.evidenceImageFiles.length > 0 || refundForm.evidenceVideoFiles.length > 0) {
+          console.log('=== UPLOADING MIXED EVIDENCE ===')
           try {
-            const imageUploadResponse = await orderService.uploadRefundImages(remainingImages)
-            const newImageUrls = imageUploadResponse.data || []
-            evidenceImages.push(...newImageUrls)
-            console.log('Additional images uploaded:', newImageUrls)
+            const uploadResponse = await refundService.uploadRefundMixedEvidence(
+              refundForm.evidenceImageFiles,
+              refundForm.evidenceVideoFiles
+            )
+            
+            if (uploadResponse.status === 200) {
+              evidenceImages = uploadResponse.data.imagePaths || []
+              evidenceVideos = uploadResponse.data.videoPaths || []
+              console.log('Uploaded evidence:', { evidenceImages, evidenceVideos })
+              
+              // Thông báo upload thành công nhưng không hiển thị URL
+              const totalFiles = refundForm.evidenceImageFiles.length + refundForm.evidenceVideoFiles.length
+              Swal.fire({
+                icon: 'success',
+                title: 'Upload thành công!',
+                text: `Đã lưu ${totalFiles} file minh chứng trên server`,
+                timer: 2000,
+                timerProgressBar: true,
+                showConfirmButton: false
+              })
+            }
           } catch (error) {
-            console.error('Failed to upload remaining images:', error)
-            Swal.fire('Lỗi', 'Không thể upload một số ảnh còn lại', 'error')
+            console.error('Failed to upload evidence:', error)
+            Swal.fire('Lỗi', 'Không thể upload minh chứng. Vui lòng thử lại.', 'error')
             return
           }
         }
 
-        if (refundForm.evidenceVideoFiles.length > evidenceVideos.length) {
-          console.log('=== UPLOADING REMAINING VIDEOS ===')
-          const remainingVideos = refundForm.evidenceVideoFiles.slice(evidenceVideos.length)
-          try {
-            const videoUploadResponse = await orderService.uploadRefundVideos(remainingVideos)
-            const newVideoUrls = videoUploadResponse.data || []
-            evidenceVideos.push(...newVideoUrls)
-            console.log('Additional videos uploaded:', newVideoUrls)
-          } catch (error) {
-            console.error('Failed to upload remaining videos:', error)
-            Swal.fire('Lỗi', 'Không thể upload một số video còn lại', 'error')
-            return
-          }
-        }
-
-        // Prepare refund data according to API documentation
+        // Tạo refund data theo API mới (format chuẩn từ tài liệu)
         const refundData = {
-          userId: getUserId(),
+          orderId: selectedOrderForRefund.value.id,
+          refundType: refundForm.refundType,
           reason: refundForm.reason,
-          additionalNotes: refundForm.customerNote || "",
+          reasonDisplay: refundForm.reasonDisplay,
+          customerNote: refundForm.customerNote || "",
           evidenceImages: evidenceImages,
           evidenceVideos: evidenceVideos,
-          refundDetails: []
+          refundItems: []
         }
 
-        // Add refund details based on refund type
+        // Add refund items based on refund type
         if (refundForm.refundType === 'FULL') {
-          console.log('DEBUG: Creating FULL refund details')
-          console.log('DEBUG: Available order details:', selectedOrderForRefund.value.orderDetails)
-          
-          // Hoàn toàn bộ đơn hàng - add all items
-          refundData.refundDetails = selectedOrderForRefund.value.orderDetails.map(item => {
-            console.log('DEBUG: Processing item:', item)
-            return {
-              bookId: item.bookId,
-              refundQuantity: item.quantity, // hoàn toàn bộ số lượng
-              reason: refundForm.reason,
-              evidenceImages: evidenceImages, // Thêm evidence cho từng item
-              evidenceVideos: evidenceVideos, // Thêm evidence cho từng item
-              additionalNotes: `Hoàn toàn bộ sản phẩm: ${item.bookName || item.bookTitle || 'Unknown'}`
-            }
-          })
+          console.log('DEBUG: Creating FULL refund - refundItems để trống theo tài liệu')
+          // Với FULL refund, refundItems để trống theo tài liệu
+          refundData.refundItems = []
         } else if (refundForm.refundType === 'PARTIAL') {
           console.log('DEBUG: Creating PARTIAL refund details')
           console.log('DEBUG: Selected book IDs:', refundForm.selectedBookIds)
           
-          // Hoàn một phần - chỉ add items được chọn
-          refundData.refundDetails = refundForm.selectedBookIds.map(bookId => {
+          // Hoàn một phần - add items được chọn theo format mới
+          refundData.refundItems = refundForm.selectedBookIds.map(bookId => {
             const orderItem = selectedOrderForRefund.value.orderDetails.find(item => item.bookId === bookId)
             if (!orderItem) {
               console.error('ERROR: Cannot find order item for bookId:', bookId)
@@ -924,80 +856,55 @@ export default {
             return {
               bookId: bookId,
               refundQuantity: refundQuantity,
-              reason: refundForm.reason,
-              evidenceImages: evidenceImages, // Thêm evidence cho từng item
-              evidenceVideos: evidenceVideos, // Thêm evidence cho từng item
-              additionalNotes: `Hoàn ${refundQuantity}/${orderItem.quantity} sản phẩm: ${orderItem.bookName || orderItem.bookTitle || 'Unknown'}`
+              reason: `Hoàn ${refundQuantity}/${orderItem.quantity} sản phẩm: ${orderItem.bookName || orderItem.bookTitle || 'Unknown'}`
             }
-          }).filter(item => item !== null) // Remove null items
+          }).filter(item => item !== null)
         }
         
-        console.log('DEBUG: Final refundDetails:', refundData.refundDetails)
-
-        console.log('=== DEBUG: Submitting refund request ===')
-        console.log('Order ID:', selectedOrderForRefund.value.id)
+        console.log('=== DEBUG: Submitting refund request with new API ===')
         console.log('User ID:', getUserId())
-        console.log('Evidence Images URLs:', evidenceImages)
-        console.log('Evidence Videos URLs:', evidenceVideos)
         console.log('Refund data:', JSON.stringify(refundData, null, 2))
-        console.log('Refund details count:', refundData.refundDetails.length)
 
-        // Validate refund data before sending
-        if (refundData.refundDetails.length === 0) {
-          console.error('ERROR: refundDetails is empty!')
-          Swal.fire('Lỗi', 'Không có sản phẩm nào được chọn để hoàn trả', 'error')
-          return
-        }
-
-        // Submit refund request using new API
-        const response = await orderService.requestRefund(selectedOrderForRefund.value.id, refundData)
+        // Gọi API tạo yêu cầu hoàn hàng theo format mới
+        const response = await refundService.createRefundRequest(getUserId(), refundData)
         
-        console.log('=== DEBUG: Refund request response ===')
-        console.log('Response:', response)
-
-        // Close modal
-        const modal = Modal.getInstance(document.getElementById('refundModal'))
-        modal.hide()
-
-        // Show success message
-        await Swal.fire({
-          title: 'Thành công!',
-          text: 'Yêu cầu hoàn hàng đã được gửi thành công. Admin sẽ xem xét và phản hồi sớm nhất.',
-          icon: 'success',
-          confirmButtonText: 'OK'
-        })
-
-        // Reload orders
-        await loadOrders()
+        if (response.status === 201) {
+          // Success response theo tài liệu mới
+          const refundInfo = response.data
+          
+          Swal.fire({
+            title: 'Thành công!',
+            html: `
+              <div class="text-start">
+                <p><strong>Mã yêu cầu:</strong> ${refundInfo.trackingCode}</p>
+                <p><strong>Số tiền hoàn:</strong> ${formatCurrency(refundInfo.totalRefundAmount)}</p>
+                <p><strong>Thời gian xử lý:</strong> ${refundInfo.estimatedProcessTime}</p>
+                <p class="text-muted mt-3">${response.message}</p>
+              </div>
+            `,
+            icon: 'success',
+            confirmButtonText: 'Đóng'
+          }).then(() => {
+            // Đóng modal và refresh orders
+            const modal = Modal.getInstance(document.getElementById('refundModal'))
+            modal.hide()
+            loadOrders()
+          })
+        }
 
       } catch (error) {
-        console.error('Refund request error:', error)
-        console.error('Error details:', {
-          status: error.response?.status,
-          data: error.response?.data,
-          message: error.response?.data?.message,
-          validationErrors: error.response?.data?.data
-        })
+        console.error('=== ERROR: Submitting refund request ===')
+        console.error('Error:', error)
         
         let errorMessage = 'Có lỗi xảy ra khi gửi yêu cầu hoàn hàng'
         
-        if (error.response?.status === 400) {
-          const validationErrors = error.response?.data?.data
-          if (Array.isArray(validationErrors) && validationErrors.length > 0) {
-            errorMessage = validationErrors.map(err => `${err.field}: ${err.message}`).join('\n')
-          } else {
-            errorMessage = error.response?.data?.message || 'Dữ liệu không hợp lệ'
-          }
-        } else {
-          errorMessage = error.response?.data?.message || errorMessage
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message
+        } else if (error.message) {
+          errorMessage = error.message
         }
         
-        Swal.fire({
-          title: 'Lỗi!',
-          text: errorMessage,
-          icon: 'error',
-          confirmButtonText: 'OK'
-        })
+        Swal.fire('Lỗi', errorMessage, 'error')
       } finally {
         submittingRefund.value = false
       }
@@ -1036,6 +943,7 @@ export default {
       buyAgain,
       viewOrderDetail,
       openRefundModal,
+      updateReasonDisplay,
       updateRefundQuantity,
       getRefundQuantity,
       handleEvidenceImagesChange,
@@ -1043,8 +951,6 @@ export default {
       removeEvidenceImage,
       removeEvidenceVideo,
       getFilePreview,
-      uploadImmediateImages,
-      uploadImmediateVideos,
       submitRefundRequest
     }
   }
