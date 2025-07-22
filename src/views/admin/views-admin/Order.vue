@@ -1724,6 +1724,7 @@ const updateOrderStatus = async (orderId, newStatus, originalStatusParam = null)
                 <li>Hoàn stock + voucher khi hoàn trả REFUNDED</li>
                 <li>Trừ điểm khi hoàn trả REFUNDED</li>
                 <li>Cập nhật rank khách hàng tự động</li>
+                ${newStatus === 'GOODS_RETURNED_TO_WAREHOUSE' ? '<li>Kiểm tra chất lượng và cập nhật kho hàng khi về kho</li>' : ''}
               </ul>
             </small>
           </div>
@@ -1747,10 +1748,17 @@ const updateOrderStatus = async (orderId, newStatus, originalStatusParam = null)
       currentStatus: currentOrder.orderStatus,
       newStatus: newStatus,
       performedBy: currentStaffId, // id admin thực hiện
-      reason: `Chuyển trạng thái từ ${formatOrderStatus(currentOrder.orderStatus)} thành ${formatOrderStatus(newStatus)}`,
-      notes: `Thực hiện bởi admin ID: ${currentStaffId}`,
       staffId: currentStaffId
     };
+
+    // Thiết lập reason và notes dựa trên trạng thái đích
+    if (newStatus === 'GOODS_RETURNED_TO_WAREHOUSE') {
+      transitionData.reason = 'Hàng đã về kho';
+      transitionData.notes = 'Đã kiểm tra chất lượng hàng hóa';
+    } else {
+      transitionData.reason = `Chuyển trạng thái từ ${formatOrderStatus(currentOrder.orderStatus)} thành ${formatOrderStatus(newStatus)}`;
+      transitionData.notes = `Thực hiện bởi admin ID: ${currentStaffId}`;
+    }
 
     // Thêm tracking number nếu chuyển sang SHIPPED
     // Không cần nhập mã vận đơn khi chuyển trạng thái SHIPPED
@@ -1890,14 +1898,15 @@ const getAvailableStatusTransitions = (currentStatus) => {
   const transitions = {
     'PENDING': ['CONFIRMED', 'CANCELED'], // Chờ xác nhận → Đã xác nhận hoặc Hủy
     'CONFIRMED': ['SHIPPED', 'CANCELED'], // Đã xác nhận → Đang giao hàng hoặc Hủy (trong một số trường hợp)
-    'SHIPPED': ['DELIVERED'], // Đang giao hàng → Đã giao hàng
+    'SHIPPED': ['DELIVERED', 'GOODS_RETURNED_TO_WAREHOUSE'], // Đang giao hàng → Đã giao hàng hoặc Hàng về kho
     'DELIVERED': ['REFUND_REQUESTED'], // Đã giao hàng → Yêu cầu hoàn trả (do khách hàng)
     'REFUND_REQUESTED': ['REFUNDING', 'DELIVERED'], // Admin xử lý: Chấp nhận hoàn trả hoặc Từ chối
     'REFUNDING': ['REFUNDED', 'PARTIALLY_REFUNDED'], // Đang hoàn trả → Hoàn trả toàn bộ hoặc một phần
     'CANCELED': [], // Đã hủy - trạng thái cuối
     'REFUNDED': [], // Đã hoàn trả toàn bộ - trạng thái cuối  
     'PARTIALLY_REFUNDED': ['REFUNDED'], // Hoàn trả một phần → Có thể hoàn trả thêm
-    'RETURNED': [] // Đã trả hàng - trạng thái cuối
+    'RETURNED': [], // Đã trả hàng - trạng thái cuối
+    'GOODS_RETURNED_TO_WAREHOUSE': [] // Hàng đã về kho - trạng thái cuối
   };
   
   const availableStatuses = transitions[currentStatus] || [];

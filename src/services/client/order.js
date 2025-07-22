@@ -55,7 +55,8 @@ export const formatOrderStatus = (status) => {
     'REFUNDING': 'Đang hoàn tiền',
     'REFUNDED': 'Đã hoàn tiền',
     'RETURNED': 'Đã trả hàng',
-    'PARTIALLY_REFUNDED': 'Hoàn tiền một phần'
+    'PARTIALLY_REFUNDED': 'Hoàn tiền một phần',
+    'GOODS_RETURNED_TO_WAREHOUSE': 'Hàng đã về kho'
   };
   return statusMap[status] || status;
 };
@@ -71,7 +72,8 @@ export const getOrderStatusClass = (status) => {
     'REFUNDING': 'status-pending',
     'REFUNDED': 'status-returned',
     'RETURNED': 'status-returned',
-    'PARTIALLY_REFUNDED': 'status-returned'
+    'PARTIALLY_REFUNDED': 'status-returned',
+    'GOODS_RETURNED_TO_WAREHOUSE': 'status-warehouse'
   };
   return statusClasses[status] || '';
 };

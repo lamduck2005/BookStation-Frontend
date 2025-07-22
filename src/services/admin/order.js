@@ -613,7 +613,8 @@ export const formatOrderStatus = (status) => {
     'REFUNDING': 'Đang hoàn tiền',
     'REFUNDED': 'Đã hoàn tiền',
     'RETURNED': 'Đã trả hàng',
-    'PARTIALLY_REFUNDED': 'Hoàn tiền một phần'
+    'PARTIALLY_REFUNDED': 'Hoàn tiền một phần',
+    'GOODS_RETURNED_TO_WAREHOUSE': 'Hàng đã về kho'
   };
   return statusMap[status] || status;
 };
@@ -629,7 +630,8 @@ export const getOrderStatusClass = (status) => {
     'REFUNDING': 'bg-warning text-dark',
     'REFUNDED': 'bg-secondary',
     'RETURNED': 'bg-dark',
-    'PARTIALLY_REFUNDED': 'bg-warning text-dark'
+    'PARTIALLY_REFUNDED': 'bg-warning text-dark',
+    'GOODS_RETURNED_TO_WAREHOUSE': 'bg-info text-white'
   };
   return statusClasses[status] || 'bg-secondary';
 };
@@ -648,7 +650,8 @@ export const getFallbackOrderStatuses = () => {
       { value: 'REFUNDING', displayName: 'Đang hoàn tiền' },
       { value: 'REFUNDED', displayName: 'Đã hoàn tiền' },
       { value: 'RETURNED', displayName: 'Đã trả hàng' },
-      { value: 'PARTIALLY_REFUNDED', displayName: 'Hoàn tiền một phần' }
+      { value: 'PARTIALLY_REFUNDED', displayName: 'Hoàn tiền một phần' },
+      { value: 'GOODS_RETURNED_TO_WAREHOUSE', displayName: 'Hàng đã về kho' }
     ]
   };
 };
