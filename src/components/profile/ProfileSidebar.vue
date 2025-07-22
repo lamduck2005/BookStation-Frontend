@@ -3,17 +3,28 @@
     <!-- User Info Card -->
     <div class="user-info-card">
       <div class="user-avatar">
-        <div class="crown-icon">
-         <i class='bxr  bx-crown' style="font-size: 48px;"></i> 
+        <div class="crown-icon" :class="rankClass">
+          <i class="bxr bx-crown" style="font-size: 48px"></i>
         </div>
       </div>
-      <div class="user-name">Vũ Linh</div>
-      <div class="user-rank">
-        <span class="rank-badge">Thành viên Bạc</span>
+      <div class="user-name" v-if="user && user.full_name">
+        {{ user.full_name }}
       </div>
-      <div class="user-points">F-Point tích lũy 0</div>
-      <div class="rank-progress">
+      <div
+        class="user-rank"
+        v-if="userRank && userRank.rank"
+        :class="rankClass"
+      >
+        <span class="rank-badge">Thành viên {{ userRank.rank.rankName }}</span>
+      </div>
+      <div class="user-points" v-if="user && user.total_point !== undefined">
+        F-Point tích lũy {{ user.total_point }}
+      </div>
+      <!-- <div class="rank-progress">
         Thêm <span class="highlight">30.000</span> để nâng hạng Vàng
+      </div> -->
+      <div class="rank-progress" v-if="nextRankMessage">
+        {{ nextRankMessage }}
       </div>
     </div>
 
@@ -25,14 +36,39 @@
           <button class="nav-group-btn" @click="toggleAccountMenu">
             <i class="bi bi-person-circle"></i>
             <span>Thông tin tài khoản</span>
-            <i class="bi bi-chevron-down dropdown-icon" :class="{ 'rotate': isAccountMenuOpen }"></i>
+            <i
+              class="bi bi-chevron-down dropdown-icon"
+              :class="{ rotate: isAccountMenuOpen }"
+            ></i>
           </button>
-          <ul class="nav-submenu" :class="{ 'show': isAccountMenuOpen }">
-            <li><RouterLink to="/profile/info" class="nav-sublink">Hồ sơ cá nhân</RouterLink></li>
-            <li><RouterLink to="/profile/addresses" class="nav-sublink">Số địa chỉ</RouterLink></li>
-            <li><RouterLink to="/profile/change-password" class="nav-sublink">Đổi mật khẩu</RouterLink></li>
-            <li><RouterLink to="/profile/invoice" class="nav-sublink">Thông tin xuất hóa đơn GTGT</RouterLink></li>
-            <li><RouterLink to="/profile/benefits" class="nav-sublink member-benefits">Ưu đãi thành viên</RouterLink></li>
+          <ul class="nav-submenu" :class="{ show: isAccountMenuOpen }">
+            <li>
+              <RouterLink to="/profile/info" class="nav-sublink"
+                >Hồ sơ cá nhân</RouterLink
+              >
+            </li>
+            <li>
+              <RouterLink to="/profile/addresses" class="nav-sublink"
+                >Số địa chỉ</RouterLink
+              >
+            </li>
+            <li>
+              <RouterLink to="/profile/change-password" class="nav-sublink"
+                >Đổi mật khẩu</RouterLink
+              >
+            </li>
+            <li>
+              <RouterLink to="/profile/invoice" class="nav-sublink"
+                >Thông tin xuất hóa đơn GTGT</RouterLink
+              >
+            </li>
+            <li>
+              <RouterLink
+                to="/profile/benefits"
+                class="nav-sublink member-benefits"
+                >Ưu đãi thành viên</RouterLink
+              >
+            </li>
           </ul>
         </li>
 
@@ -48,7 +84,9 @@
           <RouterLink to="/profile/vouchers" class="nav-link">
             <i class="bi bi-ticket-perforated"></i>
             <span>Ví voucher</span>
-            <span class="voucher-count" v-if="voucherCount">{{ voucherCount }}</span>
+            <span class="voucher-count" v-if="voucherCount">{{
+              voucherCount
+            }}</span>
           </RouterLink>
         </li>
 
@@ -78,14 +116,100 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, computed } from "vue";
+import {
+  getProfile,
+  fetchUserDetail,
+  getUserRank,
+} from "@/services/admin/user";
+import { getUserId } from "@/utils/utils";
 
-const isAccountMenuOpen = ref(true)
-const voucherCount = ref(37)
+const isAccountMenuOpen = ref(true);
+const voucherCount = ref(37);
+const user = ref(null);
+const userRank = ref({ rank: { rankName: "Vô Hạng" } });
+
+// Define the setAlert function
+const setAlert = (message, type = "alert-warning") => {
+  console.log(`[${type.toUpperCase()}]: ${message}`);
+  // Optionally, you can implement a UI alert system here
+};
+console.log(userRank.value);
+
+// Fetch user data on mount
+onMounted(async () => {
+  try {
+    const response = await fetchUserDetail(getUserId());
+    if (response.data && response.data.data) {
+      user.value = response.data.data;
+      console.log("Dữ liệu người dùng:", user.value);
+
+      // Check if user data is incomplete
+      if (!user.value.phoneNumber || !user.value.fullName) {
+        setAlert("Bạn vui lòng cập nhật đầy đủ thông tin tài khoản.");
+      }
+    }
+  } catch (error) {
+    console.error("Lỗi khi tải thông tin cá nhân:", error);
+    setAlert("Không thể tải thông tin cá nhân.", "alert-danger");
+  }
+});
+// alert(getUserId());
+
+onMounted(async () => {
+  try {
+    const response = await getUserRank(getUserId());
+    console.log("Dữ liệu trả về từ API:", response.data);
+    const rankList = response.data?.data;
+
+    if (Array.isArray(rankList)) {
+      const activeRank = rankList.find((data) => data.status === 1);
+      if (activeRank) {
+        userRank.value = activeRank; // ✅ gán đúng object
+        console.log("Dữ liệu hạng người dùng:", userRank.value);
+      }
+    } else {
+      console.warn("Không tìm thấy dữ liệu hạng người dùng.");
+    }
+  } catch (error) {
+    console.error("Lỗi khi tải thông tin hạng người dùng:", error);
+    setAlert("Không thể tải thông tin hạng người dùng.", "alert-danger");
+  }
+});
 
 const toggleAccountMenu = () => {
-  isAccountMenuOpen.value = !isAccountMenuOpen.value
-}
+  isAccountMenuOpen.value = !isAccountMenuOpen.value;
+};
+
+const rankClass = computed(() => {
+  if (userRank.value.rank.rankName === "BẠC") {
+    return "rank-silver";
+  } else if (userRank.value.rank.rankName === "VÀNG") {
+    return "rank-gold";
+  } else if (userRank.value.rank.rankName === "KIM CƯƠNG") {
+    return "rank-diamond";
+  }
+  return "";
+});
+
+const nextRankMessage = computed(() => {
+  const point = user.value?.total_point ?? 0;
+  const currentRank = userRank.value.rank.rankName;
+
+  if (currentRank === "KIM CƯƠNG") return ""; // Đã max rank
+
+  if (point < 1000) {
+    return `Cần thêm ${1000 - point} point để lên hạng BẠC`;
+  } else if (point < 30000) {
+    return `Cần thêm ${30000 - point} point để lên hạng VÀNG`;
+  } else if (point < 150000) {
+    return `Cần thêm ${150000 - point} point để lên hạng KIM CƯƠNG`;
+  }else if (point => 150000) {
+    return `Bạn đã đạt được thành tự người chinh phục đỉnh cao`;
+  }
+
+  return "";
+});
 </script>
 
 <style scoped>
@@ -135,10 +259,10 @@ const toggleAccountMenu = () => {
   margin: 8px 0 4px 0;
 }
 
-.rank-progress {
+/* .rank-progress {
   font-size: 13px;
   color: #666;
-}
+} */
 
 .rank-progress .highlight {
   color: #dc3545;
@@ -291,5 +415,37 @@ const toggleAccountMenu = () => {
   .profile-sidebar {
     margin-bottom: 20px;
   }
+}
+
+.rank-silver .rank-badge {
+  background: #d9d3d3; /* Màu bạc */
+  color: #333;
+}
+
+.rank-gold .rank-badge {
+  background: #ffd700; /* Màu vàng */
+  color: #333;
+}
+
+.rank-diamond .rank-badge {
+  background: #b9f2ff; /* Màu kim cương */
+  color: #333;
+}
+
+.crown-icon.rank-silver i {
+  color: #c0c0c0; /* bạc */
+}
+
+.crown-icon.rank-gold i {
+  color: #ffd700; /* vàng */
+}
+
+.crown-icon.rank-diamond i {
+  color: #00bcd4; /* xanh kim cương */
+}
+.rank-progress {
+  font-size: 13px;
+  color: #666;
+  margin-top: 4px;
 }
 </style>
