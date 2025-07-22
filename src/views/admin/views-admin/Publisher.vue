@@ -4,7 +4,7 @@
       <div class="col-md-6">
         <h2>Quản lý Nhà Xuất Bản</h2>
         <p class="text-muted">
-          Quản lý thông tin các nhà xuất bản của hệ thống BookStation
+          Quản trị viên / <strong>Nhà xuất bản</strong>
         </p>
       </div>
       <div class="col-md-6 d-flex justify-content-end align-items-center">
@@ -82,16 +82,10 @@
                 Tên nhà xuất bản
               </th>
               <th class="text-uppercase text-xxs font-weight-bolder opacity-7">
-                Email / Liên hệ
-              </th>
-              <th class="text-uppercase text-xxs font-weight-bolder opacity-7">
-                Người liên hệ
-              </th>
-              <th class="text-uppercase text-xxs font-weight-bolder opacity-7">
                 Trạng thái
               </th>
               <th class="text-uppercase text-xxs font-weight-bolder opacity-7">
-                Thời gian tạo
+                Email
               </th>
               <th class="text-uppercase text-xxs font-weight-bolder opacity-7">
                 Hành động
@@ -114,13 +108,6 @@
                 </div>
               </td>
               <td>
-                <p class="text-xs font-weight-bold mb-0">{{ publisher.email }}</p>
-                <p class="text-xs text-secondary mb-0">{{ publisher.phone }}</p>
-              </td>
-              <td>
-                <p class="text-xs font-weight-bold mb-0">{{ publisher.contactName }}</p>
-              </td>
-              <td>
                 <StatusLabel
                   :status="publisher.status === '1'"
                   :activeText="'Hoạt động'"
@@ -129,19 +116,11 @@
                 />
               </td>
               <td>
-                <p class="text-xs font-weight-bold mb-0">
-                  {{ formatDate(publisher.createdAt) }}
-                </p>
+                <p class="text-xs font-weight-bold mb-0">{{ publisher.email }}</p>
               </td>
               <td>
                 <div class="d-flex gap-2">
                   <EditButton @click="openEditModal(publisher, index)" />
-                  <button
-                    class="btn btn-sm btn-link text-danger m-0 p-0 border-0"
-                    @click="handleDeletePublisher(publisher.id, index)"
-                  >
-                    <i class="bi bi-trash"></i>
-                  </button>
                 </div>
               </td>
             </tr>

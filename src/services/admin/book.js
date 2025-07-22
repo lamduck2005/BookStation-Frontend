@@ -44,6 +44,64 @@ export const getSuppliersDropdown = async () => {
   }
 };
 
+// Lấy danh sách books dropdown (id, name) cho order
+export const getBooksDropdown = async () => {
+  try {
+    const response = await client.get('/api/books/dropdown');
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách books dropdown:', error);
+    throw error;
+  }
+};
+
+// Lấy danh sách books dropdown (for order creation)
+export const getBooksForOrder = async () => {
+  try {
+    const response = await client.get('/api/books');
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách books cho order:', error);
+    throw error;
+  }
+};
+
+// Fallback getBooksDropdown nếu API chưa sẵn sàng
+export const getBooksDropdownFallback = async () => {
+  return Promise.resolve({
+    status: 200,
+    message: "Thành công",
+    data: [
+      { id: 1, title: 'Clean Code', price: 350000, isFlashSale: false },
+      { id: 2, title: 'Design Patterns', price: 420000, isFlashSale: true },
+      { id: 3, title: 'Refactoring', price: 380000, isFlashSale: false },
+      { id: 4, title: 'The Pragmatic Programmer', price: 450000, isFlashSale: false },
+      { id: 5, title: 'Effective Java', price: 390000, isFlashSale: true },
+      { id: 6, title: 'JavaScript: The Good Parts', price: 320000, isFlashSale: false },
+      { id: 7, title: 'You Don\'t Know JS', price: 280000, isFlashSale: true },
+      { id: 8, title: 'Eloquent JavaScript', price: 300000, isFlashSale: false },
+      { id: 9, title: 'Head First Design Patterns', price: 400000, isFlashSale: false },
+      { id: 10, title: 'Spring Boot in Action', price: 480000, isFlashSale: false }
+    ]
+  });
+};
+
+// ✅ Lấy danh sách BookFormat enum values
+export const getBookFormats = () => {
+  return [
+    { value: 'HARDCOVER', label: 'Bìa cứng' },
+    { value: 'PAPERBACK', label: 'Bìa mềm' },
+    { value: 'AUDIOBOOK', label: 'Sách nói' },
+    { value: 'EBOOK', label: 'Sách điện tử' },
+    { value: 'MAGAZINE', label: 'Tạp chí' },
+    { value: 'COMIC', label: 'Truyện tranh' },
+    { value: 'TEXTBOOK', label: 'Sách giáo khoa' },
+    { value: 'NOTEBOOK', label: 'Sổ tay' },
+    { value: 'JOURNAL', label: 'Nhật ký' },
+    { value: 'WORKBOOK', label: 'Sách bài tập' }
+  ];
+};
+
 // Tạo sách mới
 export const createBook = async (bookData) => {
   try {
@@ -70,7 +128,16 @@ export const createBook = async (bookData) => {
 // Cập nhật sách
 export const updateBook = async (id, bookData) => {
   try {
+    console.log('=== DEBUG: Updating book with ID:', id);
+    console.log('Update data:', bookData);
+    console.log('Update data.images:', bookData.images);
+    
     const response = await client.put(`/api/books/${id}`, bookData);
+    
+    console.log('=== DEBUG: Update response ===');
+    console.log('Response data:', response.data);
+    console.log('Response data.images:', response.data?.images);
+    
     return response.data;
   } catch (error) {
     console.error('Lỗi khi cập nhật sách:', error);
@@ -78,16 +145,6 @@ export const updateBook = async (id, bookData) => {
   }
 };
 
-// Xóa sách
-export const deleteBook = async (id) => {
-  try {
-    const response = await client.delete(`/api/books/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Lỗi khi xóa sách:', error);
-    throw error;
-  }
-};
 
 // Lấy chi tiết sách
 export const getBookById = async (id) => {
@@ -110,3 +167,70 @@ export const toggleBookStatus = async (id) => {
     throw error;
   }
 };
+export const getBooksClient = async (params = {}) => {
+  try {
+    const response = await client.get('/api/books/client', { params });
+    // console.log(response.data);
+    return response.data.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách sách:', error);
+    throw error;
+  }
+};
+export const getBookByIdCategory = async (id, text) => {
+  try {
+    const response = await client.get(`/api/books/bycategoryid/${id}`, {
+      params: { text }
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách sách:', error);
+    throw error;
+  }
+}
+export const fetchFlashSaleProducts = async () => {
+  try {
+    const response = await client.get(`/api/books/flashsalebook`);
+    return response.data.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách sách:', error);
+    throw error;
+  }
+}
+
+// ✅ Validate quantity - API mới
+export const validateQuantity = async (bookId, quantity) => {
+  try {
+    const response = await client.post('/api/books/validate-quantity', {
+      bookId,
+      quantity
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi validate quantity:', error);
+    throw error;
+  }
+}
+
+// ✅ API Tính giá sách theo tài liệu BOOK_PRICE_CALCULATION_API.md
+export const calculatePrice = async (bookId, discountValue = null, discountPercent = null, discountActive = false) => {
+  try {
+    const payload = {
+      bookId,
+      discountActive
+    };
+    
+    // Chỉ gửi 1 trong 2: discountValue hoặc discountPercent
+    if (discountValue !== null && discountValue !== '' && discountValue > 0) {
+      payload.discountValue = parseFloat(discountValue);
+    } else if (discountPercent !== null && discountPercent !== '' && discountPercent > 0) {
+      payload.discountPercent = parseFloat(discountPercent);
+    }
+    
+    const response = await client.post('/api/books/calculate-price', payload);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi tính giá sách:', error);
+    throw error;
+  }
+}

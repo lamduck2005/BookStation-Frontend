@@ -55,14 +55,17 @@ const isGlowBorderShow = ref(true)
 // Hàm toggle form quên mật khẩu
 const showForgotPassword = () => {
     isContainerFlipped.value = !isContainerFlipped.value
-    
     // Tắt glow border khi flip
     isGlowBorderShow.value = false
-    
-    // Bật lại glow border sau 3 giây
+    // Bật lại glow border sau 1 giây
     setTimeout(() => {
         isGlowBorderShow.value = true
     }, 1000)
+}
+
+// Hàm chuyển hướng sang trang đăng nhập (dùng cho các nút ngoài AuthPage)
+ const goToLogin = () => {
+    router.push('/auth')
 }
 
 // Hàm xử lý đăng nhập

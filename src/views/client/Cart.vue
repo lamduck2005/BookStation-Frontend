@@ -20,11 +20,10 @@
           <i class="fa fa-shopping-cart text-muted" style="font-size: 4rem"></i>
           <h4 class="mt-3 text-muted">Giỏ hàng trống</h4>
           <p class="text-muted">
-            Thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm
+            <span v-if="!getUserId()">Vui lòng <button class="btn btn-link p-0" @click="router.push('/login')">đăng nhập</button> để mua hàng</span>
+            <span v-else>Thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm</span>
           </p>
-          <button class="btn btn-primary" @click="$router.push('/')">
-            Tiếp tục mua sắm
-          </button>
+          <button v-if="getUserId()" class="btn btn-primary" @click="router.push('/')">Tiếp tục mua sắm</button>
         </div>
 
         <!-- Cart items -->
@@ -67,9 +66,9 @@
               :key="item.id"
               class="cart-item d-flex align-items-center py-3 border-bottom"
             >
-              <input
-                type="checkbox"
-                :checked="selectedItems.includes(item.id)"
+              <input 
+                type="checkbox" 
+                :checked="item.selected"
                 @change="toggleItemSelection(item.id)"
                 class="custom-checkbox me-3"
               />
@@ -375,9 +374,15 @@
             class="btn btn-danger w-100 fw-bold py-2 mb-2"
             style="font-size: 1.1rem; border-radius: 8px"
             @click="goToCheckout"
-            :disabled="selectedItems.length === 0"
+            :disabled="selectedItems.length === 0 || sessionCreating"
           >
-            THANH TOÁN ({{ selectedItems.length }})
+            <span v-if="sessionCreating">
+              <i class="fa fa-spinner fa-spin me-2"></i>
+              Đang xử lý...
+            </span>
+            <span v-else>
+              THANH TOÁN ({{ selectedItems.length }})
+            </span>
           </button>
           <div class="text-center" style="font-size: 0.85rem; color: #d32f2f">
             (Giảm giá trên web chỉ áp dụng cho bán lẻ)
@@ -388,598 +393,367 @@
   </div>
 </template>
 
-<script>
-import { ref } from "vue";
-import {
-  getCartItems,
-  updateCartItem,
-  removeCartItem,
-} from "@/services/client/cart.js";
-import { showNotification } from "@/utils/notification.js";
-import { showQuickConfirm, showToast } from "@/utils/swalHelper.js";
-import {
-  createFlashSaleManager,
-  formatCountdownTime,
-} from "@/utils/flashSaleUtils.js";
-import { getUserId } from "@/utils/utils";
-import { getUserVoucher } from "@/services/client/userVoucher.js"; // Đường dẫn đúng tới file chứa hàm
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
+import { getCartItems, updateCartItem, removeCartItem, selectCartItem, validateCart } from '@/services/client/cart.js'
+import { createSessionFromCart } from '@/services/client/checkout.js'
+import { getUserId } from '@/utils/utils.js'
+import { showNotification } from '@/utils/notification.js'
+import { showQuickConfirm, showToast } from '@/utils/swalHelper.js'
+import { createFlashSaleManager, formatCountdownTime } from '@/utils/flashSaleUtils.js'
 
-export default {
-  name: "Cart",
-  data() {
-    return {
-      cartItems: [],
-      loading: true,
-      selectedItems: [],
-      shippingFee: 20000,
-      flashSaleManager: null,
-      countdownTexts: {}, // Quay lại object thường
-      showVoucherModal: false,
-      voucherSearch: "",
-      expandedDiscount: false,
-      expandedShipping: false,
-      selectedVouchers: [],
-      userVouchers: [],
-      voucherLoading: false,
-      selectedVoucherIds: [],
-    };
-  },
-  computed: {
-    allSelected() {
-      return (
-        this.cartItems.length > 0 &&
-        this.selectedItems.length === this.cartItems.length
-      );
-    },
-    totalAmount() {
-      return this.selectedItems.reduce((total, itemId) => {
-        const item = this.cartItems.find((item) => item.id === itemId);
-        return total + (item ? item.totalPrice : 0);
-      }, 0);
-    },
-    totalSavedAmount() {
-      return this.selectedItems.reduce((total, itemId) => {
-        const item = this.cartItems.find((item) => item.id === itemId);
-        let savedAmount = 0;
-        if (
-          item &&
-          item.flashSalePrice &&
-          item.bookPrice > item.flashSalePrice
-        ) {
-          savedAmount = (item.bookPrice - item.flashSalePrice) * item.quantity;
-        }
-        return total + savedAmount;
-      }, 0);
-    },
-    discountVouchers() {
-      return this.userVouchers.filter((v) => v.type === "DISCOUNT");
-    },
-    shippingVouchers() {
-      return this.userVouchers.filter((v) => v.type === "SHIPPING");
-    },
-    filteredDiscountVouchers() {
-      let arr = this.discountVouchers;
-      if (this.voucherSearch.trim()) {
-        arr = arr.filter(
-          (v) =>
-            (v.code &&
-              v.code
-                .toLowerCase()
-                .includes(this.voucherSearch.toLowerCase())) ||
-            (v.name &&
-              v.name.toLowerCase().includes(this.voucherSearch.toLowerCase()))
-        );
-      }
-      return this.expandedDiscount ? arr : arr.slice(0, 2);
-    },
-    filteredShippingVouchers() {
-      let arr = this.shippingVouchers;
-      if (this.voucherSearch.trim()) {
-        arr = arr.filter(
-          (v) =>
-            (v.code &&
-              v.code
-                .toLowerCase()
-                .includes(this.voucherSearch.toLowerCase())) ||
-            (v.name &&
-              v.name.toLowerCase().includes(this.voucherSearch.toLowerCase()))
-        );
-      }
-      return this.expandedShipping ? arr : arr.slice(0, 1);
-    },
-  },
-  async loadUserVouchers() {
+const router = useRouter()
+
+// Reactive state
+const cartItems = ref([])
+const loading = ref(true)
+const selectedItems = ref([])
+const shippingFee = ref(30000) // Fixed shipping fee 30k
+const flashSaleManager = ref(null)
+const countdownTexts = ref({})
+const sessionCreating = ref(false)
+
+// Computed properties
+const allSelected = computed(() => {
+  return cartItems.value.length > 0 && selectedItems.value.length === cartItems.value.length
+})
+
+const totalAmount = computed(() => {
+  return selectedItems.value.reduce((total, itemId) => {
+    const item = cartItems.value.find(i => i.id === itemId)
+    return total + (item ? item.totalPrice : 0)
+  }, 0)
+})
+
+const totalSavedAmount = computed(() => {
+  return selectedItems.value.reduce((total, itemId) => {
+    const item = cartItems.value.find(i => i.id === itemId)
+    let savedAmount = 0;
+    if (item && item.flashSalePrice && item.bookPrice > item.flashSalePrice) {
+      savedAmount = (item.bookPrice - item.flashSalePrice) * item.quantity;
+    }
+    return total + savedAmount;
+  }, 0)
+})
+
+// Methods
+const loadCartItems = async () => {
+  try {
+    loading.value = true
+    const userId = getUserId()
+    if (!userId) {
+      showToast('warning', 'Vui lòng đăng nhập để xem giỏ hàng')
+      router.push('/login')
+      return
+    }
+    
+    const response = await getCartItems(userId)
+    if (response.status === 200 && response.data?.data) {
+      cartItems.value = response.data.data
+      
+      // Tự động chọn các items đã được selected từ backend
+      selectedItems.value = cartItems.value
+        .filter(item => item.selected)
+        .map(item => item.id)
+      
+      console.log('✅ Cart items loaded:', cartItems.value)
+      console.log('✅ Selected items:', selectedItems.value)
+      
+      // Setup flash sale countdowns
+      setupFlashSaleCountdowns()
+    } else {
+      cartItems.value = []
+      selectedItems.value = []
+    }
+  } catch (error) {
+    console.error('❌ Error loading cart items:', error)
+    showToast('error', 'Không thể tải giỏ hàng')
+  } finally {
+    loading.value = false
+  }
+}
+
+const toggleSelectAll = async () => {
+  try {
+    const userId = getUserId()
+    if (!userId) return
+    
+    const newSelectedState = !allSelected.value
+    
+    // Update từng item một cách tuần tự
+    for (const item of cartItems.value) {
+      await selectCartItem(item.id, newSelectedState)
+    }
+    
+    // Cập nhật UI
+    if (newSelectedState) {
+      selectedItems.value = cartItems.value.map(item => item.id)
+    } else {
+      selectedItems.value = []
+    }
+    
+    // Cập nhật selected state trong cartItems
+    cartItems.value.forEach(item => {
+      item.selected = newSelectedState
+    })
+    
+  } catch (error) {
+    console.error('❌ Error toggling select all:', error)
+    showToast('error', 'Không thể cập nhật lựa chọn')
+  }
+}
+
+const toggleItemSelection = async (itemId) => {
+  const item = cartItems.value.find(item => item.id === itemId)
+  if (!item) return
+  
+  try {
+    const isSelected = selectedItems.value.includes(itemId)
+    const newSelectedState = !isSelected
+    
+    await selectCartItem(itemId, newSelectedState)
+    
+    // Cập nhật UI
+    if (newSelectedState) {
+      selectedItems.value.push(itemId)
+    } else {
+      selectedItems.value = selectedItems.value.filter(id => id !== itemId)
+    }
+    
+    // Cập nhật selected state trong item
+    item.selected = newSelectedState
+    
+  } catch (err) {
+    console.error('❌ Error toggling item selection:', err)
+    showToast('error', 'Không thể cập nhật lựa chọn sản phẩm')
+  }
+}
+
+const increaseQuantity = (item) => {
+  console.log('Tăng số lượng cho item:', item.id, 'số lượng hiện tại:', item.quantity)
+  
+  const index = cartItems.value.findIndex(cartItem => cartItem.id === item.id)
+  if (index > -1) {
+    cartItems.value[index].quantity++
+    cartItems.value[index].totalPrice = cartItems.value[index].quantity * cartItems.value[index].unitPrice
+    updateQuantityDebounced(item, cartItems.value[index].quantity)
+  }
+}
+
+const decreaseQuantity = (item) => {
+  console.log('Giảm số lượng cho item:', item.id, 'số lượng hiện tại:', item.quantity)
+  if (item.quantity <= 1) return
+  
+  const index = cartItems.value.findIndex(cartItem => cartItem.id === item.id)
+  if (index > -1) {
+    cartItems.value[index].quantity--
+    cartItems.value[index].totalPrice = cartItems.value[index].quantity * cartItems.value[index].unitPrice
+    updateQuantityDebounced(item, cartItems.value[index].quantity)
+  }
+}
+
+const updateQuantity = async (item, event) => {
+  const newQuantity = parseInt(event.target.value)
+  
+  if (isNaN(newQuantity) || newQuantity < 1) {
+    event.target.value = item.quantity
+    return
+  }
+  
+  const maxQuantity = item.maxAvailableQuantity || 99
+  if (newQuantity > maxQuantity) {
+    showToast('warning', `Số lượng không được vượt quá ${maxQuantity}`)
+    event.target.value = item.quantity
+    return
+  }
+  
+  try {
+    await updateCartItem(item.id, newQuantity)
+    const index = cartItems.value.findIndex(cartItem => cartItem.id === item.id)
+    if (index > -1) {
+      cartItems.value[index].quantity = newQuantity
+      cartItems.value[index].totalPrice = newQuantity * cartItems.value[index].unitPrice
+    }
+  } catch (error) {
+    console.error('❌ Error updating quantity:', error)
+    event.target.value = item.quantity
+    showToast('error', 'Không thể cập nhật số lượng')
+  }
+}
+
+// Debounced function for quantity updates
+let debounceTimer = null
+const updateQuantityDebounced = (item, newQuantity) => {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(async () => {
     try {
-      this.voucherLoading = true;
-      const res = await getUserVoucher(getUserId());
-      const allVouchers = Array.isArray(res.data)
-        ? res.data
-        : res.data.data || [];
-      this.userVouchers = allVouchers.filter((v) => v.status === 1);
-      console.log("User vouchers loaded:", this.userVouchers);
-    } catch (e) {
-      this.userVouchers = [];
-    } finally {
-      this.voucherLoading = false;
+      await updateCartItem(item.id, newQuantity)
+    } catch (error) {
+      console.error('❌ Error updating quantity:', error)
+      await loadCartItems() // Reload on error
     }
-  },
-  isVoucherExpired(voucher) {
-    return Date.now() > voucher.endTime;
-  },
-  isVoucherActive(voucher) {
-    return (
-      voucher.status === 1 &&
-      !this.isVoucherExpired(voucher) &&
-      voucher.usageLimit > voucher.usedCount
-    );
-  },
-  canUseVoucher(voucher) {
-    return this.totalAmount >= voucher.minOrderValue;
-  },
-  toggleVoucherSelection(voucher) {
-    const idx = this.selectedVoucherIds.indexOf(voucher.id);
-    if (idx > -1) {
-      this.selectedVoucherIds.splice(idx, 1);
+  }, 500)
+}
+
+const removeItem = async (itemId) => {
+  const item = cartItems.value.find(item => item.id === itemId)
+  const productName = item?.bookName || 'sản phẩm này'
+  
+  const result = await showQuickConfirm(
+    `Bạn có chắc muốn xóa "${productName}" khỏi giỏ hàng?`,
+    'Xóa sản phẩm',
+    'Xóa',
+    'Hủy',
+    'question'
+  )
+  
+  if (!result.isConfirmed) {
+    return
+  }
+  
+  try {
+    await removeCartItem(itemId)
+    cartItems.value = cartItems.value.filter(item => item.id !== itemId)
+    selectedItems.value = selectedItems.value.filter(id => id !== itemId)
+    showToast('success', 'Đã xóa sản phẩm khỏi giỏ hàng')
+  } catch (error) {
+    console.error('❌ Error removing item:', error)
+    showToast('error', 'Không thể xóa sản phẩm')
+  }
+}
+
+const formatPrice = (price) => {
+  if (!price) return '0 đ'
+  return new Intl.NumberFormat('vi-VN').format(price) + ' đ'
+}
+
+const numberOnly = (event) => {
+  const keyCode = event.keyCode || event.which
+  if (keyCode < 48 || keyCode > 57) {
+    event.preventDefault()
+  }
+}
+
+const setupFlashSaleCountdowns = () => {
+  if (flashSaleManager.value) {
+    flashSaleManager.value.stopAllCountdowns()
+  }
+  
+  console.log('Setting up flash sale countdowns for items:', cartItems.value)
+  
+  const flashSaleItems = cartItems.value.filter(item => 
+    item.itemType === 'FLASH_SALE' && 
+    item.flashSaleEndTime && 
+    !item.flashSaleExpired
+  )
+  
+  console.log('Flash sale items to setup countdown:', flashSaleItems)
+  
+  if (flashSaleItems.length === 0) {
+    console.log('No flash sale items found')
+    return
+  }
+  
+  flashSaleManager.value = createFlashSaleManager(
+    flashSaleItems.map(item => ({
+      id: item.id,
+      endTime: item.flashSaleEndTime
+    })),
+    (itemId, timeLeft) => {
+      countdownTexts.value[itemId] = formatCountdownTime(timeLeft)
+    },
+    (itemId) => {
+      console.log(`⏰ Flash sale expired for item ${itemId}`)
+      reloadCartAfterFlashSaleExpired(itemId)
+    }
+  )
+  
+  console.log('Flash sale manager created:', flashSaleManager.value)
+}
+
+const reloadCartAfterFlashSaleExpired = async (expiredItemId) => {
+  try {
+    console.log(`🔄 Reloading cart after flash sale expired for item ${expiredItemId}`)
+    await loadCartItems()
+    setupFlashSaleCountdowns()
+    showToast('info', 'Flash sale đã kết thúc, giá sản phẩm đã được cập nhật')
+  } catch (error) {
+    console.error('❌ Error reloading cart after flash sale expired:', error)
+  }
+}
+
+// Main checkout function - theo document cần validate cart trước
+const goToCheckout = async () => {
+  const userId = getUserId()
+  if (!userId) {
+    showToast('warning', 'Vui lòng đăng nhập để thanh toán')
+    router.push('/login')
+    return
+  }
+  
+  if (selectedItems.value.length === 0) {
+    showToast('warning', 'Vui lòng chọn ít nhất một sản phẩm để thanh toán')
+    return
+  }
+  
+  try {
+    sessionCreating.value = true
+    console.log('🛒 Starting checkout process for selected items:', selectedItems.value)
+    
+    // Bước 1: Validate cart trước khi checkout
+    console.log('🔍 Validating cart...')
+    const validateResponse = await validateCart(userId)
+    
+    if (validateResponse.status !== 200) {
+      throw new Error('Giỏ hàng có sản phẩm không hợp lệ')
+    }
+    
+    // Bước 2: Tạo checkout session từ cart  
+    console.log('📝 Creating checkout session from cart...')
+    const response = await createSessionFromCart(userId)
+    
+    if ((response.status === 201 || response.status === 200) && response.data?.data) {
+      console.log('✅ Checkout session created:', response.data.data)
+      showToast('success', 'Đã tạo phiên thanh toán!')
+      
+      // Navigate to checkout page
+      router.push('/checkout')
     } else {
-      this.selectedVoucherIds.push(voucher.id);
+      throw new Error(response.message || 'Không thể tạo phiên thanh toán')
     }
-  },
-  toggleVoucher(voucher) {
-    const idx = this.selectedVouchers.findIndex((v) => v.code === voucher.code);
-    if (idx > -1) {
-      this.selectedVouchers.splice(idx, 1);
-    } else {
-      this.selectedVouchers.push(voucher);
+  } catch (error) {
+    console.error('❌ Error creating checkout session:', error)
+    
+    let errorMessage = error.message || 'Không thể tạo phiên thanh toán. Vui lòng thử lại.'
+    
+    // Xử lý các lỗi đặc biệt theo document
+    if (error.message?.includes('trống')) {
+      errorMessage = 'Giỏ hàng trống, không thể thanh toán'
+    } else if (error.message?.includes('không có sản phẩm nào được chọn')) {
+      errorMessage = 'Không có sản phẩm nào được chọn để checkout'
+    } else if (error.message?.includes('hết hàng')) {
+      errorMessage = 'Có sản phẩm đã hết hàng, vui lòng cập nhật giỏ hàng'
+      // Reload cart to update stock status
+      await loadCartItems()
     }
-  },
-  applySelectedVouchers() {
-    this.showVoucherModal = false;
-    // Có thể lưu selectedVouchers vào localStorage hoặc gửi lên server nếu cần
-  },
-  async mounted() {
-    await this.loadCartItems();
-    this.setupFlashSaleCountdowns();
+    
+    showToast('error', errorMessage)
+  } finally {
+    sessionCreating.value = false
+  }
+}
 
-    // Debug: Kiểm tra dữ liệu flash sale
-    console.log("=== FLASH SALE DEBUG ===");
-    console.log("Cart items loaded:", this.cartItems);
-    this.cartItems.forEach((item) => {
-      if (item.itemType === "FLASH_SALE") {
-        console.log(`Flash Sale Item ${item.id}:`, {
-          name: item.bookName,
-          endTime: item.flashSaleEndTime,
-          endTimeDate: new Date(item.flashSaleEndTime),
-          currentTime: Date.now(),
-          currentTimeDate: new Date(),
-          isExpired: item.flashSaleExpired,
-          timeRemaining: item.flashSaleEndTime - Date.now(),
-        });
-      }
-    });
-    console.log("Countdown texts:", this.countdownTexts);
-    console.log("=====================");
-  },
-  beforeUnmount() {
-    if (this.flashSaleManager) {
-      this.flashSaleManager.stopAllCountdowns();
-    }
-  },
-  methods: {
-    async loadCartItems() {
-      try {
-        this.loading = true;
-        // Tạm thời sử dụng userId = 1, sau này sẽ lấy từ auth
-        const response = await getCartItems(1);
+// Lifecycle hooks
+onMounted(async () => {
+  await loadCartItems()
+})
 
-        if (response.status === 200) {
-          this.cartItems = response.data.data || [];
-
-          // Đảm bảo các sản phẩm có đầy đủ thông tin cần thiết
-          this.cartItems = this.cartItems.map((item) => {
-            return {
-              ...item,
-              // Mặc định cho phép tăng giảm số lượng nếu không có thông tin giới hạn
-              maxAvailableQuantity: item.maxAvailableQuantity || 99,
-            };
-          });
-
-          // Mặc định chọn tất cả items
-          this.selectedItems = this.cartItems.map((item) => item.id);
-
-          // Setup countdown cho flash sales
-          this.setupFlashSaleCountdowns();
-        }
-      } catch (error) {
-        console.error("Error loading cart items:", error);
-        showToast("error", "Không thể tải giỏ hàng");
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    toggleSelectAll() {
-      if (this.allSelected) {
-        this.selectedItems = [];
-      } else {
-        this.selectedItems = this.cartItems.map((item) => item.id);
-      }
-    },
-
-    toggleItemSelection(itemId) {
-      const index = this.selectedItems.indexOf(itemId);
-      if (index > -1) {
-        this.selectedItems.splice(index, 1);
-      } else {
-        this.selectedItems.push(itemId);
-      }
-    },
-
-    increaseQuantity(item) {
-      console.log(
-        "Tăng số lượng cho item:",
-        item.id,
-        "số lượng hiện tại:",
-        item.quantity
-      );
-
-      // Tăng số lượng trước để UI phản hồi ngay lập tức
-      const index = this.cartItems.findIndex(
-        (cartItem) => cartItem.id === item.id
-      );
-      if (index > -1) {
-        const newQuantity = this.cartItems[index].quantity + 1;
-        console.log("Số lượng mới:", newQuantity);
-
-        // Đặt giá trị mới vào UI trước
-        const oldQuantity = this.cartItems[index].quantity;
-        const oldTotalPrice = this.cartItems[index].totalPrice;
-        this.cartItems[index].quantity = newQuantity;
-
-        // Tính toán tạm thời cho totalPrice mới (để UI cập nhật ngay lập tức)
-        const unitPrice = this.cartItems[index].unitPrice;
-        this.cartItems[index].totalPrice = unitPrice * newQuantity;
-
-        // Gọi API
-        updateCartItem(item.id, newQuantity)
-          .then((response) => {
-            console.log("Kết quả API:", response.data);
-
-            if (response.status === 200) {
-              const updatedItem = response.data.data;
-              console.log("Cập nhật item:", updatedItem);
-
-              // Cập nhật dữ liệu từ response
-              this.cartItems[index].quantity = updatedItem.quantity;
-              this.cartItems[index].totalPrice = updatedItem.totalPrice;
-              this.cartItems[index].unitPrice = updatedItem.unitPrice;
-
-              // Kiểm tra nếu có dữ liệu flash sale, cũng cập nhật
-              if (updatedItem.flashSalePrice) {
-                this.cartItems[index].flashSalePrice =
-                  updatedItem.flashSalePrice;
-              }
-
-              // Hiển thị thông báo thành công
-              showToast(
-                "success",
-                "Đã cập nhật số lượng",
-                "center",
-                true,
-                3000
-              );
-            }
-          })
-          .catch((error) => {
-            console.error("Error updating quantity:", error);
-            // Hoàn tác thay đổi trên UI
-            this.cartItems[index].quantity = oldQuantity;
-            this.cartItems[index].totalPrice = oldTotalPrice;
-            showToast("error", "Không thể cập nhật số lượng");
-          });
-      }
-    },
-
-    decreaseQuantity(item) {
-      console.log(
-        "Giảm số lượng cho item:",
-        item.id,
-        "số lượng hiện tại:",
-        item.quantity
-      );
-      if (item.quantity <= 1) return;
-
-      // Giảm số lượng trước để UI phản hồi ngay lập tức
-      const index = this.cartItems.findIndex(
-        (cartItem) => cartItem.id === item.id
-      );
-      if (index > -1) {
-        const newQuantity = this.cartItems[index].quantity - 1;
-        console.log("Số lượng mới:", newQuantity);
-
-        // Đặt giá trị mới vào UI trước
-        const oldQuantity = this.cartItems[index].quantity;
-        this.cartItems[index].quantity = newQuantity;
-
-        // Gọi API
-        updateCartItem(item.id, newQuantity)
-          .then((response) => {
-            console.log("Kết quả API:", response.data);
-
-            if (response.status === 200) {
-              const updatedItem = response.data.data;
-              console.log("Cập nhật item:", updatedItem);
-
-              // Cập nhật dữ liệu từ response
-              this.cartItems[index].quantity = updatedItem.quantity;
-              this.cartItems[index].totalPrice = updatedItem.totalPrice;
-              this.cartItems[index].unitPrice = updatedItem.unitPrice;
-
-              // Kiểm tra nếu có dữ liệu flash sale, cũng cập nhật
-              if (updatedItem.flashSalePrice) {
-                this.cartItems[index].flashSalePrice =
-                  updatedItem.flashSalePrice;
-              }
-
-              // Hiển thị thông báo thành công
-              showToast(
-                "success",
-                "Đã cập nhật số lượng",
-                "center",
-                true,
-                3000
-              );
-            }
-          })
-          .catch((error) => {
-            console.error("Error updating quantity:", error);
-            // Hoàn tác thay đổi trên UI
-            this.cartItems[index].quantity = oldQuantity;
-            showToast("error", "Không thể cập nhật số lượng");
-          });
-      }
-    },
-
-    async updateQuantity(item, event) {
-      const newQuantity = parseInt(event.target.value);
-
-      // Kiểm tra giá trị hợp lệ
-      if (isNaN(newQuantity) || newQuantity < 1) {
-        event.target.value = item.quantity;
-        return;
-      }
-
-      // Kiểm tra giới hạn tối đa (nếu có)
-      const maxQuantity = item.maxAvailableQuantity || 99;
-      if (newQuantity > maxQuantity) {
-        event.target.value = maxQuantity;
-        showToast("warning", `Số lượng tối đa có thể mua là ${maxQuantity}`);
-        return;
-      }
-
-      try {
-        const response = await updateCartItem(item.id, newQuantity);
-
-        if (response.status === 200) {
-          // Cập nhật local state
-          const index = this.cartItems.findIndex(
-            (cartItem) => cartItem.id === item.id
-          );
-          if (index > -1) {
-            const updatedItem = response.data.data;
-            // Cập nhật dữ liệu từ response
-            this.cartItems[index].quantity = updatedItem.quantity;
-            this.cartItems[index].totalPrice = updatedItem.totalPrice;
-            this.cartItems[index].unitPrice = updatedItem.unitPrice;
-            // Kiểm tra nếu có dữ liệu flash sale, cũng cập nhật
-            if (updatedItem.flashSalePrice) {
-              this.cartItems[index].flashSalePrice = updatedItem.flashSalePrice;
-            }
-            // Hiển thị thông báo thành công
-            showToast("success", "Đã cập nhật số lượng", "center", true, 3000);
-          }
-        }
-      } catch (error) {
-        console.error("Error updating quantity:", error);
-        showToast("error", "Không thể cập nhật số lượng");
-        // Reset về giá trị ban đầu nếu lỗi
-        event.target.value = item.quantity;
-      }
-    },
-
-    numberOnly(event) {
-      // Chỉ cho phép nhập các ký tự số từ 0-9
-      const keyCode = event.keyCode ? event.keyCode : event.which;
-      if ((keyCode < 48 || keyCode > 57) && keyCode !== 46) {
-        event.preventDefault();
-      }
-    },
-
-    async removeItem(itemId) {
-      // Tìm thông tin sản phẩm để hiển thị
-      const item = this.cartItems.find((item) => item.id === itemId);
-      const productName = item?.bookName || "sản phẩm này";
-
-      // Hiển thị SweetAlert2 để xác nhận xóa với tên sách thực
-      const result = await showQuickConfirm(
-        "Xóa sách khỏi giỏ hàng?",
-        `Bạn có chắc muốn xóa sách "${productName}" khỏi giỏ hàng không?`,
-        "warning",
-        "Xóa sản phẩm",
-        "Hủy",
-        "btn-danger",
-        "btn-secondary"
-      );
-
-      // Nếu không đồng ý xóa
-      if (!result.isConfirmed) {
-        return;
-      }
-
-      try {
-        const response = await removeCartItem(itemId);
-
-        if (response.status === 200) {
-          // Xóa khỏi local state
-          const index = this.cartItems.findIndex((item) => item.id === itemId);
-          if (index > -1) {
-            this.cartItems.splice(index, 1);
-          }
-
-          // Xóa khỏi selected items
-          const selectedIndex = this.selectedItems.indexOf(itemId);
-          if (selectedIndex > -1) {
-            this.selectedItems.splice(selectedIndex, 1);
-          }
-
-          // Hiển thị thông báo xóa thành công ở giữa màn hình
-          showToast("success", "Đã xóa sản phẩm khỏi giỏ hàng");
-        }
-      } catch (error) {
-        console.error("Error removing item:", error);
-        showToast("error", "Không thể xóa sản phẩm");
-      }
-    },
-
-    formatPrice(price) {
-      if (!price) return "0 đ";
-      return new Intl.NumberFormat("vi-VN").format(price) + " đ";
-    },
-
-    setupFlashSaleCountdowns() {
-      // Dọn dẹp manager cũ nếu có
-      if (this.flashSaleManager) {
-        this.flashSaleManager.stopAllCountdowns();
-      }
-
-      console.log(
-        "Setting up flash sale countdowns for items:",
-        this.cartItems
-      );
-
-      // Lọc các items có flash sale hợp lệ
-      const flashSaleItems = this.cartItems.filter(
-        (item) =>
-          item.itemType === "FLASH_SALE" &&
-          item.flashSaleEndTime &&
-          !item.flashSaleExpired &&
-          item.flashSaleEndTime > Date.now()
-      );
-
-      console.log("Flash sale items to setup countdown:", flashSaleItems);
-
-      if (flashSaleItems.length === 0) {
-        console.log("No valid flash sale items found");
-        return;
-      }
-
-      // Tạo manager mới
-      this.flashSaleManager = createFlashSaleManager(
-        flashSaleItems,
-        // Callback khi flash sale hết hạn
-        (expiredItem) => {
-          console.log("Flash sale expired for item:", expiredItem.id);
-          // Đánh dấu item đã hết hạn
-          const index = this.cartItems.findIndex(
-            (item) => item.id === expiredItem.id
-          );
-          if (index > -1) {
-            this.cartItems[index].flashSaleExpired = true;
-          }
-          // Xóa countdown text
-          delete this.countdownTexts[expiredItem.id];
-          // Gọi lại API để cập nhật giá
-          this.reloadCartAfterFlashSaleExpired(expiredItem);
-        },
-        // Callback cập nhật countdown text (sử dụng format compact)
-        (itemId, countdownText) => {
-          console.log(
-            "Updating countdown for item:",
-            itemId,
-            "text:",
-            countdownText
-          );
-          // Vue 3: Trigger reactivity bằng cách tạo object mới
-          this.countdownTexts = {
-            ...this.countdownTexts,
-            [itemId]: countdownText,
-          };
-          console.log("Current countdownTexts:", this.countdownTexts);
-        },
-        "compact" // Sử dụng format compact cho gọn gàng hơn
-      );
-
-      console.log("Flash sale manager created:", this.flashSaleManager);
-    },
-
-    async reloadCartAfterFlashSaleExpired(expiredItem) {
-      try {
-        console.log(
-          "Reloading cart after flash sale expired for item:",
-          expiredItem.bookName
-        );
-        showToast(
-          "info",
-          `Flash sale cho "${expiredItem.bookName}" đã kết thúc. Đang cập nhật giá...`
-        );
-
-        // Reload cart items để cập nhật giá mới
-        const response = await getCartItems(1);
-
-        if (response.status === 200) {
-          const oldCartItems = [...this.cartItems];
-          this.cartItems = response.data.data || [];
-
-          // Giữ nguyên selected items
-          this.selectedItems = this.selectedItems.filter((itemId) =>
-            this.cartItems.some((item) => item.id === itemId)
-          );
-
-          // Tìm item đã cập nhật để so sánh giá
-          const updatedItem = this.cartItems.find(
-            (item) =>
-              item.bookId === expiredItem.bookId && item.id === expiredItem.id
-          );
-
-          if (updatedItem && updatedItem.unitPrice !== expiredItem.unitPrice) {
-            showToast(
-              "warning",
-              `Giá sản phẩm "${
-                expiredItem.bookName
-              }" đã được cập nhật từ ${this.formatPrice(
-                expiredItem.unitPrice
-              )} thành ${this.formatPrice(updatedItem.unitPrice)}`
-            );
-          }
-
-          // Setup lại countdown cho các flash sale còn lại
-          this.setupFlashSaleCountdowns();
-        }
-      } catch (error) {
-        console.error("Error reloading cart after flash sale expired:", error);
-        showToast(
-          "error",
-          "Không thể cập nhật giá sau khi flash sale kết thúc"
-        );
-      }
-    },
-
-    goToCheckout() {
-      if (this.selectedItems.length === 0) {
-        showToast(
-          "warning",
-          "Vui lòng chọn ít nhất một sản phẩm để thanh toán"
-        );
-        return;
-      }
-
-      // Lưu selected items vào localStorage để sử dụng ở checkout
-      localStorage.setItem("checkoutItems", JSON.stringify(this.selectedItems));
-
-      // Chuyển hướng sang trang thanh toán
-      this.$router.push("/checkout");
-    },
-  },
-};
+onBeforeUnmount(() => {
+  if (flashSaleManager.value) {
+    flashSaleManager.value.stopAllCountdowns()
+  }
+})
 </script>
 
 <style scoped>
@@ -1073,8 +847,8 @@ export default {
 }
 
 .flash-sale-countdown-text {
-  color: #ffd700 !important; /* Màu vàng đậm */
-  background: rgba(255, 215, 0, 0.1); /* Background vàng nhạt */
+  color: #ffd700 !important; 
+  background: rgba(255, 215, 0, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
   border: 1px solid #ffd700;

@@ -2,7 +2,7 @@
   <div class="container-fluid py-4">
     <!-- Breadcrumb -->
     <div class="mb-3">
-      <h6 class="text-muted">Admin / <strong>User</strong></h6>
+      <h6 class="text-muted">Quản trị viên / <strong>Người dùng</strong></h6>
     </div>
     <!-- Bộ lọc -->
     <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">

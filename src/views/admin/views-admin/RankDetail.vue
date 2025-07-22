@@ -2,7 +2,7 @@
   <div class="container-fluid py-4">
     <div class="mb-3">
       <h6 class="text-muted">
-        Admin / <router-link to="/admin/rank">Rank</router-link> / <strong>Chi tiết Rank: {{ rankName }}</strong>
+        Quản trị viên / <router-link to="/admin/rank">Xếp hạng</router-link> / <strong>Chi tiết xếp hạng: {{ rankName }}</strong>
       </h6>
     </div>
     <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">
@@ -51,9 +51,9 @@
               <td>{{ user.userName }}</td>
               <td>{{ user.userEmail }}</td>
               <td style="width: 200px;">
-                <ToggleStatus :id="user.id" :model-value="Number(user.status)" :true-value="1" :false-value="0"
-                  active-text="Hoạt động" inactive-text="Không hoạt động"
-                  @change="handleUserRankStatusChange(user)" />
+                <span :class="user.status == 1 ? 'status-active' : 'status-inactive'">
+                  {{ user.status == 1 ? 'Hoạt động' : 'Không hoạt động' }}
+                </span>
               </td>
               <td>{{ user.createdAt ? new Date(user.createdAt).toLocaleString() : '-' }}</td>
             </tr>
