@@ -1,6 +1,5 @@
 <template>
   <div class="container-fluid py-4">
-   
     <!-- <div class="mb-3">
       <h6 class="text-muted">Quản lý / <strong>Phiếu giảm giá</strong></h6>
     </div> -->
@@ -131,8 +130,10 @@
             >
               <td>{{ currentPage * pageSize + index + 1 }}</td>
               <td @click.stop>
-                <router-link :to="`/admin/userVoucher/${voucher.id}`" class="text-decoration-none"
-   >
+                <router-link
+                  :to="`/admin/userVoucher/${voucher.id}`"
+                  class="text-decoration-none"
+                >
                   {{ voucher.code }}
                 </router-link>
               </td>
@@ -269,8 +270,8 @@
               </div>
               <div class="mb-2 col-6">
                 <label class="form-label">
-                  Tên voucher <span style="color: red">*</span></label
-                >
+                  Tên voucher <span style="color: red">*</span>
+                </label>
                 <input
                   v-model="formVoucher.name"
                   class="form-control"
@@ -281,8 +282,22 @@
                 <label class="form-label">
                   Loại voucher <span style="color: red">*</span>
                 </label>
-                <select v-model="formVoucher.voucherType" class="form-select">
+                <select
+                  v-model="formVoucher.voucherCategory"
+                  class="form-select"
+                >
                   <option value="">Chọn loại voucher</option>
+                  <option value="NORMAL">Chung</option>
+                  <option value="SHIPPING">Đặc biệt</option>
+                  <!-- Thêm các loại khác nếu có -->
+                </select>
+              </div>
+              <div class="mb-2 col-6">
+                <label class="form-label">
+                  Kiểu giảm giá <span style="color: red">*</span>
+                </label>
+                <select v-model="formVoucher.discountType" class="form-select">
+                  <option value="">Chọn kiểu giảm giá</option>
                   <option value="PERCENTAGE">Phần trăm</option>
                   <option value="FIXED_AMOUNT">Số tiền</option>
                 </select>
@@ -294,10 +309,11 @@
                 <input
                   v-model="formVoucher.discountPercentage"
                   type="number"
-                  min="1"
+                  min="0"
                   max="100"
+                  step="0.01"
                   class="form-control"
-                  :disabled="formVoucher.voucherType !== 'PERCENTAGE'"
+                  :disabled="formVoucher.discountType !== 'PERCENTAGE'"
                 />
               </div>
               <div class="mb-2 col-6">
@@ -308,8 +324,9 @@
                   v-model="formVoucher.discountAmount"
                   type="number"
                   min="0"
+                  step="0.01"
                   class="form-control"
-                  :disabled="formVoucher.voucherType !== 'FIXED_AMOUNT'"
+                  :disabled="formVoucher.discountType !== 'FIXED_AMOUNT'"
                 />
               </div>
               <div class="mb-2 col-6">
@@ -340,6 +357,7 @@
                   v-model="formVoucher.minOrderValue"
                   type="number"
                   min="0"
+                  step="0.01"
                   class="form-control"
                 />
               </div>
@@ -351,13 +369,14 @@
                   v-model="formVoucher.maxDiscountValue"
                   type="number"
                   min="0"
+                  step="0.01"
                   class="form-control"
                 />
               </div>
               <div class="mb-2 col-6">
-                <label class="form-label"
-                  ><span style="color: red">*</span> Giới hạn lượt dùng</label
-                >
+                <label class="form-label">
+                  <span style="color: red">*</span> Giới hạn lượt dùng
+                </label>
                 <input
                   v-model="formVoucher.usageLimit"
                   type="number"
@@ -365,15 +384,51 @@
                   class="form-control"
                 />
               </div>
+              <!-- <div class="mb-2 col-6">
+                <label class="form-label">
+                  <span style="color: red">*</span> Đã dùng
+                </label>
+                <input
+                  v-model="formVoucher.usedCount"
+                  type="number"
+                  min="0"
+                  class="form-control"
+                />
+              </div> -->
               <div class="mb-2 col-6">
-                <label class="form-label"
-                  ><span style="color: red">*</span> Giới hạn/người</label
-                >
+                <label class="form-label">
+                  <span style="color: red">*</span> Giới hạn/người
+                </label>
                 <input
                   v-model="formVoucher.usageLimitPerUser"
                   type="number"
                   min="0"
                   class="form-control"
+                />
+              </div>
+              <div class="mb-2 col-6">
+                <label class="form-label">
+                  <span style="color: red">*</span> Trạng thái
+                </label>
+                <select v-model="formVoucher.status" class="form-select">
+                  <option :value="1">Hoạt động</option>
+                  <option :value="0">Không hoạt động</option>
+                </select>
+              </div>
+              <div class="mb-2 col-6">
+                <label class="form-label">Người tạo</label>
+                <input
+                  v-model="formVoucher.createdBy"
+                  class="form-control"
+                  readonly
+                />
+              </div>
+              <div class="mb-2 col-6">
+                <label class="form-label">Người cập nhật</label>
+                <input
+                  v-model="formVoucher.updatedBy"
+                  class="form-control"
+                  readonly
                 />
               </div>
               <div class="mb-2 col-12">
@@ -451,7 +506,8 @@ export default {
       code: "",
       name: "",
       description: "",
-      voucherType: "",
+      voucherCategory: "",
+      discountType: "",
       discountPercentage: "",
       discountAmount: "",
       startTime: "",
@@ -493,7 +549,8 @@ export default {
           code: voucher.code,
           name: voucher.name,
           description: voucher.description,
-          voucherType: voucher.voucherType,
+          voucherCategory: voucher.voucherCategory,
+          discountType: voucher.discountType,
           discountPercentage: voucher.discountPercentage,
           discountAmount: voucher.discountAmount,
           start_time: formatDate(voucher.startTime),
@@ -569,7 +626,10 @@ export default {
                 voucher.description ?? "Không có dữ liệu"
               }</td></tr>
               <tr><th>Loại</th><td>${
-                voucher.voucherType ?? "Không có dữ liệu"
+                voucher.voucherCategory ?? "Không có dữ liệu"
+              }</td></tr>
+              <tr><th>Kiểu giảm giá</th><td>${
+                voucher.discountType ?? "Không có dữ liệu"
               }</td></tr>
               <tr><th>Phần trăm giảm</th><td>${
                 voucher.discountPercentage ?? "Không có dữ liệu"
@@ -629,7 +689,8 @@ export default {
         code: "",
         name: "",
         description: "",
-        voucherType: "",
+        voucherCategory: "",
+        discountType: "",
         discountPercentage: "",
         discountAmount: "",
         startTime: "",
@@ -650,7 +711,8 @@ export default {
       // Validate rỗng
       if (
         !formVoucher.value.code ||
-        !formVoucher.value.voucherType ||
+        !formVoucher.value.voucherCategory ||
+        !formVoucher.value.discountType ||
         !formVoucher.value.startTime ||
         !formVoucher.value.endTime ||
         formVoucher.value.minOrderValue === "" ||
@@ -662,7 +724,7 @@ export default {
 
       // Validate số
       if (
-        formVoucher.value.voucherType === "PERCENTAGE" &&
+        formVoucher.value.discountType === "PERCENTAGE" &&
         (isNaN(formVoucher.value.discountPercentage) ||
           formVoucher.value.discountPercentage < 1 ||
           formVoucher.value.discountPercentage > 100)
@@ -671,7 +733,7 @@ export default {
         return;
       }
       if (
-        formVoucher.value.voucherType === "FIXED_AMOUNT" &&
+        formVoucher.value.discountType === "FIXED_AMOUNT" &&
         (isNaN(formVoucher.value.discountAmount) ||
           Number(formVoucher.value.discountAmount) < 1)
       ) {
@@ -733,7 +795,8 @@ export default {
         code: formVoucher.value.code,
         name: toStringOrNull(formVoucher.value.name),
         description: toStringOrNull(formVoucher.value.description),
-        voucherType: formVoucher.value.voucherType, // "FIXED_AMOUNT" hoặc "PERCENTAGE"
+        voucherCategory: formVoucher.value.voucherCategory, // "FIXED_AMOUNT" hoặc "PERCENTAGE"
+        discountType: formVoucher.value.discountType,
         discountPercentage: toNumberOrNull(
           formVoucher.value.discountPercentage
         ),
@@ -826,7 +889,8 @@ export default {
         code: voucher.code,
         name: voucher.name,
         description: voucher.description,
-        voucherType: voucher.voucherType,
+        voucherCategory: voucher.voucherCategory,
+        discountType: voucher.discountType,
         discountPercentage: voucher.discountPercentage,
         discountAmount: voucher.discountAmount,
         startTime: toInputDate(voucher.startTime),

@@ -254,13 +254,13 @@
               >
             </li>
             <li class="nav-item">
-              <a class="nav-link text-dark" href="#">Sách hot</a>
+              <a class="nav-link text-dark" href="#Trend">Xu hướng mua sẵm -Sách hot</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link text-dark" href="#">Sách mới</a>
+              <a class="nav-link text-dark" href="#category-client">Danh mục</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link text-dark" href="#">Flash Sale</a>
+              <a class="nav-link text-dark" href="#flashsale-product">Flash Sale</a>
             </li>
             <li class="nav-item">
               <a class="nav-link text-dark" href="#">Khuyến mãi</a>

@@ -43,7 +43,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <!-- Benefits Summary -->
       <div class="benefits-summary mt-5">
@@ -261,7 +261,9 @@ const rankClass = computed(() => {
 .tier-requirements {
   padding: 16px;
   background: white;
+  background: white;
   border-radius: 8px;
+  border-left: 4px solid #d2e2ee;
   border-left: 4px solid #d2e2ee;
 }
 
@@ -279,6 +281,7 @@ const rankClass = computed(() => {
 }
 
 .benefits-summary {
+  border-top: 1px solid white;
   border-top: 1px solid white;
   padding-top: 32px;
 }
@@ -321,10 +324,12 @@ const rankClass = computed(() => {
     padding: 16px;
   }
 
+
   .tier-tabs {
     flex-direction: column;
     gap: 0;
   }
+
 
   .tier-tab {
     border-bottom: 1px solid #e9ecef;
@@ -332,10 +337,12 @@ const rankClass = computed(() => {
     justify-content: flex-start;
   }
 
+
   .tier-tab.active {
     background: #f8f9fa;
     border-left: 4px solid #dc3545;
   }
+
 
   .benefit-card {
     margin-bottom: 16px;

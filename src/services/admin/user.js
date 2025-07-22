@@ -1,22 +1,28 @@
-import axios from "@/utils/axios";
+import client from '@/utils/axios';
 
 // Lấy danh sách người dùng (có phân trang, lọc)
 export function fetchUsers(params) {
-  return axios.get("/api/users", { params });
+  return client.get('/api/users', { params });
 }
 
 // Lấy chi tiết người dùng
 export function fetchUserDetail(id) {
-  return axios.get(`/api/users/${id}`);
+  return client.get(`/api/users/${id}`);
 }
+
+// Lấy id user theo email
+export function getUserIdByEmail(email) {
+  return client.get('/api/users/userIdByEmail', { params: { email } });
+}
+
 // Lấy thông tin hạng người dùng
 export function getUserRank(userID) {
-  return axios.get("/api/users/userRank", { params: { userID } });
+  return client.get("/api/users/userRank", { params: { userID } });
 }
-// cập nhật mat khẩu người dùng
 
+// Cập nhật mật khẩu người dùng
 export function updateUserPass(id, passCu, passMoi) {
-  return axios.put("/api/users/userPass", null, {
+  return client.put("/api/users/userPass", null, {
     params: {
       id: id,
       passCu: passCu,
@@ -27,32 +33,45 @@ export function updateUserPass(id, passCu, passMoi) {
 
 // Tạo mới người dùng
 export function createUser(data) {
-  return axios.post("/api/users", data);
+  return client.post('/api/users', data);
 }
 
 // Cập nhật người dùng
 export function updateUser(id, data) {
-  return axios.put(`/api/users/${id}`, data);
+  return client.put(`/api/users/${id}`, data);
 }
 
 // Xóa người dùng
 export function deleteUser(id) {
-  return axios.delete(`/api/users/${id}`);
+  return client.delete(`/api/users/${id}`);
 }
 
 // Đổi trạng thái người dùng
 export function toggleUserStatus(id) {
-  return axios.patch(`/api/users/${id}/toggle-status`);
+  return client.patch(`/api/users/${id}/toggle-status`);
 }
+
+// Lấy danh sách users để chọn trong form tạo đơn hàng
+export function getUsersForOrder() {
+  return client.get('/api/users/dropdown');
+}
+
+// Lấy profile người dùng hiện tại
 export function getProfile() {
-  return axios.get("/api/users/profile");
+  return client.get('/api/users/profile');
 }
+
+// Cập nhật profile người dùng hiện tại
 export function updateProfile(id, data) {
-  return axios.put(`/api/users/profile/${id}`, data);
+  return client.put(`/api/users/profile/${id}`, data);
 }
+
+// Tìm user theo text
 export function userpos(text) {
-  return axios.get(`/api/users/userpos`, { params: { text } });
+  return client.get(`/api/users/userpos`, { params: { text } });
 }
+
+// Thêm retailer
 export function addretailer(data) {
-  return axios.post("/api/users/addretail", data);
+  return client.post('/api/users/addretail', data);
 }

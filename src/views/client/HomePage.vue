@@ -10,6 +10,8 @@ import {
 
 import Swal from "sweetalert2";
 import { showToast } from "@/utils/swalHelper";
+import CategoryClient from "./CategoryClient.vue";
+import FlashSaleProduct from "./FlashSaleProduct.vue";
 
 const voucher = ref(null);
 
@@ -150,9 +152,13 @@ onMounted(async () => {
         </div>
       </div>
     </section>
+    <Trend id="Trend"/>
 
+    <div class="container mt-5">
+      <CategoryClient id="category-client"/>
+      <FlashSaleProduct id="flashsale-product"/>
+    </div>
     <!-- Trend section -->
-    <Trend />
   </div>
 </template>
 

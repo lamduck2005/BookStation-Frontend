@@ -1,11 +1,11 @@
 <template>
   <div class="profile-vouchers">
-    <!-- Warning Alert -->
+    <!-- Warning Alert
     <div class="alert alert-warning d-flex align-items-center mb-4">
       <i class="bi bi-exclamation-triangle-fill me-2"></i>
       <span>Bạn vui lòng cắp nhật thông tin tài khoản:</span>
       <a href="#" class="ms-2 text-primary fw-bold">Cắp nhật thông tin ngay</a>
-    </div>
+    </div> -->
 
     <!-- Page Header -->
     <div class="page-header mb-4">
@@ -28,7 +28,7 @@
     <!-- Vouchers List -->
     <div class="vouchers-list">
       <div v-if="loading" class="text-center my-4">Đang tải voucher...</div>
-      <div v-if="error" class="alert alert-danger">{{ error }}</div>
+      <!-- <div v-if="error" class="alert alert-danger">{{ error }}</div> -->
 
       <div v-if="filteredVouchers.length === 0" class="no-vouchers">
         <div class="empty-state">

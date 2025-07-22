@@ -69,6 +69,39 @@
             <form @submit.prevent="submitAddForm">
               <div class="modal-body px-4 py-3">
                 <div class="row g-3">
+                  <div class="col-md-12">
+                    <label class="form-label mb-1 text-secondary small"
+                      >Tìm kiếm User qua Email
+                      <span class="text-danger">*</span></label
+                    >
+                    <div class="input-group">
+                      <input
+                        type="email"
+                        class="form-control rounded-3"
+                        v-model="searchEmail"
+                        placeholder="Nhập email người dùng"
+                        required
+                      />
+                      <button
+                        class="btn btn-outline-primary"
+                        type="button"
+                        @click="handleSearchEmail"
+                        :disabled="searchingEmail"
+                      >
+                        <span
+                          v-if="searchingEmail"
+                          class="spinner-border spinner-border-sm"
+                        ></span>
+                        <span v-else>Tìm kiếm</span>
+                      </button>
+                    </div>
+                    <div v-if="emailError" class="text-danger small mt-1">
+                      {{ emailError }}
+                    </div>
+                    <div v-if="foundUserName" class="text-success small mt-1">
+                      {{ foundUserName }}
+                    </div>
+                  </div>
                   <div class="col-md-6">
                     <label class="form-label mb-1 text-secondary small"
                       >User ID <span class="text-danger">*</span></label
@@ -77,10 +110,14 @@
                       type="number"
                       class="form-control rounded-3"
                       v-model="addForm.userId"
+                      readonly
                       required
-                      placeholder="Nhập User ID"
                     />
+                    <div v-if="userIdError" class="text-danger small mt-1">
+                      {{ userIdError }}
+                    </div>
                   </div>
+
                   <div class="col-md-6">
                     <label class="form-label mb-1 text-secondary small"
                       >Voucher ID</label
@@ -105,6 +142,7 @@
                 <button
                   type="submit"
                   class="btn btn-primary rounded-pill ms-2 px-4"
+                  :disabled="!addForm.userId"
                 >
                   Thêm mới
                 </button>
@@ -179,6 +217,7 @@
 import { ref, computed, onMounted } from "vue";
 import { getUsersByVoucherId } from "@/services/admin/voucher";
 import { addVoucherForNewuser } from "@/services/client/userVoucher";
+import { getUserIdByEmail } from "@/services/admin/user";
 
 export default {
   props: {
@@ -194,12 +233,20 @@ export default {
     const pageSize = ref(10);
     const currentPage = ref(0);
 
+    const userIdError = ref("");
+
     // Modal state
     const showAddForm = ref(false);
     const addForm = ref({
       userId: "",
       voucherId: props.id,
     });
+
+    // Email search state
+    const searchEmail = ref("");
+    const searchingEmail = ref(false);
+    const emailError = ref("");
+    const foundUserName = ref("");
 
     // Lấy voucherId từ props
     const voucherId = Number(props.id);
@@ -265,14 +312,25 @@ export default {
       addForm.value = {
         userId: "",
         voucherId: props.id,
-        usedCount: 0,
       };
+      searchEmail.value = "";
+      emailError.value = "";
+      foundUserName.value = "";
       showAddForm.value = true;
     }
     function closeAddForm() {
       showAddForm.value = false;
     }
     async function submitAddForm() {
+      userIdError.value = ""; // Reset lỗi
+
+      const exists = users.value.some(
+        (user) => user.userId === addForm.value.userId
+      );
+      if (exists) {
+        userIdError.value = "Người dùng này đã được nhận voucher trước đó.";
+        return;
+      }
       try {
         await addVoucherForNewuser(addForm.value);
         showAddForm.value = false;
@@ -284,6 +342,37 @@ export default {
         alert("Thêm thất bại!");
       } finally {
         loading.value = false;
+      }
+    }
+    async function handleSearchEmail() {
+      emailError.value = "";
+      foundUserName.value = "";
+      addForm.value.userId = "";
+      // Validate email
+      const email = searchEmail.value.trim();
+      if (!email) {
+        emailError.value = "Vui lòng nhập email.";
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        emailError.value = "Email không hợp lệ.";
+        return;
+      }
+      searchingEmail.value = true;
+      try {
+        const res = await getUserIdByEmail(email);
+        if (res.data && res.data.status === 200 && res.data.data) {
+          addForm.value.userId = res.data.data;
+          foundUserName.value = res.data.message || ""; // Nếu backend trả về tên, gán vào đây
+        } else {
+          emailError.value =
+            res.data?.message || "Không tìm thấy user với email này.";
+        }
+      } catch (e) {
+        emailError.value = "Không tìm thấy user với email này.";
+      } finally {
+        searchingEmail.value = false;
       }
     }
 
@@ -306,6 +395,12 @@ export default {
       openAddForm,
       closeAddForm,
       submitAddForm,
+      searchEmail,
+      searchingEmail,
+      emailError,
+      handleSearchEmail,
+      foundUserName,
+      userIdError,
       id: props.id,
     };
   },

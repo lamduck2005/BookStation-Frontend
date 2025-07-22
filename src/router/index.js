@@ -9,6 +9,7 @@ import HomePage from "@/views/client/HomePage.vue";
 import NotificationsPage from "@/views/client/NotificationsPage.vue";
 import DemoPage from "@/views/client/DemoPage.vue";
 import CheckoutPage from "@/views/client/CheckoutPage.vue";
+import OrderSuccess from "@/views/client/OrderSuccess.vue";
 import Cart from "@/views/client/Cart.vue";
 import DetailProduct from "@/views/client/DetailProduct.vue";
 import Trend from "@/views/client/Trend.vue";
@@ -52,14 +53,16 @@ import EventGift from "@/views/admin/views-admin/EventGift.vue";
 import EventParticipant from "@/views/admin/views-admin/EventParticipant.vue";
 import EventGiftClaim from "@/views/admin/views-admin/EventGiftClaim.vue";
 import EventHistory from "@/views/admin/views-admin/EventHistory.vue";
+
 import ProductCatalog from "@/views/client/ProductCatalog.vue";
 
 
 import AuthPage from "@/views/AuthPage.vue";
 import { showToast } from "@/utils/swalHelper";
 import ResetPassword from "@/views/ResetPassword.vue";
-import POSVIew from "@/views/client/POSVIew.vue";
+
 import UserVoucher from "@/views/admin/views-admin/UserVoucher.vue";
+import POSVIew from "@/views/client/POSVIew.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -87,7 +90,19 @@ const router = createRouter({
         {
           path: "checkout",
           name: "checkout",
+          component: CheckoutPage
+        },
+        {
+          path: "checkout/:sessionId",
+          name: "checkout-session",
           component: CheckoutPage,
+          props: true,
+        },
+        {
+          path: "order/success/:orderId",
+          name: "order-success",
+          component: OrderSuccess,
+          props: true,
         },
         {
           path: "cart",
@@ -183,6 +198,7 @@ const router = createRouter({
           name: "product-catalog",
           component: ProductCatalog,
         },
+
       ],
     },
     // Trang auth, không thuộc parent nào
@@ -333,7 +349,7 @@ const router = createRouter({
           name: "event-history",
           component: EventHistory,
         },
-        {
+         {
           path: "pos-view",
           name: "pos-view",
           component: POSVIew,
