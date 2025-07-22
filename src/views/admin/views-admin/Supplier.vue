@@ -3,7 +3,7 @@
     <!-- Breadcrumb -->
     <div class="mb-3">
       <h6 class="text-muted">
-        Admin / <strong>Supplier</strong>
+        Quản trị viên / <strong>Nhà cung cấp</strong>
       </h6>
     </div>
     
@@ -99,11 +99,9 @@
               <tr>
                 <th style="min-width: 50px;">STT</th>
                 <th style="min-width: 200px;">Tên nhà cung cấp</th>
-                <th style="min-width: 150px;">Người liên hệ</th>
                 <th style="min-width: 150px;">Email</th>
                 <th style="min-width: 120px;">Số điện thoại</th>
                 <th style="min-width: 120px;">Địa chỉ</th>
-                <th style="min-width: 100px;">Trạng thái</th>
                 <th style="min-width: 120px;">Thao tác</th>
               </tr>
             </thead>
@@ -115,29 +113,12 @@
                     <strong>{{ supplier.supplierName }}</strong>
                   </div>
                 </td>
-                <td>
-                  <div>
-                    <div>{{ supplier.contactName }}</div>
-                  </div>
-                </td>
                 <td>{{ supplier.email }}</td>
                 <td>{{ supplier.phoneNumber }}</td>
                 <td>{{ supplier.address }}</td>
                 <td>
-                  <ToggleStatus 
-                    :id="supplier.id"
-                    :model-value="Number(supplier.status)"
-                    :true-value="1"
-                    :false-value="0"
-                    active-text="Hoạt động"
-                    inactive-text="Không hoạt động"
-                    @change="handleStatusChange(supplier, $event)"
-                  />
-                </td>
-                <td>
                   <div class="d-flex gap-2">
                     <EditButton @click="openEditModal(supplier, index)" />
-                    <DeleteButton @click="handleDelete(supplier)" />
                   </div>
                 </td>
               </tr>

@@ -1011,7 +1011,8 @@ const initializeData = async () => {
       getBooksForOrder()
     ]);
     
-    orderStatuses.value = statusesResponse.data || [];
+    // Lọc bỏ trạng thái 'REFUND_REQUESTED' khỏi danh sách trạng thái
+    orderStatuses.value = (statusesResponse.data || []).filter(status => status.value !== 'REFUND_REQUESTED');
     orderTypes.value = typesResponse.data || [];
     
     // Process users từ API /api/users/dropdown (trả về array trực tiếp)
@@ -1899,7 +1900,7 @@ const getAvailableStatusTransitions = (currentStatus) => {
     'PENDING': ['CONFIRMED', 'CANCELED'], // Chờ xác nhận → Đã xác nhận hoặc Hủy
     'CONFIRMED': ['SHIPPED', 'CANCELED'], // Đã xác nhận → Đang giao hàng hoặc Hủy (trong một số trường hợp)
     'SHIPPED': ['DELIVERED', 'GOODS_RETURNED_TO_WAREHOUSE'], // Đang giao hàng → Đã giao hàng hoặc Hàng về kho
-    'DELIVERED': ['REFUND_REQUESTED'], // Đã giao hàng → Yêu cầu hoàn trả (do khách hàng)
+    'DELIVERED': [], // Đã giao hàng → Không cho phép admin chuyển sang yêu cầu hoàn trả
     'REFUND_REQUESTED': ['REFUNDING', 'DELIVERED'], // Admin xử lý: Chấp nhận hoàn trả hoặc Từ chối
     'REFUNDING': ['REFUNDED', 'PARTIALLY_REFUNDED'], // Đang hoàn trả → Hoàn trả toàn bộ hoặc một phần
     'CANCELED': [], // Đã hủy - trạng thái cuối
