@@ -1,5 +1,5 @@
 ---
-alwaysApply true
+alwaysApply : true
 
 - Chỉ nên tận dụng tài nguyên hiện có trước khi đề xuất dùng thư viện mới 
 - Project có dùng bootstrap, sweetalert2, ưu tiên dùng

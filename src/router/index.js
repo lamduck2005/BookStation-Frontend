@@ -61,6 +61,7 @@ import AuthPage from "@/views/AuthPage.vue";
 import { showToast } from "@/utils/swalHelper";
 import ResetPassword from "@/views/ResetPassword.vue";
 import POSVIew from "@/views/client/POSVIew.vue";
+import OrderFail from "@/views/client/OrderFail.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -101,6 +102,11 @@ const router = createRouter({
           name: "order-success",
           component: OrderSuccess,
           props: true,
+        },
+        {
+          path: "order/fail",
+          name: "order-fail",
+          component: OrderFail,
         },
         {
           path: "cart",

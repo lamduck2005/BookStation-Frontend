@@ -243,6 +243,16 @@ export const deleteCheckoutSession = async (sessionId, userId) => {
   }
 }
 
+export const createVNPayPaymentUrl = async (sessionId, userId) => {
+  try {
+    const response = await axiosClient.post(`/api/payment/vnpay/create-url?sessionId=${sessionId}&userId=${userId}`)
+    return response
+  } catch (error) {
+    console.error('Error creating VNPay payment URL:', error)
+    throw error
+  }
+}
+
 // Export tất cả functions
 export default {
   // Session Management
@@ -261,5 +271,6 @@ export default {
   // Utility functions
   recalculateSessionPricing,
   extendCheckoutSession,
-  markSessionCompleted
+  markSessionCompleted,
+  createVNPayPaymentUrl
 }

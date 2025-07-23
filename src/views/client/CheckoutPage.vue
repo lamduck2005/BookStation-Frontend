@@ -141,7 +141,7 @@
             </div>
 
             <!-- Chuyển khoản ngân hàng -->
-            <div class="d-flex align-items-center mb-2 p-2 border rounded" :class="{ 'border-primary bg-light': session?.paymentMethod === 'BANK_TRANSFER' }">
+            <!-- <div class="d-flex align-items-center mb-2 p-2 border rounded" :class="{ 'border-primary bg-light': session?.paymentMethod === 'BANK_TRANSFER' }">
               <div class="form-check me-2">
                 <input 
                   class="form-check-input" 
@@ -166,7 +166,7 @@
                   </div>
                 </div>
               </div>
-            </div>
+            </div> -->
 
             <!-- VNPay -->
             <div class="d-flex align-items-center mb-2 p-2 border rounded" :class="{ 'border-primary bg-light': session?.paymentMethod === 'VNPAY' }">
@@ -606,7 +606,8 @@ import {
   validateCheckoutSession,
   createOrderFromSession,
   recalculateSessionPricing,
-  updateCheckoutSession
+  updateCheckoutSession,
+  createVNPayPaymentUrl
 } from '@/services/client/checkout.js'
 import { getAddresses } from '@/services/client/address.js'
 import { getUserId } from '@/utils/utils.js'
@@ -766,8 +767,16 @@ const processPayment = async () => {
     if (!session.value.paymentMethod) {
       console.log('💳 Setting default payment method to COD...')
       await updateSessionPaymentMethod('COD')
+    } else if (session.value.paymentMethod === 'VNPAY') {
+      const response = await createVNPayPaymentUrl(sessionId.value, userId)
+      if(response.data.data) {
+        const paymentUrl = response.data.data
+        window.location.href = paymentUrl
+      } else {
+        showToast('error', 'Có lỗi khi thanh toán bằng VNPay, vui lòng thử lại.')
+      }
+      return
     }
-    
     // Tạo đơn hàng từ session
     console.log('📝 Creating order from session...')
     const response = await createOrderFromSession(sessionId.value, userId)
