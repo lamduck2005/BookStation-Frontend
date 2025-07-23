@@ -58,3 +58,14 @@ export const upStatusVouchers = async (id, status, updatedBy) => {
     throw error;
   }
 };
+
+// Lấy danh sách user theo voucherId
+export const getUsersByVoucherId = async (voucherId) => {
+  try {
+    const response = await client.get(`/api/vouchers/newVoucher/${voucherId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách user theo voucherId:", error);
+    throw error;
+  }
+};

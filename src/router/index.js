@@ -54,12 +54,15 @@ import EventGift from "@/views/admin/views-admin/EventGift.vue";
 import EventParticipant from "@/views/admin/views-admin/EventParticipant.vue";
 import EventGiftClaim from "@/views/admin/views-admin/EventGiftClaim.vue";
 import EventHistory from "@/views/admin/views-admin/EventHistory.vue";
+
 import ProductCatalog from "@/views/client/ProductCatalog.vue";
 
 
 import AuthPage from "@/views/AuthPage.vue";
 import { showToast } from "@/utils/swalHelper";
 import ResetPassword from "@/views/ResetPassword.vue";
+
+import UserVoucher from "@/views/admin/views-admin/UserVoucher.vue";
 import POSVIew from "@/views/client/POSVIew.vue";
 
 const router = createRouter({
@@ -286,6 +289,12 @@ const router = createRouter({
           component: Voucher,
         },
         {
+          path: "userVoucher/:id",
+          name: "Voucher của người dùng",
+          component: UserVoucher,
+          props: true,
+        },
+        {
           path: "supplier",
           name: "Supplier",
           component: Supplier,
@@ -293,7 +302,7 @@ const router = createRouter({
         {
           path: "publisher",
           name: "Publisher",
-          component: () => import('@/views/admin/views-admin/Publisher.vue'),
+          component: () => import("@/views/admin/views-admin/Publisher.vue"),
         },
         {
           path: "rank",

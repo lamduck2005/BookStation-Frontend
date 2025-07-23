@@ -57,7 +57,7 @@
           </div>
           <div class="password-requirements mt-2">
             <small class="text-muted">
-              Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số
+              Mật khẩu phải có ít nhất 6 ký tự, bao gồm chữ hoa, chữ thường và số
             </small>
           </div>
         </div>
@@ -113,6 +113,9 @@
 
 <script setup>
 import { ref, reactive, computed } from 'vue'
+import { updateUserPass,fetchUserDetail } from '@/services/admin/user'
+import { getUserId } from '@/utils/utils'
+import { showToast } from '@/utils/swalHelper'
 
 const showCurrentPassword = ref(false)
 const showNewPassword = ref(false)
@@ -136,41 +139,48 @@ const canSubmit = computed(() => {
          passwordForm.newPassword &&
          passwordForm.confirmPassword &&
          passwordsMatch.value &&
-         passwordForm.newPassword.length >= 8
+         passwordForm.newPassword.length >= 6
 })
 
 // Validate password strength
 const isPasswordStrong = (password) => {
-  const strongPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+  const strongPassword = /^.{6,}$/
   return strongPassword.test(password)
 }
 
 // Change password
-const changePassword = () => {
-  if (!canSubmit.value) {
-    return
-  }
+const changePassword = async () => {
+  if (!canSubmit.value) return;
 
   if (!isPasswordStrong(passwordForm.newPassword)) {
-    alert('Mật khẩu không đủ mạnh. Vui lòng sử dụng mật khẩu có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.')
-    return
+    // alert('Mật khẩu không đủ mạnh. Vui lòng sử dụng mật khẩu có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.');
+    showToast('error', 'Mật khẩu không đủ mạnh', 'Vui lòng sử dụng mật khẩu có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.');
+    return;
   }
 
-  // TODO: API call to change password
-  console.log('Changing password:', {
-    currentPassword: passwordForm.currentPassword,
-    newPassword: passwordForm.newPassword
-  })
-  
-  alert('Đổi mật khẩu thành công!')
-  
-  // Reset form
-  Object.assign(passwordForm, {
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  })
+  try {
+    const userID = getUserId(); // Lấy ID người dùng từ localStorage hoặc cookie
+
+    const res = await updateUserPass(userID, passwordForm.currentPassword, passwordForm.newPassword);
+
+    if (res.data === true) {
+      // alert('Đổi mật khẩu thành công!');
+      showToast('success', 'Đổi mật khẩu thành công!');
+      Object.assign(passwordForm, {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    } else {
+      showToast('warning','Mật khẩu hiện tại không đúng hoặc trùng mật khẩu cũ!');
+    }
+
+  } catch (error) {
+    alert('Lỗi khi đổi mật khẩu. Vui lòng thử lại sau.');
+    console.error(error);
+  }
 }
+
 </script>
 
 <style scoped>
