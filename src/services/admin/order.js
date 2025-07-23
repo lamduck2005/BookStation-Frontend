@@ -35,11 +35,12 @@ export const validatePrices = async (orderData) => {
   try {
     console.log('=== DEBUG: Validating prices ===');
     console.log('Order data for validation:', orderData);
-    
-    const response = await client.post('/api/orders/validate-prices', orderData);
+    // Truyền userId lên query string
+    const userId = orderData.userId;
+    const payload = orderData.payload;
+    const response = await client.post(`/api/orders/validate-prices?userId=${userId}`, payload);
     console.log('=== DEBUG: Price validation response ===');
     console.log('Response:', response.data);
-    
     return response.data;
   } catch (error) {
     console.error('Lỗi khi validate giá sản phẩm:', error);

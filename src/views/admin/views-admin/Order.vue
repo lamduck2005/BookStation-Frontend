@@ -2013,13 +2013,14 @@ const reloadBookPricesFromDropdown = async () => {
 
 // Validate all prices in the order using the new API
 const validateAllPrices = async () => {
-  // Build array from current items, only bookId and frontendPrice
+  // Build array from current items: [{bookId, frontendPrice, quantity}]
   const payload = newOrder.value.items.map(detail => ({
     bookId: detail.bookId,
-    frontendPrice: detail.unitPrice // always from dropdown
+    frontendPrice: detail.unitPrice,
+    quantity: detail.quantity
   }));
   try {
-    const response = await validatePrices(payload); // send array directly
+    const response = await validatePrices({ userId: newOrder.value.userId, payload });
     // Nếu API trả về data là "valid" (string) hoặc response.data.valid === true thì hợp lệ
     if (
       response &&
