@@ -22,17 +22,6 @@
               placeholder="Nhập tên danh mục..."
             />
           </div>
-          <div class="col-md-6">
-            <label class="form-label">
-              <i class="bi bi-toggle-on me-1"></i>
-              Trạng thái
-            </label>
-            <select class="form-select" v-model="selectedStatus">
-              <option value="">Tất cả trạng thái</option>
-              <option value="1">Hoạt động</option>
-              <option value="0">Không hoạt động</option>
-            </select>
-          </div>
         </div>
         <div class="row g-3 pt-3 d-flex justify-content-center">
           <div class="col-md-1">
@@ -113,7 +102,6 @@
                 <th style="width: 60px">#</th>
                 <th style="width: 45%">Tên danh mục</th>
                 <th style="width: 25%">Mô tả</th>
-                <th style="width: 120px">Trạng thái</th>
                 <th class="text-center" style="width: 150px">Chức năng</th>
               </tr>
             </thead>
@@ -161,20 +149,6 @@
                     <div class="description-text" :title="category.description">
                       {{ category.description || "Không có mô tả" }}
                     </div>
-                  </td>
-                  <td class="py-3">
-                    <!-- Thay thế badge bằng ToggleStatus -->
-                    <ToggleStatus
-                      :id="category.id"
-                      v-model="category.status"
-                      :true-value="1"
-                      :false-value="0"
-                      active-text="Hoạt động"
-                      inactive-text="Không hoạt động"
-                      @change="
-                        (status) => handleToggleStatus(category.id, status)
-                      "
-                    />
                   </td>
                   <td class="py-3 text-center">
                     <div class="d-inline-flex gap-1">
@@ -227,20 +201,6 @@
                       <div class="description-text" :title="child.description">
                         {{ child.description || "Không có mô tả" }}
                       </div>
-                    </td>
-                    <td class="py-2">
-                      <!-- Thay thế badge bằng ToggleStatus cho child category -->
-                      <ToggleStatus
-                        :id="child.id"
-                        v-model="child.status"
-                        :true-value="1"
-                        :false-value="0"
-                        active-text="Hoạt động"
-                        inactive-text="Không hoạt động"
-                        @change="
-                          (status) => handleToggleStatus(child.id, status)
-                        "
-                      />
                     </td>
                     <td class="py-2 text-center">
                       <div class="d-inline-flex gap-1">
@@ -333,13 +293,6 @@
                 class="form-control"
                 placeholder="Nhập mô tả"
               ></textarea>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Trạng thái</label>
-              <select v-model="category.status" class="form-select">
-                <option :value="1">Hoạt động</option>
-                <option :value="0">Không hoạt động</option>
-              </select>
             </div>
           </form>
         </div>
@@ -475,16 +428,6 @@
                 placeholder="Nhập mô tả"
               ></textarea>
             </div>
-            <!-- ✅ THÊM FIELD TRẠNG THÁI -->
-            <div class="mb-3">
-              <label class="form-label"
-                >Trạng thái <span class="text-danger">*</span></label
-              >
-              <select v-model="editData.status" class="form-select" required>
-                <option :value="1">Hoạt động</option>
-                <option :value="0">Không hoạt động</option>
-              </select>
-            </div>
           </form>
         </div>
         <div class="modal-footer">
@@ -560,7 +503,6 @@ const editData = ref({
   description: "",
 });
 const searchQuery = ref("");
-const selectedStatus = ref("");
 
 // Pagination variables
 const currentPage = ref(0);
@@ -587,7 +529,6 @@ const fetchCategory = async () => {
       page: currentPage.value,
       size: pageSize.value,
       name: searchQuery.value || undefined,
-      status: selectedStatus.value || undefined,
     };
 
     const response = await getAllParentCategories(params);
@@ -695,18 +636,6 @@ const validateCategoryForm = () => {
     return false;
   }
 
-  // Validate trạng thái
-  if (category.value.status !== 0 && category.value.status !== 1) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cảnh báo!",
-      text: "Trạng thái không hợp lệ",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    return false;
-  }
-
   return true;
 };
 
@@ -775,7 +704,6 @@ const add = async () => {
   const payload = {
     categoryName: category.value.categoryName.trim(),
     description: category.value.description?.trim() || "",
-    status: parseInt(category.value.status),
     parentCategory: {
       id: category.value.parentCategory.id || null,
     },
@@ -831,7 +759,6 @@ const handleUpdateCategory = async (id, categoryData) => {
       categoryName: categoryData.categoryName.trim(),
       description: categoryData.description?.trim() || "",
       parentCategory: categoryData.parentCategory || null,
-      status: categoryData.status, // Thêm status vào payload
     };
 
     await updateCategory(id, payload);
@@ -907,7 +834,6 @@ const fillFakeData = () => {
   category.value = {
     categoryName: `${randomCategoryName} #${timestamp}`,
     description: randomDescription,
-    status: randomStatus,
     parentCategory: {
       id: randomParentId,
       categoryName: "",
@@ -962,40 +888,8 @@ const handleDeleteCategory = async (id) => {
   }
 };
 
-// Hàm xử lý toggle status
-const handleToggleStatus = async (id, status) => {
-  try {
-    await toggleStatus(id);
-    // Refresh lại danh sách để đảm bảo đồng bộ
-    fetchCategory();
-    Swal.fire({
-      icon: "success",
-      title: `Đã ${status === 1 ? "kích hoạt" : "tắt"} trạng thái!`,
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true,
-    });
-  } catch (error) {
-    console.error("Lỗi khi thay đổi trạng thái:", error);
-    // Refresh lại để khôi phục trạng thái cũ
-    fetchCategory();
-    Swal.fire({
-      icon: "error",
-      title: "Thay đổi trạng thái thất bại!",
-      text: "Không thể thay đổi trạng thái danh mục.",
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true,
-    });
-  }
-};
-
 // Watch để tự động fetch khi thay đổi filter hoặc phân trang
-watch([searchQuery, selectedStatus, pageSize, currentPage], () => {
+watch([searchQuery, pageSize, currentPage], () => {
   debounce(fetchCategory(), 500);
 });
 
@@ -1018,7 +912,6 @@ const resetForm = () => {
   category.value = {
     categoryName: "",
     description: "",
-    status: 1, // Mặc định là hoạt động
     parentCategory: {
       id: null,
       categoryName: "",
@@ -1034,7 +927,6 @@ const resetEditForm = () => {
     categoryName: "",
     description: "",
     parentCategory: null,
-    status: 1, // Mặc định là hoạt động
   };
 };
 
@@ -1048,7 +940,6 @@ const editCategory = async (id) => {
       categoryName: data.categoryName,
       description: data.description,
       parentCategory: data.parentCategory,
-      status: data.status, // Thêm status vào edit data
     };
     showEditModal.value = true;
   } catch (error) {
@@ -1082,7 +973,6 @@ const closeDetailModal = () => {
 const reloadPage = () => {
   currentPage.value = 0;
   searchQuery.value = "";
-  selectedStatus.value = "";
   fetchCategory();
 };
 
@@ -1094,7 +984,6 @@ const searchWithFilter = () => {
 
 const clearFilters = () => {
   searchQuery.value = "";
-  selectedStatus.value = "";
   currentPage.value = 0;
   fetchCategory();
 };
