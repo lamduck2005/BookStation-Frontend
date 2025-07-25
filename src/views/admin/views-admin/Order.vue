@@ -289,18 +289,29 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label enhanced-label">Địa chỉ giao hàng <span class="text-danger">*</span></label>
-                  <select 
-                    class="form-select enhanced-input" 
-                    v-model="newOrder.addressId"
-                    :disabled="!newOrder.userId"
-                    required
-                    @change="onAddressChange"
-                  >
-                    <option value="">-- Chọn địa chỉ giao hàng --</option>
-                    <option v-for="address in userAddresses" :key="address.id" :value="address.id">
-                      {{ address.name }}
-                    </option>
-                  </select>
+                  <div class="d-flex gap-2">
+                    <select 
+                      class="form-select enhanced-input" 
+                      v-model="newOrder.addressId"
+                      :disabled="!newOrder.userId"
+                      required
+                      @change="onAddressChange"
+                    >
+                      <option value="">-- Chọn địa chỉ giao hàng --</option>
+                      <option v-for="address in userAddresses" :key="address.id" :value="address.id">
+                        {{ address.recipientName }} - {{ address.phoneNumber }} - {{ address.addressDetail }}
+                      </option>
+                    </select>
+                    <button 
+                      type="button" 
+                      class="btn btn-outline-primary btn-sm"
+                      :disabled="!newOrder.userId"
+                      @click="openAddAddressModal"
+                      title="Thêm địa chỉ mới"
+                    >
+                      <i class="bi bi-plus-circle"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -312,7 +323,7 @@
                 <h6 class="section-title">Thông tin đơn hàng</h6>
               </div>
               <div class="row g-3">
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <label class="form-label enhanced-label">Phí vận chuyển <span class="text-danger">*</span></label>
                   <input 
                     type="number" 
@@ -325,7 +336,7 @@
                     required
                   />
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <label class="form-label enhanced-label">Loại đơn hàng</label>
                   <select 
                     class="form-select enhanced-input" 
@@ -341,18 +352,7 @@
                     {{ newOrder.orderType === 'COUNTER' ? 'Đơn tại quầy' : 'Đơn online' }}
                   </small>
                 </div>
-                <div class="col-md-3">
-                  <label class="form-label enhanced-label">Trạng thái</label>
-                  <select 
-                    class="form-select enhanced-input" 
-                    v-model="newOrder.orderStatus"
-                  >
-                    <option v-for="status in orderStatuses" :key="status.value" :value="status.value">
-                      {{ status.displayName }}
-                    </option>
-                  </select>
-                </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <label class="form-label enhanced-label">Nhân viên tạo đơn</label>
                   <input 
                     type="text" 
@@ -380,7 +380,7 @@
             <div class="form-section" v-if="newOrder.userId">
               <div class="section-header">
                 <i class="bi bi-ticket section-icon"></i>
-                <h6 class="section-title">Vouchers (Tối đa 2 voucher)</h6>
+                <h6 class="section-title">Vouchers (Tối đa 2 voucher: 1 Giảm giá vận chuyển + 1 Giảm giá sản phẩm)</h6>
               </div>
               <div class="row g-3">
                 <div class="col-12">
@@ -388,32 +388,50 @@
                     <div v-if="userVouchers.length === 0" class="text-muted">
                       Khách hàng này không có voucher khả dụng
                     </div>
-                    <div v-else class="row g-2">
+                    <div v-else class="row g-3">
                       <div 
                         v-for="voucher in userVouchers" 
                         :key="voucher.id"
-                        class="col-md-6"
+                        class="col-12"
                       >
-                        <div class="voucher-item" :class="{ 'selected': newOrder.voucherIds.includes(voucher.id) }">
-                          <div class="form-check">
-                            <input 
-                              class="form-check-input" 
-                              type="checkbox" 
-                              :value="voucher.id"
-                              v-model="newOrder.voucherIds"
-                              :disabled="!newOrder.voucherIds.includes(voucher.id) && newOrder.voucherIds.length >= 2"
-                              :id="'voucher-' + voucher.id"
-                              @change="onVoucherChange"
-                            >
-                            <label class="form-check-label" :for="'voucher-' + voucher.id">
-                              <div class="voucher-content">
-                                <div class="voucher-name">{{ voucher.name }}</div>
-                                <div class="voucher-discount">{{ voucher.description || 'Voucher giảm giá' }}</div>
-                                <div class="voucher-condition text-muted small">
-                                  Loại: {{ voucher.voucherType || 'N/A' }}
+                        <div class="voucher-item card" :class="{ 'selected border-primary': newOrder.voucherIds.includes(voucher.id) }">
+                          <div class="card-body p-3">
+                            <div class="form-check">
+                              <input 
+                                class="form-check-input" 
+                                type="checkbox" 
+                                :value="voucher.id"
+                                v-model="newOrder.voucherIds"
+                                :disabled="!newOrder.voucherIds.includes(voucher.id) && (newOrder.voucherIds.length >= 2 || !canSelectVoucher(voucher))"
+                                :id="'voucher-' + voucher.id"
+                                @change="onVoucherChange"
+                              >
+                              <label class="form-check-label w-100" :for="'voucher-' + voucher.id">
+                                <div class="voucher-content">
+                                  <div class="row">
+                                    <div class="col-md-8">
+                                      <div class="voucher-name fw-bold text-primary">{{ voucher.code }} - {{ voucher.name }}</div>
+                                      <div class="voucher-description text-muted small mb-2">{{ voucher.description }}</div>
+                                      <div class="voucher-info">
+                                        <span class="badge bg-info me-2">{{ voucher.categoryVi }}</span>
+                                        <span class="badge bg-secondary me-2">{{ voucher.discountTypeVi }}</span>
+                                        <span class="text-success fw-bold">{{ voucher.discountInfo }}</span>
+                                      </div>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                      <div class="voucher-usage mb-2">
+                                        <div class="small text-muted">Số lượng còn lại:</div>
+                                        <div class="fw-bold text-success">{{ voucher.remainingUses }}/{{ voucher.usageLimit }}</div>
+                                      </div>
+                                      <div class="voucher-expire">
+                                        <div class="small text-muted">Hết hạn:</div>
+                                        <div class="small fw-bold text-warning">{{ voucher.expireDate }}</div>
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                            </label>
+                              </label>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -442,27 +460,93 @@
                 </button>
               </div>
 
+              <!-- Product Search -->
+              <div class="mb-4">
+                <label class="form-label">Tìm kiếm sản phẩm để thêm vào đơn hàng</label>
+                <div class="position-relative">
+                  <div class="input-group">
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      v-model="productSearchTerm"
+                      @input="onProductSearch"
+                      @focus="showProductSearchResults = true"
+                      placeholder="Nhập tên sách hoặc mã sách để tìm kiếm..."
+                    />
+                    <button 
+                      type="button" 
+                      class="btn btn-outline-secondary"
+                      @click="clearProductSearch"
+                      v-if="productSearchTerm || showProductSearchResults"
+                    >
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                  
+                  <!-- Search Results -->
+                  <div 
+                    v-if="showProductSearchResults && productSearchResults.length > 0"
+                    class="position-absolute bg-white border rounded-3 shadow-lg w-100 mt-1"
+                    style="z-index: 1050; max-height: 300px; overflow-y: auto;"
+                  >
+                    <div class="p-2 bg-light border-bottom d-flex justify-content-between align-items-center">
+                      <small class="text-muted">{{ productSearchResults.length }} sản phẩm tìm thấy</small>
+                      <button 
+                        type="button" 
+                        class="btn btn-sm btn-outline-secondary"
+                        @click="showProductSearchResults = false"
+                      >
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+                    <div 
+                      v-for="book in productSearchResults" 
+                      :key="book.id"
+                      class="p-3 border-bottom hover-bg-light cursor-pointer"
+                      @click="addBookToOrder(book)"
+                    >
+                      <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                          <div class="fw-bold text-primary">#{{ book.id }} - {{ book.name }}</div>
+                          <div class="small text-muted mb-1">Mã: {{ book.bookCode }}</div>
+                          <div class="d-flex gap-2 mb-1">
+                            <span class="badge bg-secondary">Tồn kho: {{ book.stockQuantity }}</span>
+                            <span class="badge bg-warning" v-if="book.processingQuantity > 0">Đang xử lý: {{ book.processingQuantity }}</span>
+                            <span class="badge bg-info" v-if="book.soldQuantity > 0">Đã bán: {{ book.soldQuantity }}</span>
+                          </div>
+                          <div v-if="book.isFlashSale" class="d-flex gap-2">
+                            <span class="badge bg-danger">🔥 Flash Sale</span>
+                            <span class="badge bg-success">Tồn kho FS: {{ book.flashSaleStockQuantity }}</span>
+                            <span class="badge bg-warning" v-if="book.flashSaleProcessingQuantity > 0">FS đang xử lý: {{ book.flashSaleProcessingQuantity }}</span>
+                          </div>
+                        </div>
+                        <div class="text-end">
+                          <div class="fw-bold text-success">{{ formatCurrency(book.normalPrice) }}</div>
+                          <div v-if="book.isFlashSale" class="text-decoration-line-through text-muted small">{{ formatCurrency(book.originalPrice) }}</div>
+                          <div v-if="book.isFlashSale" class="text-danger fw-bold">🔥 {{ formatCurrency(book.flashSalePrice) }}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Product rows -->
               <div v-if="newOrder.items.length === 0" class="text-muted text-center py-4">
-                Chưa có sản phẩm nào. Nhấn "Thêm sản phẩm" để bắt đầu.
+                Chưa có sản phẩm nào. Tìm kiếm và click vào sản phẩm ở trên để thêm vào đơn hàng.
               </div>
               
               <div v-for="(detail, index) in newOrder.items" :key="index" class="product-row mb-3">
                 <div class="row g-3 align-items-end">
                   <div class="col-md-5">
                     <label class="form-label">Sách <span class="text-danger">*</span></label>
-                    <select 
-                      class="form-select" 
-                      v-model="detail.bookId"
-                      @change="onBookChange(detail, index)"
-                      required
-                    >
-                      <option value="">-- Chọn sách --</option>
-                      <option v-for="book in books" :key="book.id" :value="book.id">
-                        {{ book.title }}
-                        {{ book.isFlashSale ? '🔥' : '' }}
-                      </option>
-                    </select>
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      :value="getBookDisplayName(detail.bookId)"
+                      readonly
+                      style="background-color: #f8f9fa;"
+                    />
                   </div>
                   <div class="col-md-2">
                     <label class="form-label">Số lượng <span class="text-danger">*</span></label>
@@ -484,6 +568,7 @@
                       min="0"
                       step="1000"
                       readonly
+                      style="background-color: #f8f9fa;"
                     />
                   </div>
                   <div class="col-md-2">
@@ -633,6 +718,14 @@
           <button type="button" class="btn btn-secondary btn-cancel" data-bs-dismiss="modal">
             <i class="bi bi-x-circle me-1"></i>
             Hủy
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-info me-2" 
+            @click="fillSampleData"
+          >
+            <i class="bi bi-database me-1"></i>
+            Dữ liệu mẫu
           </button>
           <button 
             type="button" 
@@ -858,6 +951,142 @@
       </div>
     </div>
   </div>
+
+  <!-- Add Address Modal -->
+  <div class="modal fade" id="addAddressModal" tabindex="-1" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addAddressModalLabel">
+            <i class="bi bi-geo-alt me-2"></i>Thêm địa chỉ mới
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        
+        <div class="modal-body">
+          <form @submit.prevent="handleSaveAddress">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Họ và tên *</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  v-model="addressForm.recipientName"
+                  placeholder="Nguyễn Văn A"
+                  required
+                />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Số điện thoại *</label>
+                <input 
+                  type="tel" 
+                  class="form-control" 
+                  v-model="addressForm.phoneNumber"
+                  placeholder="0123456789"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Địa chỉ *</label>
+              <input 
+                type="text" 
+                class="form-control" 
+                v-model="addressForm.addressDetail"
+                placeholder="Số nhà 1, ngõ 1"
+                required
+              />
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label class="form-label">Tỉnh/Thành phố *</label>
+                <select class="form-select" v-model="addressForm.provinceId" required @change="onProvinceChange">
+                  <option value="">Chọn tỉnh/thành phố</option>
+                  <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">
+                    {{ p.ProvinceName }}
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Quận/Huyện *</label>
+                <select class="form-select" v-model="addressForm.districtId" required @change="onDistrictChange">
+                  <option value="">Chọn quận/huyện</option>
+                  <option v-for="d in districts" :key="d.DistrictID" :value="d.DistrictID">
+                    {{ d.DistrictName || d.ProvinceName }}
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Phường/Xã *</label>
+                <select class="form-select" v-model="addressForm.wardCode" required @change="onWardChange">
+                  <option value="">Chọn phường/xã</option>
+                  <option v-for="w in wards" :key="w.WardCode" :value="w.WardCode">
+                    {{ w.WardName }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Loại địa chỉ</label>
+              <div class="form-check-group">
+                <div class="form-check form-check-inline">
+                  <input 
+                    class="form-check-input" 
+                    type="radio" 
+                    name="addressType" 
+                    id="home"
+                    value="HOME"
+                    v-model="addressForm.addressType"
+                  />
+                  <label class="form-check-label" for="home">Nhà riêng</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input 
+                    class="form-check-input" 
+                    type="radio" 
+                    name="addressType" 
+                    id="office"
+                    value="OFFICE"
+                    v-model="addressForm.addressType"
+                  />
+                  <label class="form-check-label" for="office">Văn phòng</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check">
+                <input 
+                  class="form-check-input" 
+                  type="checkbox" 
+                  id="isDefault"
+                  v-model="addressForm.isDefault"
+                />
+                <label class="form-check-label" for="isDefault">
+                  Đặt làm địa chỉ mặc định
+                </label>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+              <button 
+                type="submit" 
+                class="btn btn-primary"
+                :disabled="isSavingAddress"
+              >
+                <span v-if="isSavingAddress" class="spinner-border spinner-border-sm me-2"></span>
+                Lưu địa chỉ
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -865,7 +1094,7 @@ import EditButton from '@/components/common/EditButton.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import AddButton from '@/components/common/AddButton.vue';
 import StatusLabel from '@/components/common/StatusLabel.vue';
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { Modal } from 'bootstrap';
 import {
   getOrders, 
@@ -896,6 +1125,7 @@ import {
 } from '@/services/admin/order';
 import { getUsersForOrder } from '@/services/admin/user';
 import { getBooksForOrder, getBooksDropdown, validateQuantity } from '@/services/admin/book';
+import { addAddressAtAdmin } from '@/services/client/address';
 import Swal from 'sweetalert2';
 import { ghn } from '@/utils/giaohangnhanh';
 import { getUserId } from '@/utils/utils.js';
@@ -934,6 +1164,33 @@ const isCalculating = ref(false);
 // Modal states
 let addOrderModal = null;
 let orderDetailModal = null;
+
+// Address modal states
+const isSavingAddress = ref(false);
+const provinces = ref([]);
+const districts = ref([]);
+const wards = ref([]);
+
+// Address form
+const addressForm = ref({
+  recipientName: '',
+  phoneNumber: '',
+  addressDetail: '',
+  provinceName: '',
+  provinceId: '',
+  districtName: '',
+  districtId: '',
+  wardName: '',
+  wardCode: '',
+  isDefault: false,
+  addressType: 'HOME'
+});
+
+// Product search states
+const productSearchTerm = ref('');
+const productSearchResults = ref([]);
+const showProductSearchResults = ref(false);
+let productSearchTimeout = null;
 
 // New order form data
 const newOrder = ref({
@@ -998,6 +1255,14 @@ onMounted(async () => {
   // Initialize modals
   addOrderModal = new Modal(document.getElementById('addOrderModal'));
   orderDetailModal = new Modal(document.getElementById('orderDetailModal'));
+  
+  // Add click outside handler for product search
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  // Remove click outside handler
+  document.removeEventListener('click', handleClickOutside);
 });
 
 // Methods
@@ -1298,7 +1563,7 @@ const onOrderTypeChange = () => {
   
   // Hiển thị thông báo cho user
   const typeText = newOrder.value.orderType === 'COUNTER' ? 'tại quầy' : 'online'
-  showToast('Đã chuyển sang đơn ' + typeText, 'info')
+  showToast('info', 'Đã chuyển sang đơn ' + typeText)
   
   // Có thể trigger calculation lại nếu cần
   if (newOrder.value.items.length > 0) {
@@ -1308,45 +1573,33 @@ const onOrderTypeChange = () => {
 
 const loadUserAddresses = async (userId) => {
   try {
+    console.log('=== DEBUG: Loading addresses for userId:', userId);
     const response = await getUserAddressesDropdown(userId);
-    // response từ service đã trả về mảng địa chỉ theo API mới
-    const addresses = response || [];
-
-    // Hàm format hiển thị địa chỉ
-    const formatAddress = (addr) => {
-      // recipientName - addressDetail, ward, district, province
-      const parts = [];
-      if (addr.recipientName) parts.push(addr.recipientName);
-      if (addr.addressDetail) parts.push(addr.addressDetail);
-      if (addr.wardName) parts.push(addr.wardName);
-      if (addr.districtName) parts.push(addr.districtName);
-      if (addr.provinceName) parts.push(addr.provinceName);
-      if(addr.isDefault) parts.push('(Mặc định)');
-      return parts.join(', ');
-    };
-
-    userAddresses.value = addresses.map(addr => ({
-      id: addr.id,
-      name: formatAddress(addr),
-      isDefault: addr.isDefault,
-      raw: addr
-    }));
+    console.log('=== DEBUG: Address response:', response);
+    
+    // Directly use the addresses from API without transformation
+    userAddresses.value = response || [];
+    console.log('=== DEBUG: Loaded addresses:', userAddresses.value);
+    
     // Auto-select default address
     const defaultAddress = userAddresses.value.find(addr => addr.isDefault);
     if (defaultAddress && !newOrder.value.addressId) {
       newOrder.value.addressId = defaultAddress.id;
-      currentAddress.value = defaultAddress; // Cập nhật địa chỉ hiện tại
-    } 
+      currentAddress.value = defaultAddress;
+    }
   } catch (error) {
-    showToast('error', 'Lỗi khi lấy địa chỉ user!');
+    console.error('Error loading user addresses:', error);
+    userAddresses.value = [];
+    showToast('error', 'Lỗi khi tải địa chỉ người dùng');
   }
 };
 
 const onAddressChange = () => {
+  console.log('=== DEBUG: Address changed to ID:', newOrder.value.addressId);
   currentAddress.value = userAddresses.value.find(addr => addr.id == newOrder.value.addressId) || null;
-  calculateShippingFee()
-}
-
+  console.log('=== DEBUG: Selected address:', currentAddress.value);
+  calculateShippingFee();
+};
 
 const loadUserVouchers = async (userId) => {
   try {
@@ -1527,12 +1780,12 @@ const calculateOrderPreview = async () => {
 };
 
 const calculateShippingFee = async () => {
-  if (!currentAddress.value?.raw) {
+  if (!currentAddress.value) {
     newOrder.value.shippingFee = 30000; // Default shipping fee
     return;
   }
   
-  const selectedAddress = currentAddress.value.raw;
+  const selectedAddress = currentAddress.value;
   const orderItems = newOrder.value.items;
   // Mỗi quyển sách tính 200g, tổng cân nặng = tổng số lượng * 200
   const totalBooks = orderItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
@@ -1895,19 +2148,18 @@ const cancelOrder = async (order) => {
 };
 
 const getAvailableStatusTransitions = (currentStatus) => {
-  // Business rules theo tài liệu backend mới - Luồng chuyển trạng thái chuẩn
+  // Business rules theo backend mới - Luồng chuyển trạng thái chuẩn
   const transitions = {
-    'PENDING': ['CONFIRMED', 'CANCELED'], // Chờ xác nhận → Đã xác nhận hoặc Hủy
-    'CONFIRMED': ['SHIPPED', 'CANCELED'], // Đã xác nhận → Đang giao hàng hoặc Hủy (trong một số trường hợp)
-    'SHIPPED': ['DELIVERED', 'GOODS_RETURNED_TO_WAREHOUSE'], // Đang giao hàng → Đã giao hàng hoặc Hàng về kho
-    'DELIVERED': [], // Đã giao hàng → Không cho phép admin chuyển sang yêu cầu hoàn trả
-    'REFUND_REQUESTED': ['REFUNDING', 'DELIVERED'], // Admin xử lý: Chấp nhận hoàn trả hoặc Từ chối
-    'REFUNDING': ['REFUNDED', 'PARTIALLY_REFUNDED'], // Đang hoàn trả → Hoàn trả toàn bộ hoặc một phần
-    'CANCELED': [], // Đã hủy - trạng thái cuối
-    'REFUNDED': [], // Đã hoàn trả toàn bộ - trạng thái cuối  
-    'PARTIALLY_REFUNDED': ['REFUNDED'], // Hoàn trả một phần → Có thể hoàn trả thêm
-    'RETURNED': [], // Đã trả hàng - trạng thái cuối
-    'GOODS_RETURNED_TO_WAREHOUSE': [] // Hàng đã về kho - trạng thái cuối
+    'PENDING': ['CONFIRMED', 'CANCELED'],
+    'CONFIRMED': ['SHIPPED', 'CANCELED'], 
+    'SHIPPED': ['DELIVERED', 'CANCELED'],
+    'DELIVERED': ['GOODS_RECEIVED_FROM_CUSTOMER', 'PARTIALLY_REFUNDED'],
+    'CANCELED': ['REFUNDING'],
+    'GOODS_RECEIVED_FROM_CUSTOMER': ['GOODS_RETURNED_TO_WAREHOUSE', 'REFUNDING'],
+    'GOODS_RETURNED_TO_WAREHOUSE': ['REFUNDING'],
+    'REFUNDING': ['GOODS_RETURNED_TO_WAREHOUSE', 'GOODS_RECEIVED_FROM_CUSTOMER'], // ✅ CHỈ HIỆN TRẠNG THÁI TIẾP THEO
+    'PARTIALLY_REFUNDED': ['GOODS_RECEIVED_FROM_CUSTOMER', 'REFUNDING'],
+    'REFUNDED': ['GOODS_RECEIVED_FROM_CUSTOMER']
   };
   
   const availableStatuses = transitions[currentStatus] || [];
@@ -2056,6 +2308,405 @@ const validateAllPrices = async () => {
   }
 };
 
+// ✅ Function kiểm tra voucher có thể chọn không (tối đa 1 shipping + 1 product)
+const canSelectVoucher = (voucher) => {
+  const selectedVouchers = userVouchers.value.filter(v => newOrder.value.voucherIds.includes(v.id));
+  const selectedShippingVouchers = selectedVouchers.filter(v => v.categoryVi && v.categoryVi.includes('vận chuyển'));
+  const selectedProductVouchers = selectedVouchers.filter(v => v.categoryVi && v.categoryVi.includes('sản phẩm'));
+  
+  if (voucher.categoryVi && voucher.categoryVi.includes('vận chuyển')) {
+    return selectedShippingVouchers.length === 0;
+  } else {
+    return selectedProductVouchers.length === 0;
+  }
+};
+
+// ✅ Clear product search
+const clearProductSearch = () => {
+  productSearchTerm.value = '';
+  productSearchResults.value = [];
+  showProductSearchResults.value = false;
+};
+
+// ✅ Book search functions
+const onProductSearch = async () => {
+  // Clear previous timeout
+  if (productSearchTimeout) {
+    clearTimeout(productSearchTimeout);
+  }
+  
+  // Set new timeout for debounced search
+  productSearchTimeout = setTimeout(async () => {
+    const searchTerm = productSearchTerm.value.trim();
+    
+    if (!searchTerm) {
+      productSearchResults.value = [];
+      showProductSearchResults.value = false;
+      return;
+    }
+    
+    try {
+      let response;
+      if (searchTerm) {
+        // Search with term
+        response = await getBooksDropdown({ search: searchTerm });
+      } else {
+        // Don't load all books when empty
+        productSearchResults.value = [];
+        showProductSearchResults.value = false;
+        return;
+      }
+      
+      productSearchResults.value = response.data || [];
+      showProductSearchResults.value = productSearchResults.value.length > 0;
+    } catch (error) {
+      console.error('Product search error:', error);
+      productSearchResults.value = [];
+      showProductSearchResults.value = false;
+    }
+  }, 300);
+};
+
+// Click outside to close dropdown
+const handleClickOutside = (event) => {
+  const searchContainer = event.target.closest('.position-relative');
+  if (!searchContainer) {
+    showProductSearchResults.value = false;
+  }
+};
+
+const addBookToOrder = (book) => {
+  // Check if book already exists in order
+  const existingItem = newOrder.value.items.find(item => item.bookId === book.id);
+  if (existingItem) {
+    // Increase quantity
+    existingItem.quantity += 1;
+    calculateDetailTotal(existingItem);
+    showToast('info', 'Đã tăng số lượng sản phẩm có sẵn');
+  } else {
+    // Add new item
+    const newItem = {
+      bookId: book.id,
+      quantity: 1,
+      unitPrice: book.isFlashSale && book.flashSalePrice ? book.flashSalePrice : book.normalPrice,
+      totalPrice: 0,
+      isFlashSale: book.isFlashSale || false,
+      frontendPrice: book.normalPrice,
+      frontendFlashSalePrice: book.flashSalePrice,
+      bookData: book // Store book data for display
+    };
+    
+    newOrder.value.items.push(newItem);
+    calculateDetailTotal(newItem);
+    showToast('success', 'Đã thêm sản phẩm vào đơn hàng');
+  }
+  
+  // Clear search using the function
+  clearProductSearch();
+};
+
+const getBookDisplayName = (bookId) => {
+  if (!bookId) return '';
+  
+  // Find in current items
+  const item = newOrder.value.items.find(item => item.bookId === bookId);
+  if (item && item.bookData) {
+    return `#${item.bookData.id} - ${item.bookData.name} (${item.bookData.bookCode})`;
+  }
+  
+  // Fallback to books array
+  const book = books.value.find(b => b.id === bookId);
+  return book ? `#${book.id} - ${book.title || book.name} (${book.bookCode || ''})` : '';
+};
+
+const onBookSearch = async (event, detail, index) => {
+  // This function is no longer used with the new search approach
+};
+
+const showBookDropdown = (index) => {
+  // This function is no longer used with the new search approach
+};
+
+const hideBookDropdown = (index) => {
+  // This function is no longer used with the new search approach
+};
+
+const selectBook = (book, detail, index) => {
+  // This function is no longer used with the new search approach
+};
+
+const getBookDisplayText = (bookId) => {
+  // Use the new function
+  return getBookDisplayName(bookId);
+};
+
+// ✅ Address modal functions
+const openAddAddressModal = async () => {
+  if (!newOrder.value.userId) {
+    showToast('warning', 'Vui lòng chọn khách hàng trước!');
+    return;
+  }
+  
+  // Reset form
+  resetAddressForm();
+  
+  // Load provinces if not loaded
+  if (provinces.value.length === 0) {
+    await fetchProvinces();
+  }
+  
+  // Auto-load user info if possible
+  const selectedUser = users.value.find(u => u.id == newOrder.value.userId);
+  if (selectedUser && selectedUser.name) {
+    addressForm.value.recipientName = selectedUser.name;
+  }
+  
+  // Use Bootstrap Modal
+  const modalElement = document.getElementById('addAddressModal');
+  const modal = Modal.getOrCreateInstance(modalElement);
+  modal.show();
+};
+
+const closeAddressModal = () => {
+  const modalElement = document.getElementById('addAddressModal');
+  const modal = Modal.getOrCreateInstance(modalElement);
+  modal.hide();
+  resetAddressForm();
+};
+
+const resetAddressForm = () => {
+  addressForm.value = {
+    recipientName: '',
+    phoneNumber: '',
+    addressDetail: '',
+    provinceName: '',
+    provinceId: '',
+    districtName: '',
+    districtId: '',
+    wardName: '',
+    wardCode: '',
+    isDefault: false,
+    addressType: 'HOME'
+  };
+  districts.value = [];
+  wards.value = [];
+};
+
+const fetchProvinces = async () => {
+  try {
+    const res = await ghn.address.getProvinces();
+    const excludeIds = [2002, 298, 290, 286];
+    provinces.value = (res.data || res)
+      .filter(p => !excludeIds.includes(p.ProvinceID))
+      .sort((a, b) => a.ProvinceName.localeCompare(b.ProvinceName));
+  } catch (error) {
+    console.error('Error fetching provinces:', error);
+    showToast('error', 'Lỗi khi tải danh sách tỉnh/thành phố!');
+  }
+};
+
+const fetchDistricts = async (provinceId) => {
+  if (!provinceId) {
+    districts.value = [];
+    return;
+  }
+  try {
+    const res = await ghn.address.getDistricts(provinceId);
+    districts.value = (res.data || res)
+      .sort((a, b) => (a.DistrictName || a.ProvinceName).localeCompare(b.DistrictName || b.ProvinceName));
+  } catch (error) {
+    console.error('Error fetching districts:', error);
+    showToast('error', 'Lỗi khi tải danh sách quận/huyện!');
+  }
+};
+
+const fetchWards = async (districtId) => {
+  if (!districtId) {
+    wards.value = [];
+    return;
+  }
+  try {
+    const res = await ghn.address.getWards(districtId);
+    wards.value = (res.data || res)
+      .sort((a, b) => a.WardName.localeCompare(b.WardName));
+  } catch (error) {
+    console.error('Error fetching wards:', error);
+    showToast('error', 'Lỗi khi tải danh sách phường/xã!');
+  }
+};
+
+const onProvinceChange = () => {
+  const p = provinces.value.find(p => p.ProvinceID == addressForm.value.provinceId);
+  addressForm.value.provinceName = p ? p.ProvinceName : '';
+  addressForm.value.districtName = '';
+  addressForm.value.districtId = '';
+  addressForm.value.wardName = '';
+  addressForm.value.wardCode = '';
+  fetchDistricts(addressForm.value.provinceId);
+};
+
+const onDistrictChange = () => {
+  const d = districts.value.find(d => d.DistrictID == addressForm.value.districtId);
+  addressForm.value.districtName = d ? (d.DistrictName || d.ProvinceName) : '';
+  addressForm.value.wardName = '';
+  addressForm.value.wardCode = '';
+  fetchWards(addressForm.value.districtId);
+};
+
+const onWardChange = () => {
+  const w = wards.value.find(w => w.WardCode == addressForm.value.wardCode);
+  addressForm.value.wardName = w ? w.WardName : '';
+};
+
+const handleSaveAddress = async () => {
+  // Validate form
+  const nameRegex = /^[A-Za-zÀ-ỹà-ỹ\s]{3,100}$/u;
+  const phoneRegex = /^0\d{9}$/;
+  
+  if (!addressForm.value.recipientName || !addressForm.value.phoneNumber || !addressForm.value.addressDetail || 
+      !addressForm.value.provinceId || !addressForm.value.districtId || !addressForm.value.wardCode) {
+    showToast('error', 'Vui lòng điền đầy đủ thông tin bắt buộc');
+    return;
+  }
+  
+  if (!nameRegex.test(addressForm.value.recipientName.trim())) {
+    showToast('error', 'Họ tên phải từ 3-100 ký tự, không chứa ký tự đặc biệt');
+    return;
+  }
+  
+  if (!phoneRegex.test(addressForm.value.phoneNumber.trim())) {
+    showToast('error', 'Số điện thoại phải gồm 10 chữ số, bắt đầu bằng 0');
+    return;
+  }
+  
+  isSavingAddress.value = true;
+  try {
+    console.log('=== DEBUG: Saving address for userId:', newOrder.value.userId);
+    console.log('=== DEBUG: Address data:', addressForm.value);
+    
+    await addAddressAtAdmin(addressForm.value, newOrder.value.userId);
+    showToast('success', 'Thêm địa chỉ thành công!');
+    
+    // Reload user addresses
+    await loadUserAddresses(newOrder.value.userId);
+    
+    closeAddressModal();
+  } catch (error) {
+    const errorMsg = error.response?.data?.message || 'Lưu địa chỉ thất bại';
+    showToast('error', errorMsg);
+    console.error('Save address error:', error);
+  } finally {
+    isSavingAddress.value = false;
+  }
+};
+
+// ✅ Sample data function
+const createSampleOrder = () => {
+  newOrder.value = {
+    userId: '',
+    addressId: '',
+    phone: '0987654321',
+    email: 'sample@email.com',
+    note: 'Đơn hàng mẫu để test hệ thống',
+    paymentMethod: 'CASH',
+    products: [
+      {
+        bookId: 1,
+        quantity: 2,
+        name: 'Sách mẫu 1',
+        price: 150000,
+        imageUrl: '/api/placeholder/100/120'
+      },
+      {
+        bookId: 2,
+        quantity: 1,
+        name: 'Sách mẫu 2',
+        price: 200000,
+        imageUrl: '/api/placeholder/100/120'
+      }
+    ],
+    vouchers: [],
+    shippingFee: 30000,
+    totalAmount: 530000
+  };
+  
+  // Auto select first user if available
+  if (users.value.length > 0) {
+    newOrder.value.userId = users.value[0].id;
+    loadUserAddresses(users.value[0].id);
+  }
+  
+  showToast('success', 'Đã tải dữ liệu mẫu thành công!');
+};
+
+// ✅ Sample data function
+const fillSampleData = async () => {
+  try {
+    // Tìm user "Lê Văn C"
+    const leVanC = users.value.find(user => user.name && user.name.toLowerCase().includes('lê văn c'));
+    if (!leVanC) {
+      showToast('warning', 'Không tìm thấy khách hàng "Lê Văn C"');
+      return;
+    }
+    
+    // Set user
+    newOrder.value.userId = leVanC.id;
+    await onUserChange();
+    
+    // Wait a bit for addresses to load
+    setTimeout(async () => {
+      // Set address thứ 2 nếu có
+      if (userAddresses.value.length >= 2) {
+        newOrder.value.addressId = userAddresses.value[1].id;
+        onAddressChange();
+      }
+      
+      // Search và add sách "Chí Phèo"
+      const chiPheoResponse = await getBooksDropdown({ search: 'Chí Phèo' });
+      const chiPheoBook = chiPheoResponse.data?.[0];
+      
+      // Search và add sách "Đắc Nhân Tâm"  
+      const dacNhanTamResponse = await getBooksDropdown({ search: 'Đắc Nhân Tâm' });
+      const dacNhanTamBook = dacNhanTamResponse.data?.[0];
+      
+      // Clear existing items
+      newOrder.value.items = [];
+      
+      // Add Chí Phèo
+      if (chiPheoBook) {
+        addProductRow();
+        const chiPheoDetail = newOrder.value.items[0];
+        chiPheoDetail.bookId = chiPheoBook.id;
+        chiPheoDetail.quantity = 3;
+        chiPheoDetail.unitPrice = chiPheoBook.isFlashSale ? chiPheoBook.flashSalePrice : chiPheoBook.normalPrice;
+        chiPheoDetail.isFlashSale = chiPheoBook.isFlashSale;
+        chiPheoDetail.frontendPrice = chiPheoBook.normalPrice;
+        chiPheoDetail.frontendFlashSalePrice = chiPheoBook.flashSalePrice;
+        await calculateDetailTotal(chiPheoDetail);
+      }
+      
+      // Add Đắc Nhân Tâm
+      if (dacNhanTamBook) {
+        addProductRow();
+        const dacNhanTamDetail = newOrder.value.items[1];
+        dacNhanTamDetail.bookId = dacNhanTamBook.id;
+        dacNhanTamDetail.quantity = 3;
+        dacNhanTamDetail.unitPrice = dacNhanTamBook.isFlashSale ? dacNhanTamBook.flashSalePrice : dacNhanTamBook.normalPrice;
+        dacNhanTamDetail.isFlashSale = dacNhanTamBook.isFlashSale;
+        dacNhanTamDetail.frontendPrice = dacNhanTamBook.normalPrice;
+        dacNhanTamDetail.frontendFlashSalePrice = dacNhanTamBook.flashSalePrice;
+        await calculateDetailTotal(dacNhanTamDetail);
+      }
+      
+      showToast('success', 'Đã điền dữ liệu mẫu thành công!');
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Fill sample data error:', error);
+    showToast('error', 'Lỗi khi điền dữ liệu mẫu');
+  }
+};
+
 // Watch for changes to trigger order calculation
 watch([
   () => newOrder.value.userId,
@@ -2067,6 +2718,21 @@ watch([
     calculateOrderPreview();
   }
 }, { deep: true });
+
+// Watch for address form changes
+watch(() => addressForm.value.provinceId, (newVal) => {
+  addressForm.value.districtName = '';
+  addressForm.value.districtId = '';
+  addressForm.value.wardName = '';
+  addressForm.value.wardCode = '';
+  fetchDistricts(newVal);
+});
+
+watch(() => addressForm.value.districtId, (newVal) => {
+  addressForm.value.wardName = '';
+  addressForm.value.wardCode = '';
+  fetchWards(newVal);
+});
 
 // Watch for page changes
 watch([currentPage, pageSize], () => {
@@ -2307,5 +2973,44 @@ watch([currentPage, pageSize], () => {
   .modal-dialog {
     margin: 10px;
   }
+}
+
+/* Book search dropdown styles */
+.hover-bg-light:hover {
+  background-color: #f8f9fa !important;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Address modal styles */
+.modal-fade {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Voucher card improvements */
+.voucher-item.card.selected {
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.voucher-item.card:hover {
+  border-color: #6c757d;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 </style>

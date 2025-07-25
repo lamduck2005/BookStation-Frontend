@@ -21,6 +21,14 @@ export const addAddress = async (data) => {
   return client.post(`/api/addresses`, { ...data, userId });
 };
 
+export const addAddressAtAdmin = async (data, userId) => {
+  console.log('=== DEBUG addAddressAtAdmin: data =', data);
+  console.log('=== DEBUG addAddressAtAdmin: userId =', userId);
+  const payload = { ...data, userId };
+  console.log('=== DEBUG addAddressAtAdmin: final payload =', payload);
+  return client.post(`/api/addresses`, payload);
+};
+
 export const updateAddress = async (id, data) => client.put(`/api/addresses/${id}`, data);
 
 // export const deleteAddress = async (id) => client.delete(`/api/addresses/${id}`);

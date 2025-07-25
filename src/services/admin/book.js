@@ -45,9 +45,9 @@ export const getSuppliersDropdown = async () => {
 };
 
 // Lấy danh sách books dropdown (id, name) cho order
-export const getBooksDropdown = async () => {
+export const getBooksDropdown = async (params = {}) => {
   try {
-    const response = await client.get('/api/books/dropdown');
+    const response = await client.get('/api/books/dropdown', { params });
     return response.data;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách books dropdown:', error);

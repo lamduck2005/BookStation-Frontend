@@ -189,9 +189,8 @@
             <thead class="table-light">
               <tr>
                 <th style="width: 20px; min-width: 20px; text-align: center;">STT</th>
-                <th style="width: 70px; min-width: 60px; text-align: center;">ID</th>
                 <th style="width: 180px; min-width: 120px;">Ảnh</th>
-                <th>Tên sách</th>
+                <th>ID & Tên sách</th>
                 <th>Mã sách & ISBN</th>
                 <th>Giá & Giảm giá</th>
                 <th>Số lượng & Đã bán</th>
@@ -206,14 +205,13 @@
             </thead>
             <tbody>
               <tr v-if="books.length === 0">
-                <td colspan="13" class="text-center py-4 text-muted">
+                <td colspan="12" class="text-center py-4 text-muted">
                   <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                   Không có dữ liệu
                 </td>
               </tr>
               <tr v-for="(book, index) in books" :key="book.id">
                 <td style="text-align: center;">{{ currentPage * pageSize + index + 1 }}</td>
-                <td style="text-align: center;">{{ book.id }}</td>
                 <td>
                   <!-- 🔥 HIỂN THỊ ẢNH TỪ TRƯỜNG IMAGES (MẢNG URL) - THEO TÀI LIỆU API -->
                   <div style="display: flex; flex-wrap: wrap; gap: 4px;">
@@ -236,8 +234,9 @@
                 </td>
                 <td>
                   <div>
+                    <span class="badge bg-danger  me-2">id : {{ book.id }}</span>
                     <strong>{{ book.bookName }}</strong>
-                    <div v-if="book.description" class="small text-muted">
+                    <div v-if="book.description" class="small text-muted mt-1">
                       {{ book.description.length > 40 ? book.description.substring(0, 40) + '...' : book.description }}
                     </div>
                   </div>
@@ -288,8 +287,11 @@
                     >
                       Tồn: {{ book.stockQuantity }}
                     </span>
-                    <small class="text-info">
+                    <small class="text-info d-block">
                       Đã bán: {{ book.soldCount || 0 }}
+                    </small>
+                    <small class="text-warning d-block">
+                      Đang xử lý: {{ book.processingQuantity || 0 }}
                     </small>
                   </div>
                 </td>

@@ -13,11 +13,11 @@
 </template>
 
 <script setup>
-import PosCustomerInfo from './pos/PosCustomerInfo.vue';
-import PosHeader from './pos/PosHeader.vue';
-import PosOrderList from './pos/PosOrderList.vue';
-import PosOrderSummary from './pos/PosOrderSummary.vue';
-import PosPayment from './pos/PosPayment.vue';
+import PosCustomerInfo from '../../client/pos/PosCustomerInfo.vue';
+import PosHeader from '../../client/pos/PosHeader.vue';
+import PosOrderList from '../../client/pos/PosOrderList.vue';
+import PosOrderSummary from '../../client/pos/PosOrderSummary.vue';
+import PosPayment from '../../client/pos/PosPayment.vue';
 
 
 </script>

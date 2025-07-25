@@ -63,7 +63,7 @@ import { showToast } from "@/utils/swalHelper";
 import ResetPassword from "@/views/ResetPassword.vue";
 
 import UserVoucher from "@/views/admin/views-admin/UserVoucher.vue";
-import POSVIew from "@/views/client/POSVIew.vue";
+import POSView from "@/views/admin/views-admin/POSView.vue";
 import OrderFail from "@/views/client/OrderFail.vue";
 
 const router = createRouter({
@@ -364,7 +364,7 @@ const router = createRouter({
          {
           path: "pos-view",
           name: "pos-view",
-          component: POSVIew,
+          component: POSView,
         },
       ],
       // End - Admin routes
