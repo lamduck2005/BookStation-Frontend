@@ -313,6 +313,7 @@
                       <div class="small">
                         <div class="text-danger fw-bold">{{ formatCurrency(book.flashSalePrice) }}</div>
                         <div class="text-muted">Đã bán: {{ book.flashSaleSoldCount || 0 }}</div>
+                        <div class="text-muted">Tồn : {{ book.flashSaleStock || 0 }}</div>
                         <div v-if="book.flashSaleEndTime" class="text-muted">
                           Kết thúc: {{ formatDateTime(book.flashSaleEndTime) }}
                         </div>

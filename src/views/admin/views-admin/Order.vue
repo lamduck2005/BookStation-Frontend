@@ -725,8 +725,8 @@
                   <tr>
                     <td><strong>Địa chỉ giao hàng:</strong></td>
                     <td>
-                      <div v-if="selectedOrder.address">
-                        {{ selectedOrder.address.name }}
+                      <div v-if="selectedOrder.addressDetail">
+                        {{ selectedOrder.addressDetail }}
                       </div>
                       <div v-else class="text-muted">Chưa có địa chỉ</div>
                     </td>

@@ -878,7 +878,6 @@ export default {
               <div class="text-start">
                 <p><strong>Mã yêu cầu:</strong> ${refundInfo.trackingCode}</p>
                 <p><strong>Số tiền hoàn:</strong> ${formatCurrency(refundInfo.totalRefundAmount)}</p>
-                <p><strong>Thời gian xử lý:</strong> ${refundInfo.estimatedProcessTime}</p>
                 <p class="text-muted mt-3">${response.message}</p>
               </div>
             `,
