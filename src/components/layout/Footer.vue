@@ -5,41 +5,30 @@
                 <!-- Thông tin công ty -->
                 <div class="col-lg-3 col-md-6">
                     <div class="footer-brand mb-4">
-                        <img src="@/assets/img/logo.png" alt="BookStation Logo" class="footer-logo mb-3" style="height: 40px;">
+                        <!-- <img src="@/assets/img/logo.png" alt="BookStation Logo" class="footer-logo mb-3" style="height: 40px;"> -->
                         <h5 class="fw-bold text-danger">BookStation.com</h5>
                     </div>
                     <address class="text-muted small mb-3">
                         <strong>Phú Kiều, Hà Nội, Việt Nam</strong><br>
-                        Công Ty Cổ Phần Phát Hành Sách Hà Nội - BOOKSTATION<br>
-                        Phú Kiều, Hà Nội, Việt Nam
+                        Đồ án tốt nghiệp - BOOKSTATION<br>
+                 
                     </address>
                     <p class="text-muted small">
                         BookStation.com nhận đặt hàng trực tuyến và giao hàng tận nơi. 
-                        KHÔNG hỗ trợ đặt mua và nhận hàng trực tiếp tại văn phòng 
-                        cũng như tất cả Hệ Thống BookStation trên toàn quốc.
                     </p>
-                    <div class="certification mb-3">
-                        <img src="https://cdn0.fahasa.com/media/wysiwyg/Logo-NCC/logo-bo-cong-thuong-da-thong-bao1.png" 
-                             alt="Đã thông báo" class="me-2" style="height: 40px;">
-                    </div>
+                    
                     
                     <!-- Social Media Icons -->
-                    <div class="social-links mb-3">
+                    <!-- <div class="social-links mb-3">
                         <a href="#" class="text-muted me-3"><i class="bi bi-facebook fs-5"></i></a>
                         <a href="#" class="text-muted me-3"><i class="bi bi-instagram fs-5"></i></a>
                         <a href="#" class="text-muted me-3"><i class="bi bi-youtube fs-5"></i></a>
                         <a href="#" class="text-muted me-3"><i class="bi bi-tiktok fs-5"></i></a>
                         <a href="#" class="text-muted me-3"><i class="bi bi-twitter fs-5"></i></a>
                         <a href="#" class="text-muted"><i class="bi bi-pinterest fs-5"></i></a>
-                    </div>
+                    </div> -->
                     
-                    <!-- App Download -->
-                    <div class="app-download">
-                        <img src="https://cdn0.fahasa.com/media/wysiwyg/Logo-NCC/android1.png" 
-                             alt="Google Play" class="me-2" style="height: 40px;">
-                        <img src="https://cdn0.fahasa.com/media/wysiwyg/Logo-NCC/apple1.png" 
-                             alt="App Store" style="height: 40px;">
-                    </div>
+                    
                 </div>
 
                 <!-- Dịch vụ -->
@@ -82,15 +71,15 @@
                     <div class="contact-info mb-3">
                         <p class="text-muted small mb-2">
                             <i class="bi bi-geo-alt-fill text-danger me-2"></i>
-                            60-62 Lê Lợi, Q.1, TP. HCM
+                            Trường Cao Đẳng FPT Polytechnic
                         </p>
                         <p class="text-muted small mb-2">
                             <i class="bi bi-envelope-fill text-danger me-2"></i>
-                            cskh@bookstation.com.vn
+                            cskh@bookstation.com
                         </p>
                         <p class="text-muted small mb-2">
                             <i class="bi bi-telephone-fill text-danger me-2"></i>
-                            1900636467
+                            0123456789
                         </p>
                     </div>
                     
@@ -101,29 +90,9 @@
                                 <img src="https://cdn0.fahasa.com/media/wysiwyg/Logo-NCC/vnpay_logo.png" 
                                      alt="VNPay" class="img-fluid" style="height: 30px;">
                             </div>
-                            <div class="col-4">
-                                <img src="https://cdn0.fahasa.com/media/wysiwyg/Logo-NCC/ZaloPay-logo-130x83.png" 
-                                     alt="ZaloPay" class="img-fluid" style="height: 30px;">
-                            </div>
-                            <div class="col-4">
-                                <img src="https://cdn0.fahasa.com/media/wysiwyg/Logo-NCC/shopeepay_logo.png" 
-                                     alt="ShopeePay" class="img-fluid" style="height: 30px;">
-                            </div>
+                            
                         </div>
-                        <div class="row g-2 mt-2">
-                            <div class="col-4">
-                                <img src="https://cdn0.fahasa.com/media/wysiwyg/Logo-NCC/momo_1.png" 
-                                     alt="MoMo" class="img-fluid" style="height: 30px;">
-                            </div>
-                            <div class="col-4">
-                                <img src="https://cdn0.fahasa.com/media/wysiwyg/Logo-NCC/logo-ninjavan-1.png" 
-                                     alt="NinjaVan" class="img-fluid" style="height: 30px;">
-                            </div>
-                            <div class="col-4">
-                                <img src="https://cdn0.fahasa.com/media/wysiwyg/Logo-NCC/logo-giao-hang-tiet-kiem.png" 
-                                     alt="GHTK" class="img-fluid" style="height: 30px;">
-                            </div>
-                        </div>
+                        
                     </div>
                 </div>
             </div>
@@ -134,8 +103,7 @@
             <div class="container">
                 <div class="text-center">
                     <small class="text-muted">
-                        Giấy chứng nhận Đăng ký Kinh doanh số 0304132047 do Sở Kế hoạch và Đầu tư Thành phố Hồ Chí Minh cấp ngày 20/12/2005, 
-                        đăng ký thay đổi lần thứ 10, ngày 20/05/2022.
+                        Copyright © 2025 BookStation. All rights reserved.
                     </small>
                 </div>
             </div>

@@ -193,157 +193,15 @@
       </div>
 
       <div class="col-4">
-        <!-- Khuyến mãi section -->
-        <div class="promotion-box bg-white rounded p-3 mb-3 shadow-sm">
-          <div class="d-flex align-items-center mb-2">
-            <i class="fa fa-gift text-primary me-2"></i>
-            <span class="fw-bold text-primary">KHUYẾN MÃI</span>
-            <span
-              class="ms-auto text-primary"
-              style="cursor: pointer"
-              @click="showVoucherModal = true"
-              >Xem thêm <i class="fa fa-chevron-right"></i
-            ></span>
-          </div>
-          <!-- Voucher modal trigger only, voucher UI sẽ hiển thị trong modal -->
-          <!-- Modal chọn voucher hiện đại -->
-          <div v-if="showVoucherModal" class="voucher-modal-overlay">
-            <div class="voucher-modal card shadow p-3">
-              <div class="d-flex align-items-center mb-3">
-                <span class="fw-bold text-primary me-2"
-                  ><i class="fa fa-ticket-alt"></i> CHỌN MÃ KHUYẾN MÃI</span
-                >
-                <span class="small text-muted"
-                  >Có thể áp dụng đồng thời nhiều mã
-                  <i class="fa fa-info-circle"></i
-                ></span>
-                <button
-                  class="btn btn-sm btn-outline-secondary ms-auto"
-                  @click="showVoucherModal = false"
-                >
-                  Đóng
-                </button>
-              </div>
-
-              <!-- Danh sách voucher đã chọn -->
-              <div v-if="selectedVouchers.length" class="mb-3">
-                <div class="fw-bold mb-2 text-success">Mã đã chọn:</div>
-                <div class="d-flex flex-wrap gap-2">
-                  <span
-                    v-for="voucher in selectedVouchers"
-                    :key="voucher.code"
-                    class="badge bg-success px-3 py-2"
-                  >
-                    <i class="fa fa-ticket-alt me-1"></i>
-                    {{ voucher.name }}
-                    <span class="ms-2" style="font-size: 0.9em"
-                      >({{ voucher.code }})</span
-                    >
-                  </span>
-                </div>
-                <hr />
-              </div>
-
-              <input
-                type="text"
-                class="form-control form-control-sm mb-2"
-                v-model="voucherSearch"
-                placeholder="Nhập mã khuyến mãi/Quà tặng"
-              />
-              <!-- Mã giảm giá -->
-              <div class="voucher-section mb-2">
-                <div class="fw-bold mb-1">Mã giảm giá</div>
-                <div
-                  v-if="filteredDiscountVouchers.length === 0"
-                  class="text-center text-muted py-3"
-                >
-                  Không có mã giảm giá nào phù hợp
-                </div>
-                <div v-else>
-                  <div
-                    v-for="voucher in filteredDiscountVouchers"
-                    :key="voucher.id"
-                    class="voucher-card mb-2 d-flex align-items-center justify-content-between"
-                    :class="[
-                      isVoucherActive(voucher)
-                        ? 'voucher-card-active'
-                        : 'voucher-card-inactive',
-                      !isVoucherActive(voucher) && 'voucher-card-disabled',
-                    ]"
-                  >
-                    <div>
-                      <div class="fw-bold">{{ voucher.name }}</div>
-                      <div class="small text-muted">
-                        {{ voucher.description }}
-                      </div>
-                      <div class="small">
-                        HSD:
-                        {{
-                          new Date(voucher.endTime).toLocaleDateString("vi-VN")
-                        }}
-                      </div>
-                    </div>
-                    <button
-                      class="btn btn-sm btn-primary"
-                      :disabled="!isVoucherActive(voucher)"
-                      @click="toggleVoucher(voucher)"
-                      :style="
-                        !isVoucherActive(voucher)
-                          ? 'opacity:0.6;pointer-events:none;'
-                          : ''
-                      "
-                    >
-                      {{
-                        selectedVouchers.some((v) => v.code === voucher.code)
-                          ? "Bỏ chọn"
-                          : voucher.minOrderValue > totalAmount
-                          ? "Mua thêm"
-                          : "Áp dụng"
-                      }}
-                    </button>
-                  </div>
-                  <div v-if="discountVouchers.length > 2">
-                    <span
-                      class="text-primary small"
-                      style="cursor: pointer"
-                      @click="expandedDiscount = !expandedDiscount"
-                    >
-                      {{ expandedDiscount ? "Thu gọn" : "Xem thêm" }}
-                    </span>
-                  </div>
-                  <div v-if="expandedDiscount">
-                    <ul class="voucher-list">
-                      <li
-                        v-for="voucher in discountVouchers"
-                        :key="voucher.id"
-                        class="voucher-item"
-                      >
-                        <div class="fw-bold">{{ voucher.name }}</div>
-                        <div class="small text-muted">
-                          {{ voucher.description }}
-                        </div>
-                        <div class="small">
-                          HSD:
-                          {{ new Date(voucher.endTime).toLocaleDateString("vi-VN") }}
-                        </div>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              <!-- Mã vận chuyển -->
-
-              <div class="mt-3 text-end">
-                <button class="btn btn-primary" @click="applySelectedVouchers">
-                  Áp dụng
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        
 
         <!-- Cart summary -->
-        <div class="cart-summary bg-white rounded p-3 shadow-sm">
+        <div class="cart-summary bg-white rounded p-3 mt-4 shadow-sm">
+          <div class="mb-3">
+            <h5 class="fw-bold text-primary" style="font-size: 1.2rem;">
+              Thông tin đơn hàng
+            </h5>
+          </div>
           <div class="d-flex justify-content-between mb-2">
             <span>Thành tiền</span>
             <span>{{ formatPrice(totalAmount) }}</span>
@@ -394,9 +252,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { getCartItems, updateCartItem, removeCartItem, selectCartItem, validateCart } from '@/services/client/cart.js'
+import { getAddresses } from '@/services/client/address.js'
+import { calcShippingFee, DEFAULT_SHIPPING_FEE } from '@/services/client/shippingFee.js'
 import { createSessionFromCart } from '@/services/client/checkout.js'
 import { getUserId } from '@/utils/utils.js'
 import { showNotification } from '@/utils/notification.js'
@@ -409,7 +269,13 @@ const router = useRouter()
 const cartItems = ref([])
 const loading = ref(true)
 const selectedItems = ref([])
-const shippingFee = ref(30000) // Fixed shipping fee 30k
+const shippingFee = ref(0)
+
+// Address states to tính phí ship
+const addresses = ref([])
+const selectedAddress = ref(null)
+const addressLoading = ref(false)
+
 const flashSaleManager = ref(null)
 const countdownTexts = ref({})
 const sessionCreating = ref(false)
@@ -436,6 +302,17 @@ const totalSavedAmount = computed(() => {
     return total + savedAmount;
   }, 0)
 })
+
+// Helper: danh sách item (quantity) đang được tính ship
+const shipItems = computed(() => {
+  return cartItems.value
+    .filter(item => selectedItems.value.includes(item.id))
+    .map(item => ({ quantity: item.quantity }))
+})
+
+const updateShippingFee = async () => {
+  shippingFee.value = await calcShippingFee(selectedAddress.value || {}, shipItems.value)
+}
 
 // Methods
 const loadCartItems = async () => {
@@ -471,6 +348,7 @@ const loadCartItems = async () => {
     showToast('error', 'Không thể tải giỏ hàng')
   } finally {
     loading.value = false
+    await updateShippingFee()
   }
 }
 
@@ -744,9 +622,32 @@ const goToCheckout = async () => {
   }
 }
 
+// Watchers để cập nhật phí ship khi thay đổi dữ liệu liên quan
+watch([selectedAddress, shipItems], () => {
+  updateShippingFee()
+})
+
+// Load addresses
+const loadAddresses = async () => {
+  try {
+    addressLoading.value = true
+    const response = await getAddresses()
+    if (response.status === 200 && response.data?.data) {
+      addresses.value = response.data.data
+      // Chọn địa chỉ mặc định
+      selectedAddress.value = addresses.value.find(a => a.isDefault) || addresses.value[0] || null
+    }
+  } catch (e) {
+    console.error('Lỗi load địa chỉ:', e)
+  } finally {
+    addressLoading.value = false
+    await updateShippingFee()
+  }
+}
+
 // Lifecycle hooks
 onMounted(async () => {
-  await loadCartItems()
+  await Promise.all([loadCartItems(), loadAddresses()])
 })
 
 onBeforeUnmount(() => {

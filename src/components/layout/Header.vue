@@ -270,11 +270,11 @@
           <div class="d-flex align-items-center gap-3">
             <small class="text-muted">
               <i class="bi bi-telephone me-1"></i>
-              1900-1234
+              0123456789
             </small>
             <small class="text-muted">
               <i class="bi bi-envelope me-1"></i>
-              support@bookstation.com
+              cskh@bookstation.com
             </small>
           </div>
         </div>
