@@ -41,6 +41,7 @@ import Dashboard from "@/views/admin/set-up/Dashboard.vue";
 import Account from "@/views/admin/set-up/Account.vue";
 import Notifications from "@/views/admin/set-up/Notifications.vue";
 import Order from "@/views/admin/views-admin/Order.vue";
+import RefundManagement from "@/views/admin/views-admin/RefundManagement.vue";
 import Supplier from "@/views/admin/views-admin/Supplier.vue";
 import Rank from "@/views/admin/views-admin/Rank.vue";
 import Point from "@/views/admin/views-admin/Point.vue";
@@ -53,13 +54,17 @@ import EventGift from "@/views/admin/views-admin/EventGift.vue";
 import EventParticipant from "@/views/admin/views-admin/EventParticipant.vue";
 import EventGiftClaim from "@/views/admin/views-admin/EventGiftClaim.vue";
 import EventHistory from "@/views/admin/views-admin/EventHistory.vue";
+
 import ProductCatalog from "@/views/client/ProductCatalog.vue";
 
 
 import AuthPage from "@/views/AuthPage.vue";
 import { showToast } from "@/utils/swalHelper";
 import ResetPassword from "@/views/ResetPassword.vue";
+
+import UserVoucher from "@/views/admin/views-admin/UserVoucher.vue";
 import POSVIew from "@/views/client/POSVIew.vue";
+import OrderFail from "@/views/client/OrderFail.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -100,6 +105,11 @@ const router = createRouter({
           name: "order-success",
           component: OrderSuccess,
           props: true,
+        },
+        {
+          path: "order/fail",
+          name: "order-fail",
+          component: OrderFail,
         },
         {
           path: "cart",
@@ -229,6 +239,11 @@ const router = createRouter({
           component: Order,
         },
         {
+          path: "refund-management",
+          name: "RefundManagement",
+          component: RefundManagement,
+        },
+        {
           path: "account",
           name: "Account",
           component: Account,
@@ -280,6 +295,12 @@ const router = createRouter({
           component: Voucher,
         },
         {
+          path: "userVoucher/:id",
+          name: "Voucher của người dùng",
+          component: UserVoucher,
+          props: true,
+        },
+        {
           path: "supplier",
           name: "Supplier",
           component: Supplier,
@@ -287,7 +308,7 @@ const router = createRouter({
         {
           path: "publisher",
           name: "Publisher",
-          component: () => import('@/views/admin/views-admin/Publisher.vue'),
+          component: () => import("@/views/admin/views-admin/Publisher.vue"),
         },
         {
           path: "rank",

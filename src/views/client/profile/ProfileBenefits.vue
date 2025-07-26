@@ -12,6 +12,7 @@
         <div class="d-flex align-items-center">
           <div class="member-avatar me-3">
             <div class="crown-icon">
+              <!-- Avatar Icon -->
               <svg
                 width="56"
                 height="56"
@@ -33,47 +34,12 @@
             </div>
           </div>
           <div class="member-info">
-            <h4 class="member-name">Vũ Linh</h4>
-            <span class="member-rank">Thành viên Bạc</span>
-            <div class="member-points">F-Point tích lũy 0</div>
-            <div class="rank-progress">
-              Thêm <span class="highlight">30.000</span> để nâng hạng Vàng
-            </div>
-          </div>
-        </div>
-      </div>
-<!-- 
-     
-      <div class="membership-tiers">
-        <h3 class="section-title mb-4">Quyền lợi thành viên tại Fahasa.com</h3>
-        
-        <div class="tier-tabs">
-          <button 
-            v-for="tier in membershipTiers" 
-            :key="tier.id"
-            class="tier-tab"
-            :class="{ active: activeTier === tier.id }"
-            @click="activeTier = tier.id"
-          >
-            <div class="tier-icon">
-              <i :class="tier.icon"></i>
-            </div>
-            <span>{{ tier.name }}</span>
-          </button>
-        </div>
-
-        <div class="tier-content">
-          <div v-for="tier in membershipTiers" :key="tier.id" v-show="activeTier === tier.id">
-            <div class="benefits-list">
-              <div v-for="benefit in tier.benefits" :key="benefit" class="benefit-item">
-                <i class="bi bi-check2 text-success me-2"></i>
-                <span>{{ benefit }}</span>
-              </div>
-            </div>
-            
-            <div class="tier-requirements mt-4">
-              <h5>Điều kiện đạt hạng:</h5>
-              <p>{{ tier.requirements }}</p>
+            <h4 class="member-name">{{ user.full_name }}</h4>
+            <span class="member-rank" :class="rankClass">
+              Thành viên {{ userRank.rank.rankName || "Không xác định" }}
+            </span>
+            <div class="member-points">
+              F-Point tích lũy {{ user.total_point || 0 }}
             </div>
           </div>
         </div>
@@ -116,49 +82,48 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
+import { fetchUserDetail, getUserRank } from "@/services/admin/user";
+import { getUserId } from "@/utils/utils";
 
-const activeTier = ref("silver");
+const user = ref({ full_name: "Chưa xác định", total_point: 0 });
+const userRank = reactive({ rank: { rankName: "Vô Hạng" } });
 
-const membershipTiers = [
-  {
-    id: "bronze",
-    name: "Hạng Bạc",
-    icon: "bi bi-circle-fill text-secondary",
-    benefits: [
-      "Quà tặng sinh nhật: ✗",
-      "Ưu đãi freeship và mã giảm giá: ✗",
-      "Tỉ lệ tích lũy F-Point trên giá trị đơn hàng: 0,5%",
-    ],
-    requirements: "Đăng ký tài khoản tại Fahasa.com",
-  },
-  {
-    id: "silver",
-    name: "Hạng Vàng",
-    icon: "bi bi-circle-fill text-warning",
-    benefits: [
-      "Quà tặng sinh nhật: ✓",
-      "Ưu đãi freeship và mã giảm giá: ✓",
-      "Tỉ lệ tích lũy F-Point trên giá trị đơn hàng: 0,5%",
-    ],
-    requirements:
-      "Tổng giá trị đơn hàng đã mua từ 500.000đ trở lên trong vòng 12 tháng",
-  },
-  {
-    id: "gold",
-    name: "Kim cương",
-    icon: "bi bi-gem text-primary",
-    benefits: [
-      "Quà tặng sinh nhật: ✓",
-      "Ưu đãi freeship và mã giảm giá: ✓",
-      "Tỉ lệ tích lũy F-Point trên giá trị đơn hàng: 1%",
-    ],
-    requirements:
-      "Tổng giá trị đơn hàng đã mua từ 2.000.000đ trở lên trong vòng 12 tháng",
-  },
-];
+onMounted(async () => {
+  try {
+    const userRes = await fetchUserDetail(getUserId());
+    if (userRes.data?.data) {
+      user.value = userRes.data.data;
+      console.log("User data loaded:", user.value);
+    }
+
+    const rankRes = await getUserRank(getUserId());
+    const rankList = rankRes.data?.data;
+
+    if (Array.isArray(rankList)) {
+      const activeRank = rankList.find((item) => item.status === 1); // ✅ đúng status cấp ngoài
+      if (activeRank) {
+        userRank.rank = activeRank.rank;
+      }
+    }
+  } catch (error) {
+    console.error("Lỗi khi tải dữ liệu:", error);
+  }
+});
+
+const rankClass = computed(() => {
+  switch (userRank.rank.rankName) {
+    case "BẠC":
+      return "rank-silver";
+    case "VÀNG":
+      return "rank-gold";
+    case "KIM CƯƠNG":
+      return "rank-diamond";
+    default:
+      return "";
+  }
+});
 </script>
-
 <style scoped>
 .profile-benefits {
   background: white;
@@ -206,6 +171,21 @@ const membershipTiers = [
   font-weight: 500;
   display: inline-block;
   margin-bottom: 8px;
+}
+
+.member-rank.rank-silver {
+  background: #c0c0c0; /* Màu bạc */
+  color: #333;
+}
+
+.member-rank.rank-gold {
+  background: #ffd700; /* Màu vàng */
+  color: #333;
+}
+
+.member-rank.rank-diamond {
+  background: #b9f2ff; /* Màu kim cương */
+  color: #333;
 }
 
 .member-points {
@@ -281,7 +261,9 @@ const membershipTiers = [
 .tier-requirements {
   padding: 16px;
   background: white;
+  background: white;
   border-radius: 8px;
+  border-left: 4px solid #d2e2ee;
   border-left: 4px solid #d2e2ee;
 }
 
@@ -299,6 +281,7 @@ const membershipTiers = [
 }
 
 .benefits-summary {
+  border-top: 1px solid white;
   border-top: 1px solid white;
   padding-top: 32px;
 }
@@ -341,10 +324,12 @@ const membershipTiers = [
     padding: 16px;
   }
 
+
   .tier-tabs {
     flex-direction: column;
     gap: 0;
   }
+
 
   .tier-tab {
     border-bottom: 1px solid #e9ecef;
@@ -352,10 +337,12 @@ const membershipTiers = [
     justify-content: flex-start;
   }
 
+
   .tier-tab.active {
     background: #f8f9fa;
     border-left: 4px solid #dc3545;
   }
+
 
   .benefit-card {
     margin-bottom: 16px;

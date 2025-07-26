@@ -10,6 +10,27 @@ export function fetchUserDetail(id) {
   return client.get(`/api/users/${id}`);
 }
 
+// Lấy id user theo email
+export function getUserIdByEmail(email) {
+  return client.get('/api/users/userIdByEmail', { params: { email } });
+}
+
+// Lấy thông tin hạng người dùng
+export function getUserRank(userID) {
+  return client.get("/api/users/userRank", { params: { userID } });
+}
+
+// Cập nhật mật khẩu người dùng
+export function updateUserPass(id, passCu, passMoi) {
+  return client.put("/api/users/userPass", null, {
+    params: {
+      id: id,
+      passCu: passCu,
+      passMoi: passMoi,
+    },
+  });
+}
+
 // Tạo mới người dùng
 export function createUser(data) {
   return client.post('/api/users', data);
@@ -34,15 +55,23 @@ export function toggleUserStatus(id) {
 export function getUsersForOrder() {
   return client.get('/api/users/dropdown');
 }
+
+// Lấy profile người dùng hiện tại
 export function getProfile() {
   return client.get('/api/users/profile');
 }
-export function updateProfile(id,data) {
+
+// Cập nhật profile người dùng hiện tại
+export function updateProfile(id, data) {
   return client.put(`/api/users/profile/${id}`, data);
 }
+
+// Tìm user theo text
 export function userpos(text) {
   return client.get(`/api/users/userpos`, { params: { text } });
 }
+
+// Thêm retailer
 export function addretailer(data) {
   return client.post('/api/users/addretail', data);
 }

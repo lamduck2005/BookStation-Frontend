@@ -3,7 +3,7 @@
     <!-- Breadcrumb -->
     <div class="mb-3">
       <h6 class="text-muted">
-        Admin / <strong>Rank</strong>
+        Quản trị viên / <strong>Xếp hạng</strong>
       </h6>
     </div>
     
@@ -67,7 +67,6 @@
                 <th style="min-width: 150px;">Mức chi tiêu tối thiểu</th>
                 <th style="min-width: 150px;">Hệ số điểm</th>
                 <th style="min-width: 100px;">Trạng thái</th>
-                <th style="min-width: 150px;">Ngày tạo</th>
                 <th style="min-width: 120px;">Thao tác</th>
               </tr>
             </thead>
@@ -91,11 +90,9 @@
                     :status-class="rank.status == 1 ? 'status-active' : 'status-inactive'"
                   />
                 </td>
-                <td>{{ formatDate(rank.createdAt) }}</td>
                 <td>
                   <div class="d-flex gap-2">
                     <EditButton @click="openEditModal(rank, index)" />
-                    <DeleteButton @click="handleDelete(rank)" />
                   </div>
                 </td>
               </tr>
@@ -156,7 +153,8 @@
                   </select>
                   <div class="form-text">Chỉ được phép tạo 3 loại rank: Vàng, Bạc, Kim cương</div>
                 </div>
-                <div class="col-md-6">
+                <!-- Trường trạng thái chỉ hiển thị khi thêm mới, không cho sửa trạng thái -->
+                <div v-if="!isEditMode" class="col-md-6">
                   <label class="form-label enhanced-label">Trạng thái <span class="text-danger">*</span></label>
                   <select class="form-select enhanced-input" v-model="formData.status" required>
                     <option value="">Chọn trạng thái</option>

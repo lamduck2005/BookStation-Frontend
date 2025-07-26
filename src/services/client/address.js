@@ -23,12 +23,7 @@ export const addAddress = async (data) => {
 
 export const updateAddress = async (id, data) => client.put(`/api/addresses/${id}`, data);
 
-export const deleteAddress = async (id) => client.delete(`/api/addresses/${id}`);
+// export const deleteAddress = async (id) => client.delete(`/api/addresses/${id}`);
 
-export default {
-  getAddresses,
-  getAddress,
-  addAddress,
-  updateAddress,
-  deleteAddress,
-};
+export const disableAddress = async (id) => client.patch(`/api/addresses/${id}/disable`);
+

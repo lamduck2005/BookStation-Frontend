@@ -45,7 +45,7 @@
               </div>
               <span class="ms-2 small">Đang tải địa chỉ...</span>
             </div>
-            
+
             <!-- Có địa chỉ -->
             <div v-else-if="selectedAddress" class="position-relative">
               <!-- Địa chỉ đã chọn -->
@@ -54,7 +54,7 @@
                 <div class="form-check me-2 align-self-start mt-1">
                   <input class="form-check-input" type="radio" name="address" checked>
                 </div>
-                
+
                 <!-- Thông tin địa chỉ -->
                 <div class="flex-grow-1">
                   <div class="d-flex align-items-center mb-1">
@@ -68,16 +68,17 @@
                     <span class="badge bg-primary" style="font-size: 10px;">Mặc định</span>
                   </div>
                 </div>
-                
+
                 <!-- Nút sửa/thay đổi -->
                 <div class="align-self-start">
-                  <button class="btn btn-link text-primary p-0 text-decoration-none small" @click="showAddressModal = true">
+                  <button class="btn btn-link text-primary p-0 text-decoration-none small"
+                    @click="showAddressModal = true">
                     Sửa
                   </button>
                 </div>
               </div>
             </div>
-            
+
             <!-- Không có địa chỉ -->
             <div v-else class="text-center py-3">
               <div class="text-muted mb-2">
@@ -92,18 +93,7 @@
           </div>
         </div>
 
-        <!-- Phương thức vận chuyển -->
-        <div class="card mb-3">
-          <div class="card-header bg-white py-2">
-            <h6 class="mb-0 text-uppercase fw-bold">Phương thức vận chuyển</h6>
-          </div>
-          <div class="card-body py-3">
-            <div class="alert alert-info text-center">
-              <i class="fas fa-info-circle me-2"></i>
-              Chức năng chọn phương thức vận chuyển sẽ được triển khai trong phiên bản tiếp theo
-            </div>
-          </div>
-        </div>
+
 
         <!-- Phương thức thanh toán -->
         <div class="card mb-3">
@@ -112,20 +102,17 @@
           </div>
           <div class="card-body py-3">
             <!-- Thanh toán khi nhận hàng (COD) - Mặc định -->
-            <div class="d-flex align-items-center mb-2 p-2 border rounded" :class="{ 'border-primary bg-light': session?.paymentMethod === 'COD' || !session?.paymentMethod }">
+            <div class="d-flex align-items-center mb-2 p-2 border rounded"
+              :class="{ 'border-primary bg-light': session?.paymentMethod === 'COD' || !session?.paymentMethod }">
               <div class="form-check me-2">
-                <input 
-                  class="form-check-input" 
-                  type="radio" 
-                  name="payment" 
-                  id="cod" 
+                <input class="form-check-input" type="radio" name="payment" id="cod"
                   :checked="session?.paymentMethod === 'COD' || !session?.paymentMethod"
-                  @change="updateSessionPaymentMethod('COD')"
-                >
+                  @change="updateSessionPaymentMethod('COD')">
                 <label class="form-check-label" for="cod"></label>
               </div>
               <div class="d-flex align-items-center flex-grow-1">
-                <div class="me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; border: 1px solid #ddd; border-radius: 3px; background-color: #28a745;">
+                <div class="me-2 d-flex align-items-center justify-content-center"
+                  style="width: 30px; height: 30px; border: 1px solid #ddd; border-radius: 3px; background-color: #28a745;">
                   <i class="fas fa-money-bill-wave" style="font-size: 14px; color: white;"></i>
                 </div>
                 <div>
@@ -140,49 +127,20 @@
               </div>
             </div>
 
-            <!-- Chuyển khoản ngân hàng -->
-            <div class="d-flex align-items-center mb-2 p-2 border rounded" :class="{ 'border-primary bg-light': session?.paymentMethod === 'BANK_TRANSFER' }">
-              <div class="form-check me-2">
-                <input 
-                  class="form-check-input" 
-                  type="radio" 
-                  name="payment" 
-                  id="bank" 
-                  :checked="session?.paymentMethod === 'BANK_TRANSFER'"
-                  @change="updateSessionPaymentMethod('BANK_TRANSFER')"
-                >
-                <label class="form-check-label" for="bank"></label>
-              </div>
-              <div class="d-flex align-items-center flex-grow-1">
-                <div class="me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; border: 1px solid #ddd; border-radius: 3px; background-color: #007bff;">
-                  <i class="fas fa-university" style="font-size: 14px; color: white;"></i>
-                </div>
-                <div>
-                  <div class="small">
-                    <strong>Chuyển khoản ngân hàng</strong>
-                  </div>
-                  <div class="text-muted" style="font-size: 11px;">
-                    Chuyển khoản trước khi giao hàng
-                  </div>
-                </div>
-              </div>
-            </div>
+
 
             <!-- VNPay -->
-            <div class="d-flex align-items-center mb-2 p-2 border rounded" :class="{ 'border-primary bg-light': session?.paymentMethod === 'VNPAY' }">
+            <div class="d-flex align-items-center mb-2 p-2 border rounded"
+              :class="{ 'border-primary bg-light': session?.paymentMethod === 'VNPAY' }">
               <div class="form-check me-2">
-                <input 
-                  class="form-check-input" 
-                  type="radio" 
-                  name="payment" 
-                  id="vnpay" 
-                  :checked="session?.paymentMethod === 'VNPAY'"
-                  @change="updateSessionPaymentMethod('VNPAY')"
-                >
+                <input class="form-check-input" type="radio" name="payment" id="vnpay"
+                  :checked="session?.paymentMethod === 'VNPAY'" @change="updateSessionPaymentMethod('VNPAY')">
                 <label class="form-check-label" for="vnpay"></label>
               </div>
               <div class="d-flex align-items-center flex-grow-1">
-                <img src="https://vnpay.vn/s1/statics.vnpay.vn/2023/9/06ncktiwd6dc1694418196384.png" alt="VNPay" class="me-2" style="width: 30px; height: 30px; border: 1px solid #ddd; border-radius: 3px; padding: 3px;">
+                <img src="https://vnpay.vn/s1/statics.vnpay.vn/2023/9/06ncktiwd6dc1694418196384.png" alt="VNPay"
+                  class="me-2"
+                  style="width: 30px; height: 30px; border: 1px solid #ddd; border-radius: 3px; padding: 3px;">
                 <div>
                   <div class="small">
                     <strong>Ví điện tử VNPAY</strong>
@@ -195,7 +153,7 @@
             </div>
           </div>
         </div>
-        </div>
+
 
         <!-- Thành viên BookStation -->
         <div class="card mb-3">
@@ -207,20 +165,14 @@
           <div class="card-body py-3">
             <!-- B-Point -->
             <div class="mb-3">
-              <div
-                class="d-flex align-items-center justify-content-between mb-2"
-              >
+              <div class="d-flex align-items-center justify-content-between mb-2">
                 <div class="small">
                   <strong>Số B-Point hiện có:</strong>
                   <span class="text-warning ms-1">0</span>
                 </div>
               </div>
               <div class="form-check">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  id="usePoints"
-                />
+                <input class="form-check-input" type="checkbox" id="usePoints" />
                 <label class="form-check-label small" for="usePoints">
                   Sử dụng B-point để thanh toán
                 </label>
@@ -229,20 +181,14 @@
 
             <!-- Freeship -->
             <div class="mb-3">
-              <div
-                class="d-flex align-items-center justify-content-between mb-2"
-              >
+              <div class="d-flex align-items-center justify-content-between mb-2">
                 <div class="small">
                   <strong>Số lần freeship:</strong>
                   <span class="text-warning ms-1">0 lần</span>
                 </div>
               </div>
               <div class="form-check">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  id="useFreeship"
-                />
+                <input class="form-check-input" type="checkbox" id="useFreeship" />
                 <label class="form-check-label small" for="useFreeship">
                   Sử dụng freeship
                 </label>
@@ -261,29 +207,17 @@
           <div class="card-body py-3">
             <div class="row">
               <div class="col-8">
-                <input
-                  type="text"
-                  class="form-control form-control-sm"
-                  placeholder="Nhập mã khuyến mãi/Quà tặng"
-                  v-model="couponCode"
-                  style="font-size: 14px"
-                />
+                <input type="text" class="form-control form-control-sm" placeholder="Nhập mã khuyến mãi/Quà tặng"
+                  v-model="couponCode" style="font-size: 14px" />
               </div>
               <div class="col-4">
-                <button
-                  class="btn btn-primary btn-sm w-100"
-                  @click="applyCoupon"
-                  style="font-size: 14px"
-                >
+                <button class="btn btn-primary btn-sm w-100" @click="applyCoupon" style="font-size: 14px">
                   Áp dụng
                 </button>
               </div>
             </div>
             <div class="mt-2">
-              <button
-                class="btn btn-link p-0 text-primary text-decoration-none small"
-                @click="showVoucherList = true"
-              >
+              <button class="btn btn-link p-0 text-primary text-decoration-none small" @click="showVoucherList = true">
                 Chọn mã khuyến mãi
               </button>
             </div>
@@ -291,29 +225,16 @@
             <div v-if="showVoucherList" class="voucher-modal-overlay">
               <div class="voucher-modal card shadow p-3">
                 <div class="d-flex align-items-center mb-3">
-                  <span class="fw-bold text-primary me-2"
-                    ><i class="fas fa-ticket-alt"></i> CHỌN MÃ KHUYẾN MÃI</span
-                  >
-                  <span class="small text-muted"
-                    >Có thể áp dụng đồng thời nhiều mã</span
-                  >
-                  <button
-                    class="btn btn-sm btn-outline-secondary ms-auto"
-                    @click="showVoucherList = false"
-                  >
+                  <span class="fw-bold text-primary me-2"><i class="fas fa-ticket-alt"></i> CHỌN MÃ KHUYẾN MÃI</span>
+                  <span class="small text-muted">Có thể áp dụng đồng thời nhiều mã</span>
+                  <button class="btn btn-sm btn-outline-secondary ms-auto" @click="showVoucherList = false">
                     Đóng
                   </button>
                 </div>
-                <input
-                  type="text"
-                  class="form-control form-control-sm mb-2"
-                  v-model="voucherSearch"
-                  placeholder="Tìm kiếm mã..."
-                />
+                <input type="text" class="form-control form-control-sm mb-2" v-model="voucherSearch"
+                  placeholder="Tìm kiếm mã..." />
                 <div v-if="filteredVouchers.length > 0">
-                  <div
-                    v-for="voucher in filteredVouchers"
-                    :key="voucher.id || voucher.code"
+                  <div v-for="voucher in filteredVouchers" :key="voucher.id || voucher.code"
                     class="voucher-item border rounded p-2 mb-2 d-flex align-items-center justify-content-between"
                     :style="{
                       background: selectedVouchers.some(
@@ -321,8 +242,7 @@
                       )
                         ? '#e3f2fd'
                         : '#fff',
-                    }"
-                  >
+                    }">
                     <div>
                       <div class="fw-bold">
                         {{ voucher.name || voucher.code }}
@@ -337,15 +257,10 @@
                         }}
                       </div>
                     </div>
-                    <button
-                      class="btn btn-sm"
-                      :class="
-                        selectedVouchers.some((v) => v.code === voucher.code)
-                          ? 'btn-danger'
-                          : 'btn-primary'
-                      "
-                      @click="toggleVoucher(voucher)"
-                    >
+                    <button class="btn btn-sm" :class="selectedVouchers.some((v) => v.code === voucher.code)
+                      ? 'btn-danger'
+                      : 'btn-primary'
+                      " @click="toggleVoucher(voucher)">
                       {{
                         selectedVouchers.some((v) => v.code === voucher.code)
                           ? "Bỏ chọn"
@@ -358,10 +273,7 @@
                   Không tìm thấy mã phù hợp
                 </div>
                 <div class="mt-3 text-end">
-                  <button
-                    class="btn btn-primary"
-                    @click="showVoucherList = false"
-                  >
+                  <button class="btn btn-primary" @click="showVoucherList = false">
                     Áp dụng
                   </button>
                 </div>
@@ -371,17 +283,11 @@
             <div v-if="selectedVouchers.length > 0" class="mt-2">
               <div class="fw-bold small mb-1">Voucher đã chọn:</div>
               <div class="d-flex flex-wrap gap-2">
-                <span
-                  v-for="voucher in selectedVouchers"
-                  :key="voucher.code"
-                  class="badge bg-primary text-white d-flex align-items-center"
-                >
+                <span v-for="voucher in selectedVouchers" :key="voucher.code"
+                  class="badge bg-primary text-white d-flex align-items-center">
                   {{ voucher.code }}
-                  <button
-                    class="btn btn-sm btn-link text-white ms-1 p-0"
-                    style="font-size: 13px"
-                    @click="toggleVoucher(voucher)"
-                  >
+                  <button class="btn btn-sm btn-link text-white ms-1 p-0" style="font-size: 13px"
+                    @click="toggleVoucher(voucher)">
                     <i class="fas fa-times"></i>
                   </button>
                 </span>
@@ -392,10 +298,7 @@
             </div>
 
             <!-- Nhận quà section -->
-            <div
-              class="mt-3 p-2"
-              style="background-color: #f8f9fa; border-radius: 6px"
-            >
+            <div class="mt-3 p-2" style="background-color: #f8f9fa; border-radius: 6px">
               <div class="d-flex align-items-center">
                 <i class="fas fa-gift text-primary me-2"></i>
                 <div class="flex-grow-1">
@@ -404,15 +307,9 @@
                     Đơn hàng của bạn chưa đủ điều kiện nhận quà
                   </div>
                 </div>
-                <button
-                  class="btn btn-outline-primary btn-sm"
-                  @click="selectGift"
-                >
+                <button class="btn btn-outline-primary btn-sm" @click="selectGift">
                   <span style="font-size: 12px">Chọn quà</span>
-                  <i
-                    class="fas fa-chevron-right ms-1"
-                    style="font-size: 10px"
-                  ></i>
+                  <i class="fas fa-chevron-right ms-1" style="font-size: 10px"></i>
                 </button>
               </div>
             </div>
@@ -429,12 +326,8 @@
             <div v-if="session && session.checkoutItems && session.checkoutItems.length > 0">
 
               <div v-for="item in session.checkoutItems" :key="item.bookId" class="d-flex align-items-start mb-3">
-                <img 
-                  :src="item.bookImage || '/src/assets/img/login/frontImg.jpg'" 
-                  alt="Product" 
-                  class="me-3" 
-                  style="width: 80px; height: 100px; object-fit: cover; border-radius: 4px;"
-                >
+                <img :src="item.bookImage || '/src/assets/img/login/frontImg.jpg'" alt="Product" class="me-3"
+                  style="width: 80px; height: 100px; object-fit: cover; border-radius: 4px;">
                 <div class="flex-grow-1">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="small flex-grow-1 me-3" style="line-height: 1.4;">
@@ -454,7 +347,7 @@
                   </div>
                 </div>
               </div>
-             
+
             </div>
             <div v-else class="text-center text-muted">Không có sản phẩm nào trong đơn hàng.</div>
           </div>
@@ -466,13 +359,8 @@
             <h6 class="mb-0 text-uppercase fw-bold">Ghi chú cho đơn hàng</h6>
           </div>
           <div class="card-body py-3">
-            <textarea 
-              class="form-control" 
-              rows="3" 
-              placeholder="Nhập ghi chú cho đơn hàng (tùy chọn)..."
-              :value="session?.notes || ''"
-              @blur="updateSessionNotes($event.target.value)"
-            ></textarea>
+            <textarea class="form-control" rows="3" placeholder="Nhập ghi chú cho đơn hàng (tùy chọn)..."
+              :value="session?.notes || ''" @blur="updateSessionNotes($event.target.value)"></textarea>
             <div class="small text-muted mt-2">
               <i class="fas fa-info-circle me-1"></i>
               Ghi chú sẽ được gửi đến người bán để hỗ trợ giao hàng tốt hơn
@@ -480,120 +368,119 @@
           </div>
         </div>
 
-        <!-- Đồng ý điều khoản -->
-        <!-- Đã chuyển xuống thanh dưới -->
-      </div>
-    </div>
-    
 
-    <!-- Thanh tổng tiền cố định ở dưới -->
-    <div class="fixed-bottom bg-white border-top shadow-lg">
-      <div class="container-fluid py-3">
-        <!-- Phần tổng tiền ở trên -->
-        <div class="row justify-content-end mb-2">
-          <div class="col-auto">
-            <div class="text-end">
-              <div
-                class="d-flex justify-content-between align-items-center mb-1"
-              >
-                <span class="small text-muted me-3">Thành tiền</span>
-                <span class="fw-bold small">{{ formatPrice(session?.subtotal || 0) }}</span>
-              </div>
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="small text-muted me-3">Phí vận chuyển (Giao hàng tiêu chuẩn)</span>
-                <span class="fw-bold small">{{ formatPrice(session?.shippingFee || 20000) }}</span>
-              </div>
-              <div class="d-flex justify-content-between align-items-center">
-                <span class="small text-muted me-3">Tổng Số Tiền (gồm VAT)</span>
-                <span class="fw-bold text-warning">{{ formatPrice(session?.totalAmount || 0) }}</span>
-              </div>
+      </div>
+
+
+
+      <!-- Đồng ý điều khoản -->
+      <!-- Đã chuyển xuống thanh dưới -->
+    </div>
+  </div>
+
+
+  <!-- Thanh tổng tiền cố định ở dưới -->
+  <div class="fixed-bottom bg-white border-top shadow-lg">
+    <div class="container-fluid py-3">
+      <!-- Phần tổng tiền ở trên -->
+      <div class="row justify-content-end mb-2">
+        <div class="col-auto">
+          <div class="text-end">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="small text-muted me-3">Thành tiền</span>
+              <span class="fw-bold small">{{ formatPrice(session?.subtotal || 0) }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="small text-muted me-3">Phí vận chuyển (Giao hàng tiêu chuẩn)</span>
+              <span class="fw-bold small">{{ formatPrice(session?.shippingFee || 20000) }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="small text-muted me-3">Tổng Số Tiền (gồm VAT)</span>
+              <span class="fw-bold text-warning">{{ formatPrice(session?.totalAmount || 0) }}</span>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Đường kẻ ngăn cách -->
-        <hr class="my-2" style="border-color: #dee2e6" />
+      <!-- Đường kẻ ngăn cách -->
+      <hr class="my-2" style="border-color: #dee2e6" />
 
-        <!-- Phần điều khoản và nút thanh toán ở dưới -->
-        <div class="row align-items-center">
-          <div class="col-12 col-md-6">
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="agree"
-                checked
-              />
-              <label class="form-check-label small" for="agree">
-                Bằng việc tiến hành Mua hàng, bạn đã đồng ý với
-                <a href="#" class="text-primary"
-                  >Điều khoản & Điều kiện của BookStation.com</a
-                >
-              </label>
-            </div>
+      <!-- Phần điều khoản và nút thanh toán ở dưới -->
+      <div class="row align-items-center">
+        <div class="col-12 col-md-6">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="agree" checked />
+            <label class="form-check-label small" for="agree">
+              Bằng việc tiến hành Mua hàng, bạn đã đồng ý với
+              <a href="#" class="text-primary">Điều khoản & Điều kiện của BookStation.com</a>
+            </label>
           </div>
-          <div class="col-12 col-md-6 text-center text-md-end">
-            <button
-              class="btn btn-danger px-4 py-2 fw-bold"
-              @click="processPayment"
-            >
-              Xác nhận thanh toán
-            </button>
-          </div>
+        </div>
+        <div class="col-12 col-md-6 text-center text-md-end">
+          <button class="btn btn-danger px-4 py-2 fw-bold" @click="processPayment">
+            Xác nhận thanh toán
+          </button>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Padding để tránh bị che bởi thanh cố định -->
-    <div style="height: 120px;"></div>
+  <!-- Padding để tránh bị che bởi thanh cố định -->
+  <div style="height: 120px;"></div>
 
-    <!-- Modal chọn địa chỉ -->
-    <div class="modal fade" :class="{ show: showAddressModal }" :style="{ display: showAddressModal ? 'block' : 'none' }" tabindex="-1" @click.self="showAddressModal = false">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Chọn địa chỉ giao hàng</h5>
-            <button type="button" class="btn-close" @click="showAddressModal = false"></button>
-          </div>
-          <div class="modal-body">
-            <div v-if="addresses.length === 0" class="text-center py-3">
-              <div class="text-muted">Bạn chưa có địa chỉ nào</div>
-              <button class="btn btn-primary btn-sm mt-2">
-                <i class="fas fa-plus me-1"></i>
-                Thêm địa chỉ mới
-              </button>
-            </div>
-            <div v-else>
-              <div v-for="address in addresses" :key="address.id" class="border rounded p-3 mb-2" :class="{ 'border-primary': selectedAddress?.id === address.id }" @click="selectAddress(address)" style="cursor: pointer;">
-                <div class="d-flex">
-                  <div class="form-check me-2 align-self-start mt-1">
-                    <input class="form-check-input" type="radio" name="modalAddress" :checked="selectedAddress?.id === address.id">
+  <!-- Modal chọn địa chỉ -->
+  <div class="modal fade" :class="{ show: showAddressModal }" :style="{ display: showAddressModal ? 'block' : 'none' }"
+    tabindex="-1" @click.self="showAddressModal = false">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Chọn địa chỉ giao hàng</h5>
+          <button type="button" class="btn-close" @click="showAddressModal = false"></button>
+        </div>
+        <div class="modal-body">
+          <div  v-if="addresses.length === 0" class="py-3 text-center text-muted">Bạn chưa có địa chỉ nào</div>
+          <div v-else>
+            <div v-for="address in addresses" :key="address.id" class="border rounded p-3 mb-2"
+              :class="{ 'border-primary': selectedAddress?.id === address.id }" @click="selectAddress(address)"
+              style="cursor: pointer;">
+              <div class="d-flex">
+                <div class="form-check me-2 align-self-start mt-1">
+                  <input class="form-check-input" type="radio" name="modalAddress"
+                    :checked="selectedAddress?.id === address.id">
+                </div>
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center mb-1">
+                    <strong class="me-2">{{ address.recipientName }}</strong>
+                    <span class="text-muted">{{ address.phoneNumber }}</span>
+                    <span v-if="address.isDefault" class="badge bg-primary ms-2" style="font-size: 10px;">Mặc
+                      định</span>
                   </div>
-                  <div class="flex-grow-1">
-                    <div class="d-flex align-items-center mb-1">
-                      <strong class="me-2">{{ address.recipientName }}</strong>
-                      <span class="text-muted">{{ address.phoneNumber }}</span>
-                      <span v-if="address.isDefault" class="badge bg-primary ms-2" style="font-size: 10px;">Mặc định</span>
-                    </div>
-                    <div class="text-muted small">
-                      {{ formatFullAddress(address) }}
-                    </div>
+                  <div class="text-muted small">
+                    {{ formatFullAddress(address) }}
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="showAddressModal = false">Hủy</button>
-            <button type="button" class="btn btn-primary" @click="showAddressModal = false">Xác nhận</button>
+          <!-- nut them dia chi -->
+          <div class="text-center">
+            <button class="btn btn-primary btn-sm mt-2" @click="redirectToAddressPage">
+              <i class="fas fa-plus me-1"></i>
+              Thêm địa chỉ mới
+            </button>
           </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" @click="showAddressModal = false">Hủy</button>
+          <button type="button" class="btn btn-primary" @click="showAddressModal = false">Xác nhận</button>
         </div>
       </div>
     </div>
-    
-    <!-- Modal backdrop -->
-    <div v-if="showAddressModal" class="modal-backdrop fade show"></div>
-  
+  </div>
+
+  <!-- Modal backdrop -->
+  <div v-if="showAddressModal" class="modal-backdrop fade show"></div>
+
 </template>
 
 
@@ -606,11 +493,13 @@ import {
   validateCheckoutSession,
   createOrderFromSession,
   recalculateSessionPricing,
-  updateCheckoutSession
+  updateCheckoutSession,
+  createVNPayPaymentUrl
 } from '@/services/client/checkout.js'
 import { getAddresses } from '@/services/client/address.js'
 import { getUserId } from '@/utils/utils.js'
 import { showToast } from '@/utils/swalHelper.js'
+import { calcShippingFee } from '@/services/client/shippingFee.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -635,6 +524,14 @@ const voucherSearch = ref('')
 const selectedVouchers = ref([])
 const filteredVouchers = ref([])
 
+// Shipping Fee auto-calc
+const updateShippingFee = async () => {
+  if (!session.value) return
+  const fee = await calcShippingFee(selectedAddress.value, session.value.checkoutItems || [])
+  session.value.shippingFee = fee
+  await updateSessionShippingFee(fee)
+}
+
 let validationTimer = null
 
 const formatPrice = (price) => {
@@ -647,14 +544,14 @@ const loadLatestSession = async (userId) => {
     loading.value = true
     error.value = null
     const response = await getLatestCheckoutSession(userId)
-    
+
     console.log('🔍 Response from getLatestCheckoutSession:', response)
-    
+
     // Fix: Kiểm tra đúng cấu trúc response
     if (response.status === 200 && response.data?.data) {
       session.value = response.data.data
       sessionId.value = response.data.data.id
-      
+
       console.log('✅ Latest session loaded hi:', {
         sessionId: sessionId.value,
         session: session.value,
@@ -662,7 +559,7 @@ const loadLatestSession = async (userId) => {
         length: session.value?.checkoutItems?.length,
         isActive: session.value?.isActive
       })
-      
+
       // Lấy địa chỉ từ session nếu có, nếu không thì lấy địa chỉ mặc định
       if (session.value.addressId) {
         // Tìm địa chỉ trong danh sách addresses đã load
@@ -674,27 +571,33 @@ const loadLatestSession = async (userId) => {
         // Nếu session chưa có địa chỉ, tự động cập nhật với địa chỉ mặc định
         await setDefaultAddressToSession()
       }
-      
-      // Fix: Validate session nhưng không để nó block loading
-      try {
-        await validateSession()
-      } catch (validateError) {
-        console.warn('⚠️ Validation error (non-blocking):', validateError)
+
+      //Lấy payment method từ session
+      if (!session.value.paymentMethod) {
+        await updateSessionPaymentMethod('COD')
       }
-    } else {
-      throw new Error('Không tìm thấy phiên thanh toán mới nhất.')
+    
+
+    // Fix: Validate session nhưng không để nó block loading
+    try {
+      await validateSession()
+    } catch (validateError) {
+      console.warn('⚠️ Validation error (non-blocking):', validateError)
     }
-  } catch (err) {
-    console.error('❌ Error loading latest checkout session:', err)
-    const errorMessage = err.response?.data?.message || err.message
-    if (err.response?.status === 404) {
-      error.value = 'Không có phiên thanh toán nào. Vui lòng quay lại giỏ hàng.'
-    } else {
-      error.value = errorMessage || 'Không thể tải thông tin thanh toán.'
-    }
-  } finally {
-    loading.value = false
+  } else {
+    throw new Error('Không tìm thấy phiên thanh toán mới nhất.')
   }
+} catch (err) {
+  console.error('❌ Error loading latest checkout session:', err)
+  const errorMessage = err.response?.data?.message || err.message
+  if (err.response?.status === 404) {
+    error.value = 'Không có phiên thanh toán nào. Vui lòng quay lại giỏ hàng.'
+  } else {
+    error.value = errorMessage || 'Không thể tải thông tin thanh toán.'
+  }
+} finally {
+  loading.value = false
+}
 }
 
 const validateSession = async () => {
@@ -703,9 +606,9 @@ const validateSession = async () => {
     const id = session.value?.id
     if (!userId || !id) return
     const response = await validateCheckoutSession(id, userId)
-    
+
     console.log('🔍 Validate session response:', response)
-    
+
     if (response.status === 200) {
       validationErrors.value = []
       // Fix: Kiểm tra đúng structure response.data?.data
@@ -737,6 +640,7 @@ const setupValidationTimer = () => {
 }
 
 const processPayment = async () => {
+  await updateShippingFee() // đảm bảo phí ship mới nhất trước khi thanh toán
   if (!agreed.value) {
     showToast('warning', 'Vui lòng đồng ý với điều khoản và điều kiện!')
     return
@@ -749,34 +653,40 @@ const processPayment = async () => {
     showToast('warning', 'Vui lòng kiểm tra và sửa các lỗi trước khi đặt hàng')
     return
   }
-  
+
   try {
     orderLoading.value = true
     const userId = getUserId()
-    
+
     // Validate session một lần nữa trước khi tạo đơn hàng
-    console.log('🔍 Final validation before order creation...')
     await validateSession()
     if (validationErrors.value.length > 0) {
       showToast('error', 'Có lỗi trong đơn hàng. Vui lòng kiểm tra lại.')
       return
     }
-    
+
     // Đảm bảo có phương thức thanh toán, mặc định là COD
     if (!session.value.paymentMethod) {
-      console.log('💳 Setting default payment method to COD...')
       await updateSessionPaymentMethod('COD')
+    } else if (session.value.paymentMethod === 'VNPAY') {
+      const response = await createVNPayPaymentUrl(sessionId.value, userId)
+      if (response.data.data) {
+        const paymentUrl = response.data.data
+        window.location.href = paymentUrl
+      } else {
+        showToast('error', 'Có lỗi khi thanh toán bằng VNPay, vui lòng thử lại.')
+      }
+      return
     }
-    
     // Tạo đơn hàng từ session
     console.log('📝 Creating order from session...')
     const response = await createOrderFromSession(sessionId.value, userId)
-    
+
     if (response.status === 201 && response.data) {
       const orderId = response.data
       console.log('🎉 Order created successfully:', orderId)
       showToast('success', `Đặt hàng thành công! Mã đơn hàng: ${orderId}`)
-      
+
       // Chuyển đến trang thành công
       router.push(`/order/success/${orderId}`)
     } else {
@@ -785,7 +695,7 @@ const processPayment = async () => {
   } catch (err) {
     console.error('❌ Error creating order:', err)
     const errorMessage = err.response?.data?.message || err.message
-    
+
     if (err.response?.status === 400) {
       if (errorMessage.includes('hết hàng')) {
         showToast('error', 'Một số sản phẩm đã hết hàng. Vui lòng cập nhật lại giỏ hàng.')
@@ -836,12 +746,12 @@ const loadAddresses = async () => {
     addressLoading.value = true
     const userId = getUserId()
     if (!userId) return
-    
+
     const response = await getAddresses()
     if (response.status === 200 && response.data?.data) {
       addresses.value = response.data.data
       console.log('✅ Addresses loaded:', addresses.value)
-      
+
       // Tìm và set địa chỉ mặc định nếu chưa có selectedAddress
       if (!selectedAddress.value) {
         const defaultAddr = addresses.value.find(addr => addr.isDefault)
@@ -880,16 +790,18 @@ const applyCoupon = () => {
   }
   // TODO: Implement coupon application logic
   showToast('info', 'Chức năng áp dụng mã khuyến mãi sẽ được triển khai sớm')
+  updateShippingFee()
 }
 
 const selectAddress = async (address) => {
   selectedAddress.value = address
   showAddressModal.value = false
-  
+
   // Cập nhật địa chỉ vào session
   if (sessionId.value && address?.id) {
     await updateSessionAddress(address.id)
   }
+  await updateShippingFee()
 }
 
 // Helper function để lấy items từ session hiện tại - LUÔN LUÔN CẦN THIẾT khi update session
@@ -898,7 +810,7 @@ const getCurrentSessionItems = () => {
     console.warn('⚠️ No checkout items found in session')
     return []
   }
-  
+
   return session.value.checkoutItems.map(item => ({
     bookId: item.bookId,
     quantity: item.quantity
@@ -912,16 +824,16 @@ const setDefaultAddressToSession = async () => {
     const defaultAddr = addresses.value.find(addr => addr.isDefault)
     if (defaultAddr && sessionId.value) {
       const userId = getUserId()
-      
+
       // QUAN TRỌNG: Phải truyền items theo document
       const updateData = {
         items: getCurrentSessionItems(),
         addressId: defaultAddr.id
       }
-      
+
       console.log('📝 Updating session with default address:', updateData)
       const response = await updateCheckoutSession(sessionId.value, userId, updateData)
-      
+
       if (response.status === 200 && response.data?.data) {
         session.value = response.data.data
         selectedAddress.value = defaultAddr // Fix: Dùng defaultAddr thay vì response.data.data.address
@@ -938,16 +850,16 @@ const updateSessionAddress = async (addressId) => {
   try {
     const userId = getUserId()
     if (!sessionId.value || !userId) return
-    
+
     // QUAN TRỌNG: Phải truyền items theo document
     const updateData = {
       items: getCurrentSessionItems(),
       addressId: addressId
     }
-    
+
     console.log('📝 Updating session address:', updateData)
     const response = await updateCheckoutSession(sessionId.value, userId, updateData)
-    
+
     if (response.status === 200 && response.data?.data) {
       session.value = response.data.data
       // Fix: Tìm địa chỉ trong danh sách addresses thay vì dùng response.data.data.address
@@ -965,23 +877,23 @@ const updateSessionPaymentMethod = async (paymentMethod) => {
   try {
     const userId = getUserId()
     if (!sessionId.value || !userId) return
-    
+
     // QUAN TRỌNG: Phải truyền items theo document
     const updateData = {
       items: getCurrentSessionItems(),
       paymentMethod: paymentMethod
     }
-    
+
     console.log('📝 Updating session payment method:', updateData)
     const response = await updateCheckoutSession(sessionId.value, userId, updateData)
-    
+
     if (response.status === 200 && response.data?.data) {
       session.value = response.data.data
-      showToast('success', 'Phương thức thanh toán đã được cập nhật')
+      // showToast('success', 'Phương thức thanh toán đã được cập nhật')
     }
   } catch (error) {
     console.error('❌ Error updating payment method:', error)
-    showToast('error', 'Không thể cập nhật phương thức thanh toán')
+    // showToast('error', 'Không thể cập nhật phương thức thanh toán')
   }
 }
 
@@ -990,16 +902,16 @@ const updateSessionVouchers = async (voucherIds) => {
   try {
     const userId = getUserId()
     if (!sessionId.value || !userId) return
-    
+
     // QUAN TRỌNG: Phải truyền items theo document
     const updateData = {
       items: getCurrentSessionItems(),
       selectedVoucherIds: voucherIds
     }
-    
+
     console.log('📝 Updating session vouchers:', updateData)
     const response = await updateCheckoutSession(sessionId.value, userId, updateData)
-    
+
     if (response.status === 200 && response.data?.data) {
       session.value = response.data.data
       showToast('success', 'Voucher đã được cập nhật')
@@ -1015,16 +927,16 @@ const updateSessionNotes = async (notes) => {
   try {
     const userId = getUserId()
     if (!sessionId.value || !userId) return
-    
+
     // QUAN TRỌNG: Phải truyền items theo document
     const updateData = {
       items: getCurrentSessionItems(),
       notes: notes
     }
-    
+
     console.log('📝 Updating session notes:', updateData)
     const response = await updateCheckoutSession(sessionId.value, userId, updateData)
-    
+
     if (response.status === 200 && response.data?.data) {
       session.value = response.data.data
       showToast('success', 'Ghi chú đã được cập nhật')
@@ -1032,6 +944,29 @@ const updateSessionNotes = async (notes) => {
   } catch (error) {
     console.error('❌ Error updating notes:', error)
     showToast('error', 'Không thể cập nhật ghi chú')
+  }
+}
+
+// Function để cập nhật phí ship
+const updateSessionShippingFee = async (fee) => {
+  try {
+    const userId = getUserId()
+    if (!sessionId.value || !userId) return
+
+    const updateData = {
+      items: getCurrentSessionItems(),
+      shippingFee: fee
+    }
+
+    console.log('📝 Updating session shipping fee:', updateData)
+    const response = await updateCheckoutSession(sessionId.value, userId, updateData)
+
+    if (response.status === 200 && response.data?.data) {
+      session.value = response.data.data
+      console.log('✅ Shipping fee updated in session')
+    }
+  } catch (error) {
+    console.error('❌ Error updating shipping fee:', error)
   }
 }
 
@@ -1044,10 +979,15 @@ const toggleVoucher = (voucher) => {
     selectedVouchers.value.push(voucher)
   }
   // TODO: Update session vouchers when implemented
+  updateShippingFee()
 }
 
 const selectGift = () => {
   showToast('info', 'Chức năng chọn quà sẽ được triển khai sớm')
+}
+
+const redirectToAddressPage = () => {
+  router.push('/profile/addresses')
 }
 
 // Lắng nghe sự kiện storage để reload giữa các tab
@@ -1067,15 +1007,16 @@ onMounted(async () => {
     router.push('/login')
     return
   }
-  
+
   console.log('🚀 Loading checkout page for user:', userId)
-  
+
   // Load addresses và checkout session song song
   await Promise.all([
     loadAddresses(),
     loadLatestSession(userId)
   ])
-  
+
+  await updateShippingFee()
   setupValidationTimer()
 })
 </script>

@@ -64,3 +64,12 @@ export const getUserEmail = () => getUserFromToken()?.email;
 export const getUserFullName = () => getUserFromToken()?.fullName;
 export const getUserRole = () => getUserFromToken()?.role;
 export const getUserPhone = () => getUserFromToken()?.phone;
+
+// Format currency function
+export const formatCurrency = (amount) => {
+  if (!amount) return '0 ₫';
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND'
+  }).format(amount);
+};

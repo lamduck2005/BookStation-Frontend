@@ -1,0 +1,1274 @@
+<template>
+  <div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+      <h1 class="h3 mb-0 text-gray-800">Quản lý hoàn hàng</h1>
+    </div>
+
+    <!-- Filter Controls -->
+    <div class="card shadow mb-4">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-2">
+            <label class="form-label">Trạng thái</label>
+            <select v-model="filters.status" @change="applyFilters" class="form-select">
+              <option value="">Tất cả trạng thái</option>
+              <option value="PENDING">Chờ phê duyệt</option>
+              <option value="APPROVED">Đã phê duyệt</option>
+              <option value="REJECTED">Đã từ chối</option>
+              <option value="COMPLETED">Hoàn thành</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Loại hoàn hàng</label>
+            <select v-model="filters.refundType" @change="applyFilters" class="form-select">
+              <option value="">Tất cả loại</option>
+              <option value="FULL">Hoàn toàn bộ</option>
+              <option value="PARTIAL">Hoàn một phần</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Từ ngày</label>
+            <input
+              v-model="filters.startDate"
+              @change="applyFilters"
+              type="date"
+              class="form-control"
+            />
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Đến ngày</label>
+            <input
+              v-model="filters.endDate"
+              @change="applyFilters"
+              type="date"
+              class="form-control"
+            />
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Số tiền (min)</label>
+            <input
+              v-model="filters.minAmount"
+              @input="applyFilters"
+              type="number"
+              class="form-control"
+              placeholder="0"
+            />
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Số tiền (max)</label>
+            <input
+              v-model="filters.maxAmount"
+              @input="applyFilters"
+              type="number"
+              class="form-control"
+              placeholder="1000000"
+            />
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-4">
+            <label class="form-label">Tìm kiếm</label>
+            <input
+              v-model="filters.search"
+              @input="applyFilters"
+              type="text"
+              class="form-control"
+              placeholder="Mã đơn hàng, tên khách hàng, tracking code..."
+            />
+          </div>
+          <div class="col-md-8 d-flex align-items-end">
+            <button @click="applyFilters" class="btn btn-primary me-2">
+              <i class="fas fa-search"></i> Tìm kiếm
+            </button>
+            <button @click="clearFilters" class="btn btn-outline-secondary">
+              <i class="fas fa-times"></i> Xóa filter
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Refund Requests Table -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Danh sách yêu cầu hoàn hàng</h6>
+      </div>
+      <div class="card-body">
+        <!-- Loading State -->
+        <div v-if="loading" class="text-center">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Đang tải...</span>
+          </div>
+        </div>
+
+        <!-- Error State -->
+        <div v-else-if="error" class="alert alert-danger" role="alert">
+          {{ error }}
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="!filteredRefunds.length" class="text-center py-4">
+          <p class="text-muted">Không có yêu cầu hoàn hàng nào</p>
+        </div>
+
+        <!-- Refund Requests Table -->
+        <div v-else class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th width="8%">Mã đơn hàng</th>
+                <th width="10%">Tracking Code</th>
+                <th width="12%">Khách hàng</th>
+                <th width="10%">Ngày yêu cầu</th>
+                <th width="8%">Loại hoàn</th>
+                <th width="10%">Số tiền</th>
+                <th width="10%">Trạng thái</th>
+                <th width="15%">Lý do</th>
+                <th width="8%">Minh chứng</th>
+                <th width="9%">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="refund in filteredRefunds" :key="refund.refundRequestId || refund.id">
+                <td>
+                  <strong class="text-primary">#{{ refund.orderCode }}</strong>
+                </td>
+                <td>
+                  <span class="badge bg-info text-dark">{{ refund.trackingCode || 'N/A' }}</span>
+                </td>
+                <td>
+                  <div>
+                    <div class="fw-bold">{{ refund.userFullName }}</div>
+                    <small class="text-muted">ID: {{ refund.orderId }}</small>
+                  </div>
+                </td>
+                <td>
+                  <div>{{ formatDate(refund.createdAt) }}</div>
+                  <small class="text-muted">{{ formatTime(refund.createdAt) }}</small>
+                </td>
+                <td>
+                  <span class="badge" :class="refund.refundType === 'FULL' ? 'bg-warning text-dark' : 'bg-info'">
+                    {{ refund.refundType === 'FULL' ? 'Hoàn toàn bộ' : 'Hoàn một phần' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="fw-bold text-success">{{ formatCurrency(refund.totalRefundAmount) }}</span>
+                </td>
+                <td>
+                      <StatusLabel 
+                        :status="refund.refundStatus || refund.status" 
+                        :statusText="refund.refundStatusDisplay || refund.statusDisplay" 
+                      />
+                </td>
+                <td>
+                  <div class="text-truncate" style="max-width: 150px;" :title="(refund.reasonDisplay || refund.reason) + (refund.customerNote ? ' - ' + refund.customerNote : '')">
+                    {{ refund.reasonDisplay || refund.reason }}
+                  </div>
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <button
+                      v-if="(refund.evidenceFiles?.images && refund.evidenceFiles.images.length > 0) || (refund.evidenceImages && refund.evidenceImages.length > 0)"
+                      @click="viewEvidence(refund, 'images')"
+                      class="btn btn-sm btn-outline-info"
+                      title="Xem hình ảnh"
+                    >
+                      <i class="fas fa-image"></i>
+                      {{ (refund.evidenceFiles?.images || refund.evidenceImages || []).length }}
+                    </button>
+                    <button
+                      v-if="(refund.evidenceFiles?.videos && refund.evidenceFiles.videos.length > 0) || (refund.evidenceVideos && refund.evidenceVideos.length > 0)"
+                      @click="viewEvidence(refund, 'videos')"
+                      class="btn btn-sm btn-outline-warning"
+                      title="Xem video"
+                    >
+                      <i class="fas fa-video"></i>
+                      {{ (refund.evidenceFiles?.videos || refund.evidenceVideos || []).length }}
+                    </button>
+                    <span
+                      v-if="(!refund.evidenceFiles?.images || refund.evidenceFiles.images.length === 0) && 
+                            (!refund.evidenceImages || refund.evidenceImages.length === 0) &&
+                            (!refund.evidenceFiles?.videos || refund.evidenceFiles.videos.length === 0) &&
+                            (!refund.evidenceVideos || refund.evidenceVideos.length === 0)"
+                      class="text-muted small"
+                    >
+                      Không có
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <div class="btn-group" role="group">
+                    <button
+                      @click="viewRefundDetails(refund)"
+                      class="btn btn-sm btn-outline-primary"
+                      title="Xem chi tiết"
+                    >
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button
+                      v-if="(refund.refundStatus || refund.status) === 'PENDING'"
+                      @click="handleProcessRefund(refund)"
+                      class="btn btn-sm btn-outline-success"
+                      title="Phê duyệt/Từ chối"
+                    >
+                      <i class="fas fa-cog"></i>
+                    </button>
+                    <button
+                      v-if="(refund.refundStatus || refund.status) === 'APPROVED'"
+                      @click="processRefundRequest(refund.refundRequestId || refund.id)"
+                      class="btn btn-sm btn-success"
+                      title="Hoàn trả ngay"
+                    >
+                      <i class="fas fa-check-circle"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <Pagination
+          v-if="pagination.totalPages > 1"
+          :current-page="pagination.currentPage"
+          :total-pages="pagination.totalPages"
+          :total-items="pagination.totalItems"
+          :per-page="pagination.perPage"
+          @page-changed="changePage"
+        />
+      </div>
+    </div>
+
+    <!-- Refund Details Modal -->
+    <div
+      class="modal fade"
+      id="refundDetailsModal"
+      tabindex="-1"
+      aria-labelledby="refundDetailsModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="refundDetailsModalLabel">
+              Chi tiết yêu cầu hoàn hàng #{{ selectedRefund?.orderCode }}
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" v-if="selectedRefund">
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="fw-bold text-primary">📋 Thông tin đơn hàng</h6>
+                <table class="table table-sm">
+                  <tbody>
+                    <tr>
+                      <td><strong>Mã đơn hàng:</strong></td>
+                      <td>#{{ selectedRefund.orderCode }}</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Tracking Code:</strong></td>
+                      <td><span class="badge bg-info">{{ selectedRefund.trackingCode || 'N/A' }}</span></td>
+                    </tr>
+                    <tr>
+                      <td><strong>Tổng tiền hoàn:</strong></td>
+                      <td><span class="fw-bold text-success">{{ formatCurrency(selectedRefund.totalRefundAmount) }}</span></td>
+                    </tr>
+                    <tr>
+                      <td><strong>Loại hoàn hàng:</strong></td>
+                      <td>
+                        <span class="badge" :class="selectedRefund.refundType === 'FULL' ? 'bg-warning text-dark' : 'bg-info'">
+                          {{ selectedRefund.refundType === 'PARTIAL' ? 'Hoàn một phần' : 'Hoàn toàn bộ' }}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr v-if="selectedRefund.shippingFee">
+                      <td><strong>Phí ship:</strong></td>
+                      <td>{{ formatCurrency(selectedRefund.shippingFee) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <h6 class="fw-bold text-primary">👤 Thông tin khách hàng</h6>
+                <table class="table table-sm">
+                  <tbody>
+                    <tr>
+                      <td><strong>Tên:</strong></td>
+                      <td>{{ selectedRefund.userFullName || selectedRefund.orderDetails?.userFullName }}</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Order ID:</strong></td>
+                      <td>{{ selectedRefund.orderId }}</td>
+                    </tr>
+                    <tr v-if="selectedRefund.orderDetails?.deliveredDate">
+                      <td><strong>Ngày giao:</strong></td>
+                      <td>{{ formatDate(selectedRefund.orderDetails.deliveredDate) }}</td>
+                    </tr>
+                    <tr v-if="selectedRefund.refundDeadline">
+                      <td><strong>Hạn hoàn trả:</strong></td>
+                      <td>{{ formatDate(selectedRefund.refundDeadline) }}</td>
+                    </tr>
+                    <tr v-if="selectedRefund.remainingDays !== undefined">
+                      <td><strong>Còn lại:</strong></td>
+                      <td>
+                        <span :class="selectedRefund.remainingDays > 3 ? 'text-success' : 'text-danger'">
+                          {{ selectedRefund.remainingDays }} ngày
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <hr>
+            
+            <div class="row">
+              <div class="col-12">
+                <h6 class="fw-bold text-primary">📝 Thông tin hoàn hàng</h6>
+                <table class="table table-sm">
+                  <tbody>
+                    <tr>
+                      <td width="20%"><strong>Ngày yêu cầu:</strong></td>
+                      <td>{{ formatDate(selectedRefund.createdAt) }} {{ formatTime(selectedRefund.createdAt) }}</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Trạng thái:</strong></td>
+                      <td>
+                        <StatusLabel :status="selectedRefund.refundStatus || selectedRefund.status" :type="getStatusType(selectedRefund.refundStatus || selectedRefund.status)" />
+                        <span class="ms-2 text-muted">{{ selectedRefund.refundStatusDisplay || selectedRefund.statusDisplay }}</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td><strong>Lý do hoàn hàng:</strong></td>
+                      <td>
+                        <span class="badge bg-secondary me-2">{{ selectedRefund.reason }}</span>
+                        <span class="text-muted">{{ selectedRefund.reasonDisplay }}</span>
+                      </td>
+                    </tr>
+                    <tr v-if="selectedRefund.estimatedProcessTime">
+                      <td><strong>Thời gian xử lý:</strong></td>
+                      <td>{{ selectedRefund.estimatedProcessTime }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                
+                <div v-if="selectedRefund.customerNote" class="mt-3">
+                  <p><strong>💬 Ghi chú khách hàng:</strong></p>
+                  <div class="bg-info bg-opacity-10 p-3 rounded border-start border-info border-4">
+                    {{ selectedRefund.customerNote }}
+                  </div>
+                </div>
+                
+                <div v-if="selectedRefund.adminNote" class="mt-3">
+                  <p><strong>🔧 Ghi chú của admin:</strong></p>
+                  <div class="bg-warning bg-opacity-10 p-3 rounded border-start border-warning border-4">
+                    {{ selectedRefund.adminNote }}
+                  </div>
+                  <small class="text-muted">
+                    Bởi: {{ selectedRefund.approvedByName || 'Admin' }}
+                    <span v-if="selectedRefund.approvedAt"> - {{ formatDate(selectedRefund.approvedAt) }}</span>
+                  </small>
+                </div>
+
+                <!-- Refund Items (cho PARTIAL refund) -->
+                <div v-if="selectedRefund.refundItems && selectedRefund.refundItems.length > 0" class="mt-4">
+                  <h6 class="fw-bold text-primary">📦 Sản phẩm hoàn trả</h6>
+                  <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                      <thead class="table-light">
+                        <tr>
+                          <th>Sản phẩm</th>
+                          <th>Số lượng hoàn</th>
+                          <th>Đơn giá</th>
+                          <th>Tổng tiền</th>
+                          <th>Lý do</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="item in selectedRefund.refundItems" :key="item.bookId">
+                          <td>
+                            <div class="d-flex align-items-center">
+                              <img v-if="item.bookImage" :src="item.bookImage" class="me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                              <div>
+                                <div class="fw-bold">{{ item.bookTitle }}</div>
+                                <small class="text-muted">ID: {{ item.bookId }}</small>
+                              </div>
+                            </div>
+                          </td>
+                          <td>{{ item.refundQuantity }}</td>
+                          <td>{{ formatCurrency(item.unitPrice) }}</td>
+                          <td>{{ formatCurrency(item.refundAmount) }}</td>
+                          <td>{{ item.reason || 'N/A' }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Timeline (nếu có) -->
+                <div v-if="selectedRefund.timeline && selectedRefund.timeline.length > 0" class="mt-4">
+                  <h6 class="fw-bold text-primary">⏰ Lịch sử xử lý</h6>
+                  <div class="timeline">
+                    <div v-for="(event, index) in selectedRefund.timeline" :key="index" class="timeline-item">
+                      <div class="timeline-marker" :class="getTimelineMarkerClass(event.status)"></div>
+                      <div class="timeline-content">
+                        <div class="fw-bold">{{ event.statusDisplay }}</div>
+                        <div class="text-muted">{{ formatDate(event.timestamp) }} {{ formatTime(event.timestamp) }}</div>
+                        <div v-if="event.note" class="mt-1">{{ event.note }}</div>
+                        <div v-if="event.adminName" class="text-muted small">Bởi: {{ event.adminName }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Admin Info (nếu có quyền) -->
+                <div v-if="selectedRefund.adminInfo" class="mt-4">
+                  <h6 class="fw-bold text-danger">🔐 Thông tin admin</h6>
+                  <div class="alert alert-light">
+                    <p><strong>Có thể phê duyệt:</strong> 
+                      <span :class="selectedRefund.adminInfo.canApprove ? 'text-success' : 'text-danger'">
+                        {{ selectedRefund.adminInfo.canApprove ? 'Có' : 'Không' }}
+                      </span>
+                    </p>
+                    <div v-if="selectedRefund.adminInfo.managerApprovalRequired" class="alert alert-warning">
+                      ⚠️ Yêu cầu phê duyệt từ manager (số tiền lớn)
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            <button
+              v-if="(selectedRefund?.refundStatus || selectedRefund?.status) === 'PENDING'"
+              @click="handleProcessRefund(selectedRefund)"
+              type="button"
+              class="btn btn-primary"
+            >
+              🔧 Xử lý yêu cầu
+            </button>
+            <button
+              v-if="(selectedRefund?.refundStatus || selectedRefund?.status) === 'APPROVED'"
+              @click="processRefundRequest(selectedRefund?.refundRequestId || selectedRefund?.id)"
+              type="button"
+              class="btn btn-success"
+            >
+              💰 Hoàn trả ngay
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Evidence Viewer Modal -->
+    <div
+      class="modal fade"
+      id="evidenceModal"
+      tabindex="-1"
+      aria-labelledby="evidenceModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="evidenceModalLabel">
+              Minh chứng hoàn hàng - {{ evidenceType === 'images' ? 'Hình ảnh' : 'Video' }}
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div v-if="evidenceType === 'images'" class="row">
+              <div v-for="(image, index) in currentEvidence" :key="index" class="col-md-4 mb-3">
+                <img
+                  :src="image"
+                  :alt="`Evidence ${index + 1}`"
+                  class="img-fluid rounded shadow"
+                  style="cursor: pointer;"
+                  @click="openImagePreview(image)"
+                />
+              </div>
+            </div>
+            <div v-else-if="evidenceType === 'videos'" class="row">
+              <div v-for="(video, index) in currentEvidence" :key="index" class="col-md-6 mb-3">
+                <video
+                  :src="video"
+                  controls
+                  class="w-100 rounded shadow"
+                  style="max-height: 300px;"
+                >
+                  Trình duyệt không hỗ trợ video.
+                </video>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, onMounted, computed } from 'vue'
+import { Modal } from 'bootstrap'
+import Swal from 'sweetalert2'
+import StatusLabel from '@/components/common/StatusLabel.vue'
+import Pagination from '@/components/common/Pagination.vue'
+import { 
+  getPendingRefunds, 
+  getAllRefunds, 
+  getRefundAdminDetail,
+  adminApproveRefund, 
+  adminRejectRefund,
+  processRefund 
+} from '@/services/admin/order.js'
+import { formatCurrency, getUserId } from '@/utils/utils.js'
+
+// Reactive data
+const loading = ref(false)
+const error = ref('')
+const refundRequests = ref([])
+const selectedRefund = ref(null)
+const currentEvidence = ref([])
+const evidenceType = ref('')
+
+// Filters
+const filters = reactive({
+  status: '',
+  refundType: '',
+  startDate: '',
+  endDate: '',
+  search: '',
+  minAmount: '',
+  maxAmount: ''
+})
+
+// Pagination
+const pagination = reactive({
+  currentPage: 0,
+  totalPages: 1,
+  totalItems: 0,
+  perPage: 20
+})
+
+// Computed properties
+const filteredRefunds = computed(() => {
+  let result = [...refundRequests.value]
+
+  if (filters.status) {
+    result = result.filter(refund => refund.refundStatus === filters.status)
+  }
+
+  if (filters.refundType) {
+    result = result.filter(refund => refund.refundType === filters.refundType)
+  }
+
+  if (filters.startDate) {
+    result = result.filter(refund => new Date(refund.createdAt) >= new Date(filters.startDate))
+  }
+
+  if (filters.endDate) {
+    result = result.filter(refund => new Date(refund.createdAt) <= new Date(filters.endDate))
+  }
+
+  if (filters.search) {
+    const searchLower = filters.search.toLowerCase()
+    result = result.filter(refund =>
+      refund.orderCode.toLowerCase().includes(searchLower) ||
+      refund.userFullName.toLowerCase().includes(searchLower) ||
+      refund.orderId.toString().includes(searchLower) ||
+      refund.trackingCode?.toLowerCase().includes(searchLower)
+    )
+  }
+
+  if (filters.minAmount) {
+    result = result.filter(refund => refund.totalRefundAmount >= parseInt(filters.minAmount))
+  }
+
+  if (filters.maxAmount) {
+    result = result.filter(refund => refund.totalRefundAmount <= parseInt(filters.maxAmount))
+  }
+
+  return result
+})
+
+// Methods
+const fetchRefundRequests = async () => {
+  try {
+    loading.value = true
+    error.value = ''
+    
+    // Tạo params cho API theo tài liệu mới
+    const params = {
+      page: pagination.currentPage,
+      size: pagination.perPage,
+      sortBy: 'createdAt',
+      sortDir: 'desc'
+    }
+
+    // Nếu có filter status và không phải "ALL", gọi API với filter cụ thể
+    if (filters.status && filters.status !== 'ALL') {
+      params.status = filters.status
+    }
+
+    if (filters.refundType && filters.refundType !== 'ALL') {
+      params.refundType = filters.refundType
+    }
+
+    if (filters.startDate) {
+      params.dateFrom = new Date(filters.startDate).getTime()
+    }
+
+    if (filters.endDate) {
+      params.dateTo = new Date(filters.endDate).getTime()
+    }
+
+    if (filters.minAmount) {
+      params.minAmount = parseInt(filters.minAmount)
+    }
+
+    if (filters.maxAmount) {
+      params.maxAmount = parseInt(filters.maxAmount)
+    }
+
+    if (filters.search) {
+      if (filters.search.startsWith('ORD-')) {
+        params.orderCode = filters.search
+      } else {
+        // Tìm theo user hoặc refund ID
+        params.search = filters.search
+      }
+    }
+
+    let response
+    // Luôn dùng API getAllRefunds để hiển thị tất cả các trạng thái
+    // Chỉ filter theo status nếu user chọn cụ thể
+    if (filters.status && filters.status !== '' && filters.status !== 'ALL') {
+      // Có filter status cụ thể
+      console.log('=== FETCHING REFUNDS WITH STATUS FILTER ===')
+      console.log('Status filter:', filters.status)
+      console.log('Params:', params)
+      response = await getAllRefunds(params)
+    } else {
+      // Không có filter hoặc filter ALL -> lấy tất cả
+      delete params.status // Xóa status filter để lấy tất cả
+      console.log('=== FETCHING ALL REFUNDS ===')
+      console.log('Params:', params)
+      response = await getAllRefunds(params)
+    }
+    
+    if (response.status === 200) {
+      console.log('=== REFUND API RESPONSE ===')
+      console.log('Response data:', response.data)
+      
+      if (response.data.content) {
+        // Response có pagination
+        refundRequests.value = response.data.content
+        pagination.totalPages = response.data.totalPages
+        pagination.totalItems = response.data.totalElements
+        pagination.currentPage = response.data.pageNumber
+        
+        console.log('=== LOADED REFUNDS (PAGINATED) ===')
+        console.log('Total items:', response.data.totalElements)
+        console.log('Refunds:', refundRequests.value.map(r => ({
+          id: r.refundRequestId || r.id,
+          orderCode: r.orderCode,
+          status: r.refundStatus || r.status
+        })))
+      } else {
+        // Response không có pagination (có thể là array trực tiếp)
+        refundRequests.value = response.data || []
+        pagination.totalPages = 1
+        pagination.totalItems = refundRequests.value.length
+        
+        console.log('=== LOADED REFUNDS (NON-PAGINATED) ===')
+        console.log('Total items:', refundRequests.value.length)
+        console.log('Refunds:', refundRequests.value.map(r => ({
+          id: r.refundRequestId || r.id,
+          orderCode: r.orderCode,
+          status: r.refundStatus || r.status
+        })))
+      }
+    }
+    
+  } catch (err) {
+    error.value = 'Có lỗi xảy ra khi tải danh sách hoàn hàng'
+    console.error('Error fetching refund requests:', err)
+    refundRequests.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+const applyFilters = () => {
+  pagination.currentPage = 0
+  fetchRefundRequests()
+}
+
+const clearFilters = () => {
+  filters.status = ''
+  filters.refundType = ''
+  filters.startDate = ''
+  filters.endDate = ''
+  filters.search = ''
+  filters.minAmount = ''
+  filters.maxAmount = ''
+  applyFilters()
+}
+
+const changePage = (page) => {
+  pagination.currentPage = page - 1 // Convert to 0-based index
+  fetchRefundRequests()
+}
+
+const getStatusType = (status) => {
+  const statusTypes = {
+    PENDING: 'warning',
+    APPROVED: 'info',
+    REJECTED: 'danger',
+    COMPLETED: 'success'
+  }
+  return statusTypes[status] || 'secondary'
+}
+
+const getTimelineMarkerClass = (status) => {
+  const classes = {
+    PENDING: 'bg-warning',
+    APPROVED: 'bg-info',
+    REJECTED: 'bg-danger',
+    COMPLETED: 'bg-success'
+  }
+  return classes[status] || 'bg-secondary'
+}
+
+const formatDate = (timestamp) => {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  return date.toLocaleDateString('vi-VN')
+}
+
+const formatTime = (timestamp) => {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+}
+
+const viewRefundDetails = async (refund) => {
+  try {
+    // Gọi API để lấy chi tiết đầy đủ cho admin
+    const response = await getRefundAdminDetail(refund.refundRequestId || refund.id)
+    if (response.status === 200) {
+      selectedRefund.value = response.data
+    } else {
+      selectedRefund.value = refund
+    }
+  } catch (error) {
+    console.error('Error fetching refund detail:', error)
+    selectedRefund.value = refund
+  }
+  
+  const modal = new Modal(document.getElementById('refundDetailsModal'))
+  modal.show()
+}
+
+const viewEvidence = (refund, type) => {
+  evidenceType.value = type
+  if (type === 'images') {
+    currentEvidence.value = refund.evidenceFiles?.images || refund.evidenceImages || []
+  } else {
+    currentEvidence.value = refund.evidenceFiles?.videos || refund.evidenceVideos || []
+  }
+  const modal = new Modal(document.getElementById('evidenceModal'))
+  modal.show()
+}
+
+const openImagePreview = (imageSrc) => {
+  Swal.fire({
+    imageUrl: imageSrc,
+    imageAlt: 'Evidence Image',
+    showConfirmButton: false,
+    showCloseButton: true,
+    imageWidth: '80%',
+    imageHeight: 'auto',
+    customClass: {
+      popup: 'p-0'
+    }
+  })
+}
+
+const handleProcessRefund = async (refund) => {
+  const result = await Swal.fire({
+    title: 'Xử lý hoàn hàng',
+    text: `Xử lý yêu cầu hoàn hàng cho đơn hàng #${refund.orderCode}`,
+    input: 'select',
+    inputOptions: {
+      approve: 'Phê duyệt hoàn hàng',
+      reject: 'Từ chối hoàn hàng'
+    },
+    inputPlaceholder: 'Chọn hành động...',
+    showCancelButton: true,
+    confirmButtonText: 'Xác nhận',
+    cancelButtonText: 'Hủy',
+    inputValidator: (value) => {
+      if (!value) {
+        return 'Vui lòng chọn hành động!'
+      }
+    }
+  })
+
+  if (result.isConfirmed) {
+    const action = result.value
+    
+    if (action === 'approve') {
+      await approveRefundRequest(refund)
+    } else if (action === 'reject') {
+      await rejectRefundRequest(refund)
+    }
+  }
+}
+
+const approveRefundRequest = async (refund) => {
+  // Form thu thập thông tin phê duyệt theo tài liệu mới
+  // Tạo HTML cho input số lượng hoàn từng sản phẩm nếu có refundItems
+  let refundItemsHtml = ''
+  if (refund.refundItems && refund.refundItems.length > 0) {
+    refundItemsHtml = `
+      <div class="mb-3">
+        <label class="form-label">Số lượng hoàn từng sản phẩm</label>
+        <div>
+          ${refund.refundItems.map((item, idx) => `
+            <div class="mb-2">
+              <span><strong>${item.bookTitle}</strong> (ID: ${item.bookId})</span><br>
+              <input id="refundQuantity_${idx}" type="number" class="form-control mt-1" value="${item.refundQuantity || item.quantity || 1}" min="1" max="${item.quantity || 10}" style="width:120px;display:inline-block;">
+              <small class="text-muted">Lý do: ${item.reason || ''}</small>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `
+  }
+
+  const { value: formValues } = await Swal.fire({
+    title: 'Phê duyệt hoàn hàng',
+    text: `Phê duyệt hoàn hàng ${formatCurrency(refund.totalRefundAmount)} cho đơn hàng #${refund.orderCode}`,
+    html: `
+      <div class="mb-3">
+        <label class="form-label">Ghi chú admin *</label>
+        <textarea id="adminNote" class="form-control" rows="3" placeholder="Nhập ghi chú cho khách hàng...">Yêu cầu hợp lệ. Khách hàng đã cung cấp đầy đủ minh chứng.</textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Số tiền hoàn (có thể điều chỉnh)</label>
+        <input id="approvedAmount" type="number" class="form-control" value="${refund.totalRefundAmount}" max="${refund.totalRefundAmount}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">
+          <input id="needsReturn" type="checkbox" checked> Cần trả hàng về kho
+        </label>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Địa chỉ trả hàng</label>
+        <input id="returnAddress" type="text" class="form-control" value="Kho BookStation - 123 Đường ABC, Quận 1, TP.HCM">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Số ngày trả hàng</label>
+        <input id="returnDays" type="number" class="form-control" value="7" min="1" max="30">
+      </div>
+      ${refundItemsHtml}
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'Phê duyệt',
+    cancelButtonText: 'Hủy',
+    confirmButtonColor: '#28a745',
+    preConfirm: () => {
+      const adminNote = document.getElementById('adminNote').value
+      const approvedAmount = parseInt(document.getElementById('approvedAmount').value)
+      const needsReturn = document.getElementById('needsReturn').checked
+      const returnAddress = document.getElementById('returnAddress').value
+      const returnDays = parseInt(document.getElementById('returnDays').value)
+
+      if (!adminNote || adminNote.length < 10) {
+        Swal.showValidationMessage('Ghi chú admin phải có ít nhất 10 ký tự')
+        return false
+      }
+
+      if (approvedAmount > refund.totalRefundAmount) {
+        Swal.showValidationMessage('Số tiền hoàn không được vượt quá số tiền yêu cầu')
+        return false
+      }
+
+      // Thu thập số lượng hoàn cho từng sản phẩm
+      let refundItems = []
+      if (refund.refundItems && refund.refundItems.length > 0) {
+        refundItems = refund.refundItems.map((item, idx) => {
+          const refundQuantity = parseInt(document.getElementById(`refundQuantity_${idx}`).value) || 1
+          return {
+            ...item,
+            refundQuantity
+          }
+        })
+      }
+
+      return {
+        adminNote,
+        approvedRefundAmount: approvedAmount,
+        needsPhysicalReturn: needsReturn,
+        returnAddress: needsReturn ? returnAddress : '',
+        expectedReturnDays: needsReturn ? returnDays : 0,
+        refundItems,
+        status: 'APPROVED'
+      }
+    }
+  })
+
+  if (formValues) {
+    try {
+      loading.value = true
+      
+      const adminId = getUserId() || 1
+      const refundId = refund.refundRequestId || refund.id
+      
+      console.log('=== DEBUG: Approving refund with new API ===')
+      console.log('Refund ID:', refundId)
+      console.log('Admin ID:', adminId)
+      console.log('Approval data:', formValues)
+      
+      const response = await adminApproveRefund(refundId, adminId, formValues)
+      
+      if (response.status === 200) {
+        Swal.fire({
+          title: 'Phê duyệt thành công!',
+          html: `
+            <p>Yêu cầu hoàn hàng đã được phê duyệt thành công.</p>
+            <p><strong>Bước tiếp theo:</strong> Bạn có thể tìm đơn hàng này ở trạng thái "Đã phê duyệt" và nhấn nút "Hoàn trả ngay" để hoàn tiền cho khách hàng.</p>
+          `,
+          icon: 'success',
+          timer: 5000,
+          showConfirmButton: true
+        })
+        
+        // Refresh danh sách ngay lập tức
+        await fetchRefundRequests()
+      }
+      
+    } catch (err) {
+      console.error('Error approving refund:', err)
+      const errorMessage = err.response?.data?.message || err.message || 'Có lỗi xảy ra khi phê duyệt hoàn hàng'
+      Swal.fire({
+        title: 'Lỗi!',
+        text: errorMessage,
+        icon: 'error'
+      })
+    } finally {
+      loading.value = false
+    }
+  }
+}
+
+const rejectRefundRequest = async (refund) => {
+  // Form thu thập thông tin từ chối theo tài liệu mới
+  const { value: formValues } = await Swal.fire({
+    title: 'Từ chối hoàn hàng',
+    text: `Từ chối yêu cầu hoàn hàng cho đơn hàng #${refund.orderCode}`,
+    html: `
+      <div class="mb-3">
+        <label class="form-label">Lý do từ chối *</label>
+        <select id="rejectReason" class="form-control">
+          <option value="INSUFFICIENT_EVIDENCE">Minh chứng không đủ</option>
+          <option value="POLICY_VIOLATION">Vi phạm chính sách</option>
+          <option value="DAMAGED_BY_USER">Hư hỏng do người dùng</option>
+          <option value="EXPIRED_RETURN_PERIOD">Hết hạn hoàn trả</option>
+          <option value="OTHER">Khác</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Ghi chú chi tiết *</label>
+        <textarea id="adminNote" class="form-control" rows="4" placeholder="Nhập lý do từ chối chi tiết..."></textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Hướng dẫn cho khách hàng</label>
+        <textarea id="suggestedAction" class="form-control" rows="2" placeholder="Khách hàng có thể...">Khách hàng có thể gửi lại yêu cầu với minh chứng rõ ràng hơn.</textarea>
+      </div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'Từ chối',
+    cancelButtonText: 'Hủy',
+    confirmButtonColor: '#dc3545',
+    preConfirm: () => {
+      const rejectReason = document.getElementById('rejectReason').value
+      const adminNote = document.getElementById('adminNote').value
+      const suggestedAction = document.getElementById('suggestedAction').value
+
+      if (!adminNote || adminNote.length < 10) {
+        Swal.showValidationMessage('Ghi chú từ chối phải có ít nhất 10 ký tự')
+        return false
+      }
+
+      const reasonDisplayMap = {
+        'INSUFFICIENT_EVIDENCE': 'Minh chứng không đủ',
+        'POLICY_VIOLATION': 'Vi phạm chính sách',
+        'DAMAGED_BY_USER': 'Hư hỏng do người dùng',
+        'EXPIRED_RETURN_PERIOD': 'Hết hạn hoàn trả',
+        'OTHER': 'Khác'
+      }
+
+      return {
+        rejectReason,
+        rejectReasonDisplay: reasonDisplayMap[rejectReason],
+        adminNote,
+        suggestedAction: suggestedAction || 'Vui lòng liên hệ hỗ trợ để biết thêm chi tiết.'
+       ,status: 'REJECTED'
+      }
+    }
+  })
+
+  if (formValues) {
+    try {
+      loading.value = true
+      
+      const adminId = getUserId() || 1
+      const refundId = refund.refundRequestId || refund.id
+      
+      console.log('=== DEBUG: Rejecting refund with new API ===')
+      console.log('Refund ID:', refundId)
+      console.log('Admin ID:', adminId)
+      console.log('Rejection data:', formValues)
+      
+      const response = await adminRejectRefund(refundId, adminId, formValues)
+      
+      if (response.status === 200) {
+        Swal.fire({
+          title: 'Thành công!',
+          text: 'Đã từ chối yêu cầu hoàn hàng',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        })
+        
+        // Refresh danh sách
+        await fetchRefundRequests()
+      }
+      
+    } catch (err) {
+      console.error('Error rejecting refund:', err)
+      const errorMessage = err.response?.data?.message || err.message || 'Có lỗi xảy ra khi từ chối hoàn hàng'
+      Swal.fire({
+        title: 'Lỗi!',
+        text: errorMessage,
+        icon: 'error'
+      })
+    } finally {
+      loading.value = false
+    }
+  }
+}
+
+// Xử lý hoàn trả sau khi đã phê duyệt
+const processRefundRequest = async (refundId) => {
+  // Form thu thập thông tin xử lý hoàn trả theo tài liệu mới
+  const { value: formValues } = await Swal.fire({
+    title: 'Xử lý hoàn trả',
+    text: 'Thông tin xử lý hoàn tiền cho khách hàng',
+    html: `
+      <div class="mb-3">
+        <label class="form-label">Loại xử lý</label>
+        <select id="processType" class="form-control">
+          <option value="AUTOMATIC">Tự động</option>
+          <option value="MANUAL">Thủ công</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Phương thức hoàn tiền</label>
+        <select id="paymentMethod" class="form-control">
+          <option value="BANK_TRANSFER">Chuyển khoản ngân hàng</option>
+          <option value="E_WALLET">Ví điện tử</option>
+          <option value="CASH">Tiền mặt</option>
+          <option value="STORE_CREDIT">Tín dụng cửa hàng</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Tên ngân hàng (nếu chuyển khoản)</label>
+        <input id="bankName" type="text" class="form-control" value="Vietcombank">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Ghi chú xử lý</label>
+        <textarea id="processingNote" class="form-control" rows="3" placeholder="Ghi chú về quá trình hoàn tiền...">Đã xử lý hoàn tiền qua chuyển khoản. Khách hàng sẽ nhận tiền trong 1-2 ngày làm việc.</textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Phí xử lý (nếu có)</label>
+        <input id="refundFee" type="number" class="form-control" value="0" min="0">
+      </div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'Xử lý hoàn trả',
+    cancelButtonText: 'Hủy',
+    confirmButtonColor: '#28a745',
+    preConfirm: () => {
+      const processType = document.getElementById('processType').value
+      const paymentMethod = document.getElementById('paymentMethod').value
+      const bankName = document.getElementById('bankName').value
+      const processingNote = document.getElementById('processingNote').value
+      const refundFee = parseInt(document.getElementById('refundFee').value) || 0
+
+      return {
+        processType,
+        paymentMethod,
+        bankInfo: paymentMethod === 'BANK_TRANSFER' ? {
+          bankName,
+          transferNote: `Hoàn tiền đơn hàng`
+        } : null,
+        processingNote,
+        refundFeeDeduction: refundFee
+      }
+    }
+  })
+
+  if (formValues) {
+    try {
+      loading.value = true
+      
+      const adminId = getUserId() || 1
+      
+      console.log('=== DEBUG: Processing refund with new API ===')
+      console.log('Refund ID:', refundId)
+      console.log('Admin ID:', adminId)
+      console.log('Process data:', formValues)
+      
+      const response = await processRefund(refundId, adminId, formValues)
+      
+      if (response.status === 200) {
+        Swal.fire({
+          title: 'Thành công!',
+          text: 'Đã xử lý hoàn trả thành công. Hàng hóa và tiền đã được hoàn lại.',
+          icon: 'success',
+          timer: 3000,
+          showConfirmButton: false
+        })
+        
+        // Refresh danh sách
+        await fetchRefundRequests()
+      }
+      
+    } catch (err) {
+      console.error('Error processing refund:', err)
+      const errorMessage = err.response?.data?.message || err.message || 'Có lỗi xảy ra khi xử lý hoàn trả'
+      Swal.fire({
+        title: 'Lỗi!',
+        text: errorMessage,
+        icon: 'error'
+      })
+    } finally {
+      loading.value = false
+    }
+  }
+}
+
+// Lifecycle
+onMounted(() => {
+  fetchRefundRequests()
+})
+</script>
+
+<style scoped>
+.table-responsive {
+  border-radius: 0.375rem;
+}
+
+.btn-group .btn {
+  margin-right: 2px;
+}
+
+.btn-group .btn:last-child {
+  margin-right: 0;
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modal-xl {
+  max-width: 90%;
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Timeline styles */
+.timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -2rem;
+  top: 0.5rem;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #dee2e6;
+}
+
+.timeline-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: -1.75rem;
+  top: 1.5rem;
+  width: 2px;
+  height: calc(100% + 0.5rem);
+  background-color: #dee2e6;
+}
+
+.timeline-content {
+  background: #f8f9fa;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  border-left: 3px solid #007bff;
+}
+
+.border-4 {
+  border-width: 4px !important;
+}
+
+@media (max-width: 768px) {
+  .btn-group {
+    flex-direction: column;
+  }
+  
+  .btn-group .btn {
+    margin-bottom: 2px;
+    margin-right: 0;
+  }
+
+  .modal-xl {
+    max-width: 95%;
+  }
+  
+  .timeline {
+    padding-left: 1rem;
+  }
+  
+  .timeline-marker {
+    left: -1rem;
+  }
+  
+  .timeline-item:not(:last-child)::before {
+    left: -0.75rem;
+  }
+}
+</style>

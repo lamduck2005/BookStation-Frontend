@@ -86,6 +86,22 @@ export const getBooksDropdownFallback = async () => {
   });
 };
 
+// ✅ Lấy danh sách BookFormat enum values
+export const getBookFormats = () => {
+  return [
+    { value: 'HARDCOVER', label: 'Bìa cứng' },
+    { value: 'PAPERBACK', label: 'Bìa mềm' },
+    { value: 'AUDIOBOOK', label: 'Sách nói' },
+    { value: 'EBOOK', label: 'Sách điện tử' },
+    { value: 'MAGAZINE', label: 'Tạp chí' },
+    { value: 'COMIC', label: 'Truyện tranh' },
+    { value: 'TEXTBOOK', label: 'Sách giáo khoa' },
+    { value: 'NOTEBOOK', label: 'Sổ tay' },
+    { value: 'JOURNAL', label: 'Nhật ký' },
+    { value: 'WORKBOOK', label: 'Sách bài tập' }
+  ];
+};
+
 // Tạo sách mới
 export const createBook = async (bookData) => {
   try {
@@ -129,16 +145,6 @@ export const updateBook = async (id, bookData) => {
   }
 };
 
-// Xóa sách
-export const deleteBook = async (id) => {
-  try {
-    const response = await client.delete(`/api/books/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Lỗi khi xóa sách:', error);
-    throw error;
-  }
-};
 
 // Lấy chi tiết sách
 export const getBookById = async (id) => {
@@ -188,6 +194,43 @@ export const fetchFlashSaleProducts = async () => {
     return response.data.data;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách sách:', error);
+    throw error;
+  }
+}
+
+// ✅ Validate quantity - API mới
+export const validateQuantity = async (bookId, quantity) => {
+  try {
+    const response = await client.post('/api/books/validate-quantity', {
+      bookId,
+      quantity
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi validate quantity:', error);
+    throw error;
+  }
+}
+
+// ✅ API Tính giá sách theo tài liệu BOOK_PRICE_CALCULATION_API.md
+export const calculatePrice = async (bookId, discountValue = null, discountPercent = null, discountActive = false) => {
+  try {
+    const payload = {
+      bookId,
+      discountActive
+    };
+    
+    // Chỉ gửi 1 trong 2: discountValue hoặc discountPercent
+    if (discountValue !== null && discountValue !== '' && discountValue > 0) {
+      payload.discountValue = parseFloat(discountValue);
+    } else if (discountPercent !== null && discountPercent !== '' && discountPercent > 0) {
+      payload.discountPercent = parseFloat(discountPercent);
+    }
+    
+    const response = await client.post('/api/books/calculate-price', payload);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi tính giá sách:', error);
     throw error;
   }
 }

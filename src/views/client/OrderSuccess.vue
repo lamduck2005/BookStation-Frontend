@@ -20,6 +20,14 @@
             <h2 class="text-success mb-2">Đặt hàng thành công!</h2>
             <p class="text-muted">Cảm ơn bạn đã tin tưởng BookStation</p>
           </div>
+          <!-- Fail icon -->
+          <div class="mb-4" hidden>
+            <div class="success-icon mx-auto mb-3">
+              <i class="fas fa-ban text-danger" style="font-size: 5rem;"></i>
+            </div>
+            <h2 class="text-danger mb-2">Đặt hàng thất bại!</h2>
+            <p class="text-muted">Vui lòng thử lại</p>
+          </div>
 
           <!-- Order info -->
           <div class="card mb-4">

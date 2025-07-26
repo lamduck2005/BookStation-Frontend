@@ -1,12 +1,12 @@
 <template>
-  <div class="product-detail-page">
+  <div class="product-detail-page py-5">
     <div v-if="loading" class="loading-container">
       <div class="spinner-border text-danger" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
     
-    <div v-else-if="book" class="product-detail-container">
+    <div v-else-if="book" class="product-detail-container ">
       <!-- Left Panel - Fixed -->
       <div class="left-panel">
         <!-- Product Image -->
@@ -17,11 +17,7 @@
               :alt="book.bookName"
               class="main-image"
             />
-            <!-- Gift Badge -->
-            <div class="gift-badge">
-              <span class="gift-text">QUÀ TẶNG</span>
-              <span class="gift-text">GIẤY KHEN</span>
-            </div>
+            
           </div>
           <!-- Thumbnail Images -->
           <div class="thumbnail-container">
@@ -164,30 +160,10 @@
             
             <!-- Stock Info -->
             <div class="stock-info">
-              <span class="stock-text text-primary">{{ book.stockQuantity || 0 }} nhà sách còn hàng</span>
-            </div>
-          </div>
-          
-          <!-- Promotions -->
-          <div class="promotions-section">
-            <h6 class="section-title">Ưu đãi liên quan</h6>
-            <div class="promo-grid">
-              <div class="promo-item">
-                <i class="fa fa-percent text-warning"></i>
-                <span>Mã giảm 10k - to...</span>
-              </div>
-              <div class="promo-item">
-                <i class="fa fa-percent text-warning"></i>
-                <span>Mã giảm 20k - to...</span>
-              </div>
-              <div class="promo-item">
-                <i class="fa fa-credit-card text-primary"></i>
-                <span>Vpbank: giảm 50...</span>
-              </div>
-              <div class="promo-item">
-                <i class="fa fa-credit-card text-primary"></i>
-                <span>Shopeepay: giảm...</span>
-              </div>
+              <span class="stock-text text-primary">
+                <template v-if="book.stockQuantity === 0">Đã hết hàng</template>
+                <template v-else>chỉ còn {{ book.stockQuantity }} sản phẩm</template>
+              </span>
             </div>
           </div>
           
@@ -254,10 +230,10 @@
                 <span class="detail-label">Hình thức</span>
                 <span class="detail-value">{{ book.format || 'Bìa Mềm' }}</span>
               </div>
-              <div class="detail-row">
+              <!-- <div class="detail-row">
                 <span class="detail-label">Sản phẩm bán chạy nhất</span>
                 <span class="detail-value text-primary">Top 100 sản phẩm Kỹ năng sống bán chạy của tháng</span>
-              </div>
+              </div> -->
             </div>
           </div>
           
@@ -267,7 +243,7 @@
             <div class="description-content">
               <h5>{{ book.bookName }}</h5>
               <div v-html="book.description"></div>
-              <button class="btn btn-link text-primary p-0 expand-btn">Xem thêm</button>
+              <!-- <button class="btn btn-link text-primary p-0 expand-btn">Xem thêm</button> -->
             </div>
           </div>
         </div>
@@ -281,6 +257,10 @@
         Quay về trang chủ
       </button>
     </div>
+
+    <div class="review-section">
+      <ReviewComponent />
+    </div>
   </div>
 </template>
 
@@ -291,9 +271,13 @@ import { createCheckoutSession } from '@/services/client/checkout.js'
 import { showToast } from '@/utils/swalHelper.js'
 import { getUserId } from '@/utils/utils.js'
 import { createFlashSaleCountdown, formatCountdownTime } from '@/utils/flashSaleUtils.js'
+import ReviewComponent from './product/ReviewComponent.vue'
 
 export default {
   name: 'DetailProduct',
+  components: {
+    ReviewComponent
+  },
   data() {
     return {
       book: null,
@@ -589,6 +573,7 @@ export default {
   margin: 0 auto;
   background: white;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  
 }
 
 /* Left Panel - Fixed */

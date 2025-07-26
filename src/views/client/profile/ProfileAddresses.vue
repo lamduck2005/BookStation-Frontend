@@ -45,7 +45,7 @@
                 <button 
                   class="btn btn-sm btn-outline-secondary me-2" 
                   :disabled="isLoadingEditAddress"
-                  @click="editAddress(address)"
+                  @click="handleEditAddress(address)"
                 >
                   <span v-if="isLoadingEditAddress && editingAddress?.id === address.id" class="spinner-border spinner-border-sm me-1" role="status"></span>
                   Sửa
@@ -53,7 +53,7 @@
                 <button 
                   class="btn btn-sm btn-outline-danger" 
                   :disabled="isDeletingAddress"
-                  @click="deleteAddress(address.id)"
+                  @click="handleDisableAddress(address.id)"
                 >
                   <span v-if="isDeletingAddress && deletingAddressId === address.id" class="spinner-border spinner-border-sm me-1" role="status"></span>
                   <i class="bi bi-trash"></i>
@@ -93,7 +93,7 @@
           </div>
           
           <div class="modal-body">
-            <form @submit.prevent="saveAddress">
+            <form @submit.prevent="handleSaveAddress">
               <div class="row mb-3">
                 <div class="col-md-6">
                   <label class="form-label">Họ và tên *</label>
@@ -225,7 +225,7 @@
 <script setup>
 import { ghn } from '@/utils/giaohangnhanh'
 import { ref, reactive, onMounted, watch } from 'vue'
-import { getAddresses, addAddress, updateAddress as updateAddressApi, deleteAddress as deleteAddressApi } from '@/services/client/address'
+import { getAddresses, addAddress, updateAddress as updateAddressApi,  disableAddress } from '@/services/client/address'
 import { showToast, showQuickConfirm } from '@/utils/swalHelper'
 
 const showAddAddressModal = ref(false)
@@ -368,11 +368,10 @@ const closeAddressModal = () => {
   resetForm()
 }
 
-// Edit address
-const editAddress = async (address) => {
+// Đổi tên hàm editAddress thành handleEditAddress
+const handleEditAddress = async (address) => {
   isLoadingEditAddress.value = true
   showAddAddressModal.value = true
-
 
   editingAddress.value = address
   // Gán các trường cơ bản
@@ -397,7 +396,8 @@ const editAddress = async (address) => {
   isLoadingEditAddress.value = false
 }
 
-const saveAddress = async () => {
+// Đổi tên hàm saveAddress thành handleSaveAddress
+const handleSaveAddress = async () => {
   // Auto set mặc định nếu là địa chỉ đầu tiên
   if (!editingAddress.value && addresses.value.length === 0) {
     addressForm.isDefault = true
@@ -430,7 +430,8 @@ const saveAddress = async () => {
   }
 }
 
-const deleteAddress = async (id) => {
+// Đổi tên hàm handleDisableAddress, thay thế deleteAddress bằng disableAddress
+const handleDisableAddress = async (id) => {
   const addr = addresses.value.find(a => a.id === id)
   let confirmText = 'Bạn có chắc chắn muốn xóa địa chỉ này?'
   if (addr?.isDefault) {
@@ -450,7 +451,7 @@ const deleteAddress = async (id) => {
   isDeletingAddress.value = true
   deletingAddressId.value = id
   try {
-    await deleteAddressApi(id)
+    await disableAddress(id)
     showToast('success', 'Xóa địa chỉ thành công!')
     await fetchAddresses()
   } catch (error) {

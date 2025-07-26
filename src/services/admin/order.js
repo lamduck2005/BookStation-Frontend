@@ -30,6 +30,24 @@ export const validateOrder = async (orderData) => {
   }
 };
 
+// ✅ API validate giá sản phẩm - THEO TÀI LIỆU MỚI
+export const validatePrices = async (orderData) => {
+  try {
+    console.log('=== DEBUG: Validating prices ===');
+    console.log('Order data for validation:', orderData);
+    // Truyền userId lên query string
+    const userId = orderData.userId;
+    const payload = orderData.payload;
+    const response = await client.post(`/api/orders/validate-prices?userId=${userId}`, payload);
+    console.log('=== DEBUG: Price validation response ===');
+    console.log('Response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi validate giá sản phẩm:', error);
+    throw error;
+  }
+};
+
 // ===== ORDER CRUD APIs =====
 
 // Lấy danh sách đơn hàng với filter và pagination
@@ -71,26 +89,32 @@ export const createOrder = async (orderData) => {
   }
 };
 
-// Cập nhật đơn hàng
-export const updateOrder = async (id, orderData) => {
+
+// ===== ORDER STATUS TRANSITION API - THEO TÀI LIỆU =====
+
+// API chuyển trạng thái đơn hàng theo tài liệu mới
+export const updateOrderStatusTransition = async (orderId, transitionData) => {
   try {
-    const response = await client.put(`/api/orders/${id}`, orderData);
+    console.log('=== DEBUG: Order status transition ===');
+    console.log('Order ID:', orderId);
+    console.log('Transition data:', transitionData);
+    
+    const response = await client.post(`/api/orders/${orderId}/status-transition`, transitionData);
+    console.log('=== DEBUG: Status transition response ===');
+    console.log('Response:', response.data);
+    
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi cập nhật đơn hàng:', error);
+    console.error('Lỗi khi chuyển trạng thái đơn hàng:', error);
     throw error;
   }
 };
 
-// Cập nhật trạng thái đơn hàng
+// Cập nhật trạng thái đơn hàng (API cũ - deprecated)
 export const updateOrderStatus = async (id, newStatus, staffId = null) => {
   try {
-    const params = { newStatus };
-    if (staffId) {
-      params.staffId = staffId;
-    }
-    
-    const response = await client.patch(`/api/orders/${id}/status`, null, { params });
+    // Theo tài liệu API mới: PATCH /api/orders/{orderId}/status?newStatus=CONFIRMED&staffId=1
+    const response = await client.patch(`/api/orders/${id}/status?newStatus=${newStatus}&staffId=${staffId}`);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi cập nhật trạng thái đơn hàng:', error);
@@ -101,12 +125,8 @@ export const updateOrderStatus = async (id, newStatus, staffId = null) => {
 // Hủy đơn hàng
 export const cancelOrder = async (id, reason = '', userId) => {
   try {
-    const params = { userId };
-    if (reason) {
-      params.reason = reason;
-    }
-    
-    const response = await client.patch(`/api/orders/${id}/cancel`, null, { params });
+    // Theo tài liệu API mới: PATCH /api/orders/{orderId}/cancel?reason=Khách hủy&userId=123
+    const response = await client.patch(`/api/orders/${id}/cancel?reason=${encodeURIComponent(reason)}&userId=${userId}`);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi hủy đơn hàng:', error);
@@ -234,6 +254,353 @@ export const getVouchersDropdown = async () => {
   }
 };
 
+// =============== REFUND APIs theo tài liệu mới ===============
+
+// 🔹 STEP 1: Upload minh chứng (Optional) - Mixed Evidence
+export const uploadRefundMixedEvidence = async (images, videos) => {
+  try {
+    const formData = new FormData();
+    
+    if (images && images.length > 0) {
+      images.forEach(file => {
+        formData.append('images', file);
+      });
+    }
+    
+    if (videos && videos.length > 0) {
+      videos.forEach(file => {
+        formData.append('videos', file);
+      });
+    }
+    
+    const response = await client.post('/api/refund-evidence/mixed', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi upload minh chứng hoàn hàng (ảnh + video):', error);
+    throw error;
+  }
+};
+
+// Upload ảnh minh chứng hoàn hàng (tối đa 10 ảnh, mỗi ảnh ≤ 5MB)
+export const uploadRefundImages = async (files) => {
+  try {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('images', file);
+    });
+    
+    const response = await client.post('/api/refund-evidence/images', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi upload ảnh minh chứng hoàn hàng:', error);
+    throw error;
+  }
+};
+
+// Upload video minh chứng hoàn hàng (tối đa 3 video, mỗi video ≤ 50MB)
+export const uploadRefundVideos = async (files) => {
+  try {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('videos', file);
+    });
+    
+    const response = await client.post('/api/refund-evidence/videos', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi upload video minh chứng hoàn hàng:', error);
+    throw error;
+  }
+};
+
+// 🔹 STEP 2: Kiểm tra điều kiện hoàn hàng
+export const validateRefundConditions = async (orderId, userId) => {
+  try {
+    const response = await client.get(`/api/refunds/validate/${orderId}/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi kiểm tra điều kiện hoàn hàng:', error);
+    throw error;
+  }
+};
+
+// 🔹 STEP 3: Tạo yêu cầu hoàn hàng - API MỚI THEO TÀI LIỆU
+export const requestRefund = async (userId, refundData) => {
+  try {
+    console.log('=== DEBUG: Creating refund request ===');
+    console.log('User ID:', userId);
+    console.log('Refund data:', refundData);
+    
+    const response = await client.post(`/api/refunds?userId=${userId}`, refundData);
+    console.log('=== DEBUG: Refund request response ===');
+    console.log('Response:', response.data);
+    
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi tạo yêu cầu hoàn trả:', error);
+    throw error;
+  }
+};
+
+// 📝 USER THEO DÕI YÊU CẦU HOÀN HÀNG
+
+// Lấy danh sách yêu cầu của user
+export const getUserRefunds = async (userId, params = {}) => {
+  try {
+    const queryString = new URLSearchParams(params).toString();
+    const url = queryString ? `/api/refunds/user/${userId}?${queryString}` : `/api/refunds/user/${userId}`;
+    const response = await client.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách yêu cầu hoàn trả của user:', error);
+    throw error;
+  }
+};
+
+// Lấy chi tiết yêu cầu hoàn trả
+export const getRefundDetail = async (refundRequestId, userId) => {
+  try {
+    const response = await client.get(`/api/refunds/${refundRequestId}?userId=${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy chi tiết yêu cầu hoàn trả:', error);
+    throw error;
+  }
+};
+
+// 📝 ADMIN XEM DANH SÁCH YÊU CẦU HOÀN HÀNG
+
+// Danh sách yêu cầu chờ phê duyệt
+export const getPendingRefunds = async (params = {}) => {
+  try {
+    const queryString = new URLSearchParams(params).toString();
+    const url = queryString ? `/api/refunds/pending?${queryString}` : '/api/refunds/pending';
+    const response = await client.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách yêu cầu hoàn hàng chờ phê duyệt:', error);
+    throw error;
+  }
+};
+
+// Tất cả yêu cầu hoàn hàng (với filter)
+export const getAllRefunds = async (params = {}) => {
+  try {
+    const queryString = new URLSearchParams(params).toString();
+    const url = queryString ? `/api/refunds/all?${queryString}` : '/api/refunds/all';
+    const response = await client.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách tất cả yêu cầu hoàn hàng:', error);
+    throw error;
+  }
+};
+
+// Chi tiết để phê duyệt (admin)
+export const getRefundAdminDetail = async (refundRequestId) => {
+  try {
+    const response = await client.get(`/api/refunds/${refundRequestId}/admin-detail`);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy chi tiết yêu cầu hoàn trả (admin):', error);
+    throw error;
+  }
+};
+
+// 📝 ADMIN PHÊ DUYỆT/TỪ CHỐI YÊU CẦU HOÀN HÀNG
+
+// Chấp nhận yêu cầu hoàn trả - API MỚI
+export const adminApproveRefund = async (refundRequestId, adminId, approvalData) => {
+  try {
+    console.log('=== DEBUG: Admin approving refund ===');
+    console.log('Refund Request ID:', refundRequestId);
+    console.log('Admin ID:', adminId);
+    console.log('Approval data:', approvalData);
+    
+    const response = await client.post(`/api/refunds/${refundRequestId}/approve?adminId=${adminId}`, approvalData);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi phê duyệt yêu cầu hoàn trả:', error);
+    throw error;
+  }
+};
+
+// Từ chối yêu cầu hoàn trả - API MỚI
+export const adminRejectRefund = async (refundRequestId, adminId, rejectionData) => {
+  try {
+    console.log('=== DEBUG: Admin rejecting refund ===');
+    console.log('Refund Request ID:', refundRequestId);
+    console.log('Admin ID:', adminId);
+    console.log('Rejection data:', rejectionData);
+    
+    const response = await client.post(`/api/refunds/${refundRequestId}/reject?adminId=${adminId}`, rejectionData);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi từ chối yêu cầu hoàn trả:', error);
+    throw error;
+  }
+};
+
+// 📝 ADMIN XỬ LÝ HOÀN TIỀN
+
+// Xử lý hoàn tiền sau phê duyệt - API MỚI
+export const processRefund = async (refundRequestId, adminId, processData) => {
+  try {
+    console.log('=== DEBUG: Processing refund ===');
+    console.log('Refund Request ID:', refundRequestId);
+    console.log('Admin ID:', adminId);
+    console.log('Process data:', processData);
+    
+    const response = await client.post(`/api/refunds/${refundRequestId}/process?adminId=${adminId}`, processData);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi xử lý hoàn trả:', error);
+    throw error;
+  }
+};
+
+// 📝 ADMIN HOÀN HÀNG TRỰC TIẾP (BYPASS)
+
+// Hoàn hàng một phần trực tiếp
+export const adminPartialRefund = async (adminData) => {
+  try {
+    console.log('=== DEBUG: Admin partial refund ===');
+    console.log('Admin refund data:', adminData);
+    
+    const response = await client.post('/api/refunds/admin/partial-refund', adminData);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi hoàn trả một phần (admin):', error);
+    throw error;
+  }
+};
+
+// Hoàn hàng toàn bộ trực tiếp
+export const adminFullRefund = async (adminData) => {
+  try {
+    console.log('=== DEBUG: Admin full refund ===');
+    console.log('Admin refund data:', adminData);
+    
+    const response = await client.post('/api/refunds/admin/full-refund', adminData);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi hoàn trả toàn bộ (admin):', error);
+    throw error;
+  }
+};
+
+// 📝 CÁC API HỖ TRỢ
+
+// Thống kê hoàn hàng
+export const getRefundStatistics = async (params = {}) => {
+  try {
+    const queryString = new URLSearchParams(params).toString();
+    const url = queryString ? `/api/refunds/statistics?${queryString}` : '/api/refunds/statistics';
+    const response = await client.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy thống kê hoàn hàng:', error);
+    throw error;
+  }
+};
+
+// Export báo cáo
+export const exportRefundReport = async (params = {}) => {
+  try {
+    const queryString = new URLSearchParams(params).toString();
+    const url = queryString ? `/api/refunds/export?${queryString}` : '/api/refunds/export';
+    const response = await client.get(url, { responseType: 'blob' });
+    return response;
+  } catch (error) {
+    console.error('Lỗi khi export báo cáo hoàn hàng:', error);
+    throw error;
+  }
+};
+
+// ===== LEGACY APIs (để tương thích với code cũ) =====
+
+// Wrapper cho API cũ - hoàn trả một phần
+export const partialRefund = async (orderId, refundData) => {
+  try {
+    // Chuyển đổi sang format mới
+    const adminData = {
+      orderId: orderId,
+      adminId: refundData.adminId || 1,
+      reason: refundData.reason || 'COMPENSATION',
+      reasonDisplay: refundData.reasonDisplay || 'Bồi thường cho khách hàng',
+      adminNote: refundData.adminNote || '',
+      refundItems: refundData.refundItems || [],
+      paymentMethod: refundData.paymentMethod || 'STORE_CREDIT',
+      skipApproval: true
+    };
+    
+    return await adminPartialRefund(adminData);
+  } catch (error) {
+    console.error('Lỗi khi hoàn trả một phần (legacy):', error);
+    throw error;
+  }
+};
+
+// Wrapper cho API cũ - hoàn trả toàn bộ
+export const fullRefund = async (orderId, refundData) => {
+  try {
+    // Chuyển đổi sang format mới
+    const adminData = {
+      orderId: orderId,
+      adminId: refundData.adminId || 1,
+      reason: refundData.reason || 'OPERATIONAL_ERROR',
+      reasonDisplay: refundData.reasonDisplay || 'Lỗi vận hành',
+      adminNote: refundData.adminNote || '',
+      paymentMethod: refundData.paymentMethod || 'BANK_TRANSFER',
+      skipApproval: true
+    };
+    
+    return await adminFullRefund(adminData);
+  } catch (error) {
+    console.error('Lỗi khi hoàn trả toàn bộ (legacy):', error);
+    throw error;
+  }
+};
+
+// Wrapper cho API cũ - phê duyệt/từ chối
+export const approveRefund = async (refundId, status, adminNote, adminId) => {
+  try {
+    if (status === 'APPROVED') {
+      const approvalData = {
+        adminNote: adminNote || 'Yêu cầu hợp lệ. Đã phê duyệt.',
+        approvedRefundAmount: null, // Để backend tự tính
+        needsPhysicalReturn: true,
+        returnAddress: 'Kho BookStation - 123 Đường ABC, Quận 1, TP.HCM',
+        expectedReturnDays: 7
+      };
+      return await adminApproveRefund(refundId, adminId, approvalData);
+    } else if (status === 'REJECTED') {
+      const rejectionData = {
+        rejectReason: 'OTHER',
+        rejectReasonDisplay: 'Khác',
+        adminNote: adminNote || 'Yêu cầu không hợp lệ.',
+        suggestedAction: 'Vui lòng liên hệ hỗ trợ để biết thêm chi tiết.'
+      };
+      return await adminRejectRefund(refundId, adminId, rejectionData);
+    }
+  } catch (error) {
+    console.error('Lỗi khi phê duyệt/từ chối hoàn trả (legacy):', error);
+    throw error;
+  }
+};
+
 // ===== HELPER FUNCTIONS =====
 
 // Format order status text
@@ -247,7 +614,8 @@ export const formatOrderStatus = (status) => {
     'REFUNDING': 'Đang hoàn tiền',
     'REFUNDED': 'Đã hoàn tiền',
     'RETURNED': 'Đã trả hàng',
-    'PARTIALLY_REFUNDED': 'Hoàn tiền một phần'
+    'PARTIALLY_REFUNDED': 'Hoàn tiền một phần',
+    'GOODS_RETURNED_TO_WAREHOUSE': 'Hàng đã về kho'
   };
   return statusMap[status] || status;
 };
@@ -263,7 +631,8 @@ export const getOrderStatusClass = (status) => {
     'REFUNDING': 'bg-warning text-dark',
     'REFUNDED': 'bg-secondary',
     'RETURNED': 'bg-dark',
-    'PARTIALLY_REFUNDED': 'bg-warning text-dark'
+    'PARTIALLY_REFUNDED': 'bg-warning text-dark',
+    'GOODS_RETURNED_TO_WAREHOUSE': 'bg-info text-white'
   };
   return statusClasses[status] || 'bg-secondary';
 };
@@ -282,7 +651,8 @@ export const getFallbackOrderStatuses = () => {
       { value: 'REFUNDING', displayName: 'Đang hoàn tiền' },
       { value: 'REFUNDED', displayName: 'Đã hoàn tiền' },
       { value: 'RETURNED', displayName: 'Đã trả hàng' },
-      { value: 'PARTIALLY_REFUNDED', displayName: 'Hoàn tiền một phần' }
+      { value: 'PARTIALLY_REFUNDED', displayName: 'Hoàn tiền một phần' },
+      { value: 'GOODS_RETURNED_TO_WAREHOUSE', displayName: 'Hàng đã về kho' }
     ]
   };
 };

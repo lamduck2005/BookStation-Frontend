@@ -106,13 +106,13 @@
                 <th style="min-width: 50px;">STT</th>
                 <th style="min-width: 150px;">Mã đơn hàng</th>
                 <th style="min-width: 200px;">Khách hàng</th>
+                <th style="min-width: 120px;">Trạng thái</th>
                 <th style="min-width: 150px;">Địa chỉ</th>
                 <th style="min-width: 120px;">Loại đơn</th>
                 <th style="min-width: 120px;">Tạm tính</th>
                 <th style="min-width: 120px;">Phí ship</th>
                 <th style="min-width: 120px;">Giảm giá</th>
                 <th style="min-width: 120px;">Tổng tiền</th>
-                <th style="min-width: 120px;">Trạng thái</th>
                 <th style="min-width: 150px;">Ngày tạo</th>
                 <th style="min-width: 150px;">Staff</th>
                 <th style="min-width: 200px;">Thao tác</th>
@@ -131,10 +131,22 @@
                   </div>
                 </td>
                 <td>
-                  <div class="small" v-if="order.address">
-                    {{ order.address.name || 'Chưa có địa chỉ' }}
+                  <select
+                    class="form-select form-select-sm"
+                    :class="getOrderStatusClass(order.orderStatus)"
+                    :value="order.orderStatus"
+                    @change="handleStatusChange(order, $event)"
+                    style="min-width: 110px; font-size: 0.82em; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 1px 4px rgba(0,0,0,0.07);"
+                  >
+                    <option v-for="status in orderStatuses" :key="status.value" :value="status.value">
+                      {{ status.displayName }}
+                    </option>
+                  </select>
+                </td>
+                <td>
+                  <div class="small">
+                    {{ order.addressDetail || 'Chưa có địa chỉ' }}
                   </div>
-                  <div class="small text-muted" v-else>Chưa có địa chỉ</div>
                 </td>
                 <td>
                   <span class="badge bg-info">{{ formatOrderType(order.orderType) }}</span>
@@ -153,13 +165,6 @@
                 </td>
                 <td>
                   <strong class="text-success">{{ formatCurrency(order.finalTotal || order.totalAmount) }}</strong>
-                </td>
-                <td>
-                  <StatusLabel 
-                    :status="order.orderStatus" 
-                    :statusText="formatOrderStatus(order.orderStatus)"
-                    :statusClass="getOrderStatusClass(order.orderStatus)"
-                  />
                 </td>
                 <td>
                   <div class="small">
@@ -202,7 +207,7 @@
                           <a 
                             class="dropdown-item" 
                             href="#"
-                            @click.prevent="updateOrderStatus(order.id, status.value)"
+                            @click.prevent="handleStatusChangeFromAction(order, status.value)"
                           >
                             <span class="badge me-2" :class="getOrderStatusClass(status.value)">
                               {{ status.displayName }}
@@ -253,7 +258,7 @@
         <div class="modal-header gradient-header">
           <h5 class="modal-title" id="addOrderModalLabel">
             <i class="bi bi-cart-plus me-2"></i>
-            {{ isEditMode ? 'Sửa đơn hàng' : 'Tạo đơn hàng mới' }}
+            Tạo đơn hàng mới
           </h5>
           <button type="button" class="custom-close-btn" data-bs-dismiss="modal" aria-label="Close">
             <i class="bi bi-x-lg"></i>
@@ -325,11 +330,16 @@
                   <select 
                     class="form-select enhanced-input" 
                     v-model="newOrder.orderType"
+                    @change="onOrderTypeChange"
                   >
                     <option v-for="type in orderTypes" :key="type.value" :value="type.value">
                       {{ type.displayName }}
                     </option>
                   </select>
+                  <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    {{ newOrder.orderType === 'COUNTER' ? 'Đơn tại quầy' : 'Đơn online' }}
+                  </small>
                 </div>
                 <div class="col-md-3">
                   <label class="form-label enhanced-label">Trạng thái</label>
@@ -347,7 +357,7 @@
                   <input 
                     type="text" 
                     class="form-control enhanced-input" 
-                    :value="getCurrentStaffId()"
+                    :value="getUserId()"
                     placeholder="Auto-fill từ session"
                     readonly
                   />
@@ -460,7 +470,7 @@
                       type="number" 
                       class="form-control" 
                       v-model="detail.quantity"
-                      @change="calculateDetailTotal(detail)"
+                      @change="onQuantityChange(detail)"
                       min="1"
                       required
                     />
@@ -471,7 +481,6 @@
                       type="number" 
                       class="form-control" 
                       v-model="detail.unitPrice"
-                      @change="calculateDetailTotal(detail)"
                       min="0"
                       step="1000"
                       readonly
@@ -627,17 +636,26 @@
           </button>
           <button 
             type="button" 
+            class="btn btn-warning me-2" 
+            @click="reloadBookPricesFromDropdown"
+          >
+            <i class="bi bi-arrow-repeat me-1"></i>
+            Cập nhật giá mới
+          </button>
+          <button 
+            type="button" 
             class="btn btn-primary btn-submit" 
             @click="handleSubmitOrder"
             :disabled="!canSubmitOrder"
           >
             <i class="bi bi-check-circle me-1"></i>
-            {{ isEditMode ? 'Cập nhật' : 'Tạo đơn hàng' }}
+            Tạo đơn hàng
           </button>
         </div>
       </div>
     </div>
   </div>
+
 
   <!-- Order Detail Modal -->
   <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailModalLabel" aria-hidden="true">
@@ -707,8 +725,8 @@
                   <tr>
                     <td><strong>Địa chỉ giao hàng:</strong></td>
                     <td>
-                      <div v-if="selectedOrder.address">
-                        {{ selectedOrder.address.name }}
+                      <div v-if="selectedOrder.addressDetail">
+                        {{ selectedOrder.addressDetail }}
                       </div>
                       <div v-else class="text-muted">Chưa có địa chỉ</div>
                     </td>
@@ -849,13 +867,14 @@ import AddButton from '@/components/common/AddButton.vue';
 import StatusLabel from '@/components/common/StatusLabel.vue';
 import { ref, onMounted, computed, watch } from 'vue';
 import { Modal } from 'bootstrap';
-import { 
+import {
   getOrders, 
   createOrder, 
-  updateOrder, 
   getOrderById,
   calculateOrder,
   validateOrder,
+  validatePrices, // ✅ THÊM VALIDATE PRICES
+  updateOrderStatusTransition, // ✅ THÊM API CHUYỂN TRẠNG THÁI MỚI
   updateOrderStatus as updateOrderStatusAPI,
   cancelOrder as cancelOrderAPI,
   getOrderStatuses, 
@@ -864,12 +883,22 @@ import {
   getUserAvailableVouchers,
   getVouchersDropdown,
   formatOrderStatus,
-  getOrderStatusClass
+  getOrderStatusClass,
+  // ✅ THÊM REFUND APIs MỚI
+  uploadRefundMixedEvidence,
+  validateRefundConditions,
+  requestRefund,
+  adminApproveRefund,
+  adminRejectRefund,
+  adminPartialRefund,
+  adminFullRefund,
+  getPendingRefunds
 } from '@/services/admin/order';
 import { getUsersForOrder } from '@/services/admin/user';
-import { getBooksForOrder, getBooksDropdown } from '@/services/admin/book';
+import { getBooksForOrder, getBooksDropdown, validateQuantity } from '@/services/admin/book';
 import Swal from 'sweetalert2';
 import { ghn } from '@/utils/giaohangnhanh';
+import { getUserId } from '@/utils/utils.js';
 
 // Search and filter states
 const searchCode = ref('');
@@ -903,8 +932,6 @@ const orderCalculation = ref(null);
 const isCalculating = ref(false);
 
 // Modal states
-const isEditMode = ref(false);
-const editIndex = ref(-1);
 let addOrderModal = null;
 let orderDetailModal = null;
 
@@ -915,7 +942,7 @@ const newOrder = ref({
   staffId: '',
   addressId: '',
   shippingFee: 30000,
-  orderType: 'NORMAL',
+  orderType: window.location.pathname.includes('pos') ? 'COUNTER' : 'ONLINE', // Set mặc định theo context
   orderStatus: 'PENDING',
   notes: '',
   voucherIds: [],
@@ -984,7 +1011,8 @@ const initializeData = async () => {
       getBooksForOrder()
     ]);
     
-    orderStatuses.value = statusesResponse.data || [];
+    // Lọc bỏ trạng thái 'REFUND_REQUESTED' khỏi danh sách trạng thái
+    orderStatuses.value = (statusesResponse.data || []).filter(status => status.value !== 'REFUND_REQUESTED');
     orderTypes.value = typesResponse.data || [];
     
     // Process users từ API /api/users/dropdown (trả về array trực tiếp)
@@ -1002,16 +1030,18 @@ const initializeData = async () => {
     if (booksResponse.data && booksResponse.data.content) {
       books.value = booksResponse.data.content.map(book => ({
         id: book.id,
-        title: book.title || book.name || 'Unknown',
-        price: book.price || 0,
+        title: book.title || book.name || book.bookName || 'Unknown',
+        normalPrice: book.normalPrice || book.price || 0,
+        flashSalePrice: book.flashSalePrice || null,
         isFlashSale: book.isFlashSale || false
       }));
     } else if (booksResponse.data && Array.isArray(booksResponse.data)) {
       // Fallback nếu API trả về array trực tiếp
       books.value = booksResponse.data.map(book => ({
         id: book.id,
-        title: book.title || book.name || 'Unknown',
-        price: book.price || 0,
+        title: book.title || book.name || book.bookName || 'Unknown',
+        normalPrice: book.normalPrice || book.price || 0,
+        flashSalePrice: book.flashSalePrice || null,
         isFlashSale: book.isFlashSale || false
       }));
     } else {
@@ -1052,12 +1082,13 @@ const loadUsersAndBooks = async () => {
       users.value = [];
     }
     
-    // Process books từ API /api/books/dropdown
+    // Process books từ API /api/books/dropdown với structure mới
     if (booksResponse.data && Array.isArray(booksResponse.data)) {
       books.value = booksResponse.data.map(book => ({
         id: book.id,
-        title: book.name,
-        price: book.price || 0,
+        title: book.name || book.title || 'Unknown',
+        normalPrice: book.normalPrice || 0,
+        flashSalePrice: book.flashSalePrice || null,
         isFlashSale: book.isFlashSale || false
       }));
     } else {
@@ -1200,64 +1231,39 @@ const clearFilters = () => {
 
 const openAddModal = async () => {
   resetForm();
-  isEditMode.value = false;
   
   // Load fresh data for the modal
   await loadUsersAndBooks();
   
+  // Set loại đơn hàng dựa trên context hiện tại
+  const isInPOSMode = window.location.pathname.includes('pos') || 
+                      window.location.hash.includes('pos') ||
+                      document.title.includes('POS') ||
+                      document.querySelector('.pos-indicator') // nếu có indicator element
+  
+  newOrder.value.orderType = isInPOSMode ? 'COUNTER' : 'ONLINE'
+  
+  console.log('=== Order Type Set ===')
+  console.log('Current URL:', window.location.pathname)
+  console.log('Is POS Mode:', isInPOSMode)
+  console.log('Order Type:', newOrder.value.orderType)
+  
   addOrderModal.show();
 };
 
-const openEditModal = async (order, index) => {
-  try {
-    // Load fresh data for the modal first
-    await loadUsersAndBooks();
-    
-    const response = await getOrderById(order.id);
-    if (response && response.data) {
-      const orderData = response.data;
-      
-      newOrder.value = {
-        id: orderData.id,
-        userId: orderData.user?.id || '',
-        staffId: orderData.staffId || '',
-        addressId: orderData.addressId || '',
-        shippingFee: orderData.shippingFee || 0,
-        paymentMethod: orderData.paymentMethod || 'COD',
-        notes: orderData.notes || '',
-        voucherIds: orderData.vouchers ? orderData.vouchers.map(v => v.id) : [],
-        items: orderData.orderDetails ? orderData.orderDetails.map(detail => ({
-          bookId: detail.bookId,
-          quantity: detail.quantity,
-          unitPrice: detail.unitPrice,
-          totalPrice: detail.totalPrice,
-          isFlashSale: !!detail.flashSaleItemId
-        })) : []
-      };
-      
-      if (newOrder.value.userId) {
-        await loadUserAddresses(newOrder.value.userId);
-        await loadUserVouchers(newOrder.value.userId);
-      }
-      
-      isEditMode.value = true;
-      editIndex.value = index;
-      addOrderModal.show();
-    }
-  } catch (error) {
-    console.error('Lỗi khi lấy chi tiết đơn hàng:', error);
-    showToast('error', 'Lỗi khi lấy chi tiết đơn hàng!');
-  }
-};
+
 
 const resetForm = () => {
+  // Xác định loại đơn hàng mặc định theo context
+  const defaultOrderType = window.location.pathname.includes('pos') ? 'COUNTER' : 'ONLINE'
+  
   newOrder.value = {
     id: '',
     userId: '',
     staffId: '',
     addressId: '',
     shippingFee: 30000,
-    orderType: 'NORMAL',
+    orderType: defaultOrderType, // Sử dụng loại đơn động
     orderStatus: 'PENDING',
     notes: '',
     voucherIds: [],
@@ -1266,8 +1272,8 @@ const resetForm = () => {
   userAddresses.value = [];
   userVouchers.value = [];
   orderCalculation.value = null;
+  currentAddress.value = null; // ✅ RESET CURRENT ADDRESS
   isCalculating.value = false;
-  editIndex.value = -1;
 };
 
 const onUserChange = async () => {
@@ -1284,6 +1290,20 @@ const onUserChange = async () => {
   }
   newOrder.value.addressId = '';
   newOrder.value.voucherIds = [];
+};
+
+const onOrderTypeChange = () => {
+  console.log('=== Order Type Changed ===')
+  console.log('New order type:', newOrder.value.orderType)
+  
+  // Hiển thị thông báo cho user
+  const typeText = newOrder.value.orderType === 'COUNTER' ? 'tại quầy' : 'online'
+  showToast('Đã chuyển sang đơn ' + typeText, 'info')
+  
+  // Có thể trigger calculation lại nếu cần
+  if (newOrder.value.items.length > 0) {
+    calculateOrderPreview()
+  }
 };
 
 const loadUserAddresses = async (userId) => {
@@ -1367,7 +1387,9 @@ const addProductRow = () => {
     quantity: 1,
     unitPrice: 0,
     totalPrice: 0,
-    isFlashSale: false
+    isFlashSale: false,
+    frontendPrice: 0,
+    frontendFlashSalePrice: null
   });
 };
 
@@ -1375,14 +1397,31 @@ const removeProductRow = (index) => {
   newOrder.value.items.splice(index, 1);
 };
 
-const onBookChange = (detail, index) => {
+const onBookChange = async (detail, index) => {
   const selectedBook = books.value.find(book => book.id == detail.bookId);
-  if (selectedBook) {
-    detail.unitPrice = selectedBook.price;
-    detail.isFlashSale = selectedBook.isFlashSale || false;
-    calculateShippingFee()
-    calculateDetailTotal(detail);
+  if (!selectedBook) {
+    detail.unitPrice = 0;
+    detail.isFlashSale = false;
+    showToast('error', 'Sản phẩm không tồn tại hoặc đã hết hàng!');
+    return;
   }
+  
+  // Sử dụng API dropdown mới: ưu tiên flashSalePrice nếu có flash sale
+  const currentPrice = selectedBook.isFlashSale && selectedBook.flashSalePrice ? 
+                      selectedBook.flashSalePrice : selectedBook.normalPrice;
+  
+  detail.unitPrice = currentPrice;
+  detail.isFlashSale = selectedBook.isFlashSale || false;
+  detail.frontendPrice = selectedBook.normalPrice;
+  detail.frontendFlashSalePrice = selectedBook.flashSalePrice;
+  
+  console.log('=== DEBUG: onBookChange với API mới ===');
+  console.log('Selected book:', selectedBook);
+  console.log('Current price:', currentPrice);
+  console.log('Is flash sale:', detail.isFlashSale);
+  
+  calculateShippingFee();
+  await calculateDetailTotal(detail);
 };
 
 // Watch for voucher changes to recalculate
@@ -1395,14 +1434,34 @@ const onShippingFeeChange = () => {
   calculateOrderPreview();
 };
 
-const calculateDetailTotal = (detail) => {
+const calculateDetailTotal = async (detail) => {
   detail.totalPrice = (detail.quantity || 0) * (detail.unitPrice || 0);
+  
+  // Validate quantity khi có đủ thông tin
+  if (detail.bookId && detail.quantity > 0) {
+    try {
+      const validateResponse = await validateQuantity(detail.bookId, detail.quantity);
+      if (validateResponse.data && !validateResponse.data.valid) {
+        showToast('error', validateResponse.data.message || 'Số lượng không hợp lệ');
+        return; // Dừng lại nếu validate thất bại
+      }
+    } catch (error) {
+      console.error('Lỗi khi validate quantity:', error);
+      showToast('error', 'Lỗi khi kiểm tra số lượng sản phẩm');
+      return;
+    }
+  }
   
   // Trigger order calculation if we have enough data
   if (newOrder.value.userId && newOrder.value.items.length > 0) {
-    calculateShippingFee()
+    calculateShippingFee();
     calculateOrderPreview();
   }
+};
+
+// Wrapper function cho template
+const onQuantityChange = async (detail) => {
+  await calculateDetailTotal(detail);
 };
 
 // Tính toán đơn hàng tự động khi có thay đổi
@@ -1468,26 +1527,36 @@ const calculateOrderPreview = async () => {
 };
 
 const calculateShippingFee = async () => {
-  const selectedAddress = currentAddress.value.raw
-  const orderItems = newOrder.value.items
+  if (!currentAddress.value?.raw) {
+    newOrder.value.shippingFee = 30000; // Default shipping fee
+    return;
+  }
+  
+  const selectedAddress = currentAddress.value.raw;
+  const orderItems = newOrder.value.items;
   // Mỗi quyển sách tính 200g, tổng cân nặng = tổng số lượng * 200
-  const totalBooks = orderItems.reduce((sum, item) => sum + (item.quantity || 0), 0)
-  const totalWeight = totalBooks * 200
+  const totalBooks = orderItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+  const totalWeight = totalBooks * 200;
 
-  if(!selectedAddress || totalWeight <= 0){
-    newOrder.value.shippingFee = 0
-    return
+  if (!selectedAddress || totalWeight <= 0) {
+    newOrder.value.shippingFee = 30000;
+    return;
   }
 
-  const res = await ghn.calculateFee.calculateShippingFee({
-    service_type_id : 2,
-    to_ward_code : selectedAddress.wardCode,
-    to_district_id : selectedAddress.districtId,
-    weight : totalWeight
-  })
-  console.log("🚀 ~ calculateShippingFee ~ res:", res)
-  newOrder.value.shippingFee = res.total || 30000
-}
+  try {
+    const res = await ghn.calculateFee.calculateShippingFee({
+      service_type_id: 2,
+      to_ward_code: selectedAddress.wardCode,
+      to_district_id: selectedAddress.districtId,
+      weight: totalWeight
+    });
+    console.log("🚀 ~ calculateShippingFee ~ res:", res);
+    newOrder.value.shippingFee = res.total || 30000;
+  } catch (error) {
+    console.error('Lỗi khi tính phí ship:', error);
+    newOrder.value.shippingFee = 30000; // Fallback
+  }
+};
 
 
 const handleSubmitOrder = async () => {
@@ -1496,20 +1565,30 @@ const handleSubmitOrder = async () => {
     return;
   }
 
+  // Validate all prices in the order using the new API
+  // Chỉ gửi mảng [{bookId, frontendPrice}] cho validatePrices
+  const pricePayload = newOrder.value.items.map(item => ({
+    bookId: item.bookId,
+    frontendPrice: item.unitPrice
+  }));
+  const isValid = await validateAllPrices();
+  if (!isValid) return;
+
   try {
-    // Chuẩn bị dữ liệu gửi lên backend theo tài liệu API
+    // CHUẨN BỊ DỮ LIỆU ĐÚNG CHO TẠO ĐƠN HÀNG
     const orderData = {
       userId: newOrder.value.userId,
-      staffId: getCurrentStaffId(),
+      staffId: getUserId(),
       addressId: newOrder.value.addressId,
       shippingFee: newOrder.value.shippingFee,
-      orderType: newOrder.value.orderType, // ⚠️ BẮT BUỘC theo tài liệu
+      orderType: newOrder.value.orderType,
       voucherIds: newOrder.value.voucherIds,
       notes: newOrder.value.notes,
       orderDetails: newOrder.value.items.map(item => ({
         bookId: item.bookId,
         quantity: item.quantity,
-        unitPrice: item.unitPrice
+        unitPrice: item.unitPrice,
+        frontendPrice: item.unitPrice
       }))
     };
 
@@ -1517,13 +1596,8 @@ const handleSubmitOrder = async () => {
     console.log('Order data:', orderData);
 
     let response;
-    if (isEditMode.value) {
-      response = await updateOrder(newOrder.value.id, orderData);
-      showToast('success', 'Cập nhật đơn hàng thành công!');
-    } else {
-      response = await createOrder(orderData);
-      showToast('success', `Tạo đơn hàng thành công! Mã đơn: ${response.data?.orderCode || ''}`);
-    }
+    response = await createOrder(orderData);
+    showToast('success', `Tạo đơn hàng thành công! Mã đơn: ${response.data?.orderCode || ''}`);
 
     console.log('=== DEBUG: Order submit response ===');
     console.log('Response:', response);
@@ -1538,8 +1612,34 @@ const handleSubmitOrder = async () => {
     let errorMessage = 'Lỗi khi xử lý đơn hàng!';
     if (error.response && error.response.data && error.response.data.message) {
       errorMessage = error.response.data.message;
+      
+      // XỬ LÝ RIÊNG LỖI PRICE VALIDATION
+      if (error.response.status === 400 && errorMessage.includes('thay đổi')) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Giá sản phẩm đã thay đổi!',
+          html: `<div style="text-align: left; white-space: pre-line;">${errorMessage}</div>`,
+          confirmButtonText: 'Cập nhật giá mới',
+          showCancelButton: true,
+          cancelButtonText: 'Đóng'
+        }).then(async (result) => {
+          if (result.isConfirmed) {
+            await loadUsersAndBooks();
+            newOrder.value.items.forEach((detail, idx) => {
+              const selectedBook = books.value.find(book => book.id == detail.bookId);
+              if (selectedBook) {
+                const currentPrice = selectedBook.isFlashSale && selectedBook.flashSalePrice ? selectedBook.flashSalePrice : selectedBook.price;
+                detail.unitPrice = currentPrice;
+                detail.isFlashSale = selectedBook.isFlashSale || false;
+                detail.frontendPrice = currentPrice;
+              }
+            });
+            calculateOrderPreview();
+          }
+        });
+        return;
+      }
     }
-    
     showToast('error', errorMessage);
   }
 };
@@ -1557,33 +1657,166 @@ const viewOrderDetail = async (order) => {
   }
 };
 
-const updateOrderStatus = async (orderId, newStatus) => {
+// ✅ Hàm xử lý khi thay đổi trạng thái trong dropdown 
+const handleStatusChange = async (order, event) => {
+  const newStatus = event.target.value;
+  const originalStatus = order.orderStatus;
+  
+  // Nếu không thay đổi thì return
+  if (newStatus === originalStatus) {
+    return;
+  }
+  
+  // Gọi API update status
+  const success = await updateOrderStatus(order.id, newStatus, originalStatus);
+  
+  // Nếu thất bại, reset lại dropdown về trạng thái cũ
+  if (!success) {
+    // Force update DOM để reset dropdown
+    event.target.value = originalStatus;
+  }
+};
+
+// ✅ Hàm xử lý khi click từ action dropdown
+const handleStatusChangeFromAction = async (order, newStatus) => {
+  const originalStatus = order.orderStatus;
+  
+  // Nếu không thay đổi thì return
+  if (newStatus === originalStatus) {
+    return;
+  }
+  
+  // Gọi API update status - không cần reset vì không có dropdown cần reset
+  await updateOrderStatus(order.id, newStatus, originalStatus);
+};
+
+const updateOrderStatus = async (orderId, newStatus, originalStatusParam = null) => {
+  const orderIndex = orders.value.findIndex(order => order.id === orderId);
+  const currentOriginalStatus = originalStatusParam || (orderIndex !== -1 ? orders.value[orderIndex].orderStatus : null);
+  
   try {
+    // Lấy thông tin admin hiện tại
+    const currentStaffId = getUserId();
+    if (!currentStaffId) {
+      Swal.fire('Lỗi', 'Không thể xác định thông tin admin', 'error');
+      return false;
+    }
+
+    // Fetch trạng thái đơn hàng mới nhất từ backend
+    const orderDetailRes = await getOrderById(orderId);
+    const currentOrder = orderDetailRes?.data;
+    if (!currentOrder) {
+      Swal.fire('Lỗi', 'Không tìm thấy đơn hàng', 'error');
+      return false;
+    }
+
+    // Xác nhận trước khi chuyển trạng thái
     const result = await Swal.fire({
-      title: 'Xác nhận cập nhật trạng thái',
-      text: `Bạn có chắc chắn muốn cập nhật trạng thái đơn hàng?`,
+      title: 'Xác nhận chuyển trạng thái',
+      html: `
+        <div class="text-start">
+          <p>Bạn có chắc chắn muốn chuyển đơn hàng từ <strong>"${formatOrderStatus(currentOrder.orderStatus)}"</strong> thành <strong>"${formatOrderStatus(newStatus)}"</strong>?</p>
+          <div class="alert alert-info mt-3">
+            <small>
+              <strong>Lưu ý:</strong> Hệ thống sẽ tự động:
+              <ul class="mb-0 mt-2">
+                <li>Tích điểm khi chuyển sang DELIVERED</li>
+                <li>Hoàn stock khi CANCELED (KHÔNG hoàn voucher)</li>
+                <li>Hoàn stock + voucher khi hoàn trả REFUNDED</li>
+                <li>Trừ điểm khi hoàn trả REFUNDED</li>
+                <li>Cập nhật rank khách hàng tự động</li>
+                ${newStatus === 'GOODS_RETURNED_TO_WAREHOUSE' ? '<li>Kiểm tra chất lượng và cập nhật kho hàng khi về kho</li>' : ''}
+              </ul>
+            </small>
+          </div>
+        </div>
+      `,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
+      confirmButtonColor: '#28a745',
+      cancelButtonColor: '#6c757d',
       confirmButtonText: 'Xác nhận',
       cancelButtonText: 'Hủy'
     });
-    
-    if (result.isConfirmed) {
-      await updateOrderStatusAPI(orderId, newStatus);
-      showToast('success', 'Cập nhật trạng thái thành công!');
-      await fetchOrders();
+
+    if (!result.isConfirmed) {
+      return false;
     }
+
+    // Chuẩn bị dữ liệu transition theo tài liệu
+    const transitionData = {
+      orderId: orderId,
+      currentStatus: currentOrder.orderStatus,
+      newStatus: newStatus,
+      performedBy: currentStaffId, // id admin thực hiện
+      staffId: currentStaffId
+    };
+
+    // Thiết lập reason và notes dựa trên trạng thái đích
+    if (newStatus === 'GOODS_RETURNED_TO_WAREHOUSE') {
+      transitionData.reason = 'Hàng đã về kho';
+      transitionData.notes = 'Đã kiểm tra chất lượng hàng hóa';
+    } else {
+      transitionData.reason = `Chuyển trạng thái từ ${formatOrderStatus(currentOrder.orderStatus)} thành ${formatOrderStatus(newStatus)}`;
+      transitionData.notes = `Thực hiện bởi admin ID: ${currentStaffId}`;
+    }
+
+    // Thêm tracking number nếu chuyển sang SHIPPED
+    // Không cần nhập mã vận đơn khi chuyển trạng thái SHIPPED
+
+    console.log('=== DEBUG: Updating order status ===');
+    console.log('Order ID:', orderId);
+    console.log('Transition data:', transitionData);
+
+    // Gọi API chuyển trạng thái mới theo tài liệu
+    const response = await updateOrderStatusTransition(orderId, transitionData);
+    
+    console.log('=== DEBUG: Status transition response ===');
+    console.log('Response:', response);
+
+    // Hiển thị thông báo thành công với business impact
+    let successMessage = `Chuyển trạng thái đơn hàng thành công!`;
+    if (response.data?.businessImpact) {
+      const impact = response.data.businessImpact;
+      if (impact.pointImpact?.pointsAwarded > 0) {
+        successMessage += ` | +${impact.pointImpact.pointsAwarded} điểm`;
+      }
+      if (impact.pointImpact?.pointsDeducted > 0) {
+        successMessage += ` | -${impact.pointImpact.pointsDeducted} điểm`;
+      }
+      if (impact.stockImpact?.itemsRestored?.length > 0) {
+        successMessage += ` | Hoàn kho: ${impact.stockImpact.itemsRestored.length}`;
+      }
+      if (impact.voucherImpact?.vouchersRestored?.length > 0) {
+        successMessage += ` | Hoàn voucher: ${impact.voucherImpact.vouchersRestored.length}`;
+      }
+    }
+    // Hiển thị toast nhỏ góc phải, tự động tắt sau 2 giây
+    showToast('success', successMessage);
+
+    // ✅ Chỉ update UI khi API thành công
+    if (orderIndex !== -1) {
+      orders.value[orderIndex].orderStatus = newStatus;
+    }
+
+    // Refresh danh sách đơn hàng
+    await fetchOrders();
+    
+    return true; // ✅ Return success
+    
   } catch (error) {
     console.error('Lỗi khi cập nhật trạng thái:', error);
     
-    let errorMessage = 'Lỗi khi cập nhật trạng thái!';
-    if (error.response && error.response.data && error.response.data.message) {
-      errorMessage = error.response.data.message;
-    }
+    const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái đơn hàng';
     
-    showToast('error', errorMessage);
+    await Swal.fire({
+      title: 'Lỗi!',
+      text: errorMessage,
+      icon: 'error',
+      confirmButtonText: 'OK'
+    });
+    
+    return false; // ✅ Return failure
   }
 };
 
@@ -1591,24 +1824,62 @@ const cancelOrder = async (order) => {
   try {
     const { value: reason } = await Swal.fire({
       title: 'Hủy đơn hàng',
-      text: 'Nhập lý do hủy đơn hàng:',
-      input: 'textarea',
-      inputPlaceholder: 'Lý do hủy đơn hàng...',
+      html: `
+        <div class="text-start">
+          <p><strong>Mã đơn hàng:</strong> ${order.code}</p>
+          <p><strong>Khách hàng:</strong> ${order.customerName}</p>
+          <div class="alert alert-warning mt-3">
+            <strong><i class="bi bi-exclamation-triangle"></i> Lưu ý quan trọng:</strong>
+            <ul class="mb-0 mt-2">
+              <li>Hủy đơn hàng sẽ hoàn lại số lượng sách vào kho</li>
+              <li><strong>KHÔNG hoàn lại voucher đã sử dụng</strong></li>
+              <li>Chỉ hoàn trả hàng mới được hoàn voucher</li>
+              <li>Thao tác này không thể hoàn tác</li>
+            </ul>
+          </div>
+          <div class="mt-3">
+            <label class="form-label"><strong>Lý do hủy đơn hàng:</strong></label>
+            <textarea id="cancelReason" class="form-control" placeholder="Nhập lý do hủy đơn hàng..." rows="3"></textarea>
+          </div>
+        </div>
+      `,
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Hủy đơn hàng',
+      confirmButtonText: 'Xác nhận hủy',
       cancelButtonText: 'Không hủy',
-      inputValidator: (value) => {
-        if (!value) {
-          return 'Vui lòng nhập lý do hủy đơn hàng!';
+      preConfirm: () => {
+        const reason = document.getElementById('cancelReason').value;
+        if (!reason.trim()) {
+          Swal.showValidationMessage('Vui lòng nhập lý do hủy đơn hàng!');
+          return false;
         }
+        return reason.trim();
       }
     });
     
     if (reason) {
       await cancelOrderAPI(order.id, reason, order.userId);
-      showToast('success', 'Hủy đơn hàng thành công!');
+      
+      await Swal.fire({
+        title: 'Hủy đơn hàng thành công!',
+        html: `
+          <div class="text-start">
+            <p><strong>Đơn hàng ${order.code} đã được hủy thành công</strong></p>
+            <div class="alert alert-success mt-3">
+              <strong><i class="bi bi-check-circle"></i> Hệ thống đã tự động:</strong>
+              <ul class="mb-0 mt-2">
+                <li>✅ Hoàn lại số lượng sách vào kho</li>
+                <li>❌ <strong>KHÔNG hoàn voucher</strong> (theo chính sách)</li>
+                <li>📝 Lưu lý do hủy: "${reason}"</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        icon: 'success',
+        confirmButtonText: 'Đã hiểu'
+      });
+      
       await fetchOrders();
     }
   } catch (error) {
@@ -1624,17 +1895,19 @@ const cancelOrder = async (order) => {
 };
 
 const getAvailableStatusTransitions = (currentStatus) => {
-  // Business rules theo tài liệu backend mới
+  // Business rules theo tài liệu backend mới - Luồng chuyển trạng thái chuẩn
   const transitions = {
-    'PENDING': ['CONFIRMED', 'CANCELED'],
-    'CONFIRMED': ['SHIPPED', 'CANCELED'], 
-    'SHIPPED': ['DELIVERED'],
-    'DELIVERED': ['RETURNED', 'REFUNDING'],
-    'REFUNDING': ['REFUNDED', 'PARTIALLY_REFUNDED'],
-    'RETURNED': ['REFUNDING'],
-    'CANCELED': [], // Không thể chuyển trạng thái từ CANCELED
-    'REFUNDED': [], // Không thể chuyển trạng thái từ REFUNDED
-    'PARTIALLY_REFUNDED': ['REFUNDED'] // Có thể hoàn tiền toàn bộ
+    'PENDING': ['CONFIRMED', 'CANCELED'], // Chờ xác nhận → Đã xác nhận hoặc Hủy
+    'CONFIRMED': ['SHIPPED', 'CANCELED'], // Đã xác nhận → Đang giao hàng hoặc Hủy (trong một số trường hợp)
+    'SHIPPED': ['DELIVERED', 'GOODS_RETURNED_TO_WAREHOUSE'], // Đang giao hàng → Đã giao hàng hoặc Hàng về kho
+    'DELIVERED': [], // Đã giao hàng → Không cho phép admin chuyển sang yêu cầu hoàn trả
+    'REFUND_REQUESTED': ['REFUNDING', 'DELIVERED'], // Admin xử lý: Chấp nhận hoàn trả hoặc Từ chối
+    'REFUNDING': ['REFUNDED', 'PARTIALLY_REFUNDED'], // Đang hoàn trả → Hoàn trả toàn bộ hoặc một phần
+    'CANCELED': [], // Đã hủy - trạng thái cuối
+    'REFUNDED': [], // Đã hoàn trả toàn bộ - trạng thái cuối  
+    'PARTIALLY_REFUNDED': ['REFUNDED'], // Hoàn trả một phần → Có thể hoàn trả thêm
+    'RETURNED': [], // Đã trả hàng - trạng thái cuối
+    'GOODS_RETURNED_TO_WAREHOUSE': [] // Hàng đã về kho - trạng thái cuối
   };
   
   const availableStatuses = transitions[currentStatus] || [];
@@ -1663,11 +1936,7 @@ const handlePageSizeChange = (newPageSize) => {
 };
 
 // Utility methods
-const getCurrentStaffId = () => {
-  // Lấy ID của admin đang đăng nhập từ localStorage hoặc store
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
-  return user.id || null;
-};
+// Đã thay thế getCurrentStaffId bằng getUserId từ utils.js
 
 const formatDate = (timestamp) => {
   if (!timestamp) return '';
@@ -1714,11 +1983,77 @@ const showToast = (icon, title) => {
 const formatOrderType = (type) => {
   const typeMap = {
     'NORMAL': 'Thường',
+    'ONLINE': 'Đơn online',
+    'COUNTER': 'Đơn tại quầy',
     'EVENT_GIFT': 'Quà sự kiện',
     'PROMOTIONAL': 'Khuyến mãi',
     'SAMPLE': 'Mẫu'
   };
   return typeMap[type] || type;
+};
+
+// Add this method to handle 'Cập nhật giá mới' (Update Prices) action
+const reloadBookPricesFromDropdown = async () => {
+  // Reload books dropdown
+  await loadUsersAndBooks();
+  // For each item in the order, update price from dropdown
+  newOrder.value.items.forEach(detail => {
+    const selectedBook = books.value.find(book => book.id == detail.bookId);
+    if (selectedBook) {
+      detail.unitPrice = selectedBook.isFlashSale && selectedBook.flashSalePrice ? selectedBook.flashSalePrice : selectedBook.normalPrice;
+      detail.isFlashSale = selectedBook.isFlashSale || false;
+      detail.frontendPrice = selectedBook.normalPrice;
+      detail.frontendFlashSalePrice = selectedBook.flashSalePrice;
+      detail.totalPrice = (detail.quantity || 0) * (detail.unitPrice || 0);
+    }
+  });
+  // Optionally, recalculate order preview
+  calculateOrderPreview();
+};
+
+// Validate all prices in the order using the new API
+const validateAllPrices = async () => {
+  // Build array from current items: [{bookId, frontendPrice, quantity}]
+  const payload = newOrder.value.items.map(detail => ({
+    bookId: detail.bookId,
+    frontendPrice: detail.unitPrice,
+    quantity: detail.quantity
+  }));
+  try {
+    const response = await validatePrices({ userId: newOrder.value.userId, payload });
+    // Nếu API trả về data là "valid" (string) hoặc response.data.valid === true thì hợp lệ
+    if (
+      response &&
+      response.data &&
+      (response.data === "valid" || response.data.valid === true)
+    ) {
+      return true;
+    }
+    // Nếu không hợp lệ, hiển thị thông báo lỗi giá
+    Swal.fire({
+      icon: 'error',
+      title: 'Lỗi giá sản phẩm',
+      text: response.data.message || 'Có sản phẩm có giá không hợp lệ!'
+    });
+    return false;
+  } catch (error) {
+    // Nếu lỗi trả về từ backend là lỗi số lượng thì báo đúng message
+    const errMsg = error?.response?.data?.message;
+    if (errMsg && errMsg.toLowerCase().includes('số lượng')) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi số lượng sản phẩm',
+        text: errMsg
+      });
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi xác thực giá',
+        text: errMsg || 'Không thể xác thực giá sản phẩm!'
+      });
+    }
+    return false;
+  }
 };
 
 // Watch for changes to trigger order calculation
@@ -1766,7 +2101,7 @@ watch([currentPage, pageSize], () => {
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
   border-radius: 50%;
-  width: 35px;
+  width:  35px;
   height: 35px;
   display: flex;
   align-items: center;

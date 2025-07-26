@@ -3,7 +3,7 @@
     <!-- Breadcrumb -->
     <div class="mb-3">
       <h6 class="text-muted">
-        Admin / <strong>Point</strong>
+        Quản trị viên / <strong>Điểm</strong>
       </h6>
     </div> <!-- Bộ lọc -->
     <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">
