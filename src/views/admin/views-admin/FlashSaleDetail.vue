@@ -20,9 +20,14 @@
           <div class="col-md-2">
             <label class="form-label">
               <i class="bi bi-book me-1"></i>
-              Book ID
+              Tên sách
             </label>
-            <input type="number" class="form-control" v-model="filter.bookId" placeholder="Book ID" />
+            <input
+              type="text"
+              class="form-control"
+              v-model="filter.bookName"
+              placeholder="Nhập tên sách..."
+            />
           </div>
           <div class="col-md-2">
             <label class="form-label">
@@ -37,37 +42,73 @@
           </div>
           <div class="col-md-2">
             <label class="form-label">Giá giảm tối thiểu</label>
-            <input type="number" class="form-control" v-model="filter.minPrice" placeholder="Min price" />
+            <input
+              type="number"
+              class="form-control"
+              v-model="filter.minPrice"
+              placeholder="Min price"
+            />
           </div>
           <div class="col-md-2">
             <label class="form-label">Giá giảm tối đa</label>
-            <input type="number" class="form-control" v-model="filter.maxPrice" placeholder="Max price" />
+            <input
+              type="number"
+              class="form-control"
+              v-model="filter.maxPrice"
+              placeholder="Max price"
+            />
           </div>
           <div class="col-md-2">
             <label class="form-label">% giảm tối thiểu</label>
-            <input type="number" class="form-control" v-model="filter.minPercent" placeholder="Min %" />
+            <input
+              type="number"
+              class="form-control"
+              v-model="filter.minPercent"
+              placeholder="Min %"
+            />
           </div>
           <div class="col-md-2">
             <label class="form-label">% giảm tối đa</label>
-            <input type="number" class="form-control" v-model="filter.maxPercent" placeholder="Max %" />
+            <input
+              type="number"
+              class="form-control"
+              v-model="filter.maxPercent"
+              placeholder="Max %"
+            />
           </div>
           <div class="col-md-2">
             <label class="form-label">Tồn kho tối thiểu</label>
-            <input type="number" class="form-control" v-model="filter.minQuantity" placeholder="Min qty" />
+            <input
+              type="number"
+              class="form-control"
+              v-model="filter.minQuantity"
+              placeholder="Min qty"
+            />
           </div>
           <div class="col-md-2">
             <label class="form-label">Tồn kho tối đa</label>
-            <input type="number" class="form-control" v-model="filter.maxQuantity" placeholder="Max qty" />
+            <input
+              type="number"
+              class="form-control"
+              v-model="filter.maxQuantity"
+              placeholder="Max qty"
+            />
           </div>
         </div>
         <div class="row g-3 pt-3 d-flex justify-content-center">
           <div class="col-md-1">
-            <button class="btn btn-outline-success w-100 me-2" @click="searchWithFilter">
+            <button
+              class="btn btn-outline-success w-100 me-2"
+              @click="searchWithFilter"
+            >
               <i class="bi bi-funnel"></i> Lọc
             </button>
           </div>
           <div class="col-md-2">
-            <button class="btn btn-outline-secondary w-100" @click="clearFilters">
+            <button
+              class="btn btn-outline-secondary w-100"
+              @click="clearFilters"
+            >
               <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
             </button>
           </div>
@@ -77,18 +118,28 @@
 
     <!-- ================== BẢNG FLASH SALE ITEM ================== -->
     <div class="card shadow-lg border-0 mb-4 flashsale-table-card">
-      <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3">
+      <div
+        class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3"
+      >
         <div>
           <h5 class="mb-0 text-secondary">
             <i class="bi bi-list-ul me-2"></i>
-            Danh sách sản phẩm trong {{ flashSaleName || 'Flash Sale' }}
+            Danh sách sản phẩm trong {{ flashSaleName || "Flash Sale" }}
           </h5>
         </div>
         <div class="d-flex gap-2">
-          <button class="btn btn-outline-info btn-sm py-2" @click="reloadPage" :disabled="loading">
+          <button
+            class="btn btn-outline-info btn-sm py-2"
+            @click="reloadPage"
+            :disabled="loading"
+          >
             <i class="bi bi-arrow-repeat me-1"></i> Làm mới
           </button>
-          <button class="btn btn-primary btn-sm py-2" style="background-color: #33304e; border-color: #33304e;" @click="openAddForm">
+          <button
+            class="btn btn-primary btn-sm py-2"
+            style="background-color: #33304e; border-color: #33304e"
+            @click="openAddForm"
+          >
             <i class="bi bi-plus-circle me-1"></i> Thêm mới
           </button>
         </div>
@@ -105,7 +156,12 @@
         <div v-else-if="error" class="alert alert-danger m-4" role="alert">
           <i class="bi bi-exclamation-triangle-fill me-2"></i>
           {{ error }}
-          <button class="btn btn-sm btn-outline-danger ms-2" @click="getDataFromApi(currentPage, pageSize)">Thử lại</button>
+          <button
+            class="btn btn-sm btn-outline-danger ms-2"
+            @click="getDataFromApi(currentPage, pageSize)"
+          >
+            Thử lại
+          </button>
         </div>
         <!-- Table -->
         <div v-else>
@@ -137,7 +193,15 @@
                 <td class="py-3">{{ item.stockQuantity }}</td>
                 <td class="py-3">{{ item.maxPurchasePerUser }}</td>
                 <td class="py-3">
-                  <ToggleStatus :id="item.id" v-model="item.status" :true-value="1" :false-value="0" active-text="Hoạt động" inactive-text="Không hoạt động" @change="handleStatusChange(item)" />
+                  <ToggleStatus
+                    :id="item.id"
+                    v-model="item.status"
+                    :true-value="1"
+                    :false-value="0"
+                    active-text="Hoạt động"
+                    inactive-text="Không hoạt động"
+                    @change="handleStatusChange(item)"
+                  />
                 </td>
                 <td class="py-3">
                   <EditButton @click="openEditForm(item)" />
@@ -165,34 +229,137 @@
     <!-- ================== HẾT BẢNG ================== -->
 
     <!-- Modal Thêm/Sửa Item -->
-    <div class="modal fade" id="formModal" tabindex="-1" aria-labelledby="formModalLabel" aria-hidden="true" style="z-index: 10000;">
+    <div
+      class="modal fade"
+      id="formModal"
+      tabindex="-1"
+      aria-labelledby="formModalLabel"
+      aria-hidden="true"
+      style="z-index: 10000"
+    >
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="formModalLabel">{{ isEditMode ? 'Chỉnh sửa' : 'Thêm mới' }}</h5>
-            <button type="button" class="custom-close-btn" @click="closeModal"><i class="bx bx-x-circle"></i></button>
+            <h5 class="modal-title" id="formModalLabel">
+              {{ isEditMode ? "Chỉnh sửa" : "Thêm mới" }}
+            </h5>
+            <button type="button" class="custom-close-btn" @click="closeModal">
+              <i class="bx bx-x-circle"></i>
+            </button>
           </div>
           <div class="modal-body">
             <form @submit.prevent="handleSubmitForm">
               <div class="mb-3">
-                <label class="form-label">Book ID <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" v-model="formData.bookId" required :disabled="isEditMode" />
+                <label class="form-label"
+                  >Book Name <span class="text-danger">*</span></label
+                >
+                <select
+                  class="form-select"
+                  v-model="formData.bookId"
+                  required
+                  :disabled="isEditMode || loadingBooks"
+                >
+                  <option value="">
+                    {{
+                      loadingBooks ? "Đang tải danh sách sách..." : "Chọn sách"
+                    }}
+                  </option>
+                  <option
+                    v-for="book in availableBooks"
+                    :key="book.bookId"
+                    :value="book.bookId"
+                  >
+                    <!-- ✅ SỬA: Dùng book.bookId làm key và value -->
+                    [ID: {{ book.bookId }}] {{ book.bookName }} -
+                    {{ formatCurrency(book.price) }} (Tồn:
+                    {{ book.stockQuantity }})
+                  </option>
+                </select>
+
+                <!-- Loading indicator -->
+                <div v-if="loadingBooks" class="form-text text-muted">
+                  <i class="bi bi-arrow-repeat spinner-border-sm me-1"></i>
+                  Đang tải danh sách sách...
+                </div>
+
+                <!-- No books available -->
+                <div
+                  v-else-if="availableBooks.length === 0"
+                  class="form-text text-warning"
+                >
+                  <i class="bi bi-exclamation-triangle me-1"></i>
+                  Không có sách nào khả dụng
+                </div>
+              </div>
+
+              <!-- Hiển thị thông tin sách đã chọn -->
+              <div v-if="selectedBookInfo" class="mb-3">
+                <div class="alert alert-info py-2">
+                  <div
+                    class="d-flex justify-content-between align-items-center"
+                  >
+                    <div>
+                      <strong>{{ selectedBookInfo.bookName }}</strong
+                      ><br />
+                      <small class="text-muted">
+                        Giá gốc: {{ formatCurrency(selectedBookInfo.price) }} |
+                        Tồn kho: {{ selectedBookInfo.stockQuantity }}
+                      </small>
+                    </div>
+                    <div class="text-end">
+                      <small class="badge bg-success"
+                        >ID: {{ selectedBookInfo.bookId }}</small
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label"
+                  >Giá giảm <span class="text-danger">*</span></label
+                >
+                <input
+                  type="number"
+                  step="0.01"
+                  class="form-control"
+                  v-model="formData.discountPrice"
+                  required
+                />
               </div>
               <div class="mb-3">
-                <label class="form-label">Giá giảm <span class="text-danger">*</span></label>
-                <input type="number" step="0.01" class="form-control" v-model="formData.discountPrice" required />
+                <label class="form-label"
+                  >% Giảm <span class="text-danger">*</span></label
+                >
+                <input
+                  type="number"
+                  step="0.01"
+                  class="form-control"
+                  v-model="formData.discountPercentage"
+                  required
+                />
               </div>
               <div class="mb-3">
-                <label class="form-label">% Giảm <span class="text-danger">*</span></label>
-                <input type="number" step="0.01" class="form-control" v-model="formData.discountPercentage" required />
+                <label class="form-label"
+                  >Tồn kho <span class="text-danger">*</span></label
+                >
+                <input
+                  type="number"
+                  class="form-control"
+                  v-model="formData.stockQuantity"
+                  required
+                />
               </div>
               <div class="mb-3">
-                <label class="form-label">Tồn kho <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" v-model="formData.stockQuantity" required />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Giới hạn mỗi người <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" v-model="formData.maxPurchasePerUser" required />
+                <label class="form-label"
+                  >Giới hạn mỗi người <span class="text-danger">*</span></label
+                >
+                <input
+                  type="number"
+                  class="form-control"
+                  v-model="formData.maxPurchasePerUser"
+                  required
+                />
               </div>
               <div class="mb-3">
                 <label class="form-label">Trạng thái</label>
@@ -204,8 +371,16 @@
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="closeModal">Đóng</button>
-            <button type="button" class="btn btn-primary" @click="handleSubmitForm">Xác nhận</button>
+            <button type="button" class="btn btn-secondary" @click="closeModal">
+              Đóng
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              @click="handleSubmitForm"
+            >
+              Xác nhận
+            </button>
           </div>
         </div>
       </div>
@@ -214,38 +389,42 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { Modal } from 'bootstrap';
-import { showToast } from '@/utils/swalHelper.js';
-import EditButton from '@/components/common/EditButton.vue';
-import Pagination from '@/components/common/Pagination.vue';
-import ToggleStatus from '@/components/common/ToggleStatus.vue';
+import { ref, onMounted, computed, watch } from "vue"; // ✅ Thêm watch
+import { Modal } from "bootstrap";
+import { showToast } from "@/utils/swalHelper.js";
+import EditButton from "@/components/common/EditButton.vue";
+import Pagination from "@/components/common/Pagination.vue";
+import ToggleStatus from "@/components/common/ToggleStatus.vue";
 import {
   getAllFlashSaleItem,
   addFlashSaleItem,
   updateFlashSaleItem,
-  toggleStatusFlashSaleItem
-} from '@/services/admin/flashSaleItem.js';
-import { useRoute } from 'vue-router';
+  toggleStatusFlashSaleItem,
+} from "@/services/admin/flashSaleItem.js";
+import { useRoute } from "vue-router";
+import {
+  getActiveBooksWithStock,
+  getActiveBooksForEdit,
+} from "@/services/admin/book";
 
 const route = useRoute();
-const defaultFlashSaleId = route.params.id ? parseInt(route.params.id) : '';
+const defaultFlashSaleId = route.params.id ? parseInt(route.params.id) : "";
 
 // Filter object
 const filter = ref({
   flashSaleId: defaultFlashSaleId,
-  bookId: '',
-  status: '',
-  minPrice: '',
-  maxPrice: '',
-  minPercent: '',
-  maxPercent: '',
-  minQuantity: '',
-  maxQuantity: ''
+  bookName: "", // ✅ Đổi từ bookId thành bookName
+  status: "",
+  minPrice: "",
+  maxPrice: "",
+  minPercent: "",
+  maxPercent: "",
+  minQuantity: "",
+  maxQuantity: "",
 });
 
 const items = ref([]);
-const flashSaleName = ref('');
+const flashSaleName = ref("");
 
 // Pagination
 const currentPage = ref(0);
@@ -260,20 +439,129 @@ const error = ref(null);
 
 const isEditMode = ref(false);
 const formData = ref({
-  id: '',
-  bookId: '',
-  discountPrice: '',
-  discountPercentage: '',
-  stockQuantity: '',
-  maxPurchasePerUser: '',
-  status: 1
+  id: "",
+  bookId: "",
+  discountPrice: "",
+  discountPercentage: "",
+  stockQuantity: "",
+  maxPurchasePerUser: "",
+  status: 1,
 });
+
+// Books loading
+const loadingBooks = ref(false);
+const availableBooks = ref([]);
 
 // Helper: currency
 function formatCurrency(value) {
-  if (value === null || value === undefined) return '';
-  return Number(value).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+  if (value === null || value === undefined) return "";
+  return Number(value).toLocaleString("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  });
 }
+
+// ✅ Computed để hiển thị thông tin sách đã chọn
+const selectedBookInfo = computed(() => {
+  console.log("=== selectedBookInfo DEBUG ===");
+  console.log("formData.bookId:", formData.value.bookId);
+  console.log("availableBooks.length:", availableBooks.value.length);
+
+  if (!formData.value.bookId || !availableBooks.value.length) {
+    console.log("❌ No bookId or no books available");
+    return null;
+  }
+
+  const bookId = parseInt(formData.value.bookId);
+  console.log("Looking for book with ID:", bookId);
+
+  // ✅ SỬA: Dùng book.bookId thay vì book.id
+  const foundBook = availableBooks.value.find((book) => {
+    const match = book.bookId === bookId;
+    console.log(`Checking: ${book.bookId} === ${bookId} ? ${match}`);
+    return match;
+  });
+
+  if (foundBook) {
+    console.log("✅ Found book object:", foundBook);
+    console.log("✅ Book details:", {
+      bookId: foundBook.bookId,
+      name: foundBook.bookName,
+      price: foundBook.price,
+      stock: foundBook.stockQuantity,
+    });
+  } else {
+    console.log("❌ Book not found!");
+    console.log(
+      "Available bookIds:",
+      availableBooks.value.map((b) => b.bookId)
+    );
+  }
+
+  return foundBook;
+});
+
+// Load books for Add mode
+const loadAvailableBooks = async () => {
+  try {
+    loadingBooks.value = true;
+    const response = await getActiveBooksWithStock();
+
+    console.log("=== DEBUG: Books API Response ===");
+    console.log("Full response:", response);
+
+    let booksData = [];
+    if (response && response.data && response.data.data) {
+      booksData = response.data.data;
+    } else if (response && response.data) {
+      booksData = response.data;
+    } else if (Array.isArray(response)) {
+      booksData = response;
+    } else {
+      booksData = [];
+    }
+
+    availableBooks.value = booksData;
+    console.log("Available books:", availableBooks.value);
+  } catch (error) {
+    console.error("Lỗi khi tải danh sách sách:", error);
+    availableBooks.value = [];
+    showToast("error", "Không thể tải danh sách sách");
+  } finally {
+    loadingBooks.value = false;
+  }
+};
+
+// Load books for Edit mode
+const loadBooksForEdit = async () => {
+  try {
+    loadingBooks.value = true;
+    const response = await getActiveBooksForEdit();
+
+    console.log("=== DEBUG: Books For Edit API Response ===");
+    console.log("Full response:", response);
+
+    let booksData = [];
+    if (response && response.data && response.data.data) {
+      booksData = response.data.data;
+    } else if (response && response.data) {
+      booksData = response.data;
+    } else if (Array.isArray(response)) {
+      booksData = response;
+    } else {
+      booksData = [];
+    }
+
+    availableBooks.value = booksData;
+    console.log("Books for edit loaded:", availableBooks.value);
+  } catch (error) {
+    console.error("Lỗi khi tải danh sách sách cho edit:", error);
+    availableBooks.value = [];
+    showToast("error", "Không thể tải danh sách sách cho chỉnh sửa");
+  } finally {
+    loadingBooks.value = false;
+  }
+};
 
 // API
 const getDataFromApi = async (page, size) => {
@@ -282,7 +570,7 @@ const getDataFromApi = async (page, size) => {
   try {
     const params = { page, size };
     Object.entries(filter.value).forEach(([key, val]) => {
-      if (val !== '' && val !== null && val !== undefined) params[key] = val;
+      if (val !== "" && val !== null && val !== undefined) params[key] = val;
     });
     const res = await getAllFlashSaleItem(defaultFlashSaleId, params);
     const resData = res.data.data;
@@ -294,7 +582,7 @@ const getDataFromApi = async (page, size) => {
       totalPages.value = resData.totalPages;
       isLastPage.value = currentPage.value >= totalPages.value - 1;
       if (resData.content && resData.content.length > 0) {
-        flashSaleName.value = resData.content[0].flashSaleName || '';
+        flashSaleName.value = resData.content[0].flashSaleName || "";
       }
     } else {
       items.value = [];
@@ -303,7 +591,7 @@ const getDataFromApi = async (page, size) => {
       isLastPage.value = true;
     }
   } catch (err) {
-    error.value = 'Lỗi khi tải dữ liệu!';
+    error.value = "Lỗi khi tải dữ liệu!";
     items.value = [];
   } finally {
     loading.value = false;
@@ -314,17 +602,18 @@ const getDataFromApi = async (page, size) => {
 const searchWithFilter = () => {
   getDataFromApi(0, pageSize.value);
 };
+
 const clearFilters = () => {
   filter.value = {
     flashSaleId: defaultFlashSaleId,
-    bookId: '',
-    status: '',
-    minPrice: '',
-    maxPrice: '',
-    minPercent: '',
-    maxPercent: '',
-    minQuantity: '',
-    maxQuantity: ''
+    bookName: "", // ✅ Đổi từ bookId thành bookName
+    status: "",
+    minPrice: "",
+    maxPrice: "",
+    minPercent: "",
+    maxPercent: "",
+    minQuantity: "",
+    maxQuantity: "",
   };
   getDataFromApi(0, pageSize.value);
 };
@@ -338,22 +627,38 @@ const reloadPage = () => {
 const handleStatusChange = async (item) => {
   try {
     await toggleStatusFlashSaleItem(defaultFlashSaleId, item.id);
-    showToast('success', 'Thay đổi trạng thái thành công!');
+    showToast("success", "Thay đổi trạng thái thành công!");
   } catch (error) {
-    showToast('error', error.response?.data?.message || 'Có lỗi xảy ra!');
+    showToast("error", error.response?.data?.message || "Có lỗi xảy ra!");
   }
 };
 
+// Reset form data
+const resetFormData = () => {
+  formData.value = {
+    id: "",
+    bookId: "",
+    discountPrice: "",
+    discountPercentage: "",
+    stockQuantity: "",
+    maxPurchasePerUser: "",
+    status: 1,
+  };
+};
+
 // Modal actions
-const openAddForm = () => {
+const openAddForm = async () => {
   isEditMode.value = false;
   resetFormData();
-  const modal = Modal.getOrCreateInstance(document.getElementById('formModal'));
+  await loadAvailableBooks();
+  const modal = Modal.getOrCreateInstance(document.getElementById("formModal"));
   modal.show();
 };
 
-const openEditForm = (item) => {
+const openEditForm = async (item) => {
   isEditMode.value = true;
+  await loadBooksForEdit();
+
   formData.value = {
     id: item.id,
     bookId: item.bookId,
@@ -361,20 +666,26 @@ const openEditForm = (item) => {
     discountPercentage: item.discountPercentage,
     stockQuantity: item.stockQuantity,
     maxPurchasePerUser: item.maxPurchasePerUser,
-    status: item.status
+    status: item.status,
   };
-  const modal = Modal.getOrCreateInstance(document.getElementById('formModal'));
+  const modal = Modal.getOrCreateInstance(document.getElementById("formModal"));
   modal.show();
 };
 
 const validateForm = () => {
   const f = formData.value;
-  if (!f.bookId || !f.discountPrice || !f.discountPercentage || !f.stockQuantity || !f.maxPurchasePerUser) {
-    showToast('error', 'Vui lòng nhập đầy đủ thông tin!');
+  if (
+    !f.bookId ||
+    !f.discountPrice ||
+    !f.discountPercentage ||
+    !f.stockQuantity ||
+    !f.maxPurchasePerUser
+  ) {
+    showToast("error", "Vui lòng nhập đầy đủ thông tin!");
     return false;
   }
   if (f.discountPercentage < 0 || f.discountPercentage > 100) {
-    showToast('error', 'Phần trăm giảm giá phải từ 0-100');
+    showToast("error", "Phần trăm giảm giá phải từ 0-100");
     return false;
   }
   return true;
@@ -390,29 +701,34 @@ const handleSubmitForm = async () => {
       discountPercentage: parseFloat(formData.value.discountPercentage),
       stockQuantity: parseInt(formData.value.stockQuantity),
       maxPurchasePerUser: parseInt(formData.value.maxPurchasePerUser),
-      status: parseInt(formData.value.status)
+      status: parseInt(formData.value.status),
     };
     if (!isEditMode.value) {
       await addFlashSaleItem(defaultFlashSaleId, submitData);
-      showToast('success', 'Thêm mới thành công!');
+      showToast("success", "Thêm mới thành công!");
     } else {
-      await updateFlashSaleItem(defaultFlashSaleId, formData.value.id, submitData);
-      showToast('success', 'Cập nhật thành công!');
+      await updateFlashSaleItem(
+        defaultFlashSaleId,
+        formData.value.id,
+        submitData
+      );
+      showToast("success", "Cập nhật thành công!");
     }
     closeModal();
     await getDataFromApi(currentPage.value, pageSize.value);
   } catch (error) {
-    showToast('error', error.response?.data?.message || 'Có lỗi xảy ra!');
+    showToast("error", error.response?.data?.message || "Có lỗi xảy ra!");
   }
 };
 
 const closeModal = () => {
-  const modal = Modal.getOrCreateInstance(document.getElementById('formModal'));
+  const modal = Modal.getOrCreateInstance(document.getElementById("formModal"));
   modal.hide();
 };
 
 const handlePrev = () => {
-  if (currentPage.value > 0) getDataFromApi(currentPage.value - 1, pageSize.value);
+  if (currentPage.value > 0)
+    getDataFromApi(currentPage.value - 1, pageSize.value);
 };
 const handleNext = () => {
   if (!isLastPage.value) getDataFromApi(currentPage.value + 1, pageSize.value);
@@ -422,20 +738,25 @@ const handlePageSizeChange = (newSize) => {
   getDataFromApi(0, newSize);
 };
 
-const resetFormData = () => {
-  formData.value = {
-    id: '',
-    bookId: '',
-    discountPrice: '',
-    discountPercentage: '',
-    stockQuantity: '',
-    maxPurchasePerUser: '',
-    status: 1
-  };
-};
+// ✅ Thêm debounce search
+let searchTimeout = null;
+
+// ✅ Watch bookName để auto search
+watch(
+  () => filter.value.bookName,
+  (newBookName) => {
+    clearTimeout(searchTimeout);
+    if (newBookName !== "") {
+      searchTimeout = setTimeout(() => {
+        searchWithFilter();
+      }, 800); // Tự động search sau 800ms
+    }
+  }
+);
 
 onMounted(() => {
   getDataFromApi(currentPage.value, pageSize.value);
+  loadAvailableBooks(); // Load sẵn danh sách sách
 });
 </script>
 
@@ -447,6 +768,12 @@ onMounted(() => {
 
 .modal-dialog {
   max-width: 650px !important;
+}
+
+.custom-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 .modal-content {
@@ -468,25 +795,44 @@ onMounted(() => {
   font-size: 1.1rem;
 }
 
-.custom-close-btn {
-  background: none;
-  border: none;
-  padding: 0.5rem;
-  cursor: pointer;
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.modal-body {
-  max-height: 70vh;
-  overflow-y: auto;
+.spinner-border-sm {
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .filter-card,
 .flashsale-table-card {
   border-radius: 0.8rem !important;
   overflow: hidden;
+}
+
+.alert-info {
+  background-color: #e7f3ff;
+  border-color: #b3d9ff;
+  color: #0c5460;
+  border-radius: 8px; /* ✅ Sửa: Xóa 'auto;' không hợp lệ */
+}
+
+.form-text {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.form-select:disabled {
+  background-color: #f8f9fa;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.badge {
+  font-size: 0.75rem;
+}
+
+.form-select option {
+  padding: 8px 12px;
+}
+
+.form-select option:hover {
+  background-color: #f8f9fa;
 }
 </style>

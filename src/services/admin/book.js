@@ -243,3 +243,21 @@ export const fetchBookSearch = async (text) => {
     throw error;
   }
 }
+export const getActiveBooksWithStock = async () => {
+  try {
+    const response = await client.get('/api/books/active-with-stock');
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy sách có sẵn và đang hoạt động:', error);
+    throw error;
+  }
+};
+export const getActiveBooksForEdit = async () => {
+  try {
+    const response = await client.get('/api/books/active-for-edit');
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy sách có sẵn và đang hoạt động:', error);
+    throw error;
+  }
+};
