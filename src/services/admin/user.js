@@ -56,11 +56,10 @@ export function getUsersForOrder() {
   return client.get('/api/users/dropdown');
 }
 
-// Lấy profile người dùng hiện tại
-export function getProfile() {
-  return client.get('/api/users/profile');
+export function getProfile(id) {
+  console.log("Fetching profile for user ID:", id);
+  return client.get(`/api/users/profile/${id}`);
 }
-
 // Cập nhật profile người dùng hiện tại
 export function updateProfile(id, data) {
   return client.put(`/api/users/profile/${id}`, data);

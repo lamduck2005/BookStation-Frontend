@@ -27,11 +27,15 @@
             <div class="stats-grid">
               <div class="stat-item">
                 <span class="stat-label">F-Point hiện có</span>
-                <span class="stat-value text-danger">{{ user.totalPoint || 0 }}</span>
+                <span class="stat-value text-danger">{{
+                  user.totalPoint || 0
+                }}</span>
               </div>
               <div class="stat-item">
                 <span class="stat-label">Freeship hiện có</span>
-                <span class="stat-value text-danger">{{ user.freeship || 0 }} lần</span>
+                <span class="stat-value text-danger"
+                  >{{ user.freeship || 0 }} lần</span
+                >
               </div>
             </div>
           </div>
@@ -41,11 +45,15 @@
             <div class="stats-grid">
               <div class="stat-item">
                 <span class="stat-label">Số đơn hàng</span>
-                <span class="stat-value text-danger">{{ user.orders || 0 }} đơn hàng</span>
+                <span class="stat-value text-danger"
+                  >{{ user.orders || 0 }} đơn hàng</span
+                >
               </div>
               <div class="stat-item">
                 <span class="stat-label">Đã thanh toán</span>
-                <span class="stat-value text-danger">{{ user.totalSpent || 0 }} đ</span>
+                <span class="stat-value text-danger"
+                  >{{ user.totalSpent || 0 }} đ</span
+                >
               </div>
             </div>
           </div>
@@ -56,13 +64,19 @@
           <h5 class="tier-title">Quyền lợi thành viên tại Fahasa.com</h5>
           <div class="tier-progress">
             <div class="tier-tabs">
-              <div class="tier-tab" :class="{ active: currentTier === 'bronze' }">
+              <div
+                class="tier-tab"
+                :class="{ active: currentTier === 'bronze' }"
+              >
                 <div class="tier-icon bronze">
                   <i class="bi bi-circle-fill"></i>
                 </div>
                 <span>Hạng Bạc</span>
               </div>
-              <div class="tier-tab" :class="{ active: currentTier === 'silver' }">
+              <div
+                class="tier-tab"
+                :class="{ active: currentTier === 'silver' }"
+              >
                 <div class="tier-icon silver">
                   <i class="bi bi-circle-fill"></i>
                 </div>
@@ -82,11 +96,15 @@
                 <span class="benefit-status denied">✗</span>
               </div>
               <div class="benefit-row">
-                <span class="benefit-label">- Ưu đãi freeship và mã giảm giá:</span>
+                <span class="benefit-label"
+                  >- Ưu đãi freeship và mã giảm giá:</span
+                >
                 <span class="benefit-status denied">✗</span>
               </div>
               <div class="benefit-row">
-                <span class="benefit-label">- Tỉ lệ tích lũy F-Point trên giá trị đơn hàng:</span>
+                <span class="benefit-label"
+                  >- Tỉ lệ tích lũy F-Point trên giá trị đơn hàng:</span
+                >
                 <span class="benefit-status">0,5%</span>
               </div>
             </div>
@@ -118,11 +136,7 @@
           <div class="col-md-6">
             <label class="form-label">Email *</label>
             <div class="input-group">
-              <input
-                type="text"
-                class="form-control"
-                v-model="user.email"
-              />
+              <input type="text" class="form-control" v-model="user.email" />
             </div>
           </div>
         </div>
@@ -141,9 +155,12 @@ import { ref, onMounted } from "vue";
 import Swal from "sweetalert2";
 import { getProfile, updateProfile } from "@/services/admin/user";
 import { showToast } from "@/utils/swalHelper";
+import { getUserFromToken, getUserId } from "@/utils/utils";
+// Import các hàm lấy thông tin từ token
+
 // --- Ref duy nhất để chứa toàn bộ thông tin người dùng ---
 const user = ref(null);
-
+const userId = ref(getUserId()); // Lấy ID người dùng từ token
 // --- Alert State ---
 const alert = ref({
   message: "",
@@ -173,36 +190,78 @@ const setAlert = (message, type = "alert-warning") => {
 // Lấy dữ liệu ban đầu
 onMounted(async () => {
   try {
-    const response = await getProfile();
-    if (response.data && response.data.data) {
-      user.value = response.data.data;
-      // Kiểm tra nếu thông tin chưa đầy đủ thì hiển thị cảnh báo
+    const currentUserId = getUserId();
+    if (!currentUserId) {
+      setAlert(
+        "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.",
+        "alert-danger"
+      );
+      return;
+    }
+
+    console.log("Calling API with user ID:", currentUserId);
+
+    // ✅ SỬA: Xử lý response đúng cách
+    const response = await getProfile(currentUserId);
+    console.log("Full API response:", response);
+
+    // ✅ Kiểm tra response structure và extract data
+    if (
+      response &&
+      response.data &&
+      response.data.status === 200 &&
+      response.data.data
+    ) {
+      const apiData = response.data.data;
+      console.log("API data:", apiData);
+
+      // ✅ Map tất cả fields cần thiết cho UI
+      user.value = {
+        // Basic profile fields
+        id: apiData.user_id || currentUserId,
+        email: apiData.email || "",
+        fullName: apiData.full_name || "",
+        phoneNumber: apiData.phone_number || "",
+
+        // Stats fields (lấy từ API hoặc default)
+        totalPoint: apiData.total_point || 0,
+        totalSpent: apiData.total_spent || 0,
+
+        // ✅ CẦN THIẾT cho UI - nếu API có thì lấy, không thì default
+        freeship: apiData.freeship || 0, // Hiển thị trong template
+        orders: apiData.total_orders || 0, // Hiển thị trong template
+      };
+
+      console.log("Mapped user data:", user.value);
+
       if (!user.value.phoneNumber || !user.value.fullName) {
         setAlert("Bạn vui lòng cập nhật đầy đủ thông tin tài khoản.");
       }
+    } else {
+      // ✅ SỬA: Xử lý khi response không đúng structure
+      console.error("Invalid response structure:", response);
+      throw new Error("Invalid API response structure");
     }
   } catch (error) {
     console.error("Lỗi khi tải thông tin cá nhân:", error);
-    setAlert("Không thể tải thông tin cá nhân.", "alert-danger");
+    setAlert("Không thể tải thông tin cá nhân từ server.", "alert-danger");
   }
 });
 
 // Hàm cập nhật thông tin
 const update = async () => {
-  // Kiểm tra các trường bắt buộc
+  // ✅ Validation như cũ
   if (!user.value.fullName || !user.value.phoneNumber || !user.value.email) {
     showToast("warning", "Vui lòng nhập đầy đủ thông tin.");
     return;
   }
 
-  // Kiểm tra định dạng email đơn giản
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(user.value.email)) {
     showToast("warning", "Vui lòng nhập đúng định dạng email.");
     return;
   }
 
-  // Kiểm tra số điện thoại (10 số, chỉ chứa số)
   const phoneRegex = /^0\d{9}$/;
   if (!phoneRegex.test(user.value.phoneNumber)) {
     showToast(
@@ -212,21 +271,62 @@ const update = async () => {
     return;
   }
 
-  if (!user.value || !user.value.id) {
-    showToast("error", "Không tìm thấy thông tin người dùng để cập nhật.");
+  // ✅ Sử dụng ID từ token
+  const userId = getUserId();
+  if (!userId) {
+    showToast(
+      "error",
+      "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại."
+    );
     return;
   }
 
   try {
-    const response = await updateProfile(user.value.id, user.value);
+    // ✅ SỬA: Chỉ gửi thông tin cần thiết, không gửi stats
+    const updateData = {
+      fullName: user.value.fullName,
+      phoneNumber: user.value.phoneNumber,
+      email: user.value.email,
+    };
+
+    console.log("Update data being sent:", updateData);
+
+    const response = await updateProfile(userId, updateData);
+
+    console.log("Update response:", response);
+
     if (response.data && response.data.status === 200) {
       showToast("success", "Cập nhật thông tin thành công!");
+
+      // ✅ Cập nhật token nếu cần (nếu backend trả về token mới)
+      if (response.data.newToken) {
+        localStorage.setItem("authToken", response.data.newToken);
+      }
+
+      // ✅ Reload lại thông tin sau khi update thành công
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } else {
       showToast("error", response.data.message || "Đã có lỗi xảy ra.");
     }
   } catch (error) {
     console.error("Lỗi khi cập nhật thông tin:", error);
-    showToast("error", "Đã có lỗi xảy ra phía máy chủ. Vui lòng thử lại sau.");
+
+    // ✅ Log chi tiết lỗi để debug
+    console.error("Error details:", {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+    });
+
+    // ✅ Hiển thị lỗi cụ thể từ backend
+    const errorMessage =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      "Đã có lỗi xảy ra phía máy chủ. Vui lòng thử lại sau.";
+
+    showToast("error", errorMessage);
   }
 };
 </script>
