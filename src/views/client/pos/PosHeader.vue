@@ -1,45 +1,66 @@
 <template>
   <div class="pos-header">
-    <select v-model="selectedCategory" class="pos-warehouse">
-      <option :value="0">Chọn danh mục</option>
-      <option v-for="c in categories" :key="c.id" :value="c.id">
-        {{ c.categoryName }}
-      </option>
-    </select>
-    <div class="product-search-wrap">
+    <!-- Tìm kiếm sản phẩm (bỏ danh mục) -->
+    <div class="product-search-wrap position-relative">
       <input
-        v-model="productSearch"
+        v-model="productSearchTerm"
         class="pos-search"
-        placeholder="Tìm tên/SKU/mã sản phẩm (F2)"
-        @focus="showProductDropdown = true"
-        @input="showProductDropdown = true"
-        @blur="hideProductDropdown"
+        placeholder="Tìm tên sách/mã sách/tác giả... (F2)"
+        @input="onProductSearch"
+        @focus="showProductSearchResults = true"
       />
-      <button
-        class="search-btn"
-        @mousedown.prevent="showProductDropdown = true"
-      >
+      <button class="search-btn">
         <i class="bi bi-search"></i>
       </button>
+      
+      <!-- Dropdown kết quả tìm kiếm -->
       <div
-        v-if="showProductDropdown && products.length"
-        class="product-dropdown"
+        v-if="showProductSearchResults && productSearchResults.length > 0"
+        class="product-dropdown shadow-lg"
       >
-        <div class="product-dropdown-item" v-for="p in products" :key="p.id">
+        <div 
+          v-for="book in productSearchResults" 
+          :key="book.id"
+          class="product-dropdown-item cursor-pointer hover-bg-light"
+          @mousedown.prevent="addBookToOrder(book)"
+        >
           <img
-            v-if="p.coverImageUrl"
-            :src="p.coverImageUrl"
+            v-if="book.coverImageUrl"
+            :src="book.coverImageUrl"
             class="product-thumb"
-            alt="thumb"
+            alt="book cover"
           />
-          <div class="product-info">
-            <div class="product-name">{{ p.bookName }}</div>
-            <div class="product-sku">{{ p.bookCode }}</div>
+          <div v-else class="product-thumb bg-light d-flex align-items-center justify-content-center">
+            <i class="bi bi-book text-muted"></i>
           </div>
-          <div class="product-price">{{ p.price.toLocaleString() }} đ</div>
+          <div class="product-info flex-grow-1">
+            <div class="product-name fw-medium">{{ book.title || book.name }}</div>
+            <div class="product-sku text-muted small">{{ book.bookCode }}</div>
+            <div class="product-author text-muted small">{{ book.author }}</div>
+          </div>
+          <div class="product-price-info text-end">
+            <div v-if="book.isFlashSale" class="d-flex flex-column">
+              <span class="text-danger fw-bold">{{ formatCurrency(book.flashSalePrice) }}</span>
+              <span class="text-muted text-decoration-line-through small">{{ formatCurrency(book.normalPrice) }}</span>
+              <span class="badge bg-danger small">Flash Sale</span>
+            </div>
+            <div v-else class="fw-semibold text-success">
+              {{ formatCurrency(book.normalPrice) }}
+            </div>
+            <div class="stock-info small text-muted">
+              Kho: {{ book.stockQuantity || 0 }}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Hiển thị khi không có kết quả -->
+        <div v-if="productSearchTerm && productSearchResults.length === 0" class="text-center p-3 text-muted">
+          <i class="bi bi-search"></i>
+          <div>Không tìm thấy sản phẩm nào</div>
         </div>
       </div>
     </div>
+    
     <button class="pos-barcode-btn" @click="showScanner = true">
       <i class="bi bi-upc-scan"></i> Quét mã vạch
     </button>
@@ -60,56 +81,102 @@
 </template>
 
 <script setup>
-import { getAllCategoriesParentNotNull } from "@/services/admin/category";
-import { getBookByIdCategory } from "@/services/admin/book"; // Thêm dòng này
-import { onMounted, ref, watch } from "vue";
-import BarcodeScanner from "./BarcodeScanner.vue";
+import { ref, onMounted, onUnmounted } from 'vue';
+import { getBooksDropdown } from '@/services/admin/book';
+import BarcodeScanner from './BarcodeScanner.vue';
 
-const categories = ref([]);
-const selectedCategory = ref(null); // Thay vì ref("")
+// Emit để gửi sản phẩm được chọn lên component cha
+const emit = defineEmits(['add-product']);
 
-const products = ref([]);
-const productSearch = ref("");
-const showProductDropdown = ref(false);
+// Product search states
+const productSearchTerm = ref('');
+const productSearchResults = ref([]);
+const showProductSearchResults = ref(false);
 const showScanner = ref(false);
+let productSearchTimeout = null;
 
-// Theo dõi khi chọn danh mục hoặc nhập search để gọi API
-watch([selectedCategory, productSearch], async () => {
-  fetchBook();
-});
-
-// Khi mở trang, load danh mục
-onMounted(() => {
-  fetchCategory();
-});
-const fetchCategory = async () => {
-  categories.value = await getAllCategoriesParentNotNull();
-  if (categories.value.length) selectedCategory.value = categories.value[0].id;
+// Methods
+const onProductSearch = async () => {
+  // Clear previous timeout
+  if (productSearchTimeout) {
+    clearTimeout(productSearchTimeout);
+  }
+  
+  // Set new timeout for debounced search
+  productSearchTimeout = setTimeout(async () => {
+    if (productSearchTerm.value.trim().length >= 1) {
+      try {
+        const response = await getBooksDropdown({
+          search: productSearchTerm.value.trim(),
+          limit: 10
+        });
+        productSearchResults.value = response.data || [];
+      } catch (error) {
+        console.error('Error searching products:', error);
+        productSearchResults.value = [];
+      }
+    } else {
+      productSearchResults.value = [];
+    }
+  }, 300);
 };
-const fetchBook = async () => {
-  console.log(
-    "selectedCategory: " +
-      selectedCategory.value +
-      " productSearch: " +
-      productSearch.value
-  );
-  const res = await getBookByIdCategory(
-    selectedCategory.value,
-    productSearch.value
-  );
 
-  console.log("books", res);
-  products.value = res;
+const addBookToOrder = (book) => {
+  // Emit sự kiện để POS component cha xử lý
+  emit('add-product', book);
+  
+  // Clear search
+  clearProductSearch();
 };
-function hideProductDropdown() {
-  setTimeout(() => (showProductDropdown.value = false), 150);
-}
 
-function onBarcodeDetected(barcode) {
+const clearProductSearch = () => {
+  productSearchTerm.value = '';
+  productSearchResults.value = [];
+  showProductSearchResults.value = false;
+};
+
+// Click outside to close dropdown
+const handleClickOutside = (event) => {
+  const searchContainer = event.target.closest('.product-search-wrap');
+  if (!searchContainer) {
+    showProductSearchResults.value = false;
+  }
+};
+
+const onBarcodeDetected = (barcode) => {
   showScanner.value = false;
-  // ... thêm logic tìm kiếm sản phẩm theo barcode
-  alert("Đã quét mã: " + barcode);
-}
+  // Tìm kiếm sản phẩm theo barcode
+  productSearchTerm.value = barcode;
+  onProductSearch();
+};
+
+const formatCurrency = (amount) => {
+  if (!amount) return '0 ₫';
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND'
+  }).format(amount);
+};
+
+// Lifecycle hooks
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+  
+  // Keyboard shortcut F2 for search focus
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'F2') {
+      e.preventDefault();
+      document.querySelector('.pos-search')?.focus();
+    }
+  });
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+  if (productSearchTimeout) {
+    clearTimeout(productSearchTimeout);
+  }
+});
 </script>
 
 <style scoped>
@@ -119,127 +186,197 @@ function onBarcodeDetected(barcode) {
   gap: 12px;
   margin-bottom: 12px;
 }
-.pos-warehouse {
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
-  min-width: 150px;
-}
+
 .product-search-wrap {
-  position: relative;
   display: flex;
   align-items: center;
   flex: 1;
-  max-width: 500px;
+  max-width: 600px;
 }
+
 .pos-search {
   flex: 1;
-  padding: 8px 12px;
-  border-radius: 6px 0 0 6px;
-  border: 1px solid #e5e7eb;
+  padding: 10px 16px;
+  border-radius: 8px 0 0 8px;
+  border: 2px solid #e5e7eb;
   font-size: 15px;
   outline: none;
+  transition: border-color 0.3s ease;
 }
+
+.pos-search:focus {
+  border-color: #00bfae;
+  box-shadow: 0 0 0 0.2rem rgba(0, 191, 174, 0.25);
+}
+
 .search-btn {
   background: #00bfae;
   color: #fff;
   border: none;
-  border-radius: 0 6px 6px 0;
-  padding: 8px 16px;
-  font-size: 20px;
+  border-radius: 0 8px 8px 0;
+  padding: 10px 20px;
+  font-size: 18px;
   cursor: pointer;
-  height: 38px;
+  height: 46px;
   display: flex;
   align-items: center;
+  transition: background-color 0.3s ease;
 }
+
+.search-btn:hover {
+  background: #009688;
+}
+
 .product-dropdown {
   position: absolute;
   top: 110%;
   left: 0;
-  width: 100%;
+  right: 0;
   background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px #e5e7eb33;
-  z-index: 10;
-  max-height: 320px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 400px;
   overflow-y: auto;
 }
+
 .product-dropdown-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: 15px;
+  padding: 12px 16px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f1f5f9;
 }
+
+.product-dropdown-item:last-child {
+  border-bottom: none;
+}
+
 .product-dropdown-item:hover {
   background: #e6f7f4;
+  transform: translateX(2px);
 }
+
 .product-thumb {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
   object-fit: cover;
-  background: #f3f3f3;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
 }
+
 .product-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  min-width: 0;
 }
+
 .product-name {
   font-weight: 500;
   font-size: 15px;
+  color: #1e293b;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.product-sku {
-  color: #888;
+
+.product-sku, .product-author {
+  color: #64748b;
   font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.product-price {
-  font-weight: 600;
-  color: #00bfae;
-  min-width: 80px;
-  text-align: right;
+
+.product-price-info {
+  min-width: 120px;
 }
+
+.stock-info {
+  margin-top: 4px;
+}
+
 .pos-barcode-btn {
   background: #00bfae;
   color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 8px 16px;
+  border-radius: 8px;
+  padding: 10px 20px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-weight: 500;
+  transition: all 0.3s ease;
+  white-space: nowrap;
 }
+
+.pos-barcode-btn:hover {
+  background: #009688;
+  transform: translateY(-1px);
+}
+
 .barcode-popup {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
 }
+
 .barcode-popup-content {
   background: #fff;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 24px 32px;
-  min-width: 340px;
-  min-height: 320px;
+  min-width: 400px;
+  min-height: 350px;
   position: relative;
-  box-shadow: 0 4px 24px #0001;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
+
 .close-btn {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 16px;
+  right: 16px;
   background: none;
   border: none;
-  color: #ff4d4f;
-  font-size: 20px;
+  color: #ef4444;
+  font-size: 24px;
   cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.close-btn:hover {
+  color: #dc2626;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .pos-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .product-search-wrap {
+    max-width: 100%;
+  }
+  
+  .pos-barcode-btn {
+    align-self: stretch;
+  }
+}
+
+/* Utility classes */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.hover-bg-light:hover {
+  background-color: #f8f9fa !important;
 }
 </style>
