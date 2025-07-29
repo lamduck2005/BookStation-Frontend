@@ -41,10 +41,20 @@
         <strong>Danh sách người dùng nhận voucher</strong>
       </div>
       <!-- Nút thêm -->
-      <div class="mb-3">
+      <div class="mb-3" >
         <button class="btn btn-success" @click="openAddForm">
           <i class="bi bi-plus-circle me-1"></i> Thêm user voucher
         </button>
+              <!-- Nút phát nhanh -->
+  <button
+    class="btn btn-warning"
+    @click="confirmGiveAll"
+    :disabled="givingAll"
+    style="margin-left: 10px;"
+  >
+    <span v-if="givingAll" class="spinner-border spinner-border-sm me-2"></span>
+    <i v-else class="bi bi-lightning-charge me-1"></i> Phát voucher nhanh
+  </button>
       </div>
 
       <!-- Modal Thêm User Voucher -->
@@ -66,6 +76,7 @@
                 @click="closeAddForm"
               ></button>
             </div>
+            
             <form @submit.prevent="submitAddForm">
               <div class="modal-body px-4 py-3">
                 <div class="row g-3">
@@ -103,11 +114,11 @@
                     </div>
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label mb-1 text-secondary small"
+                    <!-- <label class="form-label mb-1 text-secondary small"
                       >User ID <span class="text-danger">*</span></label
-                    >
+                    > -->
                     <input
-                      type="number"
+                     type="hidden"
                       class="form-control rounded-3"
                       v-model="addForm.userId"
                       readonly
@@ -119,11 +130,11 @@
                   </div>
 
                   <div class="col-md-6">
-                    <label class="form-label mb-1 text-secondary small"
+                    <!-- <label class="form-label mb-1 text-secondary small"
                       >Voucher ID</label
-                    >
+                    > -->
                     <input
-                      type="number"
+                     type="hidden"
                       class="form-control rounded-3"
                       v-model="addForm.voucherId"
                       readonly
@@ -205,6 +216,7 @@
           class="btn btn-outline-secondary btn-sm ms-2"
           :disabled="currentPage >= totalPages - 1"
           @click="nextPage"
+          style="margin-right: 10px;"
         >
           Sau
         </button>
@@ -215,9 +227,11 @@
 
 <script>
 import { ref, computed, onMounted } from "vue";
-import { getUsersByVoucherId } from "@/services/admin/voucher";
+import { getUsersByVoucherId,giveVoucherToAll } from "@/services/admin/voucher";
 import { addVoucherForNewuser } from "@/services/client/userVoucher";
 import { getUserIdByEmail } from "@/services/admin/user";
+import { showToast } from "@/utils/swalHelper";
+import Swal from 'sweetalert2';
 
 export default {
   props: {
@@ -230,8 +244,10 @@ export default {
     const users = ref([]);
     const loading = ref(false);
     const searchName = ref("");
-    const pageSize = ref(10);
+    const pageSize = ref(5);
     const currentPage = ref(0);
+    const givingAll = ref(false);
+
 
     const userIdError = ref("");
 
@@ -328,7 +344,8 @@ export default {
         (user) => user.userId === addForm.value.userId
       );
       if (exists) {
-        userIdError.value = "Người dùng này đã được nhận voucher trước đó.";
+        // userIdError.value = "Người dùng này đã được nhận voucher trước đó.";
+        showToast("error", "Người dùng này đã nhận voucher trước đó.");
         return;
       }
       try {
@@ -376,6 +393,38 @@ export default {
       }
     }
 
+  async function confirmGiveAll() {
+  const result = await Swal.fire({
+    title: 'Phát voucher cho TẤT CẢ người dùng?',
+    text: 'Bạn có chắc chắn muốn phát voucher này đến tất cả người dùng?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: '✅ Phát ngay',
+    cancelButtonText: '❌ Hủy',
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+  });
+
+  if (!result.isConfirmed) return;
+
+  givingAll.value = true;
+  try {
+    const res = await giveVoucherToAll(voucherId);
+    showToast("success", "✅ Đã phát voucher cho tất cả người dùng!");
+
+    // Làm mới danh sách người dùng đã nhận voucher
+    loading.value = true;
+    const updated = await getUsersByVoucherId(voucherId);
+    users.value = updated;
+  } catch (e) {
+    showToast("error", "❌ Lỗi khi phát voucher hàng loạt!");
+  } finally {
+    givingAll.value = false;
+    loading.value = false;
+  }
+}
+
+
     return {
       users,
       loading,
@@ -402,6 +451,8 @@ export default {
       foundUserName,
       userIdError,
       id: props.id,
+      givingAll,
+      confirmGiveAll
     };
   },
 };
