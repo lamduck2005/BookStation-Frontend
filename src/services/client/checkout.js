@@ -153,19 +153,89 @@ export const validateCheckoutSession = async (sessionId, userId) => {
 }
 
 /**
- * Tạo đơn hàng từ checkout session
- * @param {number} sessionId - ID của checkout session
+ * Tạo đơn hàng từ checkout session với frontendPrices validation
+ * @param {number} sessionId - ID của checkout session  
  * @param {number} userId - ID của user
+ * @param {Object} session - Session object chứa thông tin giá frontend
  * @returns {Promise} Response chứa order ID
  */
-export const createOrderFromSession = async (sessionId, userId) => {
+export const createOrderFromSession = async (sessionId, userId, session = null) => {
   try {
     console.log(`Creating order from session ${sessionId} for user ${userId}`)
-    const response = await axiosClient.post(`/api/checkout-sessions/${sessionId}/create-order?userId=${userId}`)
+    console.log('Session object received:', session)
+    
+    // Nếu có session object, tạo frontendPrices để validation
+    let requestBody = {};
+    if (session && session.checkoutItems) {
+      console.log('Session checkoutItems:', session.checkoutItems)
+      
+      const frontendPrices = session.checkoutItems.map(item => {
+        console.log('Processing item:', item)
+        
+        // Xác định giá frontend dựa trên flash sale - logic đơn giản
+        let frontendUnitPrice;
+        let frontendFlashSaleId = null;
+        
+        if (item.isFlashSale || item.itemType === 'FLASH_SALE') {
+          // Flash sale item
+          frontendUnitPrice = item.flashSalePrice || item.discountPrice || item.salePrice || item.unitPrice || item.price;
+          frontendFlashSaleId = item.flashSaleId || item.flashSaleItemId || item.discountId;
+        } else {
+          // Regular item
+          frontendUnitPrice = item.unitPrice || item.bookPrice || item.price || item.originalPrice;
+        }
+        
+        // Fallback nếu vẫn không có giá
+        if (!frontendUnitPrice || frontendUnitPrice === 0) {
+          console.warn(`No price found for item ${item.bookId}, using fallback`)
+          frontendUnitPrice = item.totalPrice ? (item.totalPrice / (item.quantity || 1)) : 0;
+        }
+        
+        // Validate final price
+        if (!frontendUnitPrice || frontendUnitPrice === 0) {
+          console.error(`Critical: No valid price found for item ${item.bookId}`, item);
+          throw new Error(`Không tìm thấy giá hợp lệ cho sản phẩm ID ${item.bookId}`);
+        }
+        
+        console.log(`Item ${item.bookId}: frontendUnitPrice=${frontendUnitPrice}, frontendFlashSaleId=${frontendFlashSaleId}`)
+        
+        const priceData = {
+          bookId: item.bookId,
+          quantity: item.quantity,
+          frontendUnitPrice: frontendUnitPrice
+        };
+        
+        // Nếu có flash sale id thì thêm cả frontendFlashSaleId và frontendFlashSalePrice (bằng với frontendUnitPrice)
+        if (frontendFlashSaleId) {
+          priceData.frontendFlashSaleId = frontendFlashSaleId;
+          priceData.frontendFlashSalePrice = frontendUnitPrice; // Bằng với frontendUnitPrice như bạn yêu cầu
+        }
+        
+        return priceData;
+      });
+      
+      requestBody = { frontendPrices };
+      console.log('Final frontend prices for validation:', frontendPrices);
+    } else {
+      console.log('No session or checkoutItems provided, sending empty body')
+    }
+    
+    const response = await axiosClient.post(
+      `/api/checkout-sessions/${sessionId}/create-order?userId=${userId}`,
+      requestBody
+    );
     console.log('Create order response:', response)
     return response
   } catch (error) {
     console.error('Error creating order from session:', error)
+    
+    // Xử lý lỗi 409 - giá không khớp, yêu cầu reload
+    if (error.response?.status === 409) {
+      const message = error.response?.data?.message || 'Giá sản phẩm đã thay đổi';
+      console.log('Price mismatch detected, need to reload page');
+      throw new Error(`PRICE_MISMATCH: ${message}`);
+    }
+    
     throw error
   }
 }

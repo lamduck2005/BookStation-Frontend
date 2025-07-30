@@ -138,7 +138,12 @@
                     @change="handleStatusChange(order, $event)"
                     style="min-width: 110px; font-size: 0.82em; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 1px 4px rgba(0,0,0,0.07);"
                   >
-                    <option v-for="status in orderStatuses" :key="status.value" :value="status.value">
+                    <!-- Hiện trạng thái hiện tại -->
+                    <option :value="order.orderStatus" selected>
+                      {{ formatOrderStatus(order.orderStatus) }}
+                    </option>
+                    <!-- Hiện các trạng thái có thể chuyển đến -->
+                    <option v-for="status in getAvailableStatusTransitions(order.orderStatus)" :key="status.value" :value="status.value">
                       {{ status.displayName }}
                     </option>
                   </select>
