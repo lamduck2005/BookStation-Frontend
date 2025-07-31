@@ -126,8 +126,6 @@ const totalPages = computed(() => {
 const fetchProducts = async () => {
   loading.value = true;
   try {
-    console.log(filterParams.search);
-    // 2. Tạo params gửi đi, loại bỏ các giá trị null/undefined
     const params = {
       page: filterParams.page,
       size: filterParams.size,
@@ -137,21 +135,25 @@ const fetchProducts = async () => {
         filterParams.subCategories.length > 0
           ? filterParams.subCategories[0]
           : undefined,
-      publisherId: filterParams.publisherId, // <-- SỬA LẠI DÒNG NÀY
+      publisherId: filterParams.publisherId,
       minPrice: filterParams.minPrice,
       maxPrice:
         filterParams.maxPrice === Infinity ? undefined : filterParams.maxPrice,
       sort: sortBy.value,
+      // ✅ SỬA DÒNG NÀY
+      authorIds:
+        Array.isArray(filterParams.authorIds) &&
+        filterParams.authorIds.length > 0
+          ? filterParams.authorIds.join(",")
+          : undefined,
     };
-    console.log("Params gửi đi:", params);
-    // Lọc ra các key có giá trị (không phải null/undefined)
+    // 2. Tạo params gửi đi, loại bỏ các giá trị null/undefined
     const validParams = Object.entries(params).reduce((acc, [key, value]) => {
       if (value !== null && value !== undefined && value !== "") {
         acc[key] = value;
       }
       return acc;
     }, {});
-    console.log("Params hợp lệ:", validParams);
     // 3. Gọi API với các tham số hợp lệ
     const response = await getBooksClient(validParams);
 
@@ -175,18 +177,14 @@ const fetchProducts = async () => {
 
 // Xử lý khi bộ lọc thay đổi
 const onFilterChange = (filters) => {
-  console.log("======= BỘ LỌC THAY ĐỔI =======", filters);
-
   filterParams.mainCategory = filters.mainCategory;
   filterParams.subCategories = filters.subCategories;
-  filterParams.publisherId = filters.publisherId; // <-- SỬA LẠI DÒNG NÀY
+  filterParams.publisherId = filters.publisherId;
+  filterParams.authorIds = filters.authorIds; // ✅ THÊM DÒNG NÀY
   filterParams.minPrice = filters.customPriceRange.min;
   filterParams.maxPrice = filters.customPriceRange.max;
-
-  // Reset về trang đầu tiên (page 0)
   filterParams.page = 0;
-  currentPage.value = 1; // Cập nhật UI về trang 1
-
+  currentPage.value = 1;
   fetchProducts();
 };
 

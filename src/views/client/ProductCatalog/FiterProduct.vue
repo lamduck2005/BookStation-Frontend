@@ -47,6 +47,72 @@
           </div>
         </div>
       </div>
+      <div class="filter-section">
+        <h6 class="filter-title">TÁC GIẢ</h6>
+        <div class="filter-content">
+          <!-- Search box -->
+          <div class="input-group mb-3">
+            <div class="author-search-box">
+              <div class="search-input-wrapper">
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Tìm tác giả..."
+                  v-model="authorSearchQuery"
+                  @input="onAuthorSearch"
+                />
+                <span class="search-icon">
+                  <i class="bi bi-search"></i>
+                </span>
+              </div>
+            </div>
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              @click="authorSearchQuery = ''"
+              v-if="authorSearchQuery"
+            >
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+
+          <!-- Danh sách tác giả -->
+          <div
+            v-for="author in visibleAuthors"
+            :key="author.id"
+            class="filter-item"
+          >
+            <label class="form-check-label">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                :value="author.id"
+                v-model="selectedAuthors"
+                @change="emitFilterChange"
+              />
+              <span class="category-name">{{ author.authorName }}</span>
+            </label>
+          </div>
+
+          <!-- Load more button -->
+          <button
+            v-if="authors.length > showAuthorsLimit"
+            class="btn-show-more"
+            @click="toggleShowMoreAuthors"
+          >
+            {{ showAllAuthors ? "Thu gọn ▲" : "Xem thêm ▼" }}
+          </button>
+
+          <!-- Loading spinner -->
+          <div
+            v-if="authorSearchLoading"
+            class="spinner-border text-danger"
+            role="status"
+          >
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
 
       <!-- Bộ lọc giá -->
       <div class="filter-section">
@@ -132,6 +198,8 @@
         </div>
       </div>
 
+      <!-- Tác giả -->
+
       <!-- Clear all filters -->
       <div class="filter-actions mt-4">
         <button
@@ -154,6 +222,7 @@ import {
   getAllCategoriesParentNull,
 } from "@/services/admin/category";
 import { getAllPublishers } from "@/services/admin/publisher";
+import { getAllAuthors } from "@/services/admin/author"; // ✅ Import the new service
 
 // 1. Định nghĩa props để nhận giá trị khởi tạo
 const props = defineProps({
@@ -168,6 +237,7 @@ const emit = defineEmits(["filter-change"]);
 const mainCategories = ref([]);
 const subCategories = ref([]);
 const publishers = ref([]);
+const authors = ref([]); // ✅ THÊM
 
 // --- THAY ĐỔI CÁC BIẾN NÀY ---
 const selectedSubCategories = ref([]);
@@ -183,6 +253,15 @@ const absoluteMaxPrice = ref(1000000);
 
 const showAllPublishers = ref(false);
 const showPublishersLimit = ref(5);
+
+// ✅ THÊM - array để chọn nhiều tác giả
+const selectedAuthors = ref([]); // ✅ THÊM
+
+// ✅ THÊM: Author search và display states
+const authorSearchQuery = ref("");
+const authorSearchLoading = ref(false);
+const showAllAuthors = ref(false);
+const showAuthorsLimit = ref(5);
 
 const priceRanges = ref([
   { id: 1, label: "0đ - 150,000đ", min: 0, max: 150000 },
@@ -206,7 +285,10 @@ const fetchMainCategories = async () => {
     showError("Lỗi lấy danh mục chính!");
   }
 };
-
+watch(authorSearchQuery, (newQuery) => {
+  // Nếu search rỗng thì truyền chuỗi rỗng, ngược lại truyền từ khóa
+  fetchAuthors(newQuery.trim());
+});
 const onMainCategoryChange = async (event) => {
   // --- THÊM DÒNG NÀY ---
   selectedSubCategories.value = []; // Xóa các danh mục phụ đã chọn
@@ -234,12 +316,87 @@ const fetchPublishers = async () => {
   }
 };
 
+// ✅ THÊM: Hàm lấy danh sách tác giả
+const fetchAuthors = async (name = "") => {
+  try {
+    authorSearchLoading.value = true;
+    // Chỉ truyền name, các biến khác để mặc định
+    const data = await getAllAuthors({ name });
+    console.log(data);
+    authors.value = data.content;
+    console.log(authors.value);
+  } catch (e) {
+    showError("Lỗi lấy danh sách tác giả!");
+    authors.value = [];
+  } finally {
+    authorSearchLoading.value = false;
+  }
+};
+
+// Tìm kiếm tác giả (vẫn dùng getAllAuthors, truyền thêm authorName)
+const searchAuthors = async (searchQuery) => {
+  try {
+    authorSearchLoading.value = true;
+    authors.value = await getAllAuthors({ authorName: searchQuery });
+  } catch (e) {
+    showError("Lỗi tìm kiếm tác giả!");
+    authors.value = [];
+  } finally {
+    authorSearchLoading.value = false;
+  }
+};
+
 const visiblePublishers = computed(() => {
   if (showAllPublishers.value) {
     return publishers.value;
   }
   return publishers.value.slice(0, showPublishersLimit.value);
 });
+
+// ✅ THÊM: Computed cho tác giả
+const filteredAuthors = computed(() => {
+  if (!authorSearchQuery.value.trim()) {
+    return authors.value;
+  }
+
+  const query = authorSearchQuery.value.toLowerCase().trim();
+  return authors.value.filter((author) =>
+    author.authorName.toLowerCase().includes(query)
+  );
+});
+
+const visibleAuthors = computed(() => {
+  const filtered = filteredAuthors.value;
+
+  if (showAllAuthors.value || authorSearchQuery.value.trim()) {
+    return filtered;
+  }
+
+  return filtered.slice(0, showAuthorsLimit.value);
+});
+
+const toggleShowMoreAuthors = () => {
+  showAllAuthors.value = !showAllAuthors.value;
+};
+
+// ✅ THÊM: Debounced search cho tác giả
+let authorSearchTimeout = null;
+const onAuthorSearch = () => {
+  authorSearchLoading.value = true;
+
+  // Clear existing timeout
+  if (authorSearchTimeout) {
+    clearTimeout(authorSearchTimeout);
+  }
+
+  // Set new timeout
+  authorSearchTimeout = setTimeout(async () => {
+    if (authorSearchQuery.value.trim()) {
+      await getAllAuthors(authorSearchQuery.value.trim());
+    }
+    authorSearchLoading.value = false;
+  }, 500); // 500ms delay for better UX
+};
 
 const filteredSubCategories = computed(() => {
   if (selectedSubCategories.value.length === 0) {
@@ -250,22 +407,26 @@ const filteredSubCategories = computed(() => {
   );
 });
 
+// ✅ SỬA: Cập nhật hasActiveFilters
 const hasActiveFilters = computed(() => {
   return (
     selectedMainCategory.value !== null ||
     selectedSubCategories.value.length > 0 ||
-    selectedPriceRange.value !== null || // <-- Sửa lại cho đúng biến
-    selectedPublisher.value !== null || // <-- Sửa lại cho đúng biến
+    selectedPriceRange.value !== null ||
+    selectedPublisher.value !== null ||
+    selectedAuthors.value.length > 0 || // ✅ THÊM
     minPrice.value !== absoluteMinPrice.value ||
     maxPrice.value !== absoluteMaxPrice.value
   );
 });
 
+// ✅ SỬA: Cập nhật currentFilters
 const currentFilters = computed(() => {
   return {
     mainCategory: selectedMainCategory.value,
     subCategories: selectedSubCategories.value,
-    publisherId: selectedPublisher.value, // <-- Đổi tên và giá trị
+    publisherId: selectedPublisher.value,
+    authorIds: selectedAuthors.value, // ✅ Mảng ID tác giả đã chọn
     customPriceRange: {
       min: minPrice.value,
       max: maxPrice.value,
@@ -313,15 +474,15 @@ const onMaxPriceChange = (event) => {
   }
   emitFilterChange(); // <-- Thêm vào đây
 };
-const clearAllFilters = () => {
-  // --- THÊM DÒNG NÀY ---
-  selectedMainCategory.value = null; // <-- Xóa cả danh mục chính
-  subCategories.value = []; // Xóa danh sách danh mục con
-  // --- KẾT THÚC THÊM ---
 
+const clearAllFilters = () => {
+  selectedMainCategory.value = null;
+  subCategories.value = [];
   selectedSubCategories.value = [];
-  selectedPriceRange.value = null; // <-- Sửa lại cho đúng biến
-  selectedPublisher.value = null; // <-- Sửa lại cho đúng biến
+  selectedPriceRange.value = null;
+  selectedPublisher.value = null;
+  selectedAuthors.value = []; // ✅ THÊM
+  authorSearchQuery.value = ""; // ✅ THÊM
   minPrice.value = absoluteMinPrice.value;
   maxPrice.value = absoluteMaxPrice.value;
   emitFilterChange();
@@ -356,20 +517,27 @@ onMounted(async () => {
   // Tải danh sách danh mục chính và nhà xuất bản
   await fetchMainCategories();
   await fetchPublishers();
+  await fetchAuthors(); // ✅ THÊM
 
   // Kiểm tra và áp dụng bộ lọc khởi tạo
   if (props.initialFilters) {
-    const { mainCategory, subCategories: initialSubCategories } =
-      props.initialFilters;
+    const {
+      mainCategory,
+      subCategories: initialSubCategories,
+      authorIds,
+    } = props.initialFilters;
 
     if (mainCategory) {
       selectedMainCategory.value = mainCategory;
-      // Tải danh sách danh mục con tương ứng
       await fetchSubCategoriesForParent(mainCategory);
-      // Sau khi tải xong, gán giá trị cho danh mục con đã chọn
       if (initialSubCategories && initialSubCategories.length > 0) {
         selectedSubCategories.value = initialSubCategories;
       }
+    }
+
+    // ✅ THÊM: Set initial authors
+    if (authorIds && authorIds.length > 0) {
+      selectedAuthors.value = authorIds;
     }
   }
 });
@@ -382,6 +550,7 @@ watch(
       selectedMainCategory.value = newFilters.mainCategory || null;
       await fetchSubCategoriesForParent(newFilters.mainCategory);
       selectedSubCategories.value = newFilters.subCategories || [];
+      selectedAuthors.value = newFilters.authorIds || []; // ✅ THÊM
     }
   },
   { deep: true }
@@ -564,39 +733,171 @@ watch(
   cursor: not-allowed;
 }
 
-/* Responsive */
+/* ✅ THÊM: Author search styles */
+.author-search-box {
+  position: relative;
+}
+
+.search-input-wrapper {
+  position: relative;
+}
+
+.search-input-wrapper .form-control {
+  padding-right: 2.5rem;
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.search-input-wrapper .form-control:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.search-icon {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+  font-size: 0.875rem;
+  pointer-events: none;
+}
+
+/* Selected authors */
+.selected-authors {
+  padding: 0.75rem;
+  background-color: #f8f9fa;
+  border-radius: 0.375rem;
+  border: 1px solid #e9ecef;
+}
+
+.selected-authors-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.selected-author-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.btn-remove-author {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 0.75rem;
+  padding: 0;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-remove-author:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Authors list */
+.authors-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.authors-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.authors-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.authors-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.authors-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* No results */
+.no-results {
+  padding: 1rem;
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Loading state */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .filter-sidebar {
-    position: static;
-    margin-bottom: 1rem;
+  .selected-authors-list {
+    gap: 0.25rem;
   }
-  .filter-container {
-    padding: 1rem;
+
+  .selected-author-tag {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
   }
-  .filter-section {
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
+
+  .authors-list {
+    max-height: 150px;
   }
 }
 
-/* Checkbox customization */
-.form-check-input:checked {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e");
+/* Animation for selected authors */
+.selected-author-tag {
+  animation: fadeInScale 0.2s ease-out;
 }
 
-/* Active filter highlighting */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Hover effects */
 .filter-item:has(.form-check-input:checked) .category-name {
   color: #dc3545;
   font-weight: 500;
 }
 
-/* Smooth transitions */
-.filter-item,
-.btn-show-more,
-.filter-actions .btn {
-  transition: all 0.2s ease;
+.author-search-box .form-control:hover {
+  border-color: #adb5bd;
 }
-.filter-content {
-  transition: max-height 0.3s ease;
+
+/* Focus states */
+.author-search-box .form-control:focus {
+  outline: none;
+}
+
+/* Selected state for checkboxes */
+.authors-list .form-check-input:checked + .category-name {
+  color: #dc3545;
+  font-weight: 500;
 }
 </style>

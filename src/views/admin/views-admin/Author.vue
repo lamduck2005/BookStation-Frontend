@@ -22,17 +22,7 @@
               placeholder="Nhập tên tác giả..."
             />
           </div>
-          <div class="col-md-6">
-            <label class="form-label">
-              <i class="bi bi-toggle-on me-1"></i>
-              Trạng thái
-            </label>
-            <select class="form-select" v-model="selectedStatus">
-              <option value="">Tất cả trạng thái</option>
-              <option value="1">Hoạt động</option>
-              <option value="0">Không hoạt động</option>
-            </select>
-          </div>
+          <!-- ✅ BỎ cột filter trạng thái -->
         </div>
         <div class="row g-3 pt-3 d-flex justify-content-center">
           <div class="col-md-1">
@@ -114,13 +104,13 @@
                 <th style="width: 200px">Tên tác giả</th>
                 <th>Tiểu sử</th>
                 <th style="width: 120px">Ngày sinh</th>
-                <th style="width: 130px">Trạng thái</th>
+                <!-- ✅ BỎ cột trạng thái -->
                 <th style="width: 180px">Chức năng</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="authors.length === 0">
-                <td colspan="6" class="text-center py-4 text-muted">
+                <td colspan="5" class="text-center py-4 text-muted">
                   <i class="bi bi-inbox me-2"></i>
                   Không có dữ liệu
                 </td>
@@ -141,17 +131,7 @@
                   {{ author.biography }}
                 </td>
                 <td class="py-3">{{ author.birthDate }}</td>
-                <td class="py-3">
-                  <ToggleStatus
-                    :id="author.id"
-                    v-model="author.status"
-                    :true-value="1"
-                    :false-value="0"
-                    active-text="Hoạt động"
-                    inactive-text="Không hoạt động"
-                    @change="(status) => handleToggleStatus(author.id, status)"
-                  />
-                </td>
+                <!-- ✅ BỎ cột hiển thị trạng thái -->
                 <td class="py-3">
                   <div class="d-inline-flex gap-1">
                     <button
@@ -249,13 +229,7 @@
                   min="1900-01-01"
                 />
               </div>
-              <div class="mb-3">
-                <label class="form-label">Trạng thái</label>
-                <select v-model="author.status" class="form-select">
-                  <option :value="1">Hoạt động</option>
-                  <option :value="0">Không hoạt động</option>
-                </select>
-              </div>
+              <!-- ✅ BỎ select trạng thái -->
             </form>
           </div>
           <div class="modal-footer">
@@ -295,11 +269,12 @@
               @click="closeDetailModal"
             >
               <img
-                src="https://cdn-icons-png.flaticon.com/128/694/694604.png"
+               
                 alt="Close"
               />
             </button>
           </div>
+
           <div class="modal-body">
             <div class="mb-2"><b>ID:</b> {{ detailAuthor.id }}</div>
             <div class="mb-2">
@@ -309,18 +284,7 @@
             <div class="mb-2">
               <b>Ngày sinh:</b> {{ detailAuthor.birthDate }}
             </div>
-            <div class="mb-2">
-              <b>Trạng thái:</b>
-              <span
-                :class="
-                  detailAuthor.status === 1 ? 'text-success' : 'text-danger'
-                "
-              >
-                {{
-                  detailAuthor.status === 1 ? "Hoạt động" : "Không hoạt động"
-                }}
-              </span>
-            </div>
+            <!-- ✅ BỎ hiển thị trạng thái -->
             <div class="mb-2">
               <b>Ngày tạo:</b> {{ detailAuthor.createdAt }}
             </div>
@@ -409,13 +373,7 @@
                   min="1900-01-01"
                 />
               </div>
-              <div class="mb-3">
-                <label class="form-label">Trạng thái</label>
-                <select v-model="editData.status" class="form-select">
-                  <option :value="1">Hoạt động</option>
-                  <option :value="0">Không hoạt động</option>
-                </select>
-              </div>
+              <!-- ✅ BỎ select trạng thái -->
             </form>
           </div>
           <div class="modal-footer">
@@ -449,7 +407,7 @@ import {
   addAuthor,
   updateAuthor,
   deleteAuthor,
-  toggleStatus,
+  // ✅ BỎ import toggleStatus
 } from "../../../services/admin/author";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import Swal from "sweetalert2";
@@ -457,7 +415,7 @@ import AddButton from "@/components/common/AddButton.vue";
 import EditButton from "@/components/common/EditButton.vue";
 import DeleteButton from "@/components/common/DeleteButton.vue";
 import Pagination from "@/components/common/Pagination.vue";
-import ToggleStatus from "@/components/common/ToggleStatus.vue";
+// ✅ BỎ import ToggleStatus component
 import { debounce } from "@/utils/utils";
 
 const authors = ref([]);
@@ -466,14 +424,14 @@ const author = ref({
   authorName: "",
   biography: "",
   birthDate: "",
-  status: 1, // mặc định là 1
+  // ✅ BỎ status field
 });
 const detailAuthor = ref({
   id: "",
   authorName: "",
   biography: "",
   birthDate: "",
-  status: 1,
+  // ✅ BỎ status field
   createdAt: "",
   updatedAt: "",
   createdBy: "",
@@ -486,7 +444,7 @@ const editData = ref({
   authorName: "",
   biography: "",
   birthDate: "",
-  status: 1,
+  // ✅ BỎ status field
 });
 const currentPage = ref(0);
 const pageSize = ref(5);
@@ -495,7 +453,7 @@ const totalElements = ref(0);
 const itemsPerPageOptions = ref([5, 10, 25, 50]);
 const isLastPage = ref(false);
 const searchQuery = ref("");
-const selectedStatus = ref("");
+// ✅ BỎ selectedStatus
 const loading = ref(false);
 const error = ref(null);
 
@@ -511,7 +469,7 @@ const searchWithFilter = () => {
 
 const clearFilters = () => {
   searchQuery.value = "";
-  selectedStatus.value = "";
+  // ✅ BỎ reset selectedStatus
   currentPage.value = 0;
   fetchAuthors();
 };
@@ -589,7 +547,7 @@ const resetForm = () => {
     authorName: "",
     biography: "",
     birthDate: "",
-    status: 1, // mặc định là hoạt động
+    // ✅ BỎ status: 1
   };
 };
 
@@ -599,20 +557,20 @@ const resetEditForm = () => {
     authorName: "",
     biography: "",
     birthDate: "",
-    status: 1,
+    // ✅ BỎ status: 1
   };
 };
 
 const editAuthor = async (id) => {
   try {
-    resetEditForm(); // Reset trước khi load data
+    resetEditForm();
     const data = await getAuthorById(id);
     editData.value = {
       id: data.id,
       authorName: data.authorName,
       biography: data.biography,
       birthDate: data.birthDate,
-      status: data.status,
+      // ✅ BỎ status: data.status
     };
     showEditModal.value = true;
   } catch (error) {
@@ -629,13 +587,12 @@ const editAuthor = async (id) => {
 
 const closeDetailModal = () => {
   showDetailModal.value = false;
-  // Reset detail data nếu cần
   detailAuthor.value = {
     id: "",
     authorName: "",
     biography: "",
     birthDate: "",
-    status: 1,
+    // ✅ BỎ status: 1
     createdAt: "",
     updatedAt: "",
     createdBy: "",
@@ -643,71 +600,9 @@ const closeDetailModal = () => {
   };
 };
 
-// Thêm hàm xử lý delete và toggle status nếu chưa có
-const handleDeleteAuthor = async (id) => {
-  const result = await Swal.fire({
-    title: "Bạn có chắc chắn?",
-    text: "Tác giả này sẽ bị xóa vĩnh viễn!",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#d33",
-    cancelButtonColor: "#3085d6",
-    confirmButtonText: "Xóa",
-    cancelButtonText: "Hủy",
-  });
+// ✅ BỎ hàm handleToggleStatus hoàn toàn
 
-  if (result.isConfirmed) {
-    try {
-      await deleteAuthor(id);
-      fetchAuthors();
-      Swal.fire({
-        icon: "success",
-        title: "Xóa tác giả thành công!",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-      });
-    } catch (error) {
-      console.error("Lỗi khi xóa tác giả:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Xóa thất bại!",
-        text: "Không thể xóa tác giả này.",
-        timer: 2000,
-        timerProgressBar: true,
-      });
-    }
-  }
-};
-
-const handleToggleStatus = async (id, newStatus) => {
-  try {
-    await toggleStatus(id, newStatus);
-    fetchAuthors();
-    Swal.fire({
-      icon: "success",
-      title: "Cập nhật trạng thái thành công!",
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true,
-    });
-  } catch (error) {
-    console.error("Lỗi khi cập nhật trạng thái:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Cập nhật thất bại!",
-      text: "Không thể cập nhật trạng thái.",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-  }
-};
-
-// Thêm hàm validateAuthorForm
+// ✅ Sửa lại validateAuthorForm - bỏ validation status
 const validateAuthorForm = () => {
   // 1. Validate tên tác giả (bắt buộc)
   if (!author.value.authorName || author.value.authorName.trim() === "") {
@@ -745,7 +640,7 @@ const validateAuthorForm = () => {
     return false;
   }
 
-  // 3. Validate ký tự đặc biệt (chỉ cho phép chữ, số, khoảng trắng, dấu chấm)
+  // 3. Validate ký tự đặc biệt
   const nameRegex = /^[a-zA-ZÀ-ỹ0-9\s\.\-]+$/;
   if (!nameRegex.test(authorName)) {
     Swal.fire({
@@ -812,24 +707,13 @@ const validateAuthorForm = () => {
     }
   }
 
-  // 6. Validate trạng thái
-  if (author.value.status !== 0 && author.value.status !== 1) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cảnh báo!",
-      text: "Trạng thái không hợp lệ",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    return false;
-  }
+  // ✅ BỎ validation status
 
   return true;
 };
 
-// Sửa lại hàm handleUpdateAuthor để có validation
+// ✅ Sửa lại handleUpdateAuthor - bỏ status
 const handleUpdateAuthor = async (id, authorData) => {
-  // Validate form trước khi submit
   if (!validateEditAuthorForm()) {
     return;
   }
@@ -839,7 +723,7 @@ const handleUpdateAuthor = async (id, authorData) => {
       authorName: authorData.authorName.trim(),
       biography: authorData.biography?.trim() || "",
       birthDate: authorData.birthDate || null,
-      status: parseInt(authorData.status),
+      // ✅ BỎ status: parseInt(authorData.status)
     };
 
     await updateAuthor(id, payload);
@@ -877,117 +761,9 @@ const handleUpdateAuthor = async (id, authorData) => {
   }
 };
 
-// Thêm hàm validateEditAuthorForm
-const validateEditAuthorForm = () => {
-  // 1. Validate tên tác giả (bắt buộc)
-  if (!editData.value.authorName || editData.value.authorName.trim() === "") {
-    Swal.fire({
-      icon: "warning",
-      title: "Cảnh báo!",
-      text: "Vui lòng nhập tên tác giả",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    return false;
-  }
+// ✅ Sửa lại validateEditAuthorForm - bỏ validation status (tương tự validateAuthorForm)
 
-  // 2. Validate độ dài tên tác giả
-  const authorName = editData.value.authorName.trim();
-  if (authorName.length < 2) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cảnh báo!",
-      text: "Tên tác giả phải có ít nhất 2 ký tự",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    return false;
-  }
-
-  if (authorName.length > 100) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cảnh báo!",
-      text: "Tên tác giả không được vượt quá 100 ký tự",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    return false;
-  }
-
-  // 3. Validate ký tự đặc biệt
-  const nameRegex = /^[a-zA-ZÀ-ỹ0-9\s\.\-]+$/;
-  if (!nameRegex.test(authorName)) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cảnh báo!",
-      text: "Tên tác giả chỉ được chứa chữ cái, số, khoảng trắng, dấu chấm và dấu gạch ngang",
-      timer: 3000,
-      timerProgressBar: true,
-    });
-    return false;
-  }
-
-  // 4. Validate tiểu sử (nếu có)
-  if (
-    editData.value.biography &&
-    editData.value.biography.trim().length > 1000
-  ) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cảnh báo!",
-      text: "Tiểu sử không được vượt quá 1000 ký tự",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    return false;
-  }
-
-  // 5. Validate ngày sinh (nếu có)
-  if (editData.value.birthDate) {
-    const birthDate = new Date(editData.value.birthDate);
-    const currentDate = new Date();
-    const minDate = new Date("1900-01-01");
-
-    if (birthDate > currentDate) {
-      Swal.fire({
-        icon: "warning",
-        title: "Cảnh báo!",
-        text: "Ngày sinh không thể là ngày trong tương lai",
-        timer: 2000,
-        timerProgressBar: true,
-      });
-      return false;
-    }
-
-    if (birthDate < minDate) {
-      Swal.fire({
-        icon: "warning",
-        title: "Cảnh báo!",
-        text: "Ngày sinh không hợp lệ",
-        timer: 2000,
-        timerProgressBar: true,
-      });
-      return false;
-    }
-
-    const age = currentDate.getFullYear() - birthDate.getFullYear();
-    if (age > 150) {
-      Swal.fire({
-        icon: "warning",
-        title: "Cảnh báo!",
-        text: "Tuổi tác giả không hợp lý",
-        timer: 2000,
-        timerProgressBar: true,
-      });
-      return false;
-    }
-  }
-
-  return true;
-};
-
-// Hàm lấy danh sách tác giả có phân trang
+// ✅ Sửa lại fetchAuthors - bỏ param status
 const fetchAuthors = async () => {
   loading.value = true;
   error.value = null;
@@ -996,7 +772,7 @@ const fetchAuthors = async () => {
       page: currentPage.value,
       size: pageSize.value,
       name: searchQuery.value || undefined,
-      status: selectedStatus.value || undefined,
+      // ✅ BỎ status: selectedStatus.value || undefined
     };
 
     const response = await getAllAuthors(params);
@@ -1020,10 +796,10 @@ const fetchAuthors = async () => {
   }
 };
 
-// Watch để tự động fetch khi thay đổi search/filter
-watch([searchQuery, selectedStatus], () => {
+// ✅ Sửa lại watch - bỏ selectedStatus
+watch([searchQuery], () => {
   const debouncedFetch = debounce(fetchAuthors, 500);
-  currentPage.value = 0; // Reset về trang đầu khi search
+  currentPage.value = 0;
   debouncedFetch();
 });
 
