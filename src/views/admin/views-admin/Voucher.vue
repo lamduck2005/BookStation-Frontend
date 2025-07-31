@@ -95,7 +95,7 @@
             <tr>
               <th>STT</th>
               <th>Mã voucher</th>
-              <th>Phần trăm giảm</th>
+              <!-- <th>Phần trăm giảm</th> -->
               <th>Ngày bắt đầu</th>
               <th>Ngày kết thúc</th>
               <th>Trạng thái</th>
@@ -137,7 +137,7 @@
                   {{ voucher.code }}
                 </router-link>
               </td>
-              <td>{{ voucher.discountPercentage }}%</td>
+              <!-- <td>{{ voucher.discountPercentage }}%</td> -->
               <td>{{ voucher.start_time }}</td>
               <td>{{ voucher.end_time }}</td>
               <td style="width: 200px">
@@ -287,8 +287,8 @@
                   class="form-select"
                 >
                   <option value="">Chọn loại voucher</option>
-                  <option value="NORMAL">Chung</option>
-                  <option value="SHIPPING">Đặc biệt</option>
+                  <option value="NORMAL">Thường</option>
+                  <option value="SHIPPING">Giảm Giá SHIPPING</option>
                   <!-- Thêm các loại khác nếu có -->
                 </select>
               </div>
@@ -361,9 +361,12 @@
                   class="form-control"
                 />
               </div>
-              <div class="mb-2 col-6">
-                <label class="form-label"
-                  ><span style="color: red">*</span> Giá trị giảm tối đa
+              <div
+                class="mb-2 col-6"
+                v-if="formVoucher.discountType === 'PERCENTAGE'"
+              >
+                <label class="form-label">
+                  <span style="color: red">*</span> Giá trị giảm tối đa
                 </label>
                 <input
                   v-model="formVoucher.maxDiscountValue"
@@ -373,6 +376,7 @@
                   class="form-control"
                 />
               </div>
+
               <div class="mb-2 col-6">
                 <label class="form-label">
                   <span style="color: red">*</span> Giới hạn lượt dùng
@@ -406,7 +410,7 @@
                   class="form-control"
                 />
               </div>
-              <div class="mb-2 col-6">
+              <!-- <div class="mb-2 col-6">
                 <label class="form-label">
                   <span style="color: red">*</span> Trạng thái
                 </label>
@@ -414,8 +418,8 @@
                   <option :value="1">Hoạt động</option>
                   <option :value="0">Không hoạt động</option>
                 </select>
-              </div>
-              <div class="mb-2 col-6">
+              </div> -->
+              <!-- <div class="mb-2 col-6">
                 <label class="form-label">Người tạo</label>
                 <input
                   v-model="formVoucher.createdBy"
@@ -430,7 +434,7 @@
                   class="form-control"
                   readonly
                 />
-              </div>
+              </div> -->
               <div class="mb-2 col-12">
                 <label class="form-label">Mô tả</label>
                 <textarea
@@ -614,49 +618,58 @@ export default {
 
     function showDetail(voucher) {
       Swal.fire({
-        title: `Chi tiết voucher: ${voucher.name ?? "Không có dữ liệu"}`,
+        title: `Chi tiết voucher: ${voucher.name ?? "Trống"}`,
         html: `
           <div style="max-height:400px;overflow:auto">
             <table class="table table-bordered text-start">
-              <tr><th>Mã</th><td>${voucher.code ?? "Không có dữ liệu"}</td></tr>
+              <tr><th>Mã</th><td>${voucher.code ?? "Trống"}</td></tr>
               <tr><th>Tên</th><td>${
-                voucher.name ?? "Không có dữ liệu"
+                voucher.name ?? "Trống"
               }</td></tr>
               <tr><th>Mô tả</th><td>${
-                voucher.description ?? "Không có dữ liệu"
+                voucher.description ?? "Trống"
               }</td></tr>
-              <tr><th>Loại</th><td>${
-                voucher.voucherCategory ?? "Không có dữ liệu"
-              }</td></tr>
-              <tr><th>Kiểu giảm giá</th><td>${
-                voucher.discountType ?? "Không có dữ liệu"
-              }</td></tr>
+             <tr><th>Loại</th><td>${
+  voucher.voucherCategory === "NORMAL"
+    ? "Thường"
+    : voucher.voucherCategory === "SHIPPING"
+    ? "Giảm Giá SHIPPING"
+    : "Trống"
+}</td></tr>
+<tr><th>Kiểu giảm giá</th><td>${
+  voucher.discountType === "PERCENTAGE"
+    ? "Phần trăm"
+    : voucher.discountType === "FIXED_AMOUNT"
+    ? "Số tiền"
+    : "Trống"
+}</td></tr>
+
               <tr><th>Phần trăm giảm</th><td>${
-                voucher.discountPercentage ?? "Không có dữ liệu"
+                voucher.discountPercentage ?? "0"
               }</td></tr>
               <tr><th>Số tiền giảm</th><td>${
-                voucher.discountAmount ?? "Không có dữ liệu"
+                voucher.discountAmount ?? "0"
               }</td></tr>
               <tr><th>Bắt đầu</th><td>${
-                voucher.start_time ?? "Không có dữ liệu"
+                voucher.start_time ?? "Trống"
               }</td></tr>
               <tr><th>Kết thúc</th><td>${
-                voucher.end_time ?? "Không có dữ liệu"
+                voucher.end_time ?? "Trống"
               }</td></tr>
               <tr><th>Đơn tối thiểu</th><td>${
-                voucher.minOrderValue ?? "Không có dữ liệu"
+                voucher.minOrderValue ?? "0"
               }</td></tr>
               <tr><th>Giảm tối đa</th><td>${
-                voucher.maxDiscountValue ?? "Không có dữ liệu"
+                voucher.maxDiscountValue ?? "0"
               }</td></tr>
               <tr><th>Giới hạn lượt dùng</th><td>${
-                voucher.usageLimit ?? "Không có dữ liệu"
+                voucher.usageLimit ?? "0"
               }</td></tr>
               <tr><th>Đã dùng</th><td>${
-                voucher.usedCount ?? "Không có dữ liệu"
+                voucher.usedCount ?? "0"
               }</td></tr>
               <tr><th>Giới hạn/người</th><td>${
-                voucher.usageLimitPerUser ?? "Không có dữ liệu"
+                voucher.usageLimitPerUser ?? "0"
               }</td></tr>
               <tr><th>Trạng thái</th><td>${
                 voucher.status == 1
@@ -666,10 +679,10 @@ export default {
                   : ""
               }</td></tr>
               <tr><th>Người tạo</th><td>${
-                voucher.createdBy ?? "Không có dữ liệu"
+                voucher.createdBy ?? "Trống"
               }</td></tr>
               <tr><th>Người cập nhật</th><td>${
-                voucher.updatedBy ?? "Không có dữ liệu"
+                voucher.updatedBy ?? "Trống"
               }</td></tr>
             </table>
           </div>
@@ -708,6 +721,8 @@ export default {
     }
     // Thêm mới hoặc cập nhật voucher
     async function submitVoucher() {
+      formVoucher.value.code = formVoucher.value.code.trim();
+
       // Validate rỗng
       if (
         !formVoucher.value.code ||
@@ -721,6 +736,21 @@ export default {
         showToast("error", "Vui lòng nhập đầy đủ thông tin!");
         return;
       }
+
+const codeExists = listVoucher.value.some((v) => {
+  const currentCode = formVoucher.value.code.trim().toLowerCase();
+  const voucherCode = v.code.trim().toLowerCase();
+  const sameCode = voucherCode === currentCode;
+  const isDifferentId = isEdit.value ? v.id !== formVoucher.value.id : true;
+  return sameCode && isDifferentId;
+});
+
+if (codeExists) {
+  showToast("error", "Mã voucher đã tồn tại trong hệ thống!");
+  return;
+}
+
+
 
       // Validate số
       if (
@@ -817,6 +847,10 @@ export default {
       }
 
       try {
+        
+    if (payload.discountType === "FIXED_AMOUNT") {
+      payload.maxDiscountValue = 0; // đảm bảo luôn là 0
+    }
         if (isEdit.value) {
           await updateVouchers(payload);
           voucherChannel.postMessage("updated");

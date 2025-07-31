@@ -68,4 +68,17 @@ export const getUsersByVoucherId = async (voucherId) => {
     console.error("Lỗi khi lấy danh sách user theo voucherId:", error);
     throw error;
   }
+
 };
+
+// Phát voucher cho tất cả user
+export const giveVoucherToAll = async (voucherId) => {
+  try {
+    const response = await client.post(`/api/vouchers/voucher-to-all?voucherId=${voucherId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi phát voucher:", error);
+    throw error;
+  }
+};
+
