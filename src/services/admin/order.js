@@ -610,11 +610,16 @@ export const formatOrderStatus = (status) => {
     'CONFIRMED': 'Đã xác nhận', 
     'SHIPPED': 'Đang giao hàng',
     'DELIVERED': 'Đã giao hàng',
+    'DELIVERY_FAILED': 'Giao hàng thất bại',
+    'REDELIVERING': 'Đang giao lại',
+    'RETURNING_TO_WAREHOUSE': 'Đang trả về kho',
     'CANCELED': 'Đã hủy',
+    'REFUND_REQUESTED': 'Yêu cầu hoàn trả',
     'REFUNDING': 'Đang hoàn tiền',
     'REFUNDED': 'Đã hoàn tiền',
     'RETURNED': 'Đã trả hàng',
     'PARTIALLY_REFUNDED': 'Hoàn tiền một phần',
+    'GOODS_RECEIVED_FROM_CUSTOMER': 'Đã nhận hàng từ khách',
     'GOODS_RETURNED_TO_WAREHOUSE': 'Hàng đã về kho'
   };
   return statusMap[status] || status;
@@ -627,11 +632,16 @@ export const getOrderStatusClass = (status) => {
     'CONFIRMED': 'bg-primary',
     'SHIPPED': 'bg-info',
     'DELIVERED': 'bg-success',
+    'DELIVERY_FAILED': 'bg-danger',
+    'REDELIVERING': 'bg-warning text-dark',
+    'RETURNING_TO_WAREHOUSE': 'bg-secondary',
     'CANCELED': 'bg-danger',
+    'REFUND_REQUESTED': 'bg-warning text-dark',
     'REFUNDING': 'bg-warning text-dark',
     'REFUNDED': 'bg-secondary',
     'RETURNED': 'bg-dark',
     'PARTIALLY_REFUNDED': 'bg-warning text-dark',
+    'GOODS_RECEIVED_FROM_CUSTOMER': 'bg-info',
     'GOODS_RETURNED_TO_WAREHOUSE': 'bg-info text-white'
   };
   return statusClasses[status] || 'bg-secondary';
@@ -647,11 +657,16 @@ export const getFallbackOrderStatuses = () => {
       { value: 'CONFIRMED', displayName: 'Đã xác nhận' },
       { value: 'SHIPPED', displayName: 'Đang giao hàng' },
       { value: 'DELIVERED', displayName: 'Đã giao hàng' },
+      { value: 'DELIVERY_FAILED', displayName: 'Giao hàng thất bại' },
+      { value: 'REDELIVERING', displayName: 'Đang giao lại' },
+      { value: 'RETURNING_TO_WAREHOUSE', displayName: 'Đang trả về kho' },
       { value: 'CANCELED', displayName: 'Đã hủy' },
+      { value: 'REFUND_REQUESTED', displayName: 'Yêu cầu hoàn trả' },
       { value: 'REFUNDING', displayName: 'Đang hoàn tiền' },
       { value: 'REFUNDED', displayName: 'Đã hoàn tiền' },
       { value: 'RETURNED', displayName: 'Đã trả hàng' },
       { value: 'PARTIALLY_REFUNDED', displayName: 'Hoàn tiền một phần' },
+      { value: 'GOODS_RECEIVED_FROM_CUSTOMER', displayName: 'Đã nhận hàng từ khách' },
       { value: 'GOODS_RETURNED_TO_WAREHOUSE', displayName: 'Hàng đã về kho' }
     ]
   };
