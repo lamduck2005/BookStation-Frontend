@@ -62,23 +62,32 @@
                 
                 <!-- Sales info -->
                 <div class="sales-info">
-                    <div class="progress mb-1" style="height: 6px;">
-                        <div 
-                            class="progress-bar bg-danger" 
-                            role="progressbar" 
-                            :style="{ width: getSalesProgress() + '%' }"
-                        ></div>
+                    <!-- Thông báo hết hàng -->
+                    <div v-if="isOutOfStock()" class="out-of-stock-badge mb-2">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        <span>HẾT HÀNG</span>
                     </div>
-                    <small class="text-muted" style="font-size: 0.8rem;">
-                        <!-- Flash Sale sold count for flash sale items -->
-                        <span v-if="product.isInFlashSale && product.flashSaleSoldCount !== undefined">
-                            Flash Sale đã bán {{ product.flashSaleSoldCount }}
-                        </span>
-                        <!-- Regular sold count -->
-                        <span v-else>
-                            Đã bán {{ product.soldCount || product.soldQuantity || product.sold || 0 }}
-                        </span>
-                    </small>
+                    
+                    <!-- Thanh tiến trình khi còn hàng -->
+                    <div v-else>
+                        <div class="progress mb-1" style="height: 6px;">
+                            <div 
+                                class="progress-bar bg-danger" 
+                                role="progressbar" 
+                                :style="{ width: getSalesProgress() + '%' }"
+                            ></div>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.8rem;">
+                            <!-- Flash Sale sold count for flash sale items -->
+                            <span v-if="product.isInFlashSale && product.flashSaleSoldCount !== undefined">
+                                Flash Sale đã bán {{ product.flashSaleSoldCount }}
+                            </span>
+                            <!-- Regular sold count -->
+                            <span v-else>
+                                Đã bán {{ product.soldCount || product.soldQuantity || product.sold || 0 }}
+                            </span>
+                        </small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -110,16 +119,10 @@ const getCurrentPrice = () => {
 
 const getOriginalPrice = () => {
     // Nếu có flash sale, originalPrice là price thường
-    if (props.product.isInFlashSale && props.product.flashSalePrice) {
-        return props.product.price || props.product.originalPrice
+    if (props.product.isInFlashSale && props.product.flashSalePrice && props.product.originalPrice !== props.product.flashSalePrice) {
+        return  props.product.originalPrice
     }
-    
-    // Nếu có discountPercentage, tính originalPrice từ price hiện tại
-    if (props.product.discountPercentage && props.product.discountPercentage > 0) {
-        const currentPrice = getCurrentPrice()
-        return Math.round(currentPrice / (1 - props.product.discountPercentage / 100))
-    }
-    return props.product.originalPrice || null
+    return  false;
 }
 
 const getProductImage = () => {
@@ -185,11 +188,35 @@ const goToProductDetail = () => {
 }
 
 const getSalesProgress = () => {
-  const sold = props.product.soldQuantity || props.product.sold || 0;
-  const total = props.product.stockQuantity || props.product.total || 200;
+  let sold = 0;
+  let total = 0;
+  
+  if (props.product.isInFlashSale) {
+    // Flash sale: dùng flashSaleSoldCount và flashSaleStockQuantity
+    sold = props.product.flashSaleSoldCount || 0;
+    total = props.product.flashSaleStockQuantity || 0;
+  } else {
+    // Thường: dùng soldCount và stockQuantity
+    sold = props.product.soldCount || props.product.soldQuantity || props.product.sold || 0;
+    total = props.product.stockQuantity || props.product.total || 100;
+  }
 
   if (total === 0) return 0;
   return Math.min((sold / total) * 100, 100);
+};
+
+const isOutOfStock = () => {
+  if (props.product.isInFlashSale) {
+    // Flash sale: kiểm tra flashSaleStockQuantity
+    const flashSaleStock = props.product.flashSaleStockQuantity || 0;
+    const flashSaleSold = props.product.flashSaleSoldCount || 0;
+    return (flashSaleStock - flashSaleSold) <= 0;
+  } else {
+    // Thường: kiểm tra stockQuantity
+    const stock = props.product.stockQuantity || 0;
+    const sold = props.product.soldCount || props.product.soldQuantity || props.product.sold || 0;
+    return (stock - sold) <= 0;
+  }
 };
 </script>
 
@@ -260,6 +287,7 @@ const getSalesProgress = () => {
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2; /* Hiển thị tối đa 2 dòng */
+  line-clamp: 2; /* Standard property for compatibility */
   -webkit-box-orient: vertical;
   text-overflow: ellipsis;
   word-break: break-word;
@@ -284,6 +312,25 @@ const getSalesProgress = () => {
 
 .z-index-1 {
   z-index: 1;
+}
+
+.out-of-stock-badge {
+  background: linear-gradient(135deg, #ff6b6b, #ff5252);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  animation: shake 0.5s ease-in-out;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
 }
 
 @media (max-width: 576px) {
