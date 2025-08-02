@@ -172,7 +172,7 @@
                 <th>Sách</th>
                 <th>Giá giảm</th>
                 <th>% Giảm</th>
-                <th>Tồn kho</th>
+                <th>Số lượng sản phẩm khuyến mãi</th>
                 <th>Giới hạn/người</th>
                 <th style="width: 200px">Trạng thái</th>
                 <th style="width: 120px">Chức năng</th>
@@ -314,34 +314,39 @@
                   </div>
                 </div>
               </div>
-
+<div v-if="selectedBookInfo">
+  <div class="mb-3">
+    <label class="form-label">% Giảm <span class="text-danger">*</span></label>
+    <input
+      type="number"
+      step="0.01"
+      class="form-control"
+      v-model="formData.discountPercentage"
+      required
+    />
+    <div
+      v-if="formData.discountPrice"
+      class="form-text text-success"
+    >
+      Giá sau giảm: {{ formatCurrency(formData.discountPrice) }}
+    </div>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Giá giảm <span class="text-danger">*</span></label>
+    <input
+      type="number"
+      step="0.01"
+      class="form-control"
+      v-model="formData.discountPrice"
+      required
+      disabled 
+    />
+  </div>
+</div>
               <div class="mb-3">
                 <label class="form-label"
-                  >Giá giảm <span class="text-danger">*</span></label
-                >
-                <input
-                  type="number"
-                  step="0.01"
-                  class="form-control"
-                  v-model="formData.discountPrice"
-                  required
-                />
-              </div>
-              <div class="mb-3">
-                <label class="form-label"
-                  >% Giảm <span class="text-danger">*</span></label
-                >
-                <input
-                  type="number"
-                  step="0.01"
-                  class="form-control"
-                  v-model="formData.discountPercentage"
-                  required
-                />
-              </div>
-              <div class="mb-3">
-                <label class="form-label"
-                  >Tồn kho <span class="text-danger">*</span></label
+                  >Số lượng sản phẩm khuyến mãi
+                  <span class="text-danger">*</span></label
                 >
                 <input
                   type="number"
@@ -499,6 +504,15 @@ const selectedBookInfo = computed(() => {
   }
 
   return foundBook;
+});
+
+const computedDiscountPrice = computed(() => {
+  if (!selectedBookInfo.value || !formData.value.discountPercentage) return "";
+  const price = selectedBookInfo.value.price;
+  const percent = parseFloat(formData.value.discountPercentage);
+  if (isNaN(price) || isNaN(percent)) return "";
+  // Tính giá giảm
+  return Math.round(price * (1 - percent / 100));
 });
 
 // Load books for Add mode
@@ -750,6 +764,23 @@ watch(
       searchTimeout = setTimeout(() => {
         searchWithFilter();
       }, 800); // Tự động search sau 800ms
+    }
+  }
+);
+
+// ✅ Watch discountPercentage để tự động tính giá giảm
+watch(
+  () => formData.value.discountPercentage,
+  (newPercent) => {
+    if (
+      selectedBookInfo.value &&
+      newPercent !== "" &&
+      !isNaN(selectedBookInfo.value.price) &&
+      !isNaN(newPercent)
+    ) {
+      formData.value.discountPrice = Math.round(
+        selectedBookInfo.value.price * (1 - parseFloat(newPercent) / 100)
+      );
     }
   }
 );

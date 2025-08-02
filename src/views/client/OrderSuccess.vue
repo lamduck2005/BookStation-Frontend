@@ -38,7 +38,7 @@
                   <strong>Mã đơn hàng:</strong>
                 </div>
                 <div class="col-6">
-                  #{{ orderId }}
+                  {{ orderId || 'Không xác định' }}
                 </div>
               </div>
               <hr class="my-2">
@@ -112,54 +112,56 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'OrderSuccess',
-  data() {
-    return {
-      loading: false,
-      error: null,
-      orderId: null
-    }
-  },
-  mounted() {
-    // Lấy order ID từ route params
-    this.orderId = this.$route.params.orderId
-    
-    if (!this.orderId) {
-      this.error = 'Không tìm thấy thông tin đơn hàng.'
-      return
-    }
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
-    // Có thể gọi API để lấy chi tiết đơn hàng nếu cần
-    // this.loadOrderDetails()
-  },
-  methods: {
-    formatDateTime(timestamp) {
-      return new Date(timestamp).toLocaleString('vi-VN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    },
-    
-    async loadOrderDetails() {
-      try {
-        this.loading = true
-        // Gọi API để lấy chi tiết đơn hàng
-        // const response = await getOrderDetails(this.orderId)
-        // this.orderDetails = response.data
-      } catch (error) {
-        console.error('Error loading order details:', error)
-        this.error = 'Không thể tải thông tin đơn hàng.'
-      } finally {
-        this.loading = false
-      }
-    }
+const route = useRoute()
+const router = useRouter()
+
+const loading = ref(false)
+const error = ref(null)
+const orderId = ref(null)
+
+const formatDateTime = (timestamp) => {
+  return new Date(timestamp).toLocaleString('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const loadOrderDetails = async () => {
+  try {
+    loading.value = true
+    // Gọi API để lấy chi tiết đơn hàng
+    // const response = await getOrderDetails(orderId.value)
+    // orderDetails = response.data
+  } catch (error) {
+    console.error('Error loading order details:', error)
+    error.value = 'Không thể tải thông tin đơn hàng.'
+  } finally {
+    loading.value = false
   }
 }
+
+onMounted(() => {
+  // Lấy order ID từ route params
+  orderId.value = route.params.orderId
+  
+  console.log('📋 OrderSuccess mounted with orderId:', orderId.value)
+  console.log('📋 Route params:', route.params)
+  
+  if (!orderId.value) {
+    error.value = 'Không tìm thấy thông tin đơn hàng.'
+    return
+  }
+
+  // Có thể gọi API để lấy chi tiết đơn hàng nếu cần
+  // loadOrderDetails()
+})
 </script>
 
 <style scoped>

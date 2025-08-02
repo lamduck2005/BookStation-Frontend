@@ -138,7 +138,12 @@
                     @change="handleStatusChange(order, $event)"
                     style="min-width: 110px; font-size: 0.82em; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 1px 4px rgba(0,0,0,0.07);"
                   >
-                    <option v-for="status in orderStatuses" :key="status.value" :value="status.value">
+                    <!-- Hiện trạng thái hiện tại -->
+                    <option :value="order.orderStatus" selected>
+                      {{ order.orderStatusDisplay || formatOrderStatus(order.orderStatus) }}
+                    </option>
+                    <!-- Hiện các trạng thái có thể chuyển đến -->
+                    <option v-for="status in getAvailableStatusTransitionsForOrder(order)" :key="status.targetStatus || status.value" :value="status.targetStatus || status.value">
                       {{ status.displayName }}
                     </option>
                   </select>
@@ -203,13 +208,13 @@
                         <i class="bi bi-arrow-repeat"></i>
                       </button>
                       <ul class="dropdown-menu" :aria-labelledby="'statusDropdown' + order.id">
-                        <li v-for="status in getAvailableStatusTransitions(order.orderStatus)" :key="status.value">
+                        <li v-for="status in getAvailableStatusTransitionsForOrder(order)" :key="status.targetStatus || status.value">
                           <a 
                             class="dropdown-item" 
                             href="#"
-                            @click.prevent="handleStatusChangeFromAction(order, status.value)"
+                            @click.prevent="handleStatusChangeFromAction(order, status.targetStatus || status.value)"
                           >
-                            <span class="badge me-2" :class="getOrderStatusClass(status.value)">
+                            <span class="badge me-2" :class="getOrderStatusClass(status.targetStatus || status.value)">
                               {{ status.displayName }}
                             </span>
                           </a>
@@ -1405,6 +1410,10 @@ const fetchOrders = async () => {
       totalPages.value = response.data.totalPages || 0;
       totalElements.value = response.data.totalElements || 0;
       isLastPage.value = response.data.last || false;
+      
+      // ✅ Không cần load available transitions riêng nữa - đã có trong OrderResponse
+      console.log('=== DEBUG: Orders loaded with availableTransitions ===');
+      console.log('Sample order transitions:', orders.value[0]?.availableTransitions);
     }
     
   } catch (error) {
@@ -1419,6 +1428,7 @@ const fetchOrders = async () => {
         userName: 'Nguyễn Văn A',
         userEmail: 'nguyenvana@example.com',
         orderStatus: 'PENDING',
+        orderStatusDisplay: 'Chờ xử lý',
         totalAmount: 350000,
         createdAt: Date.now() - 86400000, // 1 day ago
         paymentMethod: 'COD'
@@ -1430,6 +1440,7 @@ const fetchOrders = async () => {
         userName: 'Trần Thị B',
         userEmail: 'tranthib@example.com',
         orderStatus: 'CONFIRMED',
+        orderStatusDisplay: 'Đã xác nhận',
         totalAmount: 520000,
         createdAt: Date.now() - 172800000, // 2 days ago
         paymentMethod: 'BANK_TRANSFER'
@@ -1441,6 +1452,7 @@ const fetchOrders = async () => {
         userName: 'Lê Văn C',
         userEmail: 'levanc@example.com',
         orderStatus: 'DELIVERED',
+        orderStatusDisplay: 'Đã giao hàng',
         totalAmount: 480000,
         createdAt: Date.now() - 259200000, // 3 days ago
         paymentMethod: 'COD'
@@ -1452,6 +1464,7 @@ const fetchOrders = async () => {
         userName: 'Phạm Thị D',
         userEmail: 'phamthid@example.com',
         orderStatus: 'SHIPPED',
+        orderStatusDisplay: 'Đang giao hàng',
         totalAmount: 290000,
         createdAt: Date.now() - 345600000, // 4 days ago
         paymentMethod: 'CREDIT_CARD'
@@ -1463,6 +1476,7 @@ const fetchOrders = async () => {
         userName: 'Hoàng Văn E',
         userEmail: 'hoangvane@example.com',
         orderStatus: 'CANCELED',
+        orderStatusDisplay: 'Đã hủy',
         totalAmount: 320000,
         createdAt: Date.now() - 432000000, // 5 days ago
         paymentMethod: 'COD'
@@ -1474,6 +1488,13 @@ const fetchOrders = async () => {
     totalPages.value = 1;
     totalElements.value = fallbackOrders.length;
     isLastPage.value = true;
+    
+    // ✅ Thêm availableTransitions vào fallback data để test UI
+    orders.value.forEach(order => {
+      if (!order.availableTransitions) {
+        order.availableTransitions = getAvailableStatusTransitionsFallback(order.orderStatus);
+      }
+    });
     
     showToast('warning', 'Đang sử dụng dữ liệu đơn hàng mẫu. Vui lòng kiểm tra kết nối backend!');
   }
@@ -2050,10 +2071,12 @@ const updateOrderStatus = async (orderId, newStatus, originalStatusParam = null)
     // ✅ Chỉ update UI khi API thành công
     if (orderIndex !== -1) {
       orders.value[orderIndex].orderStatus = newStatus;
+      // ✅ Refresh lại đơn hàng để lấy availableTransitions mới từ backend
+      await refreshOrderAfterStatusChange(orderId);
     }
 
-    // Refresh danh sách đơn hàng
-    await fetchOrders();
+    // Không cần refresh toàn bộ danh sách vì đã update UI trực tiếp
+    // await fetchOrders();
     
     return true; // ✅ Return success
     
@@ -2147,23 +2170,77 @@ const cancelOrder = async (order) => {
   }
 };
 
-const getAvailableStatusTransitions = (currentStatus) => {
+// ✅ HÀM LẤY AVAILABLE TRANSITIONS TỪ ORDERRESPONSE 
+const getAvailableStatusTransitionsForOrder = (order) => {
+  // Lấy trực tiếp từ OrderResponse (theo tài liệu mới)
+  if (order.availableTransitions && Array.isArray(order.availableTransitions)) {
+    return order.availableTransitions;
+  }
+  
+  // Fallback về logic cũ nếu backend chưa cập nhật
+  return getAvailableStatusTransitionsFallback(order.orderStatus);
+};
+
+// ✅ LOGIC CŨ GIỮ LẠI LÀM FALLBACK
+const getAvailableStatusTransitionsFallback = (currentStatus) => {
   // Business rules theo backend mới - Luồng chuyển trạng thái chuẩn
   const transitions = {
     'PENDING': ['CONFIRMED', 'CANCELED'],
     'CONFIRMED': ['SHIPPED', 'CANCELED'], 
-    'SHIPPED': ['DELIVERED', 'CANCELED'],
-    'DELIVERED': ['GOODS_RECEIVED_FROM_CUSTOMER', 'PARTIALLY_REFUNDED'],
+    'SHIPPED': ['DELIVERED', 'DELIVERY_FAILED'],
+    'DELIVERED': ['REFUND_REQUESTED'],
+    'DELIVERY_FAILED': ['REDELIVERING', 'RETURNING_TO_WAREHOUSE'],
+    'REDELIVERING': ['DELIVERED', 'RETURNING_TO_WAREHOUSE'],
+    'RETURNING_TO_WAREHOUSE': ['GOODS_RETURNED_TO_WAREHOUSE'],
     'CANCELED': ['REFUNDING'],
-    'GOODS_RECEIVED_FROM_CUSTOMER': ['GOODS_RETURNED_TO_WAREHOUSE', 'REFUNDING'],
-    'GOODS_RETURNED_TO_WAREHOUSE': ['REFUNDING'],
-    'REFUNDING': ['GOODS_RETURNED_TO_WAREHOUSE', 'GOODS_RECEIVED_FROM_CUSTOMER'], // ✅ CHỈ HIỆN TRẠNG THÁI TIẾP THEO
-    'PARTIALLY_REFUNDED': ['GOODS_RECEIVED_FROM_CUSTOMER', 'REFUNDING'],
-    'REFUNDED': ['GOODS_RECEIVED_FROM_CUSTOMER']
+    'REFUND_REQUESTED': ['REFUNDING'],
+    'REFUNDING': ['GOODS_RECEIVED_FROM_CUSTOMER'],
+    'GOODS_RECEIVED_FROM_CUSTOMER': ['GOODS_RETURNED_TO_WAREHOUSE'],
+    'GOODS_RETURNED_TO_WAREHOUSE': ['REFUNDED'],
+    'PARTIALLY_REFUNDED': ['REFUNDING'],
+    'REFUNDED': []
   };
   
   const availableStatuses = transitions[currentStatus] || [];
-  return orderStatuses.value.filter(status => availableStatuses.includes(status.value));
+  
+  // ✅ Format giống API response theo tài liệu
+  return availableStatuses.map(status => {
+    const statusObj = orderStatuses.value.find(s => s.value === status);
+    return {
+      targetStatus: status,
+      displayName: statusObj?.displayName || formatOrderStatus(status),
+      actionDescription: `Chuyển sang ${statusObj?.displayName || formatOrderStatus(status)}`,
+      requiresConfirmation: ['DELIVERY_FAILED', 'CANCELED', 'REFUNDING'].includes(status),
+      businessImpactNote: null
+    };
+  });
+};
+
+// ✅ COMPATIBILITY: Giữ tên hàm cũ để không break template
+const getAvailableStatusTransitions = (currentStatus, order = null) => {
+  if (order) {
+    return getAvailableStatusTransitionsForOrder(order);
+  }
+  return getAvailableStatusTransitionsFallback(currentStatus);
+};
+
+// ✅ HÀM REFRESH ORDER SAU KHI CHUYỂN TRẠNG THÁI
+const refreshOrderAfterStatusChange = async (orderId) => {
+  try {
+    // Lấy order mới từ backend (bao gồm availableTransitions mới)
+    const response = await getOrderById(orderId);
+    if (response?.data) {
+      const orderIndex = orders.value.findIndex(order => order.id === orderId);
+      if (orderIndex !== -1) {
+        // Cập nhật order với data mới (bao gồm availableTransitions)
+        orders.value[orderIndex] = response.data;
+        console.log('=== DEBUG: Order refreshed with new transitions ===');
+        console.log('New transitions:', response.data.availableTransitions);
+      }
+    }
+  } catch (error) {
+    console.warn(`Không thể refresh order ${orderId}:`, error);
+  }
 };
 
 // Pagination methods
