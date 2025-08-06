@@ -118,12 +118,7 @@
                   >
                     <i class="bi bi-pencil"></i>
                   </button>
-                  <button
-                    class="btn btn-sm btn-outline-danger"
-                    @click="confirmDelete(user)"
-                  >
-                    <i class="bi bi-trash"></i>
-                  </button>
+                
                 </td>
               </tr>
               <tr v-if="users.length === 0">
@@ -302,7 +297,7 @@ import {
   fetchUsers,
   createUser,
   updateUser,
-  deleteUser,
+  
   toggleUserStatus,
   getDropdownRoles,
 } from "@/services/admin/user";
@@ -507,26 +502,7 @@ async function handleSubmitUser() {
     Swal.fire({ icon: "error", title: "Lỗi thao tác người dùng!" });
   }
 }
-async function confirmDelete(user) {
-  Swal.fire({
-    title: "Bạn chắc chắn muốn xóa?",
-    text: `Xóa người dùng: ${user.full_name}`,
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Xóa",
-    cancelButtonText: "Hủy",
-  }).then(async (result) => {
-    if (result.isConfirmed) {
-      try {
-        await deleteUser(user.user_id);
-        Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Đã xóa!", showConfirmButton: false, timer: 1500 });
-        loadUsers();
-      } catch (e) {
-        Swal.fire({ icon: "error", title: "Lỗi xóa người dùng!" });
-      }
-    }
-  });
-}
+
 async function handleToggleUserStatus(user) {
   try {
     await toggleUserStatus(user.user_id);
