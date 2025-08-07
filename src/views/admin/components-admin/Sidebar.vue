@@ -87,7 +87,7 @@ const sidebarLinks = [
     icon: "bi bi-arrow-return-left",
     label: "Quản lý hoàn tiền",
   },
-   {
+  {
     type: "link",
     to: "/admin/pos-view",
     icon: "bi bi-cart",
@@ -102,11 +102,19 @@ const sidebarLinks = [
       { to: "/admin/book", icon: "bi bi-book", label: "Sách" },
       { to: "/admin/author", icon: "bi bi-pen", label: "Tác giả" },
       { to: "/admin/review", icon: "bi bi-chat-dots", label: "Đánh giá" },
-      { to: "/admin/flash-sale", icon: "bi bi-lightning", label: "Flash Sale" },
+      {
+        to: "/admin/flash-sale",
+        icon: "bi bi-lightning",
+        label: "Giảm giá nhanh",
+      },
       { to: "/admin/category", icon: "bi bi-tags", label: "Thể loại" },
-      { to: "/admin/voucher", icon: "bi bi-ticket", label: "Voucher" },
+      { to: "/admin/voucher", icon: "bi bi-ticket", label: "Phiếu giảm giá" },
       { to: "/admin/supplier", icon: "bi bi-truck", label: "Nhà cung cấp" },
-      { to: "/admin/publisher", icon: "bi bi-journal-bookmark", label: "Nhà xuất bản" },
+      {
+        to: "/admin/publisher",
+        icon: "bi bi-journal-bookmark",
+        label: "Nhà xuất bản",
+      },
       { to: "/admin/rank", icon: "bi bi-star", label: "Hạng" },
       { to: "/admin/point", icon: "bi bi-coin", label: "Điểm" },
     ],
