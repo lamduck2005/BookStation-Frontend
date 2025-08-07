@@ -874,14 +874,21 @@ const handleDeleteCategory = async (id) => {
       });
     } catch (error) {
       console.error("Lỗi khi xóa danh mục:", error);
+      // ✅ Lấy message từ API nếu có
+      let errorMessage = "Không thể xóa danh mục.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors) {
+        errorMessage = Object.values(error.response.data.errors).join(", ");
+      }
       Swal.fire({
         icon: "error",
         title: "Xóa thất bại!",
-        text: "Không thể xóa danh mục.",
+        text: errorMessage,
         toast: true,
         position: "top-end",
         showConfirmButton: false,
-        timer: 2000,
+        timer: 3000,
         timerProgressBar: true,
       });
     }

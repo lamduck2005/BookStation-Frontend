@@ -1,24 +1,78 @@
-<script setup lang="ts">
-import Card_Report from "./Card_Report.vue";
-import Charts_Report from "./Charts_Report.vue";
-import Table_User from "./Table_User.vue";
-</script>
-
 <template>
-  <div class="content">
-    <h2 class="mt-0 fw-bold">Admin Dashboard</h2>
-    <div class="dashboard-container">
-      <!-- Main Cards Section -->
-      <div class="main-cards">
-        <Card_Report />
-      </div>
-      <!-- Charts Section -->
-      <div class="reports">
-        <Charts_Report />
-      </div>
+  <div class="dashboard-overview">
+    <!-- 1. Overview Stats -->
+    <OverviewStats />
+
+    <!-- 2. Revenue Chart (top) & Books Sold Chart (bottom) -->
+    <div class="charts-col">
+      <RevenueChart />
+      <BooksSoldChart />
     </div>
-    <h2 class="mt-4">Statistics Reports</h2>
-    <!-- Table for User Management -->
-    <Table_User />
+
+    <!-- 3. Top Books & Top Users Tables -->
+    <div class="top-tables-row">
+      <TopBooksTable />
+      <TopUsersTable />
+    </div>
+
+    <!-- 4. Inventory Status Table -->
+    <InventoryStatusTable />
   </div>
 </template>
+
+<script setup>
+import OverviewStats from "@/views/client/dashboard/OverviewStats.vue";
+import RevenueChart from "@/views/client/dashboard/RevenueChart.vue";
+import BooksSoldChart from "@/views/client/dashboard/BooksSoldChart.vue";
+import TopBooksTable from "@/views/client/dashboard/TopBooksTable.vue";
+import TopUsersTable from "@/views/client/dashboard/TopUsersTable.vue";
+import InventoryStatusTable from "@/views/client/dashboard/InventoryStatusTable.vue";
+</script>
+
+<style scoped>
+.dashboard-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 24px 32px;
+  background: #f7fafd;
+  min-height: 100vh;
+}
+
+/* Sửa lại charts thành dạng cột */
+.charts-col {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.charts-col > * {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px #e3e8ee;
+  padding: 24px;
+  min-width: 0;
+}
+
+.top-tables-row {
+  display: flex;
+  gap: 32px;
+}
+
+.top-tables-row > * {
+  flex: 1;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px #e3e8ee;
+  padding: 24px;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .charts-col,
+  .top-tables-row {
+    flex-direction: column;
+    gap: 24px;
+  }
+}
+</style>

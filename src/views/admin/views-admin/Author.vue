@@ -269,7 +269,7 @@
               @click="closeDetailModal"
             >
               <img
-               
+                src="https://cdn-icons-png.flaticon.com/128/694/694604.png"
                 alt="Close"
               />
             </button>
@@ -820,6 +820,49 @@ const handleNext = () => {
 const handlePageSizeChange = (newSize) => {
   pageSize.value = newSize;
   currentPage.value = 0;
+};
+
+const handleDeleteAuthor = async (id) => {
+  const result = await Swal.fire({
+    title: "Bạn có chắc chắn muốn xóa tác giả này?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Xóa",
+    cancelButtonText: "Hủy",
+  });
+  if (result.isConfirmed) {
+    try {
+      await deleteAuthor(id);
+      fetchAuthors();
+      Swal.fire({
+        icon: "success",
+        title: "Xóa tác giả thành công!",
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+    } catch (error) {
+      // ✅ Lấy message từ API nếu có
+      let errorMessage = "Không thể xóa tác giả.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors) {
+        errorMessage = Object.values(error.response.data.errors).join(", ");
+      }
+      Swal.fire({
+        icon: "error",
+        title: "Xóa thất bại!",
+        text: errorMessage,
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
+    }
+  }
 };
 </script>
 

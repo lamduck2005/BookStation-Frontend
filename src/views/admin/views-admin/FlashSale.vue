@@ -27,10 +27,7 @@
               <i class="bi bi-toggle-on me-1"></i>
               Trạng thái
             </label>
-            <select
-              class="form-select"
-              v-model="filter.status"
-            >
+            <select class="form-select" v-model="filter.status">
               <option value="">Tất cả trạng thái</option>
               <option value="1">Hoạt động</option>
               <option value="0">Không hoạt động</option>
@@ -58,7 +55,6 @@
               v-model="filter.to"
             />
           </div>
-         
         </div>
         <div class="row g-3 pt-3 d-flex justify-content-center">
           <div class="col-md-1">
@@ -69,7 +65,7 @@
               <i class="bi bi-funnel"></i> Lọc
             </button>
           </div>
-          <div class="col-md-2 ">
+          <div class="col-md-2">
             <button
               class="btn btn-outline-secondary w-100"
               @click="clearFilters"
@@ -84,7 +80,9 @@
     <!-- ================== BẢNG DANH SÁCH FLASH SALE ================== -->
     <div class="card shadow-lg border-0 mb-4 flashsale-table-card">
       <!-- Header bảng: Tên + nút -->
-      <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3">
+      <div
+        class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3"
+      >
         <div>
           <h5 class="mb-0 text-secondary">
             <i class="bi bi-lightning-charge me-2"></i>
@@ -93,11 +91,19 @@
         </div>
         <div class="d-flex gap-2">
           <!-- Nút làm mới dữ liệu -->
-          <button class="btn btn-outline-info btn-sm py-2" @click="reloadPage" :disabled="loading">
+          <button
+            class="btn btn-outline-info btn-sm py-2"
+            @click="reloadPage"
+            :disabled="loading"
+          >
             <i class="bi bi-arrow-repeat me-1"></i> Làm mới
           </button>
           <!-- Nút thêm mới -->
-          <button class="btn btn-primary btn-sm py-2" style="background-color: #33304e; border-color: #33304e;" @click="openAddForm">
+          <button
+            class="btn btn-primary btn-sm py-2"
+            style="background-color: #33304e; border-color: #33304e"
+            @click="openAddForm"
+          >
             <i class="bi bi-plus-circle me-1"></i> Thêm mới
           </button>
         </div>
@@ -114,7 +120,10 @@
         <div v-else-if="error" class="alert alert-danger m-4" role="alert">
           <i class="bi bi-exclamation-triangle-fill me-2"></i>
           {{ error }}
-          <button class="btn btn-sm btn-outline-danger ms-2" @click="getDataFromApi">
+          <button
+            class="btn btn-sm btn-outline-danger ms-2"
+            @click="getDataFromApi"
+          >
             Thử lại
           </button>
         </div>
@@ -141,10 +150,18 @@
                 </td>
               </tr>
               <!-- Dòng dữ liệu, dãn dọc py-3 -->
-              <tr v-for="(item, index) in flashSales" :key="item.id" class="align-middle" style="vertical-align: middle;">
+              <tr
+                v-for="(item, index) in flashSales"
+                :key="item.id"
+                class="align-middle"
+                style="vertical-align: middle"
+              >
                 <td class="py-3">{{ currentPage * pageSize + index + 1 }}</td>
                 <td class="py-3">
-                  <router-link :to="`/admin/flash-sale/${item.id}`" class="fw-semibold text-decoration-underline">
+                  <router-link
+                    :to="`/admin/flash-sale/${item.id}`"
+                    class="fw-semibold text-decoration-underline"
+                  >
                     {{ item.name }}
                   </router-link>
                 </td>
@@ -293,7 +310,7 @@ const filter = ref({
   name: "",
   from: "",
   to: "",
-  status: ""
+  status: "",
 });
 
 const flashSales = ref([]);
@@ -340,7 +357,7 @@ const clearFilters = () => {
     name: "",
     from: "",
     to: "",
-    status: ""
+    status: "",
   };
   getDataFromApi(0, pageSize.value);
 };
@@ -352,11 +369,16 @@ const reloadPage = () => {
 
 //trạng thái
 const handleStatusChange = (id) => {
-    toggleStatusFlashSale(id).then((res) => {
-        showToast("success", res.data.message || "Thay đổi trạng thái thành công!");
-    }).catch((error) => {
-        showToast("error", error.response?.data?.message || "Có lỗi xảy ra!");
-        console.log(error);
+  toggleStatusFlashSale(id)
+    .then((res) => {
+      showToast(
+        "success",
+        res.data.message || "Thay đổi trạng thái thành công!"
+      );
+    })
+    .catch((error) => {
+      showToast("error", error.response?.data?.message || "Có lỗi xảy ra!");
+      console.log(error);
     });
 };
 
@@ -438,8 +460,14 @@ const handleSubmitForm = async () => {
       showToast("success", "Cập nhật thành công!");
     }
   } catch (error) {
-    showToast("error", error.response?.data?.message || "Có lỗi xảy ra!");
-    console.log(error);
+    // ✅ Lấy message từ API nếu có
+    let errorMessage = "Có lỗi xảy ra!";
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.response?.data?.errors) {
+      errorMessage = Object.values(error.response.data.errors).join(", ");
+    }
+    showToast("error", errorMessage);
   }
 };
 
@@ -499,7 +527,8 @@ const getDataFromApi = async (page, size) => {
     };
     if (filter.value.name) params.name = filter.value.name;
     if (filter.value.status !== "") params.status = filter.value.status;
-    if (filter.value.from) params.from = datetimeLocalToTimestamp(filter.value.from);
+    if (filter.value.from)
+      params.from = datetimeLocalToTimestamp(filter.value.from);
     if (filter.value.to) params.to = datetimeLocalToTimestamp(filter.value.to);
 
     const res = await getAllFlashSale(params);
@@ -587,6 +616,6 @@ onMounted(async () => {
 .filter-card,
 .flashsale-table-card {
   border-radius: 0.8rem !important;
-  overflow: hidden; 
+  overflow: hidden;
 }
 </style>

@@ -314,35 +314,42 @@
                   </div>
                 </div>
               </div>
-<div v-if="selectedBookInfo">
-  <div class="mb-3">
-    <label class="form-label">% Giảm <span class="text-danger">*</span></label>
-    <input
-      type="number"
-      step="0.01"
-      class="form-control"
-      v-model="formData.discountPercentage"
-      required
-    />
-    <div
-      v-if="formData.discountPrice"
-      class="form-text text-success"
-    >
-      Giá sau giảm: {{ formatCurrency(formData.discountPrice) }}
-    </div>
-  </div>
-  <div class="mb-3">
-    <label class="form-label">Giá giảm <span class="text-danger">*</span></label>
-    <input
-      type="number"
-      step="0.01"
-      class="form-control"
-      v-model="formData.discountPrice"
-      required
-      disabled 
-    />
-  </div>
-</div>
+              <div v-if="selectedBookInfo">
+                <div class="mb-3">
+                  <label class="form-label"
+                    >% Giảm <span class="text-danger">*</span></label
+                  >
+                  <input
+                    type="number"
+                    step="0.01"
+                    class="form-control"
+                    v-model="formData.discountPercentage"
+                    required
+                    :min="0"
+                    :max="100"
+                  />
+                  <div
+                    v-if="formData.discountPrice"
+                    class="form-text text-success"
+                  >
+                    Giá sau giảm: {{ formatCurrency(formData.discountPrice) }}
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label"
+                    >Giá giảm <span class="text-danger">*</span></label
+                  >
+                  <input
+                    type="number"
+                    step="0.01"
+                    class="form-control"
+                    v-model="formData.discountPrice"
+                    required
+                    disabled
+                    :min="0"
+                  />
+                </div>
+              </div>
               <div class="mb-3">
                 <label class="form-label"
                   >Số lượng sản phẩm khuyến mãi
@@ -353,6 +360,10 @@
                   class="form-control"
                   v-model="formData.stockQuantity"
                   required
+                  :min="1"
+                  :max="9999"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
                 />
               </div>
               <div class="mb-3">
@@ -364,6 +375,8 @@
                   class="form-control"
                   v-model="formData.maxPurchasePerUser"
                   required
+                  :min="1"
+                  :max="9999"
                 />
               </div>
               <div class="mb-3">
@@ -688,20 +701,66 @@ const openEditForm = async (item) => {
 
 const validateForm = () => {
   const f = formData.value;
+
+  if (!f.bookId) {
+    showToast("error", "Vui lòng chọn sách!");
+    return false;
+  }
   if (
-    !f.bookId ||
-    !f.discountPrice ||
-    !f.discountPercentage ||
-    !f.stockQuantity ||
-    !f.maxPurchasePerUser
+    f.discountPercentage === "" ||
+    f.discountPercentage === null ||
+    isNaN(f.discountPercentage)
   ) {
-    showToast("error", "Vui lòng nhập đầy đủ thông tin!");
+    showToast("error", "Vui lòng nhập % giảm!");
     return false;
   }
   if (f.discountPercentage < 0 || f.discountPercentage > 100) {
-    showToast("error", "Phần trăm giảm giá phải từ 0-100");
+    showToast("error", "% giảm phải từ 0 đến 100!");
     return false;
   }
+  if (
+    f.discountPrice === "" ||
+    f.discountPrice === null ||
+    isNaN(f.discountPrice)
+  ) {
+    showToast("error", "Vui lòng nhập giá giảm!");
+    return false;
+  }
+  if (f.discountPrice < 0) {
+    showToast("error", "Giá giảm phải lớn hơn hoặc bằng 0!");
+    return false;
+  }
+  if (
+    f.stockQuantity === "" ||
+    f.stockQuantity === null ||
+    isNaN(Number(f.stockQuantity)) ||
+    !/^\d+$/.test(f.stockQuantity)
+  ) {
+    showToast("error", "Số lượng sản phẩm khuyến mãi phải là số nguyên dương!");
+    return false;
+  }
+  if (Number(f.stockQuantity) < 0) {
+    showToast("error", "Số lượng sản phẩm khuyến mãi phải lớn hơn hoặc bằng 0!");
+    return false;
+  }
+  if (
+    f.maxPurchasePerUser === "" ||
+    f.maxPurchasePerUser === null ||
+    isNaN(Number(f.maxPurchasePerUser)) ||
+    !/^\d+$/.test(f.maxPurchasePerUser)
+  ) {
+    showToast("error", "Giới hạn mỗi người phải là số nguyên dương!");
+    return false;
+  }
+  if (Number(f.maxPurchasePerUser) <= 0) {
+    showToast("error", "Giới hạn mỗi người phải lớn hơn 0!");
+    return false;
+  }
+  if (f.status !== 0 && f.status !== 1) {
+    showToast("error", "Vui lòng chọn trạng thái!");
+    return false;
+  }
+
   return true;
 };
 
@@ -731,7 +790,9 @@ const handleSubmitForm = async () => {
     closeModal();
     await getDataFromApi(currentPage.value, pageSize.value);
   } catch (error) {
-    showToast("error", error.response?.data?.message || "Có lỗi xảy ra!");
+    // ✅ Sửa lại để lấy đúng message từ API
+    const apiMessage = error?.response?.data?.message || "Có lỗi xảy ra!";
+    showToast("error", apiMessage);
   }
 };
 

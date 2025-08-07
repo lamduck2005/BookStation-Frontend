@@ -17,7 +17,6 @@
                 :value="mainCategory.id"
                 v-model="selectedMainCategory"
                 @change="onMainCategoryChange"
-                @click="onMainCategoryClick(mainCategory.id)"
               />
               <span class="category-name">{{ mainCategory.categoryName }}</span>
             </label>
@@ -290,9 +289,7 @@ watch(authorSearchQuery, (newQuery) => {
   fetchAuthors(newQuery.trim());
 });
 const onMainCategoryChange = async (event) => {
-  // --- THÊM DÒNG NÀY ---
   selectedSubCategories.value = []; // Xóa các danh mục phụ đã chọn
-  // --- KẾT THÚC THÊM ---
 
   const id = selectedMainCategory.value;
   try {
