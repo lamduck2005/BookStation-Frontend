@@ -1,0 +1,9 @@
+<!-- Placeholder for book images -->
+<svg width="50" height="60" viewBox="0 0 50 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="50" height="60" rx="4" fill="#E5E7EB"/>
+<path d="M15 20H35V22H15V20Z" fill="#9CA3AF"/>
+<path d="M15 25H30V27H15V25Z" fill="#9CA3AF"/>
+<path d="M15 30H35V32H15V30Z" fill="#9CA3AF"/>
+<path d="M15 35H25V37H15V35Z" fill="#9CA3AF"/>
+<rect x="20" y="12" width="10" height="12" rx="1" fill="#D1D5DB"/>
+</svg>
