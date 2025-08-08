@@ -6,6 +6,23 @@
         Admin / <strong>Quản lý đơn hàng</strong>
       </h6>
     </div>
+
+    <!-- Statistics Dashboard Section -->
+    <div class="statistics-section mb-4">
+      <!-- Overview Cards -->
+      <OverviewCards />
+      
+      <!-- Revenue Chart và Location Stats -->
+      <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+          <RevenueChart />
+        </div>
+        <div class="col-lg-5">
+          <LocationStats />
+        </div>
+      </div>
+
+    </div>
     
     <!-- Bộ lọc -->
     <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">
@@ -1099,6 +1116,13 @@ import EditButton from '@/components/common/EditButton.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import AddButton from '@/components/common/AddButton.vue';
 import StatusLabel from '@/components/common/StatusLabel.vue';
+
+// ✅ KHÔI PHỤC LẠI STATISTICS COMPONENTS - ĐÃ FIX INFINITE LOOP
+// Import Statistics Components
+import OverviewCards from '@/views/admin/components-admin/statistics/OverviewCards.vue';
+import RevenueChart from '@/views/admin/components-admin/statistics/RevenueChart.vue';
+import LocationStats from '@/views/admin/components-admin/statistics/LocationStats.vue';
+
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { Modal } from 'bootstrap';
 import {
@@ -1567,8 +1591,8 @@ const onUserChange = async () => {
     await loadUserAddresses(newOrder.value.userId);
     await loadUserVouchers(newOrder.value.userId);
     
-    // Tính toán lại khi đổi user
-    calculateOrderPreview();
+    // ❌ Không cần gọi calculateOrderPreview() ở đây vì watch đã handle
+    // calculateOrderPreview();
   } else {
     userAddresses.value = [];
     userVouchers.value = [];
@@ -1586,10 +1610,10 @@ const onOrderTypeChange = () => {
   const typeText = newOrder.value.orderType === 'COUNTER' ? 'tại quầy' : 'online'
   showToast('info', 'Đã chuyển sang đơn ' + typeText)
   
-  // Có thể trigger calculation lại nếu cần
-  if (newOrder.value.items.length > 0) {
-    calculateOrderPreview()
-  }
+  // ❌ Không cần gọi calculateOrderPreview() ở đây vì watch đã handle
+  // if (newOrder.value.items.length > 0) {
+  //   calculateOrderPreview()
+  // }
 };
 
 const loadUserAddresses = async (userId) => {
@@ -1620,6 +1644,10 @@ const onAddressChange = () => {
   currentAddress.value = userAddresses.value.find(addr => addr.id == newOrder.value.addressId) || null;
   console.log('=== DEBUG: Selected address:', currentAddress.value);
   calculateShippingFee();
+  // ✅ MANUAL TRIGGER thay vì watch
+  if (newOrder.value.userId && newOrder.value.items.length > 0) {
+    calculateOrderPreview();
+  }
 };
 
 const loadUserVouchers = async (userId) => {
@@ -1700,12 +1728,18 @@ const onBookChange = async (detail, index) => {
 
 // Watch for voucher changes to recalculate
 const onVoucherChange = () => {
-  calculateOrderPreview();
+  // ✅ MANUAL TRIGGER thay vì watch
+  if (newOrder.value.userId && newOrder.value.items.length > 0) {
+    calculateOrderPreview();
+  }
 };
 
 // Watch for shipping fee changes
 const onShippingFeeChange = () => {
-  calculateOrderPreview();
+  // ✅ MANUAL TRIGGER thay vì watch
+  if (newOrder.value.userId && newOrder.value.items.length > 0) {
+    calculateOrderPreview();
+  }
 };
 
 const calculateDetailTotal = async (detail) => {
@@ -1727,6 +1761,7 @@ const calculateDetailTotal = async (detail) => {
   }
   
   // Trigger order calculation if we have enough data
+  // ✅ BÂY GIỜ SỬ DỤNG MANUAL TRIGGER
   if (newOrder.value.userId && newOrder.value.items.length > 0) {
     calculateShippingFee();
     calculateOrderPreview();
@@ -1738,7 +1773,8 @@ const onQuantityChange = async (detail) => {
   await calculateDetailTotal(detail);
 };
 
-// Tính toán đơn hàng tự động khi có thay đổi
+// Tính toán đơn hàng tự động khi có thay đổi với DEBOUNCE
+let calculateOrderTimeout = null;
 const calculateOrderPreview = async () => {
   if (!newOrder.value.userId || newOrder.value.items.length === 0) {
     orderCalculation.value = null;
@@ -1755,8 +1791,14 @@ const calculateOrderPreview = async () => {
     return;
   }
 
-  try {
-    isCalculating.value = true;
+  // ✅ DEBOUNCE để tránh gọi API liên tục
+  if (calculateOrderTimeout) {
+    clearTimeout(calculateOrderTimeout);
+  }
+
+  calculateOrderTimeout = setTimeout(async () => {
+    try {
+      isCalculating.value = true;
     
     const calculationData = {
       userId: newOrder.value.userId,
@@ -1778,19 +1820,19 @@ const calculateOrderPreview = async () => {
       console.log('=== DEBUG: Order calculation result ===');
       console.log('Calculation:', orderCalculation.value);
       
-      // Cập nhật giá cho items từ kết quả tính toán
-      if (orderCalculation.value.itemDetails) {
-        orderCalculation.value.itemDetails.forEach(item => {
-          const detail = newOrder.value.items.find(d => d.bookId == item.bookId);
-          if (detail) {
-            detail.unitPrice = item.unitPrice;
-            detail.totalPrice = item.itemTotal;
-            detail.isFlashSale = item.isFlashSale;
-            detail.savedAmount = item.savedAmount;
-            detail.flashSaleName = item.flashSaleName;
-          }
-        });
-      }
+      // ❌ KHÔNG CẬP NHẬT LẠI ITEMS ĐỂ TRÁNH VÒNG LẶP VÔ HẠN
+      // if (orderCalculation.value.itemDetails) {
+      //   orderCalculation.value.itemDetails.forEach(item => {
+      //     const detail = newOrder.value.items.find(d => d.bookId == item.bookId);
+      //     if (detail) {
+      //       detail.unitPrice = item.unitPrice;
+      //       detail.totalPrice = item.itemTotal;
+      //       detail.isFlashSale = item.isFlashSale;
+      //       detail.savedAmount = item.savedAmount;
+      //       detail.flashSaleName = item.flashSaleName;
+      //     }
+      //   });
+      // }
     }
   } catch (error) {
     console.error('Lỗi khi tính toán đơn hàng:', error);
@@ -1798,6 +1840,7 @@ const calculateOrderPreview = async () => {
   } finally {
     isCalculating.value = false;
   }
+  }, 500); // ✅ Debounce 500ms
 };
 
 const calculateShippingFee = async () => {
@@ -2784,17 +2827,18 @@ const fillSampleData = async () => {
   }
 };
 
+// ✅ KHÔI PHỤC WATCH - ĐÃ FIX INFINITE LOOP
 // Watch for changes to trigger order calculation
 watch([
   () => newOrder.value.userId,
   () => newOrder.value.shippingFee,
   () => newOrder.value.voucherIds,
-  () => newOrder.value.items
+  () => newOrder.value.items?.length, // CHỈ WATCH LENGTH THAY VÌ DEEP WATCH
 ], () => {
   if (newOrder.value.userId && newOrder.value.items.length > 0) {
     calculateOrderPreview();
   }
-}, { deep: true });
+}, { immediate: false }); // REMOVE DEEP WATCH
 
 // Watch for address form changes
 watch(() => addressForm.value.provinceId, (newVal) => {
@@ -3084,6 +3128,59 @@ watch([currentPage, pageSize], () => {
 .voucher-item.card.selected {
   border-color: #007bff !important;
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Statistics Section Styles */
+.statistics-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+}
+
+/* Loading Animation for Statistics */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.statistics-section {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Responsive Design for Statistics */
+@media (max-width: 1200px) {
+  .statistics-section {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 992px) {
+  .statistics-section .row {
+    flex-direction: column;
+  }
+  
+  .statistics-section .col-xl-8,
+  .statistics-section .col-xl-4,
+  .statistics-section .col-lg-6 {
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .statistics-section {
+    padding: 1rem;
+    margin: 0 -15px 2rem -15px;
+    border-radius: 0;
+  }
 }
 
 .voucher-item.card:hover {

@@ -74,3 +74,8 @@ export function userpos(text) {
 export function addretailer(data) {
   return client.post('/api/users/addretail', data);
 }
+
+// Lấy danh sách vai trò cho dropdown
+export function getDropdownRoles() {
+  return client.get('/api/users/dropdown-roles');
+}

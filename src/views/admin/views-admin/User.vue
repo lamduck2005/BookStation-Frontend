@@ -35,8 +35,8 @@
           <label class="form-label">Vai trò</label>
           <select class="form-select" v-model="selectedRole">
             <option value="">Tất cả vai trò</option>
-            <option v-for="(label, id) in roleMap" :key="id" :value="id">
-              {{ label }}
+            <option v-for="role in rolesList" :key="role.id" :value="role.id">
+              {{ role.tenVaiTro }}
             </option>
           </select>
         </div>
@@ -118,12 +118,7 @@
                   >
                     <i class="bi bi-pencil"></i>
                   </button>
-                  <button
-                    class="btn btn-sm btn-outline-danger"
-                    @click="confirmDelete(user)"
-                  >
-                    <i class="bi bi-trash"></i>
-                  </button>
+                
                 </td>
               </tr>
               <tr v-if="users.length === 0">
@@ -222,11 +217,11 @@
                   >
                     <option value="">Chọn vai trò</option>
                     <option
-                      v-for="(label, id) in roleMap"
-                      :key="id"
-                      :value="id"
+                      v-for="role in rolesList"
+                      :key="role.id"
+                      :value="role.id"
                     >
-                      {{ label }}
+                      {{ role.tenVaiTro }}
                     </option>
                   </select>
                 </div>
@@ -263,19 +258,30 @@
           <div class="modal-footer">
             <button
               type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
+              class="btn btn-outline-warning btn-sm rounded-pill fake-data-btn"
+              @click="fillFakeData"
+              v-if="!isEditMode"
+              title="Điền dữ liệu mẫu để test nhanh"
             >
-              Hủy
+              <i class="bi bi-lightning me-1"></i> Dữ liệu mẫu
             </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              @click="handleSubmitUser"
-              style="background-color: #33304e; border-color: #33304e"
-            >
-              {{ isEditMode ? "Cập nhật" : "Thêm mới" }}
-            </button>
+            <div class="ms-auto">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                @click="handleSubmitUser"
+                style="background-color: #33304e; border-color: #33304e"
+              >
+                {{ isEditMode ? "Cập nhật" : "Thêm mới" }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -291,8 +297,9 @@ import {
   fetchUsers,
   createUser,
   updateUser,
-  deleteUser,
+  
   toggleUserStatus,
+  getDropdownRoles,
 } from "@/services/admin/user";
 
 const users = ref([]);
@@ -307,12 +314,15 @@ const selectedRole = ref("");
 const isEditMode = ref(false);
 const newUser = ref({});
 const loading = ref(false);
+const rolesList = ref([]);
 
-const roleMap = {
-  1: "Admin",
-  2: "User",
-  3: "Staff",
-};
+const roleMap = computed(() => {
+  const map = {};
+  rolesList.value.forEach(role => {
+    map[role.id] = role.tenVaiTro;
+  });
+  return map;
+});
 const roleBadgeClass = (roleId) => {
   switch (Number(roleId)) {
     case 1:
@@ -387,7 +397,27 @@ async function loadUsers() {
   }
 }
 
-onMounted(loadUsers);
+async function loadRoles() {
+  try {
+    const res = await getDropdownRoles();
+    if (res.data && res.data.data) {
+      rolesList.value = res.data.data;
+    }
+  } catch (e) {
+    console.error("Lỗi tải danh sách vai trò:", e);
+    // Fallback data nếu API lỗi
+    rolesList.value = [
+      { id: 1, tenVaiTro: "Quản trị viên" },
+      { id: 2, tenVaiTro: "Khách hàng" },
+      { id: 3, tenVaiTro: "Nhân viên" }
+    ];
+  }
+}
+
+onMounted(() => {
+  loadRoles();
+  loadUsers();
+});
 
 watch([searchQuery, selectedStatus, selectedRole, pageSize], () => {
   currentPage.value = 0;
@@ -472,26 +502,7 @@ async function handleSubmitUser() {
     Swal.fire({ icon: "error", title: "Lỗi thao tác người dùng!" });
   }
 }
-async function confirmDelete(user) {
-  Swal.fire({
-    title: "Bạn chắc chắn muốn xóa?",
-    text: `Xóa người dùng: ${user.full_name}`,
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Xóa",
-    cancelButtonText: "Hủy",
-  }).then(async (result) => {
-    if (result.isConfirmed) {
-      try {
-        await deleteUser(user.user_id);
-        Swal.fire({ toast: true, position: "top-end", icon: "success", title: "Đã xóa!", showConfirmButton: false, timer: 1500 });
-        loadUsers();
-      } catch (e) {
-        Swal.fire({ icon: "error", title: "Lỗi xóa người dùng!" });
-      }
-    }
-  });
-}
+
 async function handleToggleUserStatus(user) {
   try {
     await toggleUserStatus(user.user_id);
@@ -500,6 +511,42 @@ async function handleToggleUserStatus(user) {
   } catch (e) {
     Swal.fire({ icon: "error", title: "Lỗi đổi trạng thái!" });
   }
+}
+
+// Hàm điền dữ liệu mẫu
+function fillFakeData() {
+  const sampleData = [
+    {
+      full_name: "Nguyễn Văn An",
+      email: "nguyen.van.an@example.com",
+      phone_number: "0901234567",
+      role_id: 2,
+      status: "ACTIVE",
+      total_spent: 1500000,
+      total_point: 150
+    },
+    {
+      full_name: "Trần Thị Bình",
+      email: "tran.thi.binh@example.com",
+      phone_number: "0912345678",
+      role_id: 2,
+      status: "ACTIVE",
+      total_spent: 2300000,
+      total_point: 230
+    },
+    {
+      full_name: "Lê Hoàng Cường",
+      email: "le.hoang.cuong@example.com",
+      phone_number: "0923456789",
+      role_id: 3,
+      status: "ACTIVE",
+      total_spent: 800000,
+      total_point: 80
+    }
+  ];
+  
+  const randomSample = sampleData[Math.floor(Math.random() * sampleData.length)];
+  newUser.value = { ...randomSample };
 }
 </script>
 <style scoped>
@@ -722,5 +769,37 @@ input:checked + .slider:before {
   .table-responsive table {
     min-width: 1000px;
   }
+}
+
+/* Fake data button styling */
+.fake-data-btn {
+  background-color: #fff3cd !important;
+  border-color: #ffeaa7 !important;
+  color: #856404 !important;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.fake-data-btn:hover {
+  background-color: #ffeaa7 !important;
+  border-color: #fdcb6e !important;
+  color: #6c5ce7 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.fake-data-btn:active {
+  transform: translateY(0);
+}
+
+.modal-footer {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.modal-footer .ms-auto {
+  display: flex;
+  gap: 0.5rem;
 }
 </style>
