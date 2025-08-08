@@ -75,7 +75,7 @@
                 <td>{{ (currentPage * pageSize) + index + 1 }}</td>
                 <td>
                   <router-link 
-                    :to="{ name: 'Rank detail', params: { id: rank.id }, query: { name: rank.name } }"
+                    :to="{ name: 'Chi tiết hạng', params: { id: rank.id }, query: { name: rank.name } }"
                     class="text-decoration-none fw-bold text-primary"
                   >
                     {{ rank.name }}

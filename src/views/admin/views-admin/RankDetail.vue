@@ -2,7 +2,7 @@
   <div class="container-fluid py-4">
     <div class="mb-3">
       <h6 class="text-muted">
-        Quản trị viên / <router-link to="/admin/rank">Xếp hạng</router-link> / <strong>Chi tiết xếp hạng: {{ rankName }}</strong>
+        Quản trị viên / <router-link :to="{ name: 'Hạng' }">Xếp hạng</router-link> / <strong>Chi tiết xếp hạng: {{ rankName }}</strong>
       </h6>
     </div>
     <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">
@@ -196,17 +196,27 @@ const fetchUserRanks = async () => {
       params.status = selectedStatus.value;
     }
     
-    console.log('Fetching user ranks with params:', params); // Debug log
+    console.log('Fetching user ranks for rankId:', rankId, 'with params:', params); // Debug log
     
     const response = await getUserRanksByRankId(rankId, params);
-    const data = response.data || {};
-    
     console.log('User ranks response:', response); // Debug log
+    
+    // Handle different response structures
+    let data;
+    if (response && response.data) {
+      data = response.data;
+    } else if (response && response.content) {
+      data = response;
+    } else {
+      data = response || {};
+    }
     
     users.value = data.content || [];
     totalPages.value = data.totalPages ?? 1;
     totalElements.value = data.totalElements ?? users.value.length;
     isLastPage.value = data.last ?? (page.value >= totalPages.value - 1);
+    
+    console.log('Users loaded:', users.value.length);
   } catch (e) {
     console.error('Error fetching user ranks:', e);
     users.value = [];
@@ -219,21 +229,31 @@ const fetchUserRanks = async () => {
 
 const fetchRankDropdown = async () => {
   try {
+    console.log('Fetching rank dropdown...');
     const response = await getRanksDropdown();
-    console.log('Rank dropdown response:', response); // Debug log
+    console.log('Rank dropdown response:', response);
     
-    // Kiểm tra structure của response
-    if (response.data && Array.isArray(response.data)) {
-      rankOptions.value = response.data;
+    // Handle multiple possible response structures
+    let rankData = [];
+    if (Array.isArray(response)) {
+      rankData = response;
+    } else if (response.data && Array.isArray(response.data)) {
+      rankData = response.data;
     } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
-      rankOptions.value = response.data.data;
+      rankData = response.data.data;
+    } else if (response.data && response.data.content && Array.isArray(response.data.content)) {
+      rankData = response.data.content;
     } else {
-      rankOptions.value = [];
       console.warn('Unexpected rank dropdown response structure:', response);
+      rankData = [];
     }
+    
+    rankOptions.value = rankData;
+    console.log('Rank options loaded:', rankOptions.value);
   } catch (e) {
     console.error('Error fetching rank dropdown:', e);
     rankOptions.value = [];
+    showToast('error', 'Lỗi khi tải danh sách ranks!', 3000);
   }
 };
 
@@ -344,6 +364,27 @@ async function handleUserRankStatusChange(user) {
 .table th,
 .table td {
   vertical-align: middle;
+}
+
+/* Status Styles */
+.status-active {
+  background: #d4edda;
+  color: #218838;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 4px 16px;
+  font-size: 0.9rem;
+  border: 1px solid #c3e6cb;
+}
+
+.status-inactive {
+  background: #f8d7da;
+  color: #721c24;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 4px 16px;
+  font-size: 0.9rem;
+  border: 1px solid #f5c6cb;
 }
 
 /* Enhanced Modal Styles */
