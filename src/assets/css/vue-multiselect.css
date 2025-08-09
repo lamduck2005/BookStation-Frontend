@@ -1,0 +1,303 @@
+.multiselect,
+.multiselect__content-wrapper,
+.multiselect__tags,
+.card,
+.card *,
+.form-group,
+.form-group *,
+.col,
+.col * {
+  overflow: visible !important;
+}
+
+/* Cho phép overflow hidden cho một số phần tử cụ thể */
+.multiselect__option,
+.multiselect__single,
+.multiselect__input,
+.multiselect__placeholder,
+.multiselect__tag {
+  overflow: hidden !important;
+}
+
+/* Làm cho vue-multiselect trông giống select thông thường */
+
+/* Kích thước và font chữ - đồng bộ với admin-global */
+.multiselect {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+      Arial, "Noto Sans", "Liberation Sans", "Apple Color Emoji", "Segoe UI Emoji",
+      "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+    font-size: 15px;
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 42px;
+    border-radius: 0.375rem;
+  }
+  
+  /* Container chứa input và selected items */
+  .multiselect__tags {
+    min-height: 42px; 
+    padding-left: 10px; 
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    background-color: #fff;
+    width: 100%;
+    position: relative;
+  }
+  
+  /* Input */
+  .multiselect__input,
+  .multiselect__single {
+    font-size: 15px;
+    line-height: 1.4;
+    padding: 0;
+    margin-bottom: 0;
+    background-color: transparent;
+    width: 100%;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: inline-block !important;
+  }
+  
+  /* Placeholder */
+  .multiselect__placeholder {
+    color: #6c757d;
+    padding-top: 0;
+    margin-bottom: 0;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    width: 100%;
+  }
+  
+  /* Dropdown */
+.multiselect__content-wrapper {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 0 0 0.375rem 0.375rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  width: 100%;
+  background-color: #fff; /* đảm bảo có nền dưới các option */
+  max-height: 280px; /* giới hạn số option hiển thị, phần còn lại scroll */
+  overflow-y: auto !important; /* bật scroll dọc cho dropdown */
+  overflow-x: hidden; /* tránh tràn ngang gây hỏng nền */
+  box-sizing: border-box; /* tính cả border vào kích thước */
+  /* position: absolute !important; đảm bảo là lớp nổi */
+  /* z-index: 2000 !important; nổi cao hơn table/card */
+}
+
+.multiselect__content {
+  width: 100% !important;
+}
+
+/* Sửa lỗi text dài trong dropdown */
+.multiselect__content-wrapper .multiselect__content .multiselect__element .multiselect__option span {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
+  width: 100% !important;
+}
+
+/* Options trong dropdown */
+.multiselect__element {
+  width: 100%;
+  font-size: 15px;
+}
+
+.multiselect__content {
+  width: 100%;
+}
+
+.multiselect__option {
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  line-height: 1.4;
+  font-size: 15px;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  display: block !important;
+}
+  
+  /* Option được highlight - áp dụng cho tất cả text con */
+  .multiselect__option--highlight {
+    background-color: #0d6efd;
+    color: white;
+  }
+  
+  .multiselect__option--highlight * {
+    color: white !important;
+  }
+  
+  .multiselect__option--highlight:after {
+    background-color: #0d6efd;
+  }
+  
+  /* Selected option */
+  .multiselect__option--selected {
+    background-color: #e9ecef;
+    color: #212529;
+    font-weight: normal;
+  }
+  
+  .multiselect__option--selected * {
+    color: #212529 !important;
+  }
+  
+  .multiselect__option--selected.multiselect__option--highlight {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .multiselect__option--selected.multiselect__option--highlight * {
+    color: white !important;
+  }
+  
+  /* Tags (cho multiple select) */
+  .multiselect__tag {
+    background-color: #0d6efd;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    margin-right: 0.25rem;
+    max-width: 90% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: inline-block !important;
+  }
+  
+  .multiselect__tag-icon {
+    line-height: 1.7;
+  }
+  
+  .multiselect__tag-icon:after {
+    color: white;
+  }
+  
+  .multiselect__tag-icon:focus,
+  .multiselect__tag-icon:hover {
+    background-color: #0b5ed7;
+  }
+  
+  /* Caret */
+  .multiselect__select {
+    height: 37px; /* hạ chiều cao caret để khớp tổng thể */
+    width: 37px;
+  }
+  
+  /* Khi disabled */
+  .multiselect--disabled {
+    background-color: #e9ecef; /* giống Bootstrap */
+    opacity: 1;
+  }
+
+  /* Đồng bộ style disabled giống Bootstrap */
+  .multiselect--disabled .multiselect__tags,
+  .multiselect--disabled .multiselect__select {
+    background-color: #e9ecef !important;
+    border-color: #ced4da !important;
+    cursor: not-allowed !important;
+  }
+
+  .multiselect--disabled .multiselect__placeholder,
+  .multiselect--disabled .multiselect__single,
+  .multiselect--disabled .multiselect__tag {
+    color: #6c757d !important;
+  }
+
+  .multiselect--disabled .multiselect__tag-icon {
+    display: none !important;
+  }
+
+  .multiselect--disabled.multiselect--active {
+    box-shadow: none !important;
+  }
+  
+  /* Khi focus */
+  .multiselect--active {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+  
+  .multiselect--active .multiselect__tags {
+    border-color: #86b7fe;
+  }
+
+/* Ẩn tất cả các thông báo trong vue-multiselect */
+.multiselect__option:after {
+    display: none !important;
+  }
+  
+  .multiselect__option--selected:after {
+    display: none !important;
+  }
+  
+  .multiselect__option--highlight:after {
+    display: none !important;
+  }
+  
+  .multiselect__strong {
+    display: none !important;
+  }
+  
+  /* Ẩn các thông báo khác nếu có */
+  .multiselect__option--disabled:after {
+    display: none !important;
+  }
+  
+  .multiselect__option--group:after {
+    display: none !important;
+  }
+
+  .multiselect__option:hover {
+    /* background-color: rgba(13, 110, 253, 0.1); */
+    transition: background-color 0.2s ease;
+  }
+
+/* Animation khi hiện và ẩn dropdown */
+.multiselect__content-wrapper {
+  transform-origin: top center;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+/* Khi dropdown đóng (không hiển thị) */
+.multiselect:not(.multiselect--active) .multiselect__content-wrapper {
+  transform: scaleY(0);
+  opacity: 0;
+  transition: transform 0.2s ease, opacity 0.2s ease, visibility 0s linear 0.2s;
+  visibility: hidden;
+}
+
+/* Animation cho các option bên trong dropdown */
+.multiselect__element {
+  transition: all 0.2s ease;
+}
+
+/* Animation cho tag khi thêm/xóa */
+.multiselect__tag {
+  animation: tagAppear 0.2s ease;
+}
+
+@keyframes tagAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animation cho caret khi mở/đóng dropdown */
+.multiselect__select {
+  transition: transform 0.2s ease;
+}
+
+.multiselect--active .multiselect__select {
+  transform: rotate(180deg);
+}
