@@ -19,3 +19,35 @@ export const getUsersDropdown = async () => {
     throw error;
   }
 };
+
+export const getCustomersDropdown = async () => {
+  try {
+    const response = await client.get('/api/select/users/customers');
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách khách hàng:', error);
+    throw error;
+  }
+};
+
+export const getStaffsDropdown = async () => {
+  try {
+    const response = await client.get('/api/select/users/staffs');
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách nhân viên:', error);
+    throw error;
+  }
+};
+
+export const getAdminsDropdown = async () => {
+  try {
+    const response = await client.get('/api/select/users/admins');
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách quản lý:', error);
+    throw error;
+  }
+};
+
+

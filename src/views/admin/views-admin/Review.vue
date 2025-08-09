@@ -1,15 +1,26 @@
 <template>
-  <div class="container-fluid py-4">
+  <div class="admin-page container-fluid py-4">
     <OverviewStatsComponent :stats="stats" />
      
-    <div class="card mb-5 shadow-lg border-0 filter-card">
-      <div class="card-header bg-light border-0 py-3">
-        <h5 class="mb-0 text-secondary">
-          <i class="bi bi-funnel me-2"></i>
-          Bộ lọc tìm kiếm
-        </h5>
-      </div>
-      <div class="card-body">
+          <div class="card mb-5 shadow-lg border-0 filter-card">
+        <div class="card-header bg-light border-0 py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-secondary">
+              <i class="bi bi-funnel me-2"></i>
+              Bộ lọc tìm kiếm
+            </h5>
+            <button 
+              class="btn btn-sm btn-outline-secondary" 
+              type="button" 
+              @click="toggleFilter"
+              :aria-expanded="showFilter"
+            >
+              <i :class="showFilter ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+              {{ showFilter ? 'Thu gọn' : 'Mở rộng' }}
+            </button>
+          </div>
+        </div>
+        <div class="card-body filter-collapse" :class="{ 'filter-collapsed': !showFilter }">
         <div class="row g-4">
           <div class="col-md-3">
             <label class="form-label">
@@ -39,7 +50,7 @@
               <i class="bi bi-person me-1"></i>
               Người đánh giá
             </label>
-            <Multiselect v-model="filterSelected.user" :options="dropdowns.users.options" :searchable="true"
+            <Multiselect v-model="filterSelected.customer" :options="dropdowns.customers.options" :searchable="true"
               :internal-search="true" :close-on-select="true" :clear-on-select="false" label="fullName" track-by="id"
               placeholder="Tìm người dùng theo tên">
               <template #option="{ option }">
@@ -129,8 +140,8 @@
       </div>
     </div>
 
-    <!-- table -->
-    <div class="card shadow-lg border-0 mb-4 review-table-card">
+          <!-- table -->
+      <div class="card shadow-lg border-0 mb-4 admin-table-card">
       <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3">
         <div>
           <h5 class="mb-0 text-secondary">
@@ -264,7 +275,7 @@
               </div>
               <div class="mb-3">
                 <label class="form-label">Người đánh giá <span class="text-danger">*</span></label>
-                <Multiselect v-model="formSelected.user" :options="dropdowns.users.options" :searchable="true"
+                <Multiselect v-model="formSelected.customer" :options="dropdowns.customers.options" :searchable="true"
                   :internal-search="true" :close-on-select="true" :clear-on-select="false" label="fullName"
                   track-by="id" placeholder="Chọn người đánh giá" :disabled="isEditMode">
                   <template #option="{ option }">
@@ -317,7 +328,7 @@ import {
   toggleStatusReview,
   getReviewStats
 } from '@/services/admin/review.js';
-import { getBooksDropdown, getUsersDropdown } from '@/services/admin/select.js';
+import { getBooksDropdown, getCustomersDropdown } from '@/services/admin/select.js';
 import { datetimeLocalToTimestamp } from '@/utils/utils.js';
 import OverviewStatsComponent from '@/components/common/OverviewStatsComponent.vue';
 
@@ -346,6 +357,9 @@ const filter = ref({
 // Stats
 const stats = ref([]);
 
+// Filter visibility
+const showFilter = ref(true);
+
 const reviews = ref([]);
 
 // Pagination state
@@ -362,13 +376,13 @@ const error = ref(null);
 // Dropdowns gom chung
 const dropdowns = reactive({
   books: { options: [] },
-  users: { options: [] }
+  customers: { options: [] }
 });
 
 // Option đang chọn (object) và đồng bộ về filter qua 1 watcher chung
 const filterSelected = reactive({
   book: null,
-  user: null
+  customer: null
 });
 
 // Đồng bộ từng dropdown tách riêng để tránh phụ thuộc lẫn nhau
@@ -376,7 +390,7 @@ watch(() => filterSelected.book, (opt) => {
   filter.value.bookId = opt?.id || '';
 });
 
-watch(() => filterSelected.user, (opt) => {
+watch(() => filterSelected.customer, (opt) => {
   filter.value.userId = opt?.id || '';
 });
 
@@ -391,11 +405,11 @@ const formData = ref({
 });
 
 // Selected cho form (khác filter)
-const formSelected = reactive({ book: null, user: null });
+const formSelected = reactive({ book: null, customer: null });
 
 // Đồng bộ selected form -> formData ids
 watch(() => formSelected.book, (opt) => { formData.value.bookId = opt?.id || ''; });
-watch(() => formSelected.user, (opt) => { formData.value.userId = opt?.id || ''; });
+watch(() => formSelected.customer, (opt) => { formData.value.userId = opt?.id || ''; });
 
 // Helper to format datetime
 function formatDateTime(timestamp) {
@@ -488,14 +502,14 @@ const handleGetDropdown = async () => {
       dropdowns.books.options = response.data;
     }
     // Gọi users song song 
-    const usersRes = await getUsersDropdown();
-    if (usersRes && usersRes.data) {
-      dropdowns.users.options = usersRes.data;
+    const customersRes = await getCustomersDropdown();
+    if (customersRes && customersRes.data) {
+      dropdowns.customers.options = customersRes.data;
     }
   } catch (error) {
     console.error('Lỗi khi tải danh sách sách:', error);
     dropdowns.books.options = [];
-    dropdowns.users.options = [];
+    dropdowns.customers.options = [];
   }
 };
 
@@ -516,8 +530,13 @@ const clearFilters = () => {
   };
   // Reset luôn selected của multiselect để UI xóa chọn
   filterSelected.book = null;
-  filterSelected.user = null;
+  filterSelected.customer = null;
   getDataFromApi(0, pageSize.value);
+};
+
+// Toggle filter visibility
+const toggleFilter = () => {
+  showFilter.value = !showFilter.value;
 };
 
 // Reload
