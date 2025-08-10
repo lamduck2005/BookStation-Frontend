@@ -104,3 +104,14 @@ function onBlur() {
   emitJump()
 }
 </script>
+
+<style scoped>
+
+ .btn-primary {
+  background: linear-gradient(135deg, #4f3a6d 0%, #3b3157 100%) !important;
+  border: none !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.527) !important;
+}
+
+</style>

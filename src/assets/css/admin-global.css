@@ -48,8 +48,14 @@ VÍ DỤ TEMPLATE:
 }
 
 /* Fix bảng che dropdown của multiselect */
-.container-fluid .filter-card {
+.admin-page .filter-card {
+  position: relative;
   z-index: 10;
+}
+
+.admin-page .admin-table-card {
+  position: relative;
+  z-index: 1;
 }
 
 /* Header dễ nhìn hơn - màu đơn - áp dụng cho tất cả admin table */
@@ -207,14 +213,22 @@ VÍ DỤ TEMPLATE:
   background: white;
   transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
               opacity 0.3s ease, 
-              padding 0.3s ease;
+              padding 0.3s ease,
+              visibility 0s linear 0s;
   overflow: hidden;
+  visibility: visible;
 }
 
 .filter-card .filter-collapse.filter-collapsed {
   max-height: 0;
   opacity: 0;
   padding: 0 24px !important;
+  visibility: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.3s ease, 
+              padding 0.3s ease,
+              visibility 0s linear 0.4s;
+  pointer-events: none;
 }
 
 .filter-card .card-header .btn {

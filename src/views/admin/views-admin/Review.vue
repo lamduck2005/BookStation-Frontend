@@ -358,7 +358,7 @@ const filter = ref({
 const stats = ref([]);
 
 // Filter visibility
-const showFilter = ref(true);
+const showFilter = ref(false);
 
 const reviews = ref([]);
 
@@ -589,8 +589,10 @@ const openEditForm = (item) => {
     reviewStatus: item.reviewStatus
   };
   // Khóa lựa chọn và sync selected để hiển thị
-  formSelected.book = dropdowns.books.options.find(b => b.id === item.bookId) || null;
-  formSelected.user = dropdowns.users.options.find(u => u.id === item.userId) || null;
+  const bookOpts = (dropdowns.books && dropdowns.books.options) ? dropdowns.books.options : [];
+  const customerOpts = (dropdowns.customers && dropdowns.customers.options) ? dropdowns.customers.options : [];
+  formSelected.book = bookOpts.find(b => b.id === item.bookId) || null;
+  formSelected.customer = customerOpts.find(u => u.id === item.userId) || null;
   const modalElement = document.getElementById('formModal');
   if (modalElement) {
     const modal = Modal.getOrCreateInstance(modalElement);
