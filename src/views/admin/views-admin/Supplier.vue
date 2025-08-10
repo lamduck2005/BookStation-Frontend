@@ -8,10 +8,15 @@
     </div>
     
     <!-- Bộ lọc -->
-    <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">
-      <div class="d-flex align-items-center mb-3 p-2 m-0 rounded-top" style="background-color: #ecae9e;">
-        <i class="bi bi-funnel-fill me-2 text-dark"></i>
-        <h5>Bộ lọc</h5>
+    <div class="bg-light-darker p-3 rounded mb-4 border pt-0 ps-0 pe-0">
+       <div
+        class="d-flex align-items-center mb-3 p-3 m-0 rounded-top"
+        style="background-color: #f3fcf9"  >
+        <i class="bi bi-funnel-fill me-2 text-green"></i>
+        <h5 class="mb-0 text-secondary">
+          
+              Bộ lọc tìm kiếm
+            </h5>
       </div>
       <div class="row g-3 m-2 mt-0 p-0">
         <div class="col-md-3">
@@ -88,8 +93,8 @@
 
     <!-- Danh sách Supplier -->
     <div class="bg-white p-3 rounded shadow-sm pt-0 ps-0 pe-0">
-      <div class="d-flex align-items-center mb-3 p-2 m-0 rounded-top" style="background-color: #ecae9e;">
-        <strong>Danh sách Nhà cung cấp</strong>
+      <div class="d-flex align-items-center mb-3 p-3 m-0 rounded-top" style="background-color: #475569;">
+        <strong style="color: white;">Danh sách Nhà cung cấp</strong>
       </div>
 
       <div class="p-3">

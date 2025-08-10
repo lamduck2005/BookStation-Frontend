@@ -1,13 +1,15 @@
 <template>
   <div class="container-fluid py-4">
     <!-- Bộ lọc -->
-    <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">
+    <div class="bg-light-darker p-3 rounded mb-4 border pt-0 ps-0 pe-0">
       <div
-        class="d-flex align-items-center mb-3 p-2 m-0 rounded-top"
-        style="background-color: #ecae9e"
-      >
-        <i class="bi bi-funnel-fill me-2 text-dark"></i>
-        <h5 class="mb-0">Bộ lọc</h5>
+        class="d-flex align-items-center mb-3 p-3 m-0 rounded-top"
+        style="background-color: #f3fcf9"  >
+        <i class="bi bi-funnel-fill me-2 text-green"></i>
+        <h5 class="mb-0 text-secondary">
+          
+              Bộ lọc tìm kiếm
+            </h5>
       </div>
       <div class="row g-3 m-2 mt-0 p-0 align-items-end">
         <div class="col-md-6">
@@ -32,18 +34,10 @@
       </div>
     </div>
 
-    <!-- Danh sách user nhận voucher -->
-    <div class="bg-white p-3 rounded shadow-sm pt-0 ps-0 pe-0">
-      <div
-        class="d-flex align-items-center mb-3 p-2 m-0 rounded-top"
-        style="background-color: #ecae9e"
-      >
-        <strong>Danh sách người dùng nhận voucher</strong>
-      </div>
-      <!-- Nút thêm -->
-      <div class="mb-3" >
+    <!-- Nút thêm -->
+      <div class="mb-3 d-flex justify-content-end" >
         <button class="btn btn-success" @click="openAddForm">
-          <i class="bi bi-plus-circle me-1"></i> Thêm user voucher
+          <i class="bi bi-plus-circle me-1"></i> Phát voucher
         </button>
               <!-- Nút phát nhanh -->
   <button
@@ -56,6 +50,15 @@
     <i v-else class="bi bi-lightning-charge me-1"></i> Phát voucher nhanh
   </button>
       </div>
+    <!-- Danh sách user nhận voucher -->
+    <div class="bg-white p-3 rounded shadow-sm pt-0 ps-0 pe-0">
+      <div
+        class="d-flex align-items-center mb-3 p-3 m-0 rounded-top"
+        style="background-color: #475569"
+      >
+        <strong style="color: white;">Danh sách người dùng nhận voucher</strong>
+      </div>
+      
 
       <!-- Modal Thêm User Voucher -->
       <div v-if="showAddForm" class="modal-backdrop">
