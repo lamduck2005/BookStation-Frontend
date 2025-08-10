@@ -4,9 +4,11 @@
     <table>
       <thead>
         <tr>
-          <th>Hạng</th>
+          <th>STT</th>
           <th>Người dùng</th>
           <th>Chi tiêu (₫)</th>
+          <th>Hạng thành viên</th>
+          <!-- Thêm cột này -->
         </tr>
       </thead>
       <tbody>
@@ -14,6 +16,8 @@
           <td>{{ user.rank }}</td>
           <td>{{ user.name }}</td>
           <td>{{ user.spent }}</td>
+          <td>{{ user.rankName }}</td>
+          <!-- Thêm dòng này -->
         </tr>
       </tbody>
     </table>
@@ -22,7 +26,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { getTopSpenders, getTotalDeliveredOrders } from "@/services/admin/dashboard";
+import { getTopSpenders } from "@/services/admin/dashboard";
 const users = ref([]);
 onMounted(async () => {
   const res = await getTopSpenders(5);
@@ -30,8 +34,8 @@ onMounted(async () => {
     rank: idx + 1,
     name: item.fullName,
     spent: item.totalSpent.toLocaleString(),
+    rankName: item.rankName, // Thêm trường này
   }));
-  const totalOrders = await getTotalDeliveredOrders();
 });
 </script>
 
