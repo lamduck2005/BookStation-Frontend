@@ -119,10 +119,13 @@
                       !item.flashSaleExpired &&
                       countdownTexts[item.id]
                     "
-                    class="flash-sale-countdown-text mt-1"
+                    class="flash-sale-countdown mt-2"
                   >
-                    <i class="fa fa-bolt"></i> Kết thúc sau:
-                    {{ countdownTexts[item.id] }}
+                    <div class="countdown-wrapper">
+                      <i class="fa fa-bolt text-warning"></i>
+                      <span class="countdown-label">Kết thúc sau:</span>
+                      <span class="countdown-time">{{ countdownTexts[item.id] }}</span>
+                    </div>
                   </div>
                 </div>
                 <div v-if="item.stockWarning" class="text-danger small mt-1">
@@ -536,15 +539,18 @@ const setupFlashSaleCountdowns = () => {
   flashSaleManager.value = createFlashSaleManager(
     flashSaleItems.map(item => ({
       id: item.id,
-      endTime: item.flashSaleEndTime
+      itemType: 'FLASH_SALE',
+      flashSaleEndTime: item.flashSaleEndTime,
+      serverTime: Date.now() // Use current time as server time
     })),
-    (itemId, timeLeft) => {
-      countdownTexts.value[itemId] = formatCountdownTime(timeLeft)
+    (expiredItem) => {
+      console.log(`⏰ Flash sale expired for item ${expiredItem.id}`)
+      reloadCartAfterFlashSaleExpired(expiredItem.id)
     },
-    (itemId) => {
-      console.log(`⏰ Flash sale expired for item ${itemId}`)
-      reloadCartAfterFlashSaleExpired(itemId)
-    }
+    (itemId, countdownText) => {
+      countdownTexts.value[itemId] = countdownText
+    },
+    'compact' // Use compact format for display
   )
   
   console.log('Flash sale manager created:', flashSaleManager.value)
@@ -931,5 +937,54 @@ input[type="number"] {
   font-weight: 600;
   margin-top: 2px;
   color: inherit;
+}
+
+/* Flash Sale Countdown Styles */
+.flash-sale-countdown {
+  background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  border: 1px solid #ffc107;
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-top: 8px;
+}
+
+.countdown-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.countdown-label {
+  color: #6c5700;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.countdown-time {
+  background: #ffc107;
+  color: #212529;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  font-size: 0.85rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.flash-sale-countdown .fa-bolt {
+  color: #ffc107;
+  font-size: 1rem;
+  animation: flash-glow 2s infinite alternate;
+}
+
+@keyframes flash-glow {
+  0% {
+    color: #ffc107;
+    text-shadow: 0 0 5px #ffc107;
+  }
+  100% {
+    color: #ffb300;
+    text-shadow: 0 0 10px #ffb300;
+  }
 }
 </style>

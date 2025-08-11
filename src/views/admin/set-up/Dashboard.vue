@@ -3,6 +3,9 @@
     <!-- 1. Overview Stats -->
     <OverviewStats />
 
+    <!-- Location Stats -->
+    <LocationStats />
+
     <!-- 2. Revenue Chart (top) & Books Sold Chart (bottom) -->
     <div class="charts-col">
       <RevenueChart />
@@ -27,6 +30,7 @@ import BooksSoldChart from "@/views/client/dashboard/BooksSoldChart.vue";
 import TopBooksTable from "@/views/client/dashboard/TopBooksTable.vue";
 import TopUsersTable from "@/views/client/dashboard/TopUsersTable.vue";
 import InventoryStatusTable from "@/views/client/dashboard/InventoryStatusTable.vue";
+import LocationStats from "@/views/admin/components-admin/statistics/LocationStats.vue";
 </script>
 
 <style scoped>
