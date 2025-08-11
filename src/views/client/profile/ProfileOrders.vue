@@ -1,11 +1,6 @@
 <template>
   <div class="profile-orders">
-    <!-- Warning Alert -->
-    <div class="alert alert-warning d-flex align-items-center mb-4">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i>
-      <span>Bạn vui lòng cắp nhật thông tin tài khoản:</span>
-      <a href="#" class="ms-2 text-primary fw-bold">Cắp nhật thông tin ngay</a>
-    </div>
+   
 
     <!-- Page Header -->
     <div class="page-header mb-4">
@@ -48,7 +43,7 @@
             <div class="order-info">
               <span class="order-id">#{{ order.code }}</span>
               <span class="order-status" :class="getOrderStatusClass(order.orderStatus)">
-                {{ order.orderStatusDisplay }}
+                {{ order.orderStatusDisplay  }}
               </span>
             </div>
             <div class="order-date">

@@ -291,7 +291,20 @@
                       Đã bán: {{ book.soldCount || 0 }}
                     </small>
                     <small class="text-warning d-block">
-                      Đang xử lý: {{ book.processingQuantity || 0 }}
+                      <span 
+                        v-if="book.processingQuantity && book.processingQuantity > 0"
+                        class="processing-quantity-hover"
+                        @mouseenter="showProcessingOrdersPopup($event, book)"
+                        @mouseleave="hideProcessingOrdersPopup"
+                        :title="'Click để xem chi tiết ' + (book.processingQuantity || 0) + ' cuốn đang xử lý'"
+                      >
+                        <i class="bi bi-hourglass-split me-1"></i>
+                        Đang xử lý: {{ book.processingQuantity }}
+                      </span>
+                      <span v-else>
+                        <i class="bi bi-check-circle me-1"></i>
+                        Đang xử lý: {{ book.processingQuantity || 0 }}
+                      </span>
                     </small>
                   </div>
                 </td>
@@ -954,6 +967,16 @@
 
   <!-- Image Preview Modal -->
   <ImagePreviewModal :show="showImagePreview" :image-url="previewImageUrl" @close="closeImagePreview" />
+
+  <!-- Processing Orders Popup -->
+  <ProcessingOrdersPopup
+    :show="showProcessingPopup"
+    :book-id="processingPopupBookId"
+    :book-info="processingPopupBookInfo"
+    :mouse-position="mousePosition"
+    @close="hideProcessingOrdersPopup"
+    @keep-open="cancelHideProcessingOrdersPopup"
+  />
 </template>
 
 <script setup>
@@ -963,6 +986,7 @@ import AddButton from '@/components/common/AddButton.vue';
 import StatusLabel from '@/components/common/StatusLabel.vue';
 import MultiImageUpload from '@/components/common/MultiImageUpload.vue';
 import ImagePreviewModal from '@/components/common/ImagePreviewModal.vue';
+import ProcessingOrdersPopup from '@/components/common/ProcessingOrdersPopup.vue';
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { Modal } from 'bootstrap';
 import { getBooks, createBook, updateBook, getAuthorsDropdown, getCategoriesDropdown, getSuppliersDropdown, toggleBookStatus, calculatePrice } from '@/services/admin/book';
@@ -1856,6 +1880,44 @@ const closeImagePreview = () => {
   previewImageUrl.value = '';
 };
 
+// State for processing orders popup
+const showProcessingPopup = ref(false);
+const processingPopupBookId = ref(null);
+const processingPopupBookInfo = ref({});
+const mousePosition = ref({ x: 0, y: 0 });
+const hidePopupTimeout = ref(null);
+
+const cancelHideProcessingOrdersPopup = () => {
+  if (hidePopupTimeout.value) {
+    clearTimeout(hidePopupTimeout.value);
+    hidePopupTimeout.value = null;
+  }
+};
+
+const showProcessingOrdersPopup = (event, book) => {
+  // Clear any pending hide timeout first
+  cancelHideProcessingOrdersPopup();
+  if (!showProcessingPopup.value) {
+    mousePosition.value = { x: event.clientX, y: event.clientY };
+    processingPopupBookId.value = book.id;
+    processingPopupBookInfo.value = {
+      bookName: book.bookName,
+      bookCode: book.bookCode,
+      processingQuantity: book.processingQuantity
+    };
+    showProcessingPopup.value = true;
+  }
+};
+
+const hideProcessingOrdersPopup = () => {
+  cancelHideProcessingOrdersPopup();
+  hidePopupTimeout.value = setTimeout(() => {
+    showProcessingPopup.value = false;
+    processingPopupBookId.value = null;
+    processingPopupBookInfo.value = {};
+  }, 250); // slight increase for user move
+};
+
 // Format date function
 const formatDate = (timestamp) => {
   if (!timestamp) return 'Chưa có';
@@ -2309,6 +2371,31 @@ const goToFlashSaleManagement = (bookId) => {
 
 .table-responsive::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* Processing quantity hover effect */
+.processing-quantity-hover {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid transparent;
+}
+
+.processing-quantity-hover:hover {
+  background: rgba(255, 193, 7, 0.2);
+  border: 1px solid rgba(255, 193, 7, 0.5);
+  color: #d39e00 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+.processing-quantity-hover:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(255, 193, 7, 0.4);
 }
 
 /* Responsive table fixes */
