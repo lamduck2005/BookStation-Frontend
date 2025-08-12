@@ -1,15 +1,32 @@
 <template>
-  <div class="container-fluid py-4">
+  <div class="admin-page container-fluid py-4">
+    <OverviewStatsComponent :stats="stats" />
     <!-- ========== BỘ LỌC FLASH SALE ITEM ========== -->
     <div class="card mb-5 shadow-lg border-0 filter-card">
       <div class="card-header bg-light border-0 py-3">
-        <h5 class="mb-0 text-secondary">
-          <i class="bi bi-funnel me-2"></i>
-          Bộ lọc tìm kiếm
-        </h5>
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0 text-secondary">
+            <i class="bi bi-funnel me-2"></i>
+            Bộ lọc tìm kiếm
+          </h5>
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            type="button"
+            @click="toggleFilter"
+            :aria-expanded="showFilter"
+          >
+            <i
+              :class="showFilter ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"
+            ></i>
+            {{ showFilter ? "Thu gọn" : "Mở rộng" }}
+          </button>
+        </div>
       </div>
-      <div class="card-body">
-        <div class="row g-3">
+      <div
+        class="card-body filter-collapse"
+        :class="{ 'filter-collapsed': !showFilter }"
+      >
+        <div class="row g-4">
           <!-- <div class="col-md-2">
             <label class="form-label">
               <i class="bi bi-lightning-charge me-1"></i>
@@ -98,17 +115,14 @@
         <div class="row g-3 pt-3 d-flex justify-content-center">
           <div class="col-md-1">
             <button
-              class="btn btn-outline-success w-100 me-2"
+              class="btn btn-success w-100 me-2"
               @click="searchWithFilter"
             >
               <i class="bi bi-funnel"></i> Lọc
             </button>
           </div>
           <div class="col-md-2">
-            <button
-              class="btn btn-outline-secondary w-100"
-              @click="clearFilters"
-            >
+            <button class="btn btn-secondary w-100" @click="clearFilters">
               <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
             </button>
           </div>
@@ -117,7 +131,7 @@
     </div>
 
     <!-- ================== BẢNG FLASH SALE ITEM ================== -->
-    <div class="card shadow-lg border-0 mb-4 flashsale-table-card">
+    <div class="card shadow-lg border-0 mb-4 admin-table-card">
       <div
         class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3"
       >
@@ -144,16 +158,14 @@
           </button>
         </div>
       </div>
-      <div class="card-body p-0">
-        <!-- Loading -->
-        <div v-if="loading" class="text-center py-4">
-          <div class="spinner-border text-primary" role="status">
+      <div class="card-body p-0" :class="{ loading: loading }">
+        <div class="loading-overlay" :class="{ show: loading }">
+          <div class="spinner-border" role="status">
             <span class="visually-hidden">Đang tải...</span>
           </div>
-          <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+          <p>Đang tải dữ liệu...</p>
         </div>
-        <!-- Error -->
-        <div v-else-if="error" class="alert alert-danger m-4" role="alert">
+        <div v-if="error" class="alert alert-danger m-4" role="alert">
           <i class="bi bi-exclamation-triangle-fill me-2"></i>
           {{ error }}
           <button
@@ -163,7 +175,6 @@
             Thử lại
           </button>
         </div>
-        <!-- Table -->
         <div v-else>
           <table class="table align-middle table-hover mb-0">
             <thead class="table-light">
@@ -210,7 +221,6 @@
             </tbody>
           </table>
         </div>
-        <!-- Pagination -->
         <div class="p-3">
           <Pagination
             :page-number="currentPage"
@@ -418,12 +428,14 @@ import {
   addFlashSaleItem,
   updateFlashSaleItem,
   toggleStatusFlashSaleItem,
+  getFlashSaleItemStats,
 } from "@/services/admin/flashSaleItem.js";
 import { useRoute } from "vue-router";
 import {
   getActiveBooksWithStock,
   getActiveBooksForEdit,
 } from "@/services/admin/book";
+import OverviewStatsComponent from "@/components/common/OverviewStatsComponent.vue";
 
 const route = useRoute();
 const defaultFlashSaleId = route.params.id ? parseInt(route.params.id) : "";
@@ -469,6 +481,14 @@ const formData = ref({
 // Books loading
 const loadingBooks = ref(false);
 const availableBooks = ref([]);
+
+// Stats
+const stats = ref([
+  { label: "Số sách trong flash sale", value: 0 },
+  { label: "Số sách flash đã bán", value: 0 },
+  { label: "Sách được mua nhiều nhất trong flash sale", value: "" },
+  { label: "Tồn kho flash sale", value: 0 },
+]);
 
 // Helper: currency
 function formatCurrency(value) {
@@ -625,6 +645,30 @@ const getDataFromApi = async (page, size) => {
   }
 };
 
+// Fetch stats
+const fetchStats = async () => {
+  try {
+    const res = await getFlashSaleItemStats(defaultFlashSaleId);
+    const data = res.data.data;
+    stats.value = [
+      { label: "SỐ SÁCH TRONG FLASH SALE", value: data.totalBooksInFlashSale },
+      { label: "SỐ SÁCH FLASH ĐÃ BÁN", value: data.totalBooksSoldInFlashSale },
+      {
+        label: "SÁCH ĐƯỢC MUA NHIỀU NHẤT TRONG FLASH SALE",
+        value: data.topSellingBookName || "—",
+      },
+      { label: "TỒN KHO FLASH SALE", value: data.totalFlashSaleStock },
+    ];
+  } catch (e) {
+    stats.value = [
+      { label: "SỐ SÁCH TRONG FLASH SALE", value: 0 },
+      { label: "SỐ SÁCH FLASH ĐÃ BÁN", value: 0 },
+      { label: "SÁCH ĐƯỢC MUA NHIỀU NHẤT TRONG FLASH SALE", value: "—" },
+      { label: "TỒN KHO FLASH SALE", value: 0 },
+    ];
+  }
+};
+
 // Filter actions
 const searchWithFilter = () => {
   getDataFromApi(0, pageSize.value);
@@ -740,7 +784,10 @@ const validateForm = () => {
     return false;
   }
   if (Number(f.stockQuantity) < 0) {
-    showToast("error", "Số lượng sản phẩm khuyến mãi phải lớn hơn hoặc bằng 0!");
+    showToast(
+      "error",
+      "Số lượng sản phẩm khuyến mãi phải lớn hơn hoặc bằng 0!"
+    );
     return false;
   }
   if (
@@ -847,12 +894,20 @@ watch(
 );
 
 onMounted(() => {
+  fetchStats();
   getDataFromApi(currentPage.value, pageSize.value);
   loadAvailableBooks(); // Load sẵn danh sách sách
 });
+
+const showFilter = ref(false);
+const toggleFilter = () => {
+  showFilter.value = !showFilter.value;
+};
 </script>
 
 <style scoped>
+@import "@/assets/css/admin-global.css";
+
 .table th,
 .table td {
   vertical-align: middle;
@@ -926,5 +981,136 @@ onMounted(() => {
 
 .form-select option:hover {
   background-color: #f8f9fa;
+}
+
+/* New styles for admin page */
+.admin-page {
+  min-height: 100vh;
+  padding: 2rem 0;
+}
+
+.admin-table-card {
+  border-radius: 0.8rem !important;
+  overflow: hidden;
+}
+
+.card-header {
+  position: relative;
+  z-index: 1;
+}
+
+.card-header::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    #f4f7fa 100%
+  );
+  z-index: -1;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.8rem;
+  z-index: 10;
+}
+
+.loading-overlay.show {
+  display: flex;
+}
+
+.loading-overlay .spinner-border {
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.filter-collapse {
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  overflow: hidden;
+}
+
+.filter-collapsed {
+  max-height: 0;
+  opacity: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.card-header .btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.card-header h5 {
+  margin-bottom: 0;
+  font-size: 1.125rem;
+}
+
+.card-header .bi {
+  font-size: 1.25rem;
+}
+
+.table th {
+  background-color: #f8f9fa;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.table td {
+  padding: 1rem;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f1f3f5;
+}
+
+.alert {
+  border-radius: 0.8rem;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  border-color: #218838;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #5a6268;
 }
 </style>

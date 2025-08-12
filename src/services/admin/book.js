@@ -190,7 +190,7 @@ export const getBookByIdCategory = async (id, text) => {
 }
 export const fetchFlashSaleProducts = async () => {
   try {
-    const response = await client.get(`/api/books/flashsalebook`);
+    const response = await client.get(`/api/books/flashsale/books`);
     return response.data.data;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách sách:', error);

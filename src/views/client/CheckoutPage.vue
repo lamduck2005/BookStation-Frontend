@@ -744,7 +744,7 @@ const processPayment = async () => {
     const response = await createOrderFromSession(sessionId.value, userId, session.value)
 
     if (response.status === 201 && response.data) {
-      const orderId = response.data
+        const orderId = response.data.data
       console.log('🎉 Order created successfully:', orderId)
       showToast('success', `Đặt hàng thành công! Mã đơn hàng: ${orderId}`)
 
