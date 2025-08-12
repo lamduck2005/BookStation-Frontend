@@ -1,16 +1,32 @@
 <template>
-  <div class="container-fluid py-4">
+  <div class="admin-page container-fluid py-4">
     <!-- ========== BỘ LỌC CATEGORY ========== -->
     <div class="card mb-5 shadow-lg border-0 filter-card">
       <div class="card-header bg-light border-0 py-3">
-        <h5 class="mb-0 text-secondary">
-          <i class="bi bi-funnel me-2"></i>
-          Bộ lọc tìm kiếm
-        </h5>
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0 text-secondary">
+            <i class="bi bi-funnel me-2"></i>
+            Bộ lọc tìm kiếm
+          </h5>
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            type="button"
+            @click="toggleFilter"
+            :aria-expanded="showFilter"
+          >
+            <i
+              :class="showFilter ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"
+            ></i>
+            {{ showFilter ? "Thu gọn" : "Mở rộng" }}
+          </button>
+        </div>
       </div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-6">
+      <div
+        class="card-body filter-collapse"
+        :class="{ 'filter-collapsed': !showFilter }"
+      >
+        <div class="row g-4">
+          <div class="col-md-4">
             <label class="form-label">
               <i class="bi bi-search me-1"></i>
               Tìm kiếm theo tên danh mục
@@ -23,20 +39,17 @@
             />
           </div>
         </div>
-        <div class="row g-3 pt-3 d-flex justify-content-center">
+        <div class="row g-3 pt-3 m-1 d-flex justify-content-center">
           <div class="col-md-1">
             <button
-              class="btn btn-outline-success w-100 me-2"
+              class="btn btn-success w-100 me-2"
               @click="searchWithFilter"
             >
               <i class="bi bi-funnel"></i> Lọc
             </button>
           </div>
           <div class="col-md-2">
-            <button
-              class="btn btn-outline-secondary w-100"
-              @click="clearFilters"
-            >
+            <button class="btn btn-secondary w-100" @click="clearFilters">
               <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
             </button>
           </div>
@@ -45,8 +58,7 @@
     </div>
 
     <!-- ================== BẢNG DANH SÁCH CATEGORY ================== -->
-    <div class="card shadow-lg border-0 mb-4 category-table-card">
-      <!-- Header bảng: Tên + nút -->
+    <div class="card shadow-lg border-0 mb-4 admin-table-card">
       <div
         class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3"
       >
@@ -57,7 +69,6 @@
           </h5>
         </div>
         <div class="d-flex gap-2">
-          <!-- Nút làm mới dữ liệu -->
           <button
             class="btn btn-outline-info btn-sm py-2"
             @click="reloadPage"
@@ -65,7 +76,6 @@
           >
             <i class="bi bi-arrow-repeat me-1"></i> Làm mới
           </button>
-          <!-- Nút thêm mới -->
           <button
             class="btn btn-primary btn-sm py-2"
             style="background-color: #33304e; border-color: #33304e"
@@ -96,13 +106,15 @@
         </div>
         <!-- Data table -->
         <div v-else>
-          <table class="table align-middle table-hover mb-0">
-            <thead class="table-light">
+          <table
+            class="table align-middle table-hover mb-0 category-table-custom"
+          >
+            <thead>
               <tr>
                 <th style="width: 60px">#</th>
-                <th style="width: 45%">Tên danh mục</th>
-                <th style="width: 25%">Mô tả</th>
-                <th class="text-center" style="width: 150px">Chức năng</th>
+                <th style="width: 45%">TÊN DANH MỤC</th>
+                <th style="width: 25%">MÔ TẢ</th>
+                <th class="text-center" style="width: 150px">CHỨC NĂNG</th>
               </tr>
             </thead>
             <tbody>
@@ -250,18 +262,15 @@
     tabindex="-1"
     style="display: block; background: rgba(0, 0, 0, 0.2); z-index: 1050"
   >
-    <div class="modal-dialog" style="max-width: 450px">
+    <div class="modal-dialog" style="max-width: 600px">
       <div class="modal-content">
-        <div class="modal-header" style="background-color: #ecae9e">
-          <h5 class="modal-title" id="addCategoryModalLabel">
+        <div class="modal-header category-modal-header">
+          <h5 class="modal-title">
             <i class="bi bi-plus-circle me-2"></i>
             Thêm danh mục
           </h5>
           <button type="button" class="custom-close-btn" @click="closeModal">
-            <img
-              src="https://cdn-icons-png.flaticon.com/128/694/694604.png"
-              alt="Close"
-            />
+            <i class="bi bi-x-lg"></i>
           </button>
         </div>
         <div class="modal-body">
@@ -381,7 +390,7 @@
     tabindex="-1"
     style="display: block; background: rgba(0, 0, 0, 0.2); z-index: 1050"
   >
-    <div class="modal-dialog" style="max-width: 450px">
+    <div class="modal-dialog" style="max-width: 600px">
       <div class="modal-content">
         <div class="modal-header" style="background-color: #ecae9e">
           <h5 class="modal-title d-flex align-items-center gap-2">
@@ -503,6 +512,10 @@ const editData = ref({
   description: "",
 });
 const searchQuery = ref("");
+const showFilter = ref(true);
+const toggleFilter = () => {
+  showFilter.value = !showFilter.value;
+};
 
 // Pagination variables
 const currentPage = ref(0);
@@ -997,127 +1010,28 @@ const clearFilters = () => {
 </script>
 
 <style scoped>
-.div-list-category {
-  padding-top: 10px;
-  border: 1.5px solid #e0e0e0;
-  border-radius: 10px 10px 0 0px;
-}
-.table td {
-  vertical-align: middle;
-}
-.table {
-  overflow-x: auto;
-}
-.modal-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-.modal-content-custom {
-  background: #fff;
-  border-radius: 12px;
-  padding: 0;
-  min-width: 350px;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
+@import "@/assets/css/admin-global.css";
+
+/* Chỉ giữ lại các style cho modal, custom-close-btn, ... */
+.modal-dialog {
+  max-width: 600px !important;
 }
 .modal-content {
   border-radius: 15px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   border: none;
 }
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 20px;
-  border-bottom: 1px solid #eee;
+.category-modal-header {
   border-bottom: 2px solid #ecae9e;
   border-radius: 15px 15px 0 0;
   padding: 0.8rem 1.2rem;
   position: relative;
+  background: #f8fafc;
 }
 .modal-title {
   font-weight: 600;
   color: #2c2c54;
   font-size: 1.1rem;
-}
-.btn-close {
-  background: none;
-  border: none;
-  font-size: 1.3rem;
-}
-.form-control,
-textarea {
-  border-radius: 8px;
-  font-size: 1rem;
-  padding: 10px 12px;
-}
-.category-list-title {
-  margin-left: 10px;
-  background: none;
-  font-weight: bold;
-  color: #222;
-  font-size: 1.1rem;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-  margin-bottom: 0;
-  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.03);
-  border-bottom: 1.5px solid #e0e0e0;
-}
-
-.category-list-title-custom {
-  background: #ecae9e;
-  font-weight: bold;
-  color: #222;
-  font-size: 1.1rem;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-  margin-bottom: 0;
-  padding: 12px 18px;
-  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.03);
-  border-bottom: 1.5px solid #e0e0e0;
-}
-
-.custom-table {
-  margin-top: 20px;
-  border-radius: 12px;
-  border: 1.5px solid #e0e0e0;
-  overflow: hidden;
-  width: 100%;
-  font-size: 1.05rem;
-}
-.custom-table thead tr {
-  background-color: #f8f9fa;
-  color: #222;
-}
-.custom-table tbody tr:hover {
-  background-color: #f3f6fa;
-}
-.custom-table th,
-.custom-table td {
-  padding: 14px 12px;
-}
-.action-btn {
-  border-radius: 8px;
-  margin: 0 2px;
-  padding: 6px 10px;
-  transition: background 0.2s;
-}
-.action-btn:hover {
-  background: #f0f0f0;
-}
-
-.btn-success {
-  border-radius: 8px;
-  font-weight: 500;
 }
 .custom-close-btn {
   background: none;
@@ -1128,64 +1042,19 @@ textarea {
   right: 1rem;
   top: 50%;
   transform: translateY(-50%);
+  font-size: 1.5rem;
+  color: #333;
 }
-.custom-close-btn img {
-  width: 30px;
-  height: 30px;
+.modal-body {
+  min-height: 320px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1.5rem 1.2rem 0.5rem 1.2rem;
 }
 .modal-footer {
   border-top: none;
-  padding: 1rem 1.5rem;
-  display: flex;
+  background: none;
+  padding: 1rem 0 0 0;
   justify-content: flex-end;
-  gap: 10px;
-}
-
-/* Table responsive improvements */
-.table-responsive {
-  overflow-x: auto !important;
-  -webkit-overflow-scrolling: touch;
-  max-width: 100%;
-}
-
-.table-responsive table {
-  min-width: 800px; /* Ensure table has minimum width for proper scrolling */
-}
-
-.table-responsive::-webkit-scrollbar {
-  height: 8px;
-}
-
-.table-responsive::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.table-responsive::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
-}
-
-.table-responsive::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-
-/* Responsive table fixes */
-@media (max-width: 1200px) {
-  .table-responsive table {
-    min-width: 900px;
-  }
-}
-
-@media (max-width: 992px) {
-  .table-responsive table {
-    min-width: 800px;
-  }
-}
-
-@media (max-width: 768px) {
-  .table-responsive table {
-    min-width: 700px;
-  }
 }
 </style>

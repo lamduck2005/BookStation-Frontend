@@ -19,3 +19,8 @@ export const updateReview = async (id, data) => {
 export const toggleStatusReview = async (id) => {
   return await client.patch(`/api/reviews/${id}/status`);
 };
+
+// Lấy stats
+export const getReviewStats = async () => {
+  return await client.get('/api/reviews/stats');
+};

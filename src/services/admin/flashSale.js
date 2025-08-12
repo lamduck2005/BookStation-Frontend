@@ -30,5 +30,9 @@ export const toggleStatusFlashSale = async (id) => {
 
 export const getTodayFlashSale = async () => {
     return await client.get(`/api/flash-sales/today`);
+}
+
+export const getFlashSaleStats = async () => {
+    return await client.get(`/api/flash-sales/stats`);
 };
 

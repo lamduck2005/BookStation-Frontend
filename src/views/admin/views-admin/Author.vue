@@ -3,12 +3,28 @@
     <!-- ========== BỘ LỌC AUTHOR ========== -->
     <div class="card mb-5 shadow-lg border-0 filter-card">
       <div class="card-header bg-light border-0 py-3">
-        <h5 class="mb-0 text-secondary">
-          <i class="bi bi-funnel me-2"></i>
-          Bộ lọc tìm kiếm
-        </h5>
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0 text-secondary">
+            <i class="bi bi-funnel me-2"></i>
+            Bộ lọc tìm kiếm
+          </h5>
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            type="button"
+            @click="toggleFilter"
+            :aria-expanded="showFilter"
+          >
+            <i
+              :class="showFilter ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"
+            ></i>
+            {{ showFilter ? "Thu gọn" : "Mở rộng" }}
+          </button>
+        </div>
       </div>
-      <div class="card-body">
+      <div
+        class="card-body filter-collapse"
+        :class="{ 'filter-collapsed': !showFilter }"
+      >
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label">
@@ -22,22 +38,18 @@
               placeholder="Nhập tên tác giả..."
             />
           </div>
-          <!-- ✅ BỎ cột filter trạng thái -->
         </div>
         <div class="row g-3 pt-3 d-flex justify-content-center">
           <div class="col-md-1">
             <button
-              class="btn btn-outline-success w-100 me-2"
+              class="btn btn-success w-100 me-2"
               @click="searchWithFilter"
             >
               <i class="bi bi-funnel"></i> Lọc
             </button>
           </div>
           <div class="col-md-2">
-            <button
-              class="btn btn-outline-secondary w-100"
-              @click="clearFilters"
-            >
+            <button class="btn btn-secondary w-100" @click="clearFilters">
               <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
             </button>
           </div>
@@ -46,8 +58,7 @@
     </div>
 
     <!-- ================== BẢNG DANH SÁCH AUTHOR ================== -->
-    <div class="card shadow-lg border-0 mb-4 author-table-card">
-      <!-- Header bảng: Tên + nút -->
+    <div class="card shadow-lg border-0 mb-4 admin-table-card">
       <div
         class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3"
       >
@@ -58,7 +69,6 @@
           </h5>
         </div>
         <div class="d-flex gap-2">
-          <!-- Nút làm mới dữ liệu -->
           <button
             class="btn btn-outline-info btn-sm py-2"
             @click="reloadPage"
@@ -66,7 +76,6 @@
           >
             <i class="bi bi-arrow-repeat me-1"></i> Làm mới
           </button>
-          <!-- Nút thêm mới -->
           <button
             class="btn btn-primary btn-sm py-2"
             style="background-color: #33304e; border-color: #33304e"
@@ -76,16 +85,16 @@
           </button>
         </div>
       </div>
-      <div class="card-body p-0">
-        <!-- Loading state -->
-        <div v-if="loading" class="text-center py-4">
-          <div class="spinner-border text-primary" role="status">
+      <div class="card-body p-0 position-relative">
+        <!-- Loading overlay giống review -->
+        <div class="loading-overlay" :class="{ show: loading }">
+          <div class="spinner-border" role="status">
             <span class="visually-hidden">Đang tải...</span>
           </div>
-          <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+          <p>Đang tải dữ liệu...</p>
         </div>
         <!-- Error state -->
-        <div v-else-if="error" class="alert alert-danger m-4" role="alert">
+        <div v-if="error" class="alert alert-danger m-4" role="alert">
           <i class="bi bi-exclamation-triangle-fill me-2"></i>
           {{ error }}
           <button
@@ -97,15 +106,16 @@
         </div>
         <!-- Data table -->
         <div v-else>
-          <table class="table align-middle table-hover mb-0">
-            <thead class="table-light">
+          <table
+            class="table align-middle table-hover mb-0 author-table-custom"
+          >
+            <thead>
               <tr>
                 <th style="width: 40px">#</th>
-                <th style="width: 200px">Tên tác giả</th>
-                <th>Tiểu sử</th>
-                <th style="width: 120px">Ngày sinh</th>
-                <!-- ✅ BỎ cột trạng thái -->
-                <th style="width: 180px">Chức năng</th>
+                <th style="width: 220px">TÊN TÁC GIẢ</th>
+                <th style="width: 200px">NGÀY SINH</th>
+                <th>TIỂU SỬ</th>
+                <th style="width: 160px">CHỨC NĂNG</th>
               </tr>
             </thead>
             <tbody>
@@ -115,7 +125,6 @@
                   Không có dữ liệu
                 </td>
               </tr>
-              <!-- Dòng dữ liệu -->
               <tr
                 v-for="(author, index) in authors"
                 :key="author.id"
@@ -123,30 +132,32 @@
                 style="vertical-align: middle"
               >
                 <td class="py-3">{{ currentPage * pageSize + index + 1 }}</td>
-                <td class="py-3 fw-semibold">{{ author.authorName }}</td>
+                <td class="py-3 fw-bold">{{ author.authorName }}</td>
+                <td class="py-3">{{ author.birthDate }}</td>
                 <td
                   class="py-3"
                   style="max-width: 300px; white-space: pre-line"
                 >
                   {{ author.biography }}
                 </td>
-                <td class="py-3">{{ author.birthDate }}</td>
-                <!-- ✅ BỎ cột hiển thị trạng thái -->
                 <td class="py-3">
-                  <div class="d-inline-flex gap-1">
+                  <span class="tooltip-wrapper">
                     <button
-                      class="btn btn-outline-dark action-btn"
+                      class="btn btn-sm btn-outline-secondary action-btn"
                       @click="viewAuthor(author.id)"
-                      title="Xem"
                     >
                       <i class="bi bi-eye"></i>
                     </button>
-                    <EditButton @click="editAuthor(author.id)" title="Sửa" />
-                    <DeleteButton
-                      @click="handleDeleteAuthor(author.id)"
-                      title="Xóa"
-                    />
-                  </div>
+                    <span class="tooltip-bubble">Xem chi tiết</span>
+                  </span>
+                  <span class="tooltip-wrapper ms-2">
+                    <EditButton @click="editAuthor(author.id)" />
+                    <span class="tooltip-bubble">Chỉnh sửa</span>
+                  </span>
+                  <span class="tooltip-wrapper ms-2">
+                    <DeleteButton @click="handleDeleteAuthor(author.id)" />
+                    <span class="tooltip-bubble">Xóa</span>
+                  </span>
                 </td>
               </tr>
             </tbody>
@@ -177,21 +188,18 @@
       tabindex="-1"
       style="display: block; background: rgba(0, 0, 0, 0.2); z-index: 1050"
     >
-      <div class="modal-dialog" style="max-width: 450px">
+      <div class="modal-dialog" style="max-width: 600px">
         <div class="modal-content">
-          <div class="modal-header" style="background-color: #ecae9e">
+          <div class="modal-header author-modal-header">
             <h5 class="modal-title">
               <i class="bi bi-plus-circle me-2"></i>
               Thêm tác giả
             </h5>
             <button type="button" class="custom-close-btn" @click="closeModal">
-              <img
-                src="https://cdn-icons-png.flaticon.com/128/694/694604.png"
-                alt="Close"
-              />
+              <i class="bx bx-x-circle"></i>
             </button>
           </div>
-          <div class="modal-body">
+          <div class="modal-body author-modal-body">
             <form @submit.prevent="add">
               <div class="mb-3">
                 <label class="form-label">
@@ -256,7 +264,7 @@
       tabindex="-1"
       style="display: block; background: rgba(0, 0, 0, 0.2); z-index: 1050"
     >
-      <div class="modal-dialog" style="max-width: 450px">
+      <div class="modal-dialog" style="max-width: 600px">
         <div class="modal-content">
           <div class="modal-header" style="background-color: #ecae9e">
             <h5 class="modal-title">
@@ -318,25 +326,23 @@
       tabindex="-1"
       style="display: block; background: rgba(0, 0, 0, 0.2); z-index: 1050"
     >
-      <div class="modal-dialog" style="max-width: 450px">
+      <div class="modal-dialog" style="max-width: 600px">
         <div class="modal-content">
-          <div class="modal-header" style="background-color: #ecae9e">
-            <h5 class="modal-title d-flex align-items-center gap-2">
-              <i class="bi bi-pencil-square me-2"></i> Sửa tác giả
+          <div class="modal-header author-modal-header">
+            <h5 class="modal-title">
+              <i class="bi bi-pencil-square me-2"></i>
+              Sửa tác giả
             </h5>
             <button
               type="button"
               class="custom-close-btn"
               @click="showEditModal = false"
             >
-              <img
-                src="https://cdn-icons-png.flaticon.com/128/694/694604.png"
-                alt="Close"
-              />
+              <i class="bx bx-x-circle"></i>
             </button>
           </div>
-          <div class="modal-body">
-            <form @submit.prevent="update">
+          <div class="modal-body author-modal-body">
+            <form @submit.prevent="handleUpdateAuthor(editData.id, editData)">
               <div class="mb-3">
                 <label class="form-label"
                   >Tên tác giả <span class="text-danger">*</span></label
@@ -373,25 +379,17 @@
                   min="1900-01-01"
                 />
               </div>
-              <!-- ✅ BỎ select trạng thái -->
+              <div class="modal-footer px-0">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  @click="showEditModal = false"
+                >
+                  Đóng
+                </button>
+                <button type="submit" class="btn btn-primary">Lưu</button>
+              </div>
             </form>
-          </div>
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              @click="showEditModal = false"
-            >
-              Hủy
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              style="background-color: #33304e; border-color: #33304e"
-              @click="handleUpdateAuthor(editData.id, editData)"
-            >
-              Lưu
-            </button>
           </div>
         </div>
       </div>
@@ -456,6 +454,10 @@ const searchQuery = ref("");
 // ✅ BỎ selectedStatus
 const loading = ref(false);
 const error = ref(null);
+const showFilter = ref(true);
+const toggleFilter = () => {
+  showFilter.value = !showFilter.value;
+};
 
 onMounted(() => {
   fetchAuthors();
@@ -867,36 +869,29 @@ const handleDeleteAuthor = async (id) => {
 </script>
 
 <style scoped>
-.table th,
-.table td {
-  vertical-align: middle;
-}
+@import "@/assets/css/admin-global.css";
 
+/* Chỉ giữ lại style cho modal và phần riêng */
 .modal-dialog {
-  max-width: 450px !important;
+  max-width: 600px !important;
 }
-
 .modal-content {
   border-radius: 15px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   border: none;
-  padding: 0;
 }
-
-.modal-header {
+.author-modal-header {
   border-bottom: 2px solid #ecae9e;
   border-radius: 15px 15px 0 0;
   padding: 0.8rem 1.2rem;
   position: relative;
-  background-color: #ecae9e;
+  background: #f8fafc;
 }
-
 .modal-title {
   font-weight: 600;
   color: #2c2c54;
   font-size: 1.1rem;
 }
-
 .custom-close-btn {
   background: none;
   border: none;
@@ -906,34 +901,19 @@ const handleDeleteAuthor = async (id) => {
   right: 1rem;
   top: 50%;
   transform: translateY(-50%);
+  font-size: 1.5rem;
+  color: #333;
 }
-
-.custom-close-btn img {
-  width: 30px;
-  height: 30px;
+.author-modal-body {
+  min-height: 320px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1.5rem 1.2rem 0.5rem 1.2rem;
 }
-
-.action-btn {
-  border-radius: 8px;
-  margin: 0 2px;
-  padding: 6px 10px;
-  transition: background 0.2s;
-}
-
-.action-btn:hover {
-  background: #f0f0f0;
-}
-
-/* Chỉ bo tròn cho div ngoài cùng, không ảnh hưởng header/body bên trong */
-.filter-card,
-.author-table-card {
-  border-radius: 0.8rem !important;
-  overflow: hidden;
-}
-
-/* Loading spinner */
-.spinner-border {
-  width: 3rem;
-  height: 3rem;
+.modal-footer {
+  border-top: none;
+  background: none;
+  padding: 1rem 0 0 0;
+  justify-content: flex-end;
 }
 </style>

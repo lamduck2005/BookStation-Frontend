@@ -1,14 +1,31 @@
 <template>
-  <div class="container-fluid py-4">
+  <div class="admin-page container-fluid py-4">
+    <OverviewStatsComponent :stats="stats" />
     <!-- ========== BỘ LỌC FLASH SALE ========== -->
     <div class="card mb-5 shadow-lg border-0 filter-card">
       <div class="card-header bg-light border-0 py-3">
-        <h5 class="mb-0 text-secondary">
-          <i class="bi bi-funnel me-2"></i>
-          Bộ lọc tìm kiếm
-        </h5>
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-0 text-secondary">
+            <i class="bi bi-funnel me-2"></i>
+            Bộ lọc tìm kiếm
+          </h5>
+          <button
+            class="btn btn-sm btn-outline-secondary"
+            type="button"
+            @click="toggleFilter"
+            :aria-expanded="showFilter"
+          >
+            <i
+              :class="showFilter ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"
+            ></i>
+            {{ showFilter ? "Thu gọn" : "Mở rộng" }}
+          </button>
+        </div>
       </div>
-      <div class="card-body">
+      <div
+        class="card-body filter-collapse"
+        :class="{ 'filter-collapsed': !showFilter }"
+      >
         <div class="row g-3">
           <div class="col-md-4">
             <label class="form-label">
@@ -59,17 +76,14 @@
         <div class="row g-3 pt-3 d-flex justify-content-center">
           <div class="col-md-1">
             <button
-              class="btn btn-outline-success w-100 me-2"
+              class="btn btn-success w-100 me-2"
               @click="searchWithFilter"
             >
               <i class="bi bi-funnel"></i> Lọc
             </button>
           </div>
           <div class="col-md-2">
-            <button
-              class="btn btn-outline-secondary w-100"
-              @click="clearFilters"
-            >
+            <button class="btn btn-secondary w-100" @click="clearFilters">
               <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
             </button>
           </div>
@@ -78,7 +92,7 @@
     </div>
 
     <!-- ================== BẢNG DANH SÁCH FLASH SALE ================== -->
-    <div class="card shadow-lg border-0 mb-4 flashsale-table-card">
+    <div class="card shadow-lg border-0 mb-4 admin-table-card">
       <!-- Header bảng: Tên + nút -->
       <div
         class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3"
@@ -291,6 +305,7 @@
 import EditButton from "@/components/common/EditButton.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import DeleteButton from "@/components/common/DeleteButton.vue";
+import OverviewStatsComponent from "@/components/common/OverviewStatsComponent.vue";
 import { ref, onMounted } from "vue";
 import { Modal } from "bootstrap";
 import { showToast } from "@/utils/swalHelper.js";
@@ -300,6 +315,7 @@ import {
   getAllFlashSale,
   toggleStatusFlashSale,
   updateFlashSale,
+  getFlashSaleStats,
 } from "@/services/admin/flashSale";
 import {
   datetimeLocalToTimestamp,
@@ -339,6 +355,16 @@ const formData = ref({
   endTime: "",
   status: 1,
 });
+
+const stats = ref([
+  { label: "Tổng số Flash Sale", value: 0 },
+  { label: "Đơn hàng đã bán dùng Flash", value: 0 },
+  { label: "Flash đang hoạt động", value: 0 },
+  {
+    label: "Top sách được bán nhiều nhất",
+    value: "",
+  },
+]);
 
 // Định dạng ngày giờ
 function formatDateTime(timestamp) {
@@ -556,16 +582,47 @@ const getDataFromApi = async (page, size) => {
   }
 };
 
-onMounted(async () => {
-  await getDataFromApi(currentPage.value, pageSize.value);
+const fetchStats = async () => {
+  try {
+    const res = await getFlashSaleStats();
+    const data = res.data.data;
+    stats.value = [
+      { label: "Tổng số Flash Sale", value: data.totalFlashSales },
+      { label: "Đơn hàng đã bán dùng Flash", value: data.totalFlashSaleOrders },
+      { label: "Flash đang hoạt động", value: data.activeFlashSales },
+      {
+        label: "Sách được mua nhiều nhất trong Flash sale đang diễn ra",
+        value: data.bestSellingFlashSaleBookName || "—",
+      },
+    ];
+  } catch (e) {
+    stats.value = [
+      { label: "Tổng số Flash Sale", value: 0 },
+      { label: "Đơn hàng đã bán dùng Flash", value: 0 },
+      { label: "Flash đang hoạt động", value: 0 },
+      {
+        label: "Sách được mua nhiều nhất trong Flash sale đang diễn ra",
+        value: "—",
+      },
+    ];
+  }
+};
+
+onMounted(() => {
+  fetchStats();
+  getDataFromApi(currentPage.value, pageSize.value);
 });
+
+const showFilter = ref(false);
+const toggleFilter = () => {
+  showFilter.value = !showFilter.value;
+};
 </script>
 
 <style scoped>
-.table th,
-.table td {
-  vertical-align: middle;
-}
+@import "@/assets/css/admin-global.css";
+
+/* Chỉ giữ lại các style cho modal, filter-collapse, loading-overlay */
 
 .modal-dialog {
   max-width: 600px !important;
@@ -573,26 +630,29 @@ onMounted(async () => {
 
 .modal-content {
   border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
-  border-bottom: 2px solid #ecae9e;
-  border-radius: 15px 15px 0 0;
   padding: 0.8rem 1.2rem;
+  border-bottom: 2px solid #ecae9e;
   position: relative;
 }
 
 .modal-title {
   font-weight: 600;
+  padding: 0.8rem 1.2rem;
   color: #2c2c54;
+  position: relative;
   font-size: 1.1rem;
 }
 
 .custom-close-btn {
   background: none;
+  color: #2c2c54;
   border: none;
+  font-size: 1.1rem;
   padding: 0.5rem;
   cursor: pointer;
   position: absolute;
@@ -604,18 +664,62 @@ onMounted(async () => {
 .custom-close-btn img {
   width: 30px;
   height: 30px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
+/* Modal body */
 .modal-body {
   min-height: 320px;
   max-height: 70vh;
   overflow-y: auto;
 }
 
-/* Chỉ bo tròn cho div ngoài cùng, không ảnh hưởng header/body bên trong */
-.filter-card,
-.flashsale-table-card {
-  border-radius: 0.8rem !important;
+/* Admin global styles */
+@import "@/assets/css/admin-global.css";
+
+/* Bộ lọc tìm kiếm - ẩn hiện */
+.filter-collapse {
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+  max-height: 500px;
+  opacity: 1;
+}
+
+.filter-collapsed {
+  max-height: 0;
+  opacity: 0;
   overflow: hidden;
+}
+
+/* Loading overlay */
+.card-body {
+  position: relative;
+}
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.loading-overlay.show {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.loading-overlay .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 0.5rem;
 }
 </style>

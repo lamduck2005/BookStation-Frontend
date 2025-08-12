@@ -18,4 +18,9 @@ export const updateFlashSaleItem = async (flashSaleId, itemId, data) => {
 // Toggle status
 export const toggleStatusFlashSaleItem = async (flashSaleId, itemId) => {
   return await client.patch(`/api/flash-sales/${flashSaleId}/items/${itemId}/status`);
-}; 
+};
+
+// Lấy thống kê flash sale item
+export const getFlashSaleItemStats = async (flashSaleId) => {
+  return await client.get(`/api/flash-sales/${flashSaleId}/items/stats`);
+};

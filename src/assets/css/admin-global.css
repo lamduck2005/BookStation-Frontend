@@ -1,0 +1,592 @@
+
+/*
+====================================
+ADMIN GLOBAL CSS - HƯỚNG DẪN SỬ DỤNG
+====================================
+
+Để sử dụng CSS này trong các file admin khác:
+
+1. WRAPPER CLASS:
+   - Bọc toàn bộ template trong class "admin-page"
+   - VD: <div class="admin-page container-fluid py-4">
+
+2. TABLE CARD:
+   - Đổi class từ "review-table-card" thành "admin-table-card"
+   - VD: <div class="card admin-table-card">
+
+3. FILTER CARD:
+   - Giữ nguyên class "filter-card"
+   - VD: <div class="card filter-card">
+
+4. CÁC CLASS KHÁC:
+   - loading-overlay: cho loading state
+   - tooltip-wrapper, tooltip-bubble: cho tooltip
+   - filter-collapse, filter-collapsed: cho collapse filter
+
+VÍ DỤ TEMPLATE:
+<div class="admin-page container-fluid py-4">
+  <div class="card filter-card">...</div>
+  <div class="card admin-table-card">...</div>
+</div>
+
+*/
+
+/* Typography for admin pages - áp dụng cho tất cả admin views */
+.admin-page .container-fluid {
+  /* Fast, đẹp, không cần tải font ngoài */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "Noto Sans", "Liberation Sans", "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+  font-size: 15px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Fix bảng che dropdown của multiselect */
+.container-fluid .filter-card {
+  z-index: 10;
+}
+
+/* Header dễ nhìn hơn - màu đơn - áp dụng cho tất cả admin table */
+.admin-table-card thead th {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: #475569 !important;
+  color: white !important;
+  border: none !important;
+  padding: 18px 16px !important;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-table-card thead th:first-child {
+  border-top-left-radius: 12px;
+}
+
+.admin-table-card thead th:last-child {
+  border-top-right-radius: 12px;
+}
+
+/* Body rows với hiệu ứng đẹp */
+.admin-table-card tbody td {
+  font-weight: 400;
+  padding: 16px !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.admin-table-card tbody tr {
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+/* Hover effect đẹp cho rows - không dịch chuyển */
+.admin-table-card tbody tr:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(147, 51, 234, 0.08) 100%) !important;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12) !important;
+}
+
+.admin-table-card tbody tr:hover td {
+  background: transparent !important;
+}
+
+/* Alternating row colors nhẹ nhàng */
+.admin-table-card tbody tr:nth-child(even) {
+  background: rgba(248, 249, 250, 0.5);
+}
+
+.admin-table-card tbody tr:nth-child(even):hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(147, 51, 234, 0.08) 100%) !important;
+}
+
+/* In đậm hẹp ngang hơn một chút cho các ô đậm */
+.admin-table-card .fw-bold {
+  letter-spacing: -0.01em;
+  font-stretch: 97%;
+  color: #2d3748;
+}
+
+/* Canh số đẹp, đều cột */
+.admin-table-card .numeric,
+.admin-table-card td[data-type="number"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tùy chọn: kích cỡ nhỏ gọn hơn cho bảng dày đặc */
+.admin-table-card.compact table {
+  font-size: 13px;
+}
+
+/* Table alignment and styling */
+.admin-table-card .table th,
+.admin-table-card .table td {
+  vertical-align: middle;
+}
+
+/* Card styling for admin tables - hiện đại hơn */
+.filter-card,
+.admin-table-card {
+  border-radius: 16px !important;
+  overflow: hidden;
+  border: none !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.03) !important;
+  background: white;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.admin-table-card:hover {
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12), 0 6px 15px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Card header đẹp */
+.admin-table-card .card-header {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%) !important;
+  border: none !important;
+  padding: 24px !important;
+}
+
+
+
+/* Tiêu đề đẹp hơn */
+.review-table-card .card-header h5 {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+  margin: 0 !important;
+  letter-spacing: -0.025em !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.admin-table-card .card-header h5 i {
+  color: #6366f1 !important;
+  margin-right: 12px !important;
+  font-size: 20px !important;
+}
+
+/* Filter card đẹp như bảng */
+.filter-card .card-header {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%) !important;
+  border: none !important;
+  padding: 24px !important;
+}
+
+/* Tiêu đề filter giống hệt tiêu đề bảng */
+.filter-card .card-header h5 {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+  margin: 0 !important;
+  letter-spacing: -0.025em !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.filter-card .card-header h5 i {
+  color: #10b981 !important;
+  margin-right: 12px !important;
+  font-size: 20px !important;
+}
+
+/* Filter collapse animation mượt mà */
+.filter-card .filter-collapse {
+  max-height: 1000px;
+  opacity: 1;
+  padding: 24px !important;
+  background: white;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.3s ease, 
+              padding 0.3s ease;
+  overflow: hidden;
+}
+
+.filter-card .filter-collapse.filter-collapsed {
+  max-height: 0;
+  opacity: 0;
+  padding: 0 24px !important;
+}
+
+.filter-card .card-header .btn {
+  transition: all 0.2s ease;
+  border-radius: 6px !important;
+}
+
+.filter-card .card-header .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background-color: rgba(31, 31, 31, 0.623) !important;
+  color: white !important;
+}
+
+.filter-card .card-header .btn i {
+  transition: transform 0.2s ease;
+}
+
+/* Tiêu đề đẹp hơn */
+.admin-table-card .card-header h5 {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: #1f2937 !important;
+  margin: 0 !important;
+  letter-spacing: -0.025em !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Card body filter */
+.filter-card .card-body {
+  border-radius: 16px !important;
+  padding: 24px !important;
+  background: white;
+}
+
+/* Form controls trong filter */
+.filter-card .form-label {
+  font-weight: 600 !important;
+  color: #374151 !important;
+  margin-bottom: 8px !important;
+  font-size: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.filter-card .form-label i {
+  color: #6b7280 !important;
+  margin-right: 6px !important;
+}
+
+/* Input và select trong filter */
+.filter-card .form-select,
+.filter-card .form-control {
+  border: 1.5px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  padding: 10px 12px !important;
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+  background-color: #fff !important;
+}
+
+.filter-card .form-select:focus,
+.filter-card .form-control:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+  outline: none !important;
+}
+
+.filter-card .form-select:hover,
+.filter-card .form-control:hover {
+  border-color: #9ca3af !important;
+}
+
+/* Buttons trong filter */
+.filter-card .btn {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  padding: 10px 20px !important;
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.filter-card .btn i {
+  margin-right: 6px !important;
+}
+
+.filter-card .btn-success{
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.filter-card .btn-success:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  color: white !important;
+}
+
+.filter-card .btn-secondary {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.filter-card .btn-secondary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3) !important;
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%) !important;
+  color: white !important;
+}
+
+/* Button Primary */
+.filter-card .btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.filter-card .btn-primary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+  color: white !important;
+}
+
+/* Button Warning */
+.filter-card .btn-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.filter-card .btn-warning:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+  color: white !important;
+}
+
+/* Button Danger */
+.filter-card .btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.filter-card .btn-danger:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  color: white !important;
+}
+
+/* Button Info */
+.filter-card .btn-info {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+  border: none !important;
+  color: white !important;
+}
+
+.filter-card .btn-info:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3) !important;
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%) !important;
+  color: white !important;
+}
+
+
+
+/* Loading states mượt mà */
+.admin-table-card .card-body {
+  position: relative;
+  min-height: 400px;
+  transition: opacity 0.3s ease;
+}
+
+.admin-table-card .card-body.loading {
+  opacity: 0.7;
+}
+
+/* Loading overlay */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(2px);
+}
+
+.loading-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Spinner đẹp hơn */
+.loading-overlay .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.3em;
+  color: #6366f1 !important;
+}
+
+.loading-overlay p {
+  margin-top: 1rem;
+  color: #6b7280;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Skeleton loading cho table */
+.skeleton-row {
+  animation: skeleton-loading 1.5s ease-in-out infinite alternate;
+}
+
+.skeleton-cell {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 2s infinite;
+  border-radius: 4px;
+  height: 20px;
+  margin: 4px 0;
+}
+
+@keyframes skeleton-loading {
+  0% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Tooltip CSS-only - đẹp hiện đại */
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tooltip-bubble {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  transform: translateX(-50%) translateY(10px);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  border-radius: 8px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  z-index: 1;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.tooltip-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #667eea transparent transparent transparent;
+}
+
+.tooltip-wrapper:hover .tooltip-bubble {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-2px) scale(1);
+}
+
+/* Hiệu ứng đẹp cho buttons trong tooltip */
+.tooltip-wrapper button {
+  transition: all 0.2s ease;
+}
+
+.tooltip-wrapper:hover button {
+  transform: translateY(-1px);
+}
+
+/* Status badges đẹp hiện đại */
+.admin-table-card .badge {
+  padding: 8px 12px !important;
+  border-radius: 20px !important;
+  font-weight: 500 !important;
+  font-size: 11px !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  border: none !important;
+  transition: all 0.2s ease !important;
+}
+
+.admin-table-card .badge:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+.admin-table-card .bg-success {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  color: white !important;
+}
+
+.admin-table-card .bg-warning {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+  color: white !important;
+}
+
+.admin-table-card .bg-info {
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%) !important;
+  color: white !important;
+}
+
+.admin-table-card .bg-secondary {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%) !important;
+  color: white !important;
+}
+
+.admin-table-card .bg-danger {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  color: white !important;
+}
+
+/* Buttons đẹp hơn */
+.admin-table-card .btn {
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+.admin-table-card .btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+/* Pagination đẹp */
+.admin-table-card + div .pagination {
+  margin: 0 !important;
+}
+
+.admin-table-card + div .pagination .page-link {
+  border-radius: 8px !important;
+  margin: 0 2px !important;
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  transition: all 0.2s ease !important;
+}
+
+.admin-table-card + div .pagination .page-link:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}

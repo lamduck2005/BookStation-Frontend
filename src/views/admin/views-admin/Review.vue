@@ -1,54 +1,81 @@
 <template>
-  <div class="container-fluid py-4">
-    <!-- ========== BỘ LỌC REVIEW ========== -->
-    <div class="card mb-5 shadow-lg border-0 filter-card">
-      <div class="card-header bg-light border-0 py-3">
-        <h5 class="mb-0 text-secondary">
-          <i class="bi bi-funnel me-2"></i>
-          Bộ lọc tìm kiếm
-        </h5>
-      </div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-2">
+  <div class="admin-page container-fluid py-4">
+    <OverviewStatsComponent :stats="stats" />
+     
+          <div class="card mb-5 shadow-lg border-0 filter-card">
+        <div class="card-header bg-light border-0 py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-secondary">
+              <i class="bi bi-funnel me-2"></i>
+              Bộ lọc tìm kiếm
+            </h5>
+            <button 
+              class="btn btn-sm btn-outline-secondary" 
+              type="button" 
+              @click="toggleFilter"
+              :aria-expanded="showFilter"
+            >
+              <i :class="showFilter ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+              {{ showFilter ? 'Thu gọn' : 'Mở rộng' }}
+            </button>
+          </div>
+        </div>
+        <div class="card-body filter-collapse" :class="{ 'filter-collapsed': !showFilter }">
+        <div class="row g-4">
+          <div class="col-md-3">
+            <label class="form-label">
+              <i class="bi bi-book me-1"></i>
+              Sách
+            </label>
+            <Multiselect v-model="filterSelected.book" :options="dropdowns.books.options" :searchable="true"
+              :internal-search="true" :close-on-select="true" :clear-on-select="false" label="bookName" track-by="id"
+              placeholder="Tìm sách theo tên">
+              <!-- Tùy chỉnh hiển thị option -->
+              <template v-slot:option="{ option }">
+                <div class="d-flex flex-column">
+                  <strong>{{ option.bookName }}</strong>
+                  <small v-if="option.bookCode" class="text-muted">
+                    {{ option.bookCode }}
+                  </small>
+                  <small v-if="option.isbn" class="text-muted">
+                    ISBN: {{ option.isbn }}
+                  </small>
+                </div>
+              </template>
+            </Multiselect>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">
+              <i class="bi bi-person me-1"></i>
+              Người đánh giá
+            </label>
+            <Multiselect v-model="filterSelected.customer" :options="dropdowns.customers.options" :searchable="true"
+              :internal-search="true" :close-on-select="true" :clear-on-select="false" label="fullName" track-by="id"
+              placeholder="Tìm người dùng theo tên">
+              <template #option="{ option }">
+                <div class="d-flex flex-column">
+                  <strong>{{ option.fullName || option.name }}</strong>
+                  <small v-if="option.phone" class="text-muted">{{ option.phone }}</small>
+                  <small v-if="option.email" class="text-muted">{{ option.email }}</small>
+                </div>
+              </template>
+            </Multiselect>
+          </div>
+
+        
+          <div class="col-md-3">
             <label class="form-label">
               <i class="bi bi-star-half me-1"></i>
-              Rating
+              Đánh giá
             </label>
             <select class="form-select" v-model="filter.rating">
               <option value="">Tất cả</option>
-              <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
+              <option v-for="n in 5" :key="n" :value="n">{{ n }} sao</option>
             </select>
           </div>
-          <div class="col-md-2">
-            <label class="form-label">
-              <i class="bi bi-book me-1"></i>
-              Book ID
-            </label>
-            <input type="number" class="form-control" v-model="filter.bookId" placeholder="Nhập bookId" />
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">
-              <i class="bi bi-person me-1"></i>
-              User ID
-            </label>
-            <input type="number" class="form-control" v-model="filter.userId" placeholder="Nhập userId" />
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">
-              <i class="bi bi-calendar me-1"></i>
-              Từ ngày
-            </label>
-            <input type="datetime-local" class="form-control" v-model="filter.from" />
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">
-              <i class="bi bi-calendar me-1"></i>
-              Đến ngày
-            </label>
-            <input type="datetime-local" class="form-control" v-model="filter.to" />
-          </div>
-          <div class="col-md-2">
+
+          <div class="col-md-3">
             <label class="form-label">
               <i class="bi bi-toggle-on me-1"></i>
               Trạng thái
@@ -60,15 +87,52 @@
               </option>
             </select>
           </div>
+
+          <div class="col-md-3">
+            <label class="form-label">
+              <i class="bi bi-calendar me-1"></i>
+              Từ ngày
+            </label>
+            <input type="datetime-local" class="form-control" v-model="filter.from" />
+          </div>
+          
+          <div class="col-md-3">
+            <label class="form-label">
+              <i class="bi bi-calendar me-1"></i>
+              Đến ngày
+            </label>
+            <input type="datetime-local" class="form-control" v-model="filter.to" />
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">
+              <i class="bi bi-sort-down me-1"></i>
+              Sắp xếp theo
+            </label>
+            <select class="form-select" v-model="filter.sortBy">
+              <option value="reviewDate">Ngày đánh giá</option>
+              <option value="rating">Số sao</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">
+              <i class="bi bi-arrow-down-up me-1"></i>
+              Thứ tự
+            </label>
+            <select class="form-select" v-model="filter.sortDirection">
+              <option value="DESC">Giảm dần</option>
+              <option value="ASC">Tăng dần</option>
+            </select>
+          </div>
         </div>
-        <div class="row g-3 pt-3 d-flex justify-content-center">
+        <div class="row g-3 pt-3 m-1 d-flex justify-content-center">
           <div class="col-md-1">
-            <button class="btn btn-outline-success w-100 me-2" @click="searchWithFilter">
+            <button class="btn btn-success w-100 me-2" @click="searchWithFilter">
               <i class="bi bi-funnel"></i> Lọc
             </button>
           </div>
           <div class="col-md-2">
-            <button class="btn btn-outline-secondary w-100" @click="clearFilters">
+            <button class="btn btn-secondary w-100" @click="clearFilters">
               <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
             </button>
           </div>
@@ -76,9 +140,8 @@
       </div>
     </div>
 
-    <!-- ================== BẢNG DANH SÁCH REVIEW ================== -->
-    <div class="card shadow-lg border-0 mb-4 review-table-card">
-      <!-- Header bảng: Tên + nút -->
+          <!-- table -->
+      <div class="card shadow-lg border-0 mb-4 admin-table-card">
       <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3">
         <div>
           <h5 class="mb-0 text-secondary">
@@ -87,29 +150,26 @@
           </h5>
         </div>
         <div class="d-flex gap-2">
-          <!-- Nút làm mới dữ liệu -->
           <button class="btn btn-outline-info btn-sm py-2" @click="reloadPage" :disabled="loading">
             <i class="bi bi-arrow-repeat me-1"></i> Làm mới
           </button>
-          <!-- Nút thêm mới -->
-          <button class="btn btn-primary btn-sm py-2" style="background-color: #33304e; border-color: #33304e;" @click="openAddForm">
+          <button class="btn btn-primary btn-sm py-2" style="background-color: #33304e; border-color: #33304e;"
+            @click="openAddForm">
             <i class="bi bi-plus-circle me-1"></i> Thêm mới
           </button>
         </div>
       </div>
-      <div class="card-body p-0">
-        <!-- Loading state -->
-        <div v-if="loading" class="text-center py-4">
-          <div class="spinner-border text-primary" role="status">
+      <div class="card-body p-0" :class="{ loading: loading }">
+        <div class="loading-overlay" :class="{ show: loading }">
+          <div class="spinner-border" role="status">
             <span class="visually-hidden">Đang tải...</span>
           </div>
-          <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+          <p>Đang tải dữ liệu...</p>
         </div>
-        <!-- Error state -->
-        <div v-else-if="error" class="alert alert-danger m-4" role="alert">
+        <div v-if="error" class="alert alert-danger m-4" role="alert">
           <i class="bi bi-exclamation-triangle-fill me-2"></i>
           {{ error }}
-          <button class="btn btn-sm btn-outline-danger ms-2" @click="getDataFromApi">
+          <button class="btn btn-sm btn-outline-danger ms-2" @click="getDataFromApi(currentPage, pageSize)">
             Thử lại
           </button>
         </div>
@@ -119,66 +179,76 @@
             <thead class="table-light">
               <tr>
                 <th style="width: 40px">#</th>
-                <th>Sách</th>
-                <th>Người đánh giá</th>
-                <th>Rating</th>
-                <th>Bình luận</th>
-                <th>Ngày đánh giá</th>
-                <th style="width: 160px">Trạng thái</th>
+                <th style="width: 300px">Sách</th>
                 <th style="width: 120px">Chức năng</th>
+                <th style="width: 120px">Trạng thái</th>
+                <th style="width: 180px">Người đánh giá</th>
+                <th style="width: 100px">Đánh giá</th>
+                <th style="width: 200px">Nội dung</th>
+                <th style="width: 150px">Ngày đánh giá</th>
+                <th style="width: 150px">Ngày sửa</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="reviews.length === 0">
-                <td colspan="8" class="text-center py-4 text-muted">
+                <td colspan="9" class="text-center py-4 text-muted">
                   <i class="bi bi-inbox me-2"></i>
                   Không có dữ liệu
                 </td>
               </tr>
               <tr v-for="(item, index) in reviews" :key="item.id" class="align-middle" style="vertical-align: middle;">
                 <td class="py-3">{{ currentPage * pageSize + index + 1 }}</td>
-                <td class="py-3">{{ item.bookName }}</td>
+                <td class="py-3 fw-bold">{{ item.bookName }}</td>
                 <td class="py-3">
-                  {{ item.userName }}
+                  <span class="tooltip-wrapper">
+                    <EditButton @click="openEditForm(item)" />
+                    <span class="tooltip-bubble">Chỉnh sửa</span>
+                  </span>
+                  <span class="tooltip-wrapper ms-2">
+                    <button class="btn btn-sm btn-outline-secondary" @click="handleStatusChange(item)">
+                      <i :class="item.reviewStatus === 'APPROVED' ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                    </button>
+                    <span class="tooltip-bubble">{{ item.reviewStatus === 'APPROVED' ? 'Ẩn đánh giá' : 'Hiển thị đánh giá'}}</span>
+                  </span>
+                </td>
+                <td class="py-3">
+                  <StatusLabel :status-text="reviewStatusLabel(item.reviewStatus)"
+                    :status-class="reviewStatusClass(item.reviewStatus)" />
+                </td>
+                <td class="py-3">
+                  <span class="fw-bold">{{ item.userName }}</span>
                   <br />
                   <small class="text-muted">{{ item.userEmail }}</small>
                 </td>
-                <td class="py-3">{{ item.rating }}</td>
+                <td class="py-3">{{ item.rating }} <i class="fas fa-star text-warning"></i></td>
                 <td class="py-3">{{ item.comment }}</td>
-                <td class="py-3">{{ formatDateTime(item.reviewDate) }}</td>
                 <td class="py-3">
-                  <StatusLabel :status-text="reviewStatusLabel(item.reviewStatus)" :status-class="reviewStatusClass(item.reviewStatus)" />
+                  <span class="fw-bold">{{ toTime(item.reviewDate) }}</span>
+                  <br />
+                  <small class="text-muted">{{ toDate(item.reviewDate) }}</small>
                 </td>
                 <td class="py-3">
-                  <EditButton @click="openEditForm(item)" />
-                  <button class="btn btn-sm btn-outline-secondary ms-2" @click="handleStatusChange(item)">
-                    <i :class="item.reviewStatus === 'APPROVED' ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
-                  </button>
+                  <span class="fw-bold">{{ toTime(item.updatedAt) }}</span>
+                  <br />
+                  <small class="text-muted">{{ toDate(item.updatedAt) }}</small>
                 </td>
+
+
               </tr>
             </tbody>
           </table>
         </div>
         <!-- Pagination -->
         <div class="p-3">
-          <Pagination
-            :page-number="currentPage"
-            :total-pages="totalPages"
-            :is-last-page="isLastPage"
-            :page-size="pageSize"
-            :items-per-page-options="itemsPerPageOptions"
-            :total-elements="totalElements"
-            @prev="handlePrev"
-            @next="handleNext"
-            @update:pageSize="handlePageSizeChange"
-          />
+          <Pagination :page-number="currentPage" :total-pages="totalPages" :is-last-page="isLastPage"
+            :page-size="pageSize" :items-per-page-options="itemsPerPageOptions" :total-elements="totalElements"
+            @prev="handlePrev" @next="handleNext" @update:pageSize="handlePageSizeChange" @goToPage="handleGoToPage" />
         </div>
       </div>
     </div>
-    <!-- ================== HẾT BẢNG REVIEW ================== -->
 
     <!-- Modal Thêm/Sửa Review -->
-    <div class="modal fade" id="formModal" tabindex="-1" aria-labelledby="formModalLabel" aria-hidden="true" style="z-index: 10000;">
+    <div class="modal fade" id="formModal" tabindex="-1" aria-labelledby="formModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
@@ -190,22 +260,42 @@
           <div class="modal-body">
             <form @submit.prevent="handleSubmitForm">
               <div class="mb-3">
-                <label class="form-label">Book ID <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" v-model="formData.bookId" required />
+                <label class="form-label">Sách <span class="text-danger">*</span></label>
+                <Multiselect v-model="formSelected.book" :options="dropdowns.books.options" :searchable="true"
+                  :internal-search="true" :close-on-select="true" :clear-on-select="false" label="bookName"
+                  track-by="id" placeholder="Chọn sách" :disabled="isEditMode">
+                  <template #option="{ option }">
+                    <div class="d-flex flex-column">
+                      <strong>{{ option.bookName }}</strong>
+                      <small v-if="option.bookCode" class="text-muted">{{ option.bookCode }}</small>
+                      <small v-if="option.isbn" class="text-muted">ISBN: {{ option.isbn }}</small>
+                    </div>
+                  </template>
+                </Multiselect>
               </div>
               <div class="mb-3">
-                <label class="form-label">User ID <span class="text-danger">*</span></label>
-                <input type="number" class="form-control" v-model="formData.userId" required />
+                <label class="form-label">Người đánh giá <span class="text-danger">*</span></label>
+                <Multiselect v-model="formSelected.customer" :options="dropdowns.customers.options" :searchable="true"
+                  :internal-search="true" :close-on-select="true" :clear-on-select="false" label="fullName"
+                  track-by="id" placeholder="Chọn người đánh giá" :disabled="isEditMode">
+                  <template #option="{ option }">
+                    <div class="d-flex flex-column">
+                      <strong>{{ option.fullName || option.name }}</strong>
+                      <small v-if="option.phone" class="text-muted">{{ option.phone }}</small>
+                      <small v-if="option.email" class="text-muted">{{ option.email }}</small>
+                    </div>
+                  </template>
+                </Multiselect>
               </div>
               <div class="mb-3">
-                <label class="form-label">Rating <span class="text-danger">*</span></label>
+                <label class="form-label">Đánh giá <span class="text-danger">*</span></label>
                 <select class="form-select" v-model="formData.rating" required>
-                  <option v-for="n in 5" :key="n" :value="n">{{ n }}</option>
+                  <option v-for="n in 5" :key="n" :value="n">{{ n }} sao</option>
                 </select>
               </div>
               <div class="mb-3">
                 <label class="form-label">Bình luận <span class="text-danger">*</span></label>
-                <textarea class="form-control" rows="3" v-model="formData.comment" required></textarea>
+                <textarea class="form-control" rows="3" v-model="formData.comment" maxlength="500" required></textarea>
               </div>
               <div class="mb-3">
                 <label class="form-label">Trạng thái</label>
@@ -225,9 +315,9 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive, watch } from 'vue';
 import { Modal } from 'bootstrap';
-import { showToast } from '@/utils/swalHelper.js';
+import { showToast, showQuickConfirm } from '@/utils/swalHelper.js';
 import EditButton from '@/components/common/EditButton.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import StatusLabel from '@/components/common/StatusLabel.vue';
@@ -235,18 +325,23 @@ import {
   getAllReview,
   addReview,
   updateReview,
-  toggleStatusReview
+  toggleStatusReview,
+  getReviewStats
 } from '@/services/admin/review.js';
+import { getBooksDropdown, getCustomersDropdown } from '@/services/admin/select.js';
 import { datetimeLocalToTimestamp } from '@/utils/utils.js';
+import OverviewStatsComponent from '@/components/common/OverviewStatsComponent.vue';
 
 // Enum Review Status
 const REVIEW_STATUS = {
-  PENDING: { label: 'Chờ duyệt', class: 'badge bg-secondary' },
+  // PENDING: { label: 'Chờ duyệt', class: 'badge bg-secondary' },
   APPROVED: { label: 'Hiển thị', class: 'badge bg-success' },
-  REJECTED: { label: 'Từ chối', class: 'badge bg-danger' },
+  // REJECTED: { label: 'Từ chối', class: 'badge bg-danger' },
   HIDDEN: { label: 'Ẩn', class: 'badge bg-warning text-dark' },
   EDITED: { label: 'Đã sửa', class: 'badge bg-info text-dark' }
 };
+
+// Xoá mẫu books cũ không dùng
 
 const filter = ref({
   rating: '',
@@ -254,10 +349,19 @@ const filter = ref({
   userId: '',
   from: '',
   to: '',
-  status: ''
+  status: '',
+  sortBy: 'reviewDate',
+  sortDirection: 'DESC'
 });
 
+// Stats
+const stats = ref([]);
+
+// Filter visibility
+const showFilter = ref(true);
+
 const reviews = ref([]);
+
 // Pagination state
 const currentPage = ref(0);
 const pageSize = ref(5);
@@ -269,6 +373,27 @@ const isLastPage = ref(false);
 const loading = ref(false);
 const error = ref(null);
 
+// Dropdowns gom chung
+const dropdowns = reactive({
+  books: { options: [] },
+  customers: { options: [] }
+});
+
+// Option đang chọn (object) và đồng bộ về filter qua 1 watcher chung
+const filterSelected = reactive({
+  book: null,
+  customer: null
+});
+
+// Đồng bộ từng dropdown tách riêng để tránh phụ thuộc lẫn nhau
+watch(() => filterSelected.book, (opt) => {
+  filter.value.bookId = opt?.id || '';
+});
+
+watch(() => filterSelected.customer, (opt) => {
+  filter.value.userId = opt?.id || '';
+});
+
 const isEditMode = ref(false);
 const formData = ref({
   id: '',
@@ -276,14 +401,33 @@ const formData = ref({
   userId: '',
   rating: 5,
   comment: '',
-  reviewStatus: 'PENDING'
+  reviewStatus: 'APPROVED'
 });
+
+// Selected cho form (khác filter)
+const formSelected = reactive({ book: null, customer: null });
+
+// Đồng bộ selected form -> formData ids
+watch(() => formSelected.book, (opt) => { formData.value.bookId = opt?.id || ''; });
+watch(() => formSelected.customer, (opt) => { formData.value.userId = opt?.id || ''; });
 
 // Helper to format datetime
 function formatDateTime(timestamp) {
   if (!timestamp) return '';
   const date = new Date(timestamp);
   return date.toLocaleString('vi-VN', { hour12: false });
+}
+
+function toDate(timestamp) {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  return date.toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+}
+
+function toTime(timestamp) {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString('vi-VN', { hour12: false });
 }
 
 function reviewStatusLabel(status) {
@@ -300,7 +444,9 @@ const getDataFromApi = async (page, size) => {
   try {
     const params = {
       page,
-      size
+      size,
+      sortBy: filter.value.sortBy || 'reviewDate',
+      sortDirection: filter.value.sortDirection || 'DESC'
     };
     if (filter.value.rating) params.rating = filter.value.rating;
     if (filter.value.bookId) params.bookId = filter.value.bookId;
@@ -329,6 +475,41 @@ const getDataFromApi = async (page, size) => {
     reviews.value = [];
   } finally {
     loading.value = false;
+    handleGetStats();
+  }
+};
+
+const handleGetStats = async () => {
+  try {
+    const response = await getReviewStats();
+    const {total, approved, edited, hidden} = response.data.data;
+    stats.value = [
+      { label: 'Tổng số đánh giá', value: total },
+      { label: 'Đã hiển thị', value: approved },
+      { label: 'Đã chỉnh sửa', value: edited },
+      { label: 'Đã ẩn', value: hidden }
+    ];
+  } catch (error) {
+    console.error('Lỗi khi tải stats:', error);
+  }
+};
+
+const handleGetDropdown = async () => {
+  try {
+    const response = await getBooksDropdown();
+
+    if (response && response.data) {
+      dropdowns.books.options = response.data;
+    }
+    // Gọi users song song 
+    const customersRes = await getCustomersDropdown();
+    if (customersRes && customersRes.data) {
+      dropdowns.customers.options = customersRes.data;
+    }
+  } catch (error) {
+    console.error('Lỗi khi tải danh sách sách:', error);
+    dropdowns.books.options = [];
+    dropdowns.customers.options = [];
   }
 };
 
@@ -343,9 +524,19 @@ const clearFilters = () => {
     userId: '',
     from: '',
     to: '',
-    status: ''
+    status: '',
+    sortBy: 'reviewDate',
+    sortDirection: 'DESC'
   };
+  // Reset luôn selected của multiselect để UI xóa chọn
+  filterSelected.book = null;
+  filterSelected.customer = null;
   getDataFromApi(0, pageSize.value);
+};
+
+// Toggle filter visibility
+const toggleFilter = () => {
+  showFilter.value = !showFilter.value;
 };
 
 // Reload
@@ -356,6 +547,15 @@ const reloadPage = () => {
 // Toggle status
 const handleStatusChange = async (item) => {
   try {
+    const confirm = await showQuickConfirm(
+      item.reviewStatus === 'APPROVED' ? 'Ẩn đánh giá?' : 'Hiển thị đánh giá?',
+      item.reviewStatus === 'APPROVED' ? 'Bạn có chắc muốn ẩn đánh giá này?' : 'Bạn có chắc muốn hiển thị đánh giá này?',
+      'question',
+      'Xác nhận',
+      'Hủy'
+    );
+    if (!confirm.isConfirmed) return;
+
     await toggleStatusReview(item.id);
     showToast('success', 'Thay đổi trạng thái thành công!');
     // Cập nhật local nhanh
@@ -369,6 +569,8 @@ const handleStatusChange = async (item) => {
 const openAddForm = () => {
   isEditMode.value = false;
   resetFormData();
+  formSelected.book = null;
+  formSelected.user = null;
   const modalElement = document.getElementById('formModal');
   if (modalElement) {
     const modal = Modal.getOrCreateInstance(modalElement);
@@ -386,6 +588,9 @@ const openEditForm = (item) => {
     comment: item.comment,
     reviewStatus: item.reviewStatus
   };
+  // Khóa lựa chọn và sync selected để hiển thị
+  formSelected.book = dropdowns.books.options.find(b => b.id === item.bookId) || null;
+  formSelected.user = dropdowns.users.options.find(u => u.id === item.userId) || null;
   const modalElement = document.getElementById('formModal');
   if (modalElement) {
     const modal = Modal.getOrCreateInstance(modalElement);
@@ -408,6 +613,15 @@ const validateForm = () => {
 const handleSubmitForm = async () => {
   try {
     if (!validateForm()) return;
+
+    const confirm = await showQuickConfirm(
+      isEditMode.value ? 'Xác nhận cập nhật' : 'Xác nhận thêm mới',
+      isEditMode.value ? 'Bạn có chắc muốn cập nhật đánh giá này?' : 'Bạn có chắc muốn thêm mới đánh giá?',
+      'question',
+      'Xác nhận',
+      'Hủy'
+    );
+    if (!confirm.isConfirmed) return;
 
     const submitData = {
       bookId: parseInt(formData.value.bookId),
@@ -437,6 +651,9 @@ const closeModal = () => {
     const modal = Modal.getOrCreateInstance(modalElement);
     modal.hide();
   }
+  // Clear selected khi đóng
+  formSelected.book = null;
+  formSelected.user = null;
 };
 
 const handlePrev = () => {
@@ -449,6 +666,13 @@ const handleNext = () => {
     getDataFromApi(currentPage.value + 1, pageSize.value);
   }
 };
+
+const handleGoToPage = (page) => {
+  if (page < 0) return;
+  if (totalPages.value && page > totalPages.value - 1) return;
+  getDataFromApi(page, pageSize.value);
+};
+
 const handlePageSizeChange = (newSize) => {
   pageSize.value = newSize;
   getDataFromApi(0, newSize);
@@ -460,21 +684,20 @@ const resetFormData = () => {
     userId: '',
     rating: 5,
     comment: '',
-    reviewStatus: 'PENDING'
+    reviewStatus: 'APPROVED'
   };
 };
 
 onMounted(() => {
   getDataFromApi(currentPage.value, pageSize.value);
+  handleGetDropdown(); // Tải danh sách sách cho dropdown
 });
 </script>
 
 <style scoped>
-.table th,
-.table td {
-  vertical-align: middle;
-}
+@import '@/assets/css/admin-global.css';
 
+/* Modal styling - không liên quan đến bảng */
 .modal-dialog {
   max-width: 600px !important;
 }
@@ -513,12 +736,5 @@ onMounted(() => {
   min-height: 320px;
   max-height: 70vh;
   overflow-y: auto;
-}
-
-/* bo tròn */
-.filter-card,
-.review-table-card {
-  border-radius: 0.8rem !important;
-  overflow: hidden;
 }
 </style>
