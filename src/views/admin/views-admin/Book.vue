@@ -189,6 +189,7 @@
             <thead class="table-light">
               <tr>
                 <th style="width: 20px; min-width: 20px; text-align: center;">STT</th>
+                <th style="width: 80px; min-width: 80px;">Hành động</th>
                 <th style="width: 180px; min-width: 120px;">Ảnh</th>
                 <th>ID & Tên sách</th>
                 <th>Mã sách & ISBN</th>
@@ -200,18 +201,22 @@
                 <th>Thông tin bổ sung</th>
                 <th>Trạng thái</th>
                 <th>Tác giả</th>
-                <th>Hành động</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="books.length === 0">
-                <td colspan="12" class="text-center py-4 text-muted">
+                <td colspan="13" class="text-center py-4 text-muted">
                   <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                   Không có dữ liệu
                 </td>
               </tr>
               <tr v-for="(book, index) in books" :key="book.id">
                 <td style="text-align: center;">{{ currentPage * pageSize + index + 1 }}</td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <EditButton @click="openEditModal(book, index)" />
+                  </div>
+                </td>
                 <td>
                   <!-- 🔥 HIỂN THỊ ẢNH TỪ TRƯỜNG IMAGES (MẢNG URL) - THEO TÀI LIỆU API -->
                   <div style="display: flex; flex-wrap: wrap; gap: 4px;">
@@ -398,11 +403,6 @@
                     </span>
                   </div>
                   <span v-else class="text-muted small">Chưa có tác giả</span>
-                </td>
-                <td>
-                  <div class="d-flex gap-1">
-                    <EditButton @click="openEditModal(book, index)" />
-                  </div>
                 </td>
               </tr>          </tbody>
         </table>

@@ -448,12 +448,12 @@
             <input class="form-check-input" type="checkbox" id="agree" checked />
             <label class="form-check-label small" for="agree">
               Bằng việc tiến hành Mua hàng, bạn đã đồng ý với
-              <a href="#" class="text-primary">Điều khoản & Điều kiện của BookStation.com</a>
+              <RouterLink to="/policies" class="text-primary">Điều khoản & Điều kiện của BookStation.com</RouterLink>
             </label>
           </div>
         </div>
         <div class="col-12 col-md-6 text-center text-md-end">
-          <button class="btn btn-danger px-4 py-2 fw-bold" @click="processPayment">
+          <button class="btn btn-danger px-4 py-2 fw-bold" @click="showPaymentConfirmation = true">
             Xác nhận thanh toán
           </button>
         </div>
@@ -515,7 +515,119 @@
   </div>
 
   <!-- Modal backdrop -->
-  <div v-if="showAddressModal || showVoucherList" class="modal-backdrop fade show"></div>
+  <div v-if="showAddressModal || showVoucherList || showPaymentConfirmation" class="modal-backdrop fade show"></div>
+
+  <!-- Payment Confirmation Modal -->
+  <div 
+    v-if="showPaymentConfirmation"
+    class="payment-confirmation-modal"
+    @click="showPaymentConfirmation = false"
+  >
+    <div 
+      class="payment-confirmation-content"
+      @click.stop
+    >
+      <div class="confirmation-header">
+        <h5 class="mb-0">
+          <i class="bi bi-shield-check me-2 text-success"></i>
+          Xác nhận đặt hàng
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          @click="showPaymentConfirmation = false"
+        ></button>
+      </div>
+      
+      <div class="confirmation-body">
+        <div class="order-summary mb-4">
+          <h6 class="text-primary mb-3">
+            <i class="bi bi-cart-check me-2"></i>
+            Thông tin đơn hàng
+          </h6>
+          
+          <div class="summary-row">
+            <span>Số sản phẩm:</span>
+            <span class="fw-bold">{{ session?.checkoutItems?.length || 0 }} sản phẩm</span>
+          </div>
+          
+          <div class="summary-row">
+            <span>Thành tiền:</span>
+            <span>{{ formatPrice(session?.subtotal || 0) }}</span>
+          </div>
+          
+          <div v-if="session?.totalVoucherDiscount && session.totalVoucherDiscount > 0" class="summary-row">
+            <span>Giảm giá voucher:</span>
+            <span class="text-success">-{{ formatPrice(session.totalVoucherDiscount) }}</span>
+          </div>
+          
+          <div class="summary-row">
+            <span>Phí vận chuyển:</span>
+            <span>{{ formatPrice(session?.shippingFee || 20000) }}</span>
+          </div>
+          
+          <div class="summary-row total-row">
+            <span>Tổng thanh toán:</span>
+            <span class="fw-bold text-danger fs-5">{{ formatPrice(session?.totalAmount || 0) }}</span>
+          </div>
+        </div>
+        
+        <div class="policy-notice">
+          <div class="alert alert-info">
+            <div class="d-flex align-items-start">
+              <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+              <div>
+                <strong>Vui lòng đọc kỹ chính sách của BookStation</strong>
+                <p class="mb-2 small">
+                  Bằng việc xác nhận đặt hàng, bạn đồng ý với các điều khoản và chính sách của chúng tôi.
+                </p>
+                <span 
+                  class="policy-link"
+                  @click="showPolicyPreview = true"
+                  style="cursor: pointer; user-select: none;"
+                >
+                  <i class="bi bi-shield-check me-1"></i>
+                  Xem chính sách
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="confirmation-actions">
+          <button 
+            type="button" 
+            class="btn btn-outline-secondary me-2"
+            @click="showPaymentConfirmation = false"
+          >
+            <i class="bi bi-arrow-left me-1"></i>
+            Quay lại
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-danger px-4"
+            @click="confirmAndPay"
+            :disabled="orderLoading"
+          >
+            <span v-if="orderLoading">
+              <i class="spinner-border spinner-border-sm me-2"></i>
+              Đang xử lý...
+            </span>
+            <span v-else>
+              <i class="bi bi-check-circle me-1"></i>
+              Xác nhận đặt hàng
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Policy Preview Modal -->
+  <PolicyPreviewModal 
+    :show="showPolicyPreview" 
+    @close="showPolicyPreview = false" 
+  />
 
 </template>
 
@@ -537,6 +649,7 @@ import { getUserId } from '@/utils/utils.js'
 import { showToast } from '@/utils/swalHelper.js'
 import { calcShippingFee } from '@/services/client/shippingFee.js'
 import { getUserAvailableVouchers } from '@/services/admin/order.js'
+import PolicyPreviewModal from '@/components/common/PolicyPreviewModal.vue'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
@@ -563,6 +676,10 @@ const selectedVouchers = ref([])
 const filteredVouchers = ref([])
 const userVouchers = ref([])
 const voucherLoading = ref(false)
+
+// Payment confirmation states
+const showPaymentConfirmation = ref(false)
+const showPolicyPreview = ref(false)
 
 // Shipping Fee auto-calc
 const updateShippingFee = async () => {
@@ -693,6 +810,11 @@ const setupValidationTimer = () => {
       await validateSession()
     }
   }, 30000)
+}
+
+const confirmAndPay = async () => {
+  showPaymentConfirmation.value = false
+  await processPayment()
 }
 
 const processPayment = async () => {
@@ -1854,5 +1976,232 @@ onMounted(async () => {
 :deep(.swal-wide .btn:hover) {
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Payment Confirmation Modal Styles */
+.payment-confirmation-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  backdrop-filter: blur(5px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.payment-confirmation-content {
+  background: white;
+  border-radius: 15px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  animation: slideInUp 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.confirmation-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 1.5rem;
+  border-bottom: 2px solid #dc3545;
+  display: flex;
+  justify-content: between;
+  align-items: center;
+}
+
+.confirmation-header h5 {
+  color: #333;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+}
+
+.confirmation-header .btn-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  margin-left: 1rem;
+}
+
+.confirmation-header .btn-close:hover {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  transform: scale(1.1);
+}
+
+.confirmation-body {
+  padding: 1.5rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.order-summary {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 1.5rem;
+  border-left: 4px solid #dc3545;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+.total-row {
+  border-top: 2px solid #dc3545;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  font-size: 1.1rem;
+}
+
+.policy-notice .alert {
+  border-radius: 10px;
+  border: 1px solid #b3d7ff;
+  background: linear-gradient(135deg, #e7f3ff 0%, #f0f8ff 100%);
+}
+
+.policy-link {
+  color: #dc3545;
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.policy-link:hover {
+  color: #fff;
+  background: #dc3545;
+  text-decoration: none;
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+.confirmation-actions {
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.confirmation-actions .btn {
+  border-radius: 25px;
+  padding: 0.75rem 2rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-width: 140px;
+}
+
+.confirmation-actions .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.confirmation-actions .btn-danger {
+  background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%);
+  border-color: #dc3545;
+}
+
+.confirmation-actions .btn-danger:hover {
+  background: linear-gradient(135deg, #a71d2a 0%, #dc3545 100%);
+  border-color: #a71d2a;
+}
+
+.confirmation-actions .btn-outline-secondary:hover {
+  background: #6c757d;
+  border-color: #6c757d;
+  color: white;
+}
+
+/* Custom scrollbar for confirmation modal */
+.confirmation-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.confirmation-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.confirmation-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%);
+  border-radius: 10px;
+}
+
+.confirmation-body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #a71d2a 0%, #dc3545 100%);
+}
+
+/* Responsive for confirmation modal */
+@media (max-width: 576px) {
+  .payment-confirmation-content {
+    margin: 0.5rem;
+    max-width: calc(100% - 1rem);
+  }
+  
+  .confirmation-header {
+    padding: 1rem;
+  }
+  
+  .confirmation-body {
+    padding: 1rem;
+  }
+  
+  .order-summary {
+    padding: 1rem;
+  }
+  
+  .confirmation-actions {
+    flex-direction: column;
+  }
+  
+  .confirmation-actions .btn {
+    min-width: auto;
+    width: 100%;
+  }
 }
 </style>
