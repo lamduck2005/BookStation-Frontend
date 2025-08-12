@@ -175,21 +175,21 @@
             </div>
             <div class="mt-2">
               <button class="btn btn-link p-0 text-primary text-decoration-none small" @click="openVoucherModal">
-                <i class="fas fa-ticket-alt me-1"></i>Chọn mã khuyến mãi
+                <i class="fas fa-ticket-alt me-1"></i>Chọn mã khuyến mãi 
               </button>
             </div>
             <!-- Modal chọn voucher -->
-            <div v-if="showVoucherList" class="modal fade show" style="display: block;" tabindex="-1" @click.self="showVoucherList = false">
-              <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                <div class="modal-content">
-                  <div class="modal-header border-bottom-0">
+            <div v-if="showVoucherList" class="modal fade show d-block" style="z-index: 1055; background-color: rgba(0,0,0,0.5);" tabindex="-1" @click.self="showVoucherList = false">
+              <div class="modal-dialog modal-lg modal-dialog-centered" style="max-height: 90vh; margin: 5vh auto;">
+                <div class="modal-content" style="max-height: 90vh; display: flex; flex-direction: column;">
+                  <div class="modal-header border-bottom-0" style="flex-shrink: 0;">
                     <h5 class="modal-title text-primary">
                       <i class="fas fa-ticket-alt me-2"></i>
                       Chọn mã khuyến mãi
                     </h5>
                     <button type="button" class="btn-close" @click="showVoucherList = false"></button>
                   </div>
-                  <div class="modal-body">
+                  <div class="modal-body" style="flex: 1; overflow-y: auto; max-height: calc(90vh - 140px);">
                     <!-- Thông tin giới hạn -->
                     <div class="alert alert-info border-0" role="alert">
                       <i class="fas fa-info-circle me-2"></i>
@@ -262,6 +262,13 @@
                                         <small class="text-muted">
                                           Đơn tối thiểu: {{ formatPrice(voucher.minimumOrderValue) }}
                                         </small>
+                                        <!-- Hiển thị trạng thái voucher -->
+                                        <div v-if="!canSelectVoucher(voucher) && !isVoucherSelected(voucher.id)" class="mt-1">
+                                          <small class="text-danger fw-bold">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            {{ getVoucherStatusMessage(voucher) }}
+                                          </small>
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
@@ -283,7 +290,7 @@
                       </div>
                     </div>
                   </div>
-                  <div class="modal-footer border-top-0 bg-light">
+                  <div class="modal-footer border-top-0 bg-light" style="flex-shrink: 0;">
                     <div class="d-flex justify-content-between align-items-center w-100">
                       <div class="selected-count">
                         <small class="text-muted">
@@ -337,23 +344,6 @@
             <div class="text-muted small mt-1">
               <i class="fas fa-info-circle me-1"></i>
               Tối đa 2 voucher: 1 Giảm giá vận chuyển + 1 Giảm giá sản phẩm
-            </div>
-
-            <!-- Nhận quà section -->
-            <div class="mt-3 p-2" style="background-color: #f8f9fa; border-radius: 6px">
-              <div class="d-flex align-items-center">
-                <i class="fas fa-gift text-primary me-2"></i>
-                <div class="flex-grow-1">
-                  <div class="small fw-bold text-primary">Nhận quà</div>
-                  <div class="text-muted" style="font-size: 12px">
-                    Đơn hàng của bạn chưa đủ điều kiện nhận quà
-                  </div>
-                </div>
-                <button class="btn btn-outline-primary btn-sm" @click="selectGift">
-                  <span style="font-size: 12px">Chọn quà</span>
-                  <i class="fas fa-chevron-right ms-1" style="font-size: 10px"></i>
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -1005,7 +995,10 @@ const updateSessionPaymentMethod = async (paymentMethod) => {
 const updateSessionVouchers = async (voucherIds) => {
   try {
     const userId = getUserId()
-    if (!sessionId.value || !userId) return
+    if (!sessionId.value || !userId) {
+      console.warn('⚠️ Missing sessionId or userId for voucher update')
+      return
+    }
 
     // QUAN TRỌNG: Phải truyền items theo document
     const updateData = {
@@ -1013,21 +1006,40 @@ const updateSessionVouchers = async (voucherIds) => {
       selectedVoucherIds: voucherIds
     }
 
-    console.log('📝 Updating session vouchers:', updateData)
+    console.log('📝 Updating session vouchers:', {
+      sessionId: sessionId.value,
+      userId,
+      voucherIds,
+      itemsCount: updateData.items?.length || 0
+    })
+    
     const response = await updateCheckoutSession(sessionId.value, userId, updateData)
 
     if (response.status === 200 && response.data?.data) {
+      const previousTotal = session.value?.totalAmount || 0
       session.value = response.data.data
+      
       console.log('✅ Session updated with vouchers:', {
         voucherIds,
         totalVoucherDiscount: session.value.totalVoucherDiscount,
-        totalAmount: session.value.totalAmount
+        previousTotal,
+        newTotal: session.value.totalAmount,
+        savings: previousTotal - session.value.totalAmount
       })
+      
+      // Cập nhật localStorage để đồng bộ
+      localStorage.setItem('checkoutSession', JSON.stringify(session.value))
+      
       showToast('success', 'Voucher đã được cập nhật')
+      return true
+    } else {
+      console.error('❌ Invalid response from updateCheckoutSession:', response)
+      throw new Error('Invalid response from server')
     }
   } catch (error) {
     console.error('❌ Error updating vouchers:', error)
-    showToast('error', 'Không thể cập nhật voucher')
+    showToast('error', `Không thể cập nhật voucher: ${error.message}`)
+    throw error
   }
 }
 
@@ -1145,9 +1157,21 @@ const canSelectVoucher = (voucher) => {
   if (isVoucherSelected(voucher.id)) return true
   if (selectedVouchers.value.length >= 2) return false
 
-  // Kiểm tra giá trị đơn hàng tối thiểu
+  // Kiểm tra giá trị đơn hàng tối thiểu - QUAN TRỌNG
   const currentOrderValue = session.value?.subtotal || 0
+  console.log('🔍 Checking voucher conditions:', {
+    voucherCode: voucher.code,
+    minimumOrderValue: voucher.minimumOrderValue,
+    currentOrderValue,
+    isEligible: !voucher.minimumOrderValue || currentOrderValue >= voucher.minimumOrderValue
+  })
+  
   if (voucher.minimumOrderValue && currentOrderValue < voucher.minimumOrderValue) {
+    return false
+  }
+
+  // Kiểm tra số lượng sử dụng còn lại
+  if (voucher.remainingUses <= 0) {
     return false
   }
 
@@ -1165,17 +1189,123 @@ const canSelectVoucher = (voucher) => {
   }
 }
 
-const toggleVoucherSelection = (voucher) => {
-  // Không cho phép click nếu voucher bị disabled
-  if (!canSelectVoucher(voucher) && !isVoucherSelected(voucher.id)) {
+const getVoucherStatusMessage = (voucher) => {
+  const currentOrderValue = session.value?.subtotal || 0
+
+  // Kiểm tra giá trị đơn hàng tối thiểu
+  if (voucher.minimumOrderValue && currentOrderValue < voucher.minimumOrderValue) {
+    const missing = voucher.minimumOrderValue - currentOrderValue
+    return `Thiếu ${formatPrice(missing)} để đạt đơn tối thiểu`
+  }
+
+  // Kiểm tra số lượng sử dụng
+  if (voucher.remainingUses <= 0) {
+    return 'Đã hết lượt sử dụng'
+  }
+
+  // Kiểm tra đã chọn đủ 2 voucher
+  if (selectedVouchers.value.length >= 2) {
+    return 'Đã chọn đủ 2 voucher'
+  }
+
+  // Kiểm tra loại voucher
+  const selectedShippingVouchers = selectedVouchers.value.filter(v => 
+    v.categoryVi && v.categoryVi.includes('vận chuyển')
+  )
+  const selectedProductVouchers = selectedVouchers.value.filter(v => 
+    v.categoryVi && v.categoryVi.includes('sản phẩm')
+  )
+
+  if (voucher.categoryVi && voucher.categoryVi.includes('vận chuyển')) {
+    if (selectedShippingVouchers.length > 0) {
+      return 'Đã chọn voucher vận chuyển'
+    }
+  } else if (voucher.categoryVi && voucher.categoryVi.includes('sản phẩm')) {
+    if (selectedProductVouchers.length > 0) {
+      return 'Đã chọn voucher sản phẩm'
+    }
+  }
+
+  return 'Không thể chọn voucher'
+}
+
+const toggleVoucherSelection = async (voucher) => {
+  // Kiểm tra nếu voucher đã được chọn thì cho phép bỏ chọn
+  if (isVoucherSelected(voucher.id)) {
+    const index = selectedVouchers.value.findIndex(v => v.id === voucher.id)
+    selectedVouchers.value.splice(index, 1)
+    
+    // Gọi API cập nhật ngay lập tức
+    try {
+      const voucherIds = selectedVouchers.value.map(v => v.id)
+      await updateSessionVouchers(voucherIds)
+      console.log('✅ Voucher removed:', voucher.code)
+    } catch (error) {
+      console.error('❌ Error removing voucher:', error)
+      // Revert the change if API call fails
+      selectedVouchers.value.push(voucher)
+      showToast('error', 'Không thể bỏ voucher')
+    }
     return
   }
 
-  const index = selectedVouchers.value.findIndex(v => v.id === voucher.id)
-  if (index > -1) {
-    selectedVouchers.value.splice(index, 1)
-  } else {
-    selectedVouchers.value.push(voucher)
+  // Kiểm tra các điều kiện để chọn voucher mới
+  const currentOrderValue = session.value?.subtotal || 0
+
+  // Kiểm tra giá trị đơn hàng tối thiểu
+  if (voucher.minimumOrderValue && currentOrderValue < voucher.minimumOrderValue) {
+    const requiredAmount = voucher.minimumOrderValue
+    const currentAmount = currentOrderValue
+    showToast('warning', `Voucher "${voucher.code}" yêu cầu đơn hàng tối thiểu ${formatPrice(requiredAmount)}. Đơn hàng hiện tại: ${formatPrice(currentAmount)}`)
+    return
+  }
+
+  // Kiểm tra số lượng sử dụng
+  if (voucher.remainingUses <= 0) {
+    showToast('warning', `Voucher "${voucher.code}" đã hết lượt sử dụng`)
+    return
+  }
+
+  // Kiểm tra đã chọn đủ 2 voucher
+  if (selectedVouchers.value.length >= 2) {
+    showToast('warning', 'Bạn chỉ có thể chọn tối đa 2 voucher')
+    return
+  }
+
+  // Kiểm tra loại voucher
+  const selectedShippingVouchers = selectedVouchers.value.filter(v => 
+    v.categoryVi && v.categoryVi.includes('vận chuyển')
+  )
+  const selectedProductVouchers = selectedVouchers.value.filter(v => 
+    v.categoryVi && v.categoryVi.includes('sản phẩm')
+  )
+
+  if (voucher.categoryVi && voucher.categoryVi.includes('vận chuyển')) {
+    if (selectedShippingVouchers.length > 0) {
+      showToast('warning', 'Bạn đã chọn voucher giảm giá vận chuyển rồi')
+      return
+    }
+  } else if (voucher.categoryVi && voucher.categoryVi.includes('sản phẩm')) {
+    if (selectedProductVouchers.length > 0) {
+      showToast('warning', 'Bạn đã chọn voucher giảm giá sản phẩm rồi')
+      return
+    }
+  }
+
+  // Nếu tất cả điều kiện OK, thêm voucher
+  selectedVouchers.value.push(voucher)
+
+  // Gọi API cập nhật ngay lập tức
+  try {
+    const voucherIds = selectedVouchers.value.map(v => v.id)
+    await updateSessionVouchers(voucherIds)
+    console.log('✅ Voucher added:', voucher.code)
+    showToast('success', `Đã thêm voucher "${voucher.code}"`)
+  } catch (error) {
+    console.error('❌ Error adding voucher:', error)
+    // Revert the change if API call fails
+    selectedVouchers.value.splice(selectedVouchers.value.length - 1, 1)
+    showToast('error', 'Không thể áp dụng voucher. Vui lòng thử lại.')
   }
 }
 
@@ -1201,6 +1331,13 @@ const clearVoucherSelection = async () => {
 
 const applySelectedVouchers = async () => {
   try {
+    // Hiển thị loading state
+    const applyButton = document.querySelector('.modal-footer .btn-primary')
+    if (applyButton) {
+      applyButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Đang áp dụng...'
+      applyButton.disabled = true
+    }
+
     const voucherIds = selectedVouchers.value.map(v => v.id)
     await updateSessionVouchers(voucherIds)
     
@@ -1208,10 +1345,23 @@ const applySelectedVouchers = async () => {
     await validateSession()
     
     showVoucherList.value = false
-    showToast('success', `Đã áp dụng ${selectedVouchers.value.length} voucher`)
+    showToast('success', `Đã áp dụng ${selectedVouchers.value.length} voucher thành công`)
+    
+    // Log để debug
+    console.log('✅ Applied vouchers successfully:', {
+      voucherIds,
+      selectedVouchers: selectedVouchers.value.map(v => v.code)
+    })
   } catch (error) {
     console.error('❌ Error applying vouchers:', error)
-    showToast('error', 'Không thể áp dụng voucher')
+    showToast('error', 'Không thể áp dụng voucher. Vui lòng thử lại.')
+  } finally {
+    // Reset button state
+    const applyButton = document.querySelector('.modal-footer .btn-primary')
+    if (applyButton) {
+      applyButton.innerHTML = `Áp dụng (${selectedVouchers.value.length})`
+      applyButton.disabled = false
+    }
   }
 }
 
@@ -1501,9 +1651,10 @@ onMounted(async () => {
 }
 
 .voucher-card.disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed !important;
   pointer-events: none;
+  position: relative;
 }
 
 .voucher-card.disabled .card {
@@ -1513,6 +1664,19 @@ onMounted(async () => {
 
 .voucher-card.disabled .voucher-content {
   color: #6c757d;
+}
+
+/* Thêm overlay cho voucher disabled */
+.voucher-card.disabled::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  z-index: 1;
+  border-radius: 0.375rem;
 }
 
 .voucher-content {
@@ -1568,9 +1732,35 @@ onMounted(async () => {
 
 /* Custom scrollbar for voucher list */
 .voucher-list {
-  max-height: 400px;
-  overflow-y: auto;
+  max-height: none; /* Remove fixed height constraint */
+  overflow-y: visible; /* Let modal-body handle scrolling */
   padding-right: 4px;
+}
+
+/* Modal body scrolling for voucher modal */
+.modal-body {
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+}
+
+/* Custom scrollbar for modal body */
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 .voucher-list::-webkit-scrollbar {

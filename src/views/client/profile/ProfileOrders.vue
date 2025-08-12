@@ -110,7 +110,7 @@
                     class="voucher-text" 
                     :title="`Voucher: ${order.voucherCode || 'Không xác định'} - Giảm ${formatCurrency(order.voucherDiscountAmount)}`"
                     style="cursor: help; text-decoration: underline dotted;">
-                    Giảm giá voucher:
+                    Tổng giảm giá voucher:
                   </span>
                   <span>-{{ formatCurrency(order.voucherDiscountAmount) }}</span>
                 </div>
@@ -300,7 +300,7 @@
                     <span>{{ formatCurrency(selectedOrderForDetail.shippingFee) }}</span>
                   </div>
                   <div v-if="selectedOrderForDetail.voucherDiscountAmount > 0" class="summary-row discount">
-                    <span>Giảm giá voucher:</span>
+                    <span>Tổng giảm giá voucher:</span>
                     <span>-{{ formatCurrency(selectedOrderForDetail.voucherDiscountAmount) }}</span>
                   </div>
                   <div v-if="selectedOrderForDetail.discountShipping > 0" class="summary-row discount">
