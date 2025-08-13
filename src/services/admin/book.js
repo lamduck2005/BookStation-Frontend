@@ -261,3 +261,15 @@ export const getActiveBooksForEdit = async () => {
     throw error;
   }
 };
+
+// Lấy sách theo ISBN (dùng cho POS quét barcode/ISBN)
+export const getBookByIsbn = async (isbn) => {
+  try {
+    const response = await client.get(`/api/books/isbn/${encodeURIComponent(isbn)}`);
+    // Backend trả: { status, message, data: { ...book } }
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy sách theo ISBN:', error);
+    throw error;
+  }
+};

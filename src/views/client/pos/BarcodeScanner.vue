@@ -13,6 +13,7 @@ const videoRef = ref(null);
 
 let reader; // instance
 let controls = null; // object có stop()
+let scanned = false; // thêm
 
 const stopScanner = () => {
   try {
@@ -40,13 +41,15 @@ onMounted(async () => {
       null,
       videoRef.value,
       (result, err) => {
-        if (result) {
+        if (result && !scanned) {
+          scanned = true;
           const code = result.getText();
-          console.log("Scanned barcode:", code); // <-- log mã quét được
+          console.log("Scanned barcode:", code);
           emit("detected", code);
-          stopScanner(); // dừng sau khi lấy mã
+          stopScanner();
+          emit("close"); // đóng ngay overlay
         }
-        // err có thể là NotFoundException => bỏ qua
+        // bỏ qua err mỗi frame
       }
     );
   } catch (e) {

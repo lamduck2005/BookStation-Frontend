@@ -12,14 +12,14 @@
       <button class="search-btn">
         <i class="bi bi-search"></i>
       </button>
-      
+
       <!-- Dropdown kết quả tìm kiếm -->
       <div
         v-if="showProductSearchResults && productSearchResults.length > 0"
         class="product-dropdown shadow-lg"
       >
-        <div 
-          v-for="book in productSearchResults" 
+        <div
+          v-for="book in productSearchResults"
           :key="book.id"
           class="product-dropdown-item cursor-pointer hover-bg-light"
           @mousedown.prevent="addBookToOrder(book)"
@@ -30,18 +30,27 @@
             class="product-thumb"
             alt="book cover"
           />
-          <div v-else class="product-thumb bg-light d-flex align-items-center justify-content-center">
+          <div
+            v-else
+            class="product-thumb bg-light d-flex align-items-center justify-content-center"
+          >
             <i class="bi bi-book text-muted"></i>
           </div>
           <div class="product-info flex-grow-1">
-            <div class="product-name fw-medium">{{ book.title || book.name }}</div>
+            <div class="product-name fw-medium">
+              {{ book.title || book.name }}
+            </div>
             <div class="product-sku text-muted small">{{ book.bookCode }}</div>
             <div class="product-author text-muted small">{{ book.author }}</div>
           </div>
           <div class="product-price-info text-end">
             <div v-if="book.isFlashSale" class="d-flex flex-column">
-              <span class="text-danger fw-bold">{{ formatCurrency(book.flashSalePrice) }}</span>
-              <span class="text-muted text-decoration-line-through small">{{ formatCurrency(book.normalPrice) }}</span>
+              <span class="text-danger fw-bold">{{
+                formatCurrency(book.flashSalePrice)
+              }}</span>
+              <span class="text-muted text-decoration-line-through small">{{
+                formatCurrency(book.normalPrice)
+              }}</span>
               <span class="badge bg-danger small">Flash Sale</span>
             </div>
             <div v-else class="fw-semibold text-success">
@@ -52,15 +61,18 @@
             </div>
           </div>
         </div>
-        
+
         <!-- Hiển thị khi không có kết quả -->
-        <div v-if="productSearchTerm && productSearchResults.length === 0" class="text-center p-3 text-muted">
+        <div
+          v-if="productSearchTerm && productSearchResults.length === 0"
+          class="text-center p-3 text-muted"
+        >
           <i class="bi bi-search"></i>
           <div>Không tìm thấy sản phẩm nào</div>
         </div>
       </div>
     </div>
-    
+
     <button class="pos-barcode-btn" @click="showScanner = true">
       <i class="bi bi-upc-scan"></i> Quét mã vạch
     </button>
@@ -81,18 +93,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { getBooksDropdown } from '@/services/admin/book';
-import BarcodeScanner from './BarcodeScanner.vue';
+import { ref, onMounted, onUnmounted } from "vue";
+import { getBooksDropdown, getBookByIsbn } from "@/services/admin/book";
+import BarcodeScanner from "./BarcodeScanner.vue";
 
 // Emit để gửi sản phẩm được chọn lên component cha
-const emit = defineEmits(['add-product']);
+const emit = defineEmits(["add-product"]);
 
 // Product search states
-const productSearchTerm = ref('');
+const productSearchTerm = ref("");
 const productSearchResults = ref([]);
 const showProductSearchResults = ref(false);
 const showScanner = ref(false);
+const scanning = ref(false);
 let productSearchTimeout = null;
 
 // Methods
@@ -101,18 +114,18 @@ const onProductSearch = async () => {
   if (productSearchTimeout) {
     clearTimeout(productSearchTimeout);
   }
-  
+
   // Set new timeout for debounced search
   productSearchTimeout = setTimeout(async () => {
     if (productSearchTerm.value.trim().length >= 1) {
       try {
         const response = await getBooksDropdown({
           search: productSearchTerm.value.trim(),
-          limit: 10
+          limit: 10,
         });
         productSearchResults.value = response.data || [];
       } catch (error) {
-        console.error('Error searching products:', error);
+        console.error("Error searching products:", error);
         productSearchResults.value = [];
       }
     } else {
@@ -123,56 +136,114 @@ const onProductSearch = async () => {
 
 const addBookToOrder = (book) => {
   // Emit sự kiện để POS component cha xử lý
-  emit('add-product', book);
-  
+  emit("add-product", book);
+
   // Clear search
   clearProductSearch();
 };
 
 const clearProductSearch = () => {
-  productSearchTerm.value = '';
+  productSearchTerm.value = "";
   productSearchResults.value = [];
   showProductSearchResults.value = false;
 };
 
 // Click outside to close dropdown
 const handleClickOutside = (event) => {
-  const searchContainer = event.target.closest('.product-search-wrap');
+  const searchContainer = event.target.closest(".product-search-wrap");
   if (!searchContainer) {
     showProductSearchResults.value = false;
   }
 };
 
-const onBarcodeDetected = (barcode) => {
-  showScanner.value = false;
-  // Tìm kiếm sản phẩm theo barcode
-  productSearchTerm.value = barcode;
-  onProductSearch();
+const onBarcodeDetected = async (isbn) => {
+  if (scanning.value) return;
+  scanning.value = true;
+  try {
+    const resp = await getBookByIsbn(isbn);
+    const data = resp?.data;
+    console.log("RAW book data:", data);
+
+    if (!data) {
+      toast.warning("Không tìm thấy sách với mã: " + isbn);
+      return;
+    }
+
+    // Chuẩn hoá các khả năng tên field giá
+    const rawNormalPrice =
+      data.normalPrice ??
+      data.price ??
+      data.sellingPrice ??
+      data.salePrice ??
+      data.originalPrice ??
+      0;
+
+    const rawFlashPrice =
+      data.flashSalePrice ?? data.flash_price ?? data.flashSale?.price ?? null;
+
+    const normalPrice = Number(rawNormalPrice) || 0;
+    const flashSalePrice =
+      rawFlashPrice !== null && rawFlashPrice !== undefined
+        ? Number(rawFlashPrice)
+        : null;
+
+    const isFlashSale = flashSalePrice !== null && !isNaN(flashSalePrice);
+
+    const unitPrice = isFlashSale ? flashSalePrice : normalPrice;
+
+    const book = {
+      id: data.id,
+      bookId: data.id,
+      title: data.title || data.name,
+      name: data.title || data.name,
+      bookCode: data.bookCode || data.isbn || isbn,
+      normalPrice,
+      flashSalePrice,
+      isFlashSale,
+      unitPrice, // <-- thêm trực tiếp
+      flashSaleItemId: data.flashSaleItemId || null,
+      stockQuantity: data.stockQuantity ?? data.quantity ?? 0,
+      coverImageUrl: data.coverImageUrl || data.imageUrl,
+    };
+    console.log("Book chuẩn hoá:", book);
+
+    emit("add-product", book);
+    toast.success("Đã thêm: " + book.title);
+    closeScanner();
+  } catch (e) {
+    console.error(e);
+    toast.error(e.response?.data?.message || "Lỗi lấy sách");
+  } finally {
+    scanning.value = false;
+  }
 };
 
+// Sửa formatCurrency
 const formatCurrency = (amount) => {
-  if (!amount) return '0 ₫';
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
-  }).format(amount);
+  if (amount === undefined || amount === null || isNaN(amount)) return "—";
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(Number(amount));
 };
 
 // Lifecycle hooks
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
-  
+  document.addEventListener("click", handleClickOutside);
+
   // Keyboard shortcut F2 for search focus
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'F2') {
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "F2") {
       e.preventDefault();
-      document.querySelector('.pos-search')?.focus();
+      document.querySelector(".pos-search")?.focus();
     }
   });
 });
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener("click", handleClickOutside);
   if (productSearchTimeout) {
     clearTimeout(productSearchTimeout);
   }
@@ -283,7 +354,8 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-.product-sku, .product-author {
+.product-sku,
+.product-author {
   color: #64748b;
   font-size: 13px;
   overflow: hidden;
@@ -361,11 +433,11 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .product-search-wrap {
     max-width: 100%;
   }
-  
+
   .pos-barcode-btn {
     align-self: stretch;
   }
