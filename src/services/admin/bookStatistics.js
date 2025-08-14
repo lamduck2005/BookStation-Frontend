@@ -9,10 +9,10 @@ import axios from '@/utils/axios';
 export const getBookStatsSummary = async (period, fromDate = null, toDate = null) => {
   try {
     const queryParams = new URLSearchParams();
-    queryParams.append('period', period); // day/week/month/year/custom
+    queryParams.append('period', period); // day/week/month/quarter/year
     
-    // ✅ CONVERT DATES TO TIMESTAMP - Bắt buộc nếu period=custom
-    if (period === 'custom' && fromDate && toDate) {
+    // ✅ CONVERT DATES TO TIMESTAMP - Khi có fromDate/toDate thì append vào (theo tài liệu API v5)
+    if (fromDate && toDate && fromDate.trim() !== '' && toDate.trim() !== '') {
       let fromTimestamp, toTimestamp;
       
       // Convert fromDate to timestamp if it's a string
@@ -32,12 +32,16 @@ export const getBookStatsSummary = async (period, fromDate = null, toDate = null
       queryParams.append('fromDate', fromTimestamp.toString());
       queryParams.append('toDate', toTimestamp.toString());
       
-      console.log('📊 Summary API (custom period):', {
+      console.log('📊 Summary API (with custom date range):', {
         period,
         originalFromDate: fromDate,
         originalToDate: toDate,
         fromTimestamp,
         toTimestamp
+      });
+    } else {
+      console.log('📊 Summary API (default period range):', {
+        period
       });
     }
     
@@ -47,6 +51,7 @@ export const getBookStatsSummary = async (period, fromDate = null, toDate = null
     });
     
     const response = await axios.get(`/api/books/statistics/summary?${queryParams.toString()}`);
+    return response.data;
     return response.data;
   } catch (error) {
     console.error('Lỗi khi lấy tổng quan thống kê sách:', error);

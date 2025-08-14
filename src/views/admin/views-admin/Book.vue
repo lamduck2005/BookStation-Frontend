@@ -162,14 +162,7 @@
                 <i class="bi bi-graph-up me-2"></i>
                 Thống kê sách
               </h5>
-              <button 
-                class="btn btn-outline-primary btn-sm"
-                @click="refreshStatistics"
-                title="Làm mới thống kê"
-              >
-                <i class="bi bi-arrow-clockwise me-1"></i>
-                Làm mới
-              </button>
+              
             </div>
           </div>
           

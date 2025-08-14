@@ -259,25 +259,7 @@ defineExpose({
 }
 
 /* Card Types - Updated for new API */
-.books-card {
-  --card-gradient-start: #667eea;
-  --card-gradient-end: #764ba2;
-}
 
-.inventory-card {
-  --card-gradient-start: #4facfe;
-  --card-gradient-end: #00f2fe;
-}
-
-.discount-card {
-  --card-gradient-start: #f093fb;
-  --card-gradient-end: #f5576c;
-}
-
-.flash-sale-card {
-  --card-gradient-start: #ff6b6b;
-  --card-gradient-end: #ee5a52;
-}
 
 /* Icon Wrappers - Updated for new API */
 .icon-wrapper {
@@ -291,21 +273,7 @@ defineExpose({
   color: white;
 }
 
-.books-icon {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-}
 
-.inventory-icon {
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
-}
-
-.discount-icon {
-  background: linear-gradient(135deg, #f093fb, #f5576c);
-}
-
-.flash-sale-icon {
-  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-}
 
 /* Stats Values */
 .stat-value {

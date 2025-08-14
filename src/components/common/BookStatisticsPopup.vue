@@ -134,13 +134,23 @@
                     <div class="stat-value">
                       {{ formatCurrency(book.revenue) }}
                     </div>
-                    <div class="stat-growth" v-if="book.revenueGrowthPercent !== undefined">
+                    <div class="stat-growth" v-if="book.revenueGrowthPercent !== undefined || book.revenueGrowthLabel">
+                      <!-- Trường hợp có tăng trưởng % -->
                       <span 
+                        v-if="book.revenueGrowthPercent !== null"
                         class="growth-badge"
                         :class="getGrowthClass(book.revenueGrowthPercent)"
                       >
                         <i :class="getGrowthIcon(book.revenueGrowthPercent)"></i>
                         {{ Math.abs(book.revenueGrowthPercent).toFixed(1) }}%
+                      </span>
+                      <!-- Trường hợp "Tăng mới" -->
+                      <span 
+                        v-else-if="book.revenueGrowthLabel"
+                        class="growth-badge growth-new"
+                      >
+                        <i class="bi bi-plus-circle"></i>
+                        {{ book.revenueGrowthLabel }}
                       </span>
                       <span class="growth-value" v-if="book.revenueGrowthValue">
                         ({{ formatCurrency(book.revenueGrowthValue) }})
@@ -154,13 +164,23 @@
                     <div class="stat-value">
                       {{ book.quantitySold }} cuốn
                     </div>
-                    <div class="stat-growth" v-if="book.quantityGrowthPercent !== undefined">
+                    <div class="stat-growth" v-if="book.quantityGrowthPercent !== undefined || book.quantityGrowthLabel">
+                      <!-- Trường hợp có tăng trưởng % -->
                       <span 
+                        v-if="book.quantityGrowthPercent !== null"
                         class="growth-badge"
                         :class="getGrowthClass(book.quantityGrowthPercent)"
                       >
                         <i :class="getGrowthIcon(book.quantityGrowthPercent)"></i>
                         {{ Math.abs(book.quantityGrowthPercent).toFixed(1) }}%
+                      </span>
+                      <!-- Trường hợp "Tăng mới" -->
+                      <span 
+                        v-else-if="book.quantityGrowthLabel"
+                        class="growth-badge growth-new"
+                      >
+                        <i class="bi bi-plus-circle"></i>
+                        {{ book.quantityGrowthLabel }}
                       </span>
                       <span class="growth-value" v-if="book.quantityGrowthValue">
                         ({{ book.quantityGrowthValue > 0 ? '+' : '' }}{{ book.quantityGrowthValue }})
@@ -654,6 +674,21 @@ watch(() => [props.selectedDate, props.period], () => {
 .growth-neutral {
   background: #e5e7eb;
   color: #374151;
+}
+
+.growth-new {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  animation: pulseGlow 2s infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { 
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+  }
 }
 
 .growth-value {

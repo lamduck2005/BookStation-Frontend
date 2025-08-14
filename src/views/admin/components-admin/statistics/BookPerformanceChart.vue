@@ -49,6 +49,18 @@
               type="radio" 
               class="btn-check" 
               name="chartPeriod" 
+              id="quarter" 
+              autocomplete="off" 
+              value="quarter"
+              v-model="selectedPeriod"
+              @change="onPeriodChange"
+            >
+            <label class="btn btn-outline-primary" for="quarter">Quý</label>
+
+            <input 
+              type="radio" 
+              class="btn-check" 
+              name="chartPeriod" 
               id="year" 
               autocomplete="off" 
               value="year"
@@ -56,19 +68,17 @@
               @change="onPeriodChange"
             >
             <label class="btn btn-outline-primary" for="year">Năm</label>
-
-            <input 
-              type="radio" 
-              class="btn-check" 
-              name="chartPeriod" 
-              id="custom" 
-              autocomplete="off" 
-              value="custom"
-              v-model="selectedPeriod"
-              @change="onPeriodChange"
-            >
-            <label class="btn btn-outline-primary" for="custom">Tùy chỉnh</label>
           </div>
+          
+          <!-- Custom Date Range Toggle -->
+          <button 
+            class="btn btn-outline-info btn-sm me-2"
+            @click="toggleCustomDateRange"
+            :class="{ 'active': showCustomDateRange }"
+          >
+            <i class="bi bi-calendar-range me-1"></i>
+            Tùy chỉnh khoảng thời gian
+          </button>
           
           <button 
             class="btn btn-outline-secondary btn-sm"
@@ -83,10 +93,13 @@
       </div>
 
       <!-- Custom Date Range -->
-      <div v-if="selectedPeriod === 'custom'" class="card-body border-bottom">
-        <div class="row">
-          <div class="col-md-4">
-            <label class="form-label">Từ ngày</label>
+      <div v-if="showCustomDateRange" class="card-body border-bottom">
+        <div class="row align-items-center">
+          <div class="col-md-3">
+            <label class="form-label">
+              <i class="bi bi-calendar3 me-1"></i>
+              Từ ngày
+            </label>
             <input 
               type="date" 
               class="form-control form-control-sm"
@@ -94,8 +107,11 @@
               :max="toDate || getTodayString()"
             >
           </div>
-          <div class="col-md-4">
-            <label class="form-label">Đến ngày</label>
+          <div class="col-md-3">
+            <label class="form-label">
+              <i class="bi bi-calendar3 me-1"></i>
+              Đến ngày
+            </label>
             <input 
               type="date" 
               class="form-control form-control-sm"
@@ -104,15 +120,59 @@
               :max="getTodayString()"
             >
           </div>
-          <div class="col-md-4 d-flex align-items-end">
+          <div class="col-md-3">
+            <label class="form-label">
+              <i class="bi bi-graph-up me-1"></i>
+              Loại biểu đồ
+            </label>
+            <select class="form-select form-select-sm" v-model="selectedPeriod">
+              <option value="day">Theo ngày</option>
+              <option value="week">Theo tuần</option>
+              <option value="month">Theo tháng</option>
+              <option value="quarter">Theo quý</option>
+              <option value="year">Theo năm</option>
+            </select>
+          </div>
+          <div class="col-md-3 d-flex align-items-end gap-2">
             <button 
-              class="btn btn-primary btn-sm"
+              class="btn btn-primary btn-sm flex-grow-1"
               @click="applyCustomDateRange"
               :disabled="!fromDate || !toDate || loading"
             >
               <i class="bi bi-search me-1"></i>
               Áp dụng
             </button>
+            <button 
+              class="btn btn-outline-secondary btn-sm"
+              @click="clearCustomDateRange"
+            >
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        </div>
+        <div class="mt-2">
+          <div class="note-box mt-2 p-3">
+            <div class="d-flex align-items-center mb-2">
+              <i class="bi bi-lightbulb-fill text-warning fs-5 me-2"></i>
+              <span class="fw-bold text-dark me-1" style="font-size: 1rem; letter-spacing: 0.5px;">Lưu ý quan trọng</span>
+              <button class="btn btn-link p-0 m-0 border-0 note-toggle-btn align-self-center ms-1" @click="noteOpen = !noteOpen" :aria-label="noteOpen ? 'Đóng lưu ý' : 'Mở lưu ý'">
+                <i :class="noteOpen ? 'bi bi-chevron-up fs-4 text-primary' : 'bi bi-chevron-down fs-4 text-primary'"></i>
+              </button>
+            </div>
+            <transition name="fade">
+              <div v-show="noteOpen" class="note-content text-dark" style="font-size: 0.97rem;">
+                <i class="bi bi-info-circle text-primary me-1"></i>
+                Nếu <span class="fw-semibold text-primary">khoảng thời gian</span> bạn chọn <span class="fw-semibold">ngắn hơn 1 đơn vị thống kê</span> (ngày / tuần / tháng / quý / năm), hệ thống sẽ tự động trả về <span class="fw-semibold text-success">toàn bộ dữ liệu của đơn vị thống kê đó</span> chứa khoảng thời gian này.<br>
+                <ul class="mt-2 mb-1 ps-4">
+                  <li><i class="bi bi-calendar-week text-info me-1"></i> <span class="fw-semibold">Ví dụ 1:</span> Chọn kiểu <span class="text-primary">“Tuần”</span> nhưng chỉ chọn 3 ngày (02/05 → 04/05) → <span class="text-success">trả về toàn bộ tuần</span> chứa ngày 02/05.</li>
+                  <li><i class="bi bi-calendar-month text-info me-1"></i> <span class="fw-semibold">Ví dụ 2:</span> Chọn kiểu <span class="text-primary">“Tháng”</span> nhưng chỉ chọn 10 ngày (05/03 → 14/03) → <span class="text-success">trả về toàn bộ tháng 3</span>.</li>
+                </ul>
+                <div class="d-flex align-items-center mt-2">
+                  <i class="bi bi-star-fill text-warning me-1"></i>
+                  <span class="text-muted" style="font-size: 0.93rem;">Điều này giúp đảm bảo số liệu thống kê luôn đầy đủ và chính xác.</span>
+                </div>
+              </div>
+            </transition>
           </div>
         </div>
       </div>
@@ -221,6 +281,8 @@
 
 <script setup>
 import { ref, onMounted, nextTick, computed } from 'vue';
+// State for note open/close
+const noteOpen = ref(false);
 import { getBookStatsSummary } from '@/services/admin/bookStatistics';
 import BookStatisticsPopup from '@/components/common/BookStatisticsPopup.vue';
 import ApexCharts from 'apexcharts';
@@ -233,6 +295,7 @@ const error = ref('');
 const selectedPeriod = ref('day');
 const fromDate = ref('');
 const toDate = ref('');
+const showCustomDateRange = ref(false);
 
 // Chart instance
 let chart = null;
@@ -423,17 +486,20 @@ const renderChart = () => {
       curve: 'smooth',
       width: 3
     },
-    // ✅ THÊM MARKERS - Điểm tròn để click
+    // ✅ THÊM MARKERS - Điểm tròn để click (cải thiện UX)
     markers: {
-      size: 6,
+      size: 8,
       colors: ['#667eea'],
       strokeColors: '#fff',
-      strokeWidth: 2,
+      strokeWidth: 3,
       hover: {
-        size: 10,
-        sizeOffset: 3
+        size: 12,
+        sizeOffset: 2
       },
-      discrete: []
+      discrete: [],
+      // ✅ Cải thiện click area
+      offsetX: 0,
+      offsetY: 0
     },
     fill: {
       type: 'gradient',
@@ -492,14 +558,25 @@ const renderChart = () => {
     tooltip: {
       theme: 'light',
       shared: false,
-      intersect: true,
-      followCursor: true,
+      intersect: false,
+      followCursor: false,
+      style: {
+        fontSize: '13px',
+        fontFamily: 'Inter, sans-serif'
+      },
+      onDatasetHover: {
+        highlightDataSeries: false
+      },
       custom: function({series, seriesIndex, dataPointIndex, w}) {
+        if (dataPointIndex < 0 || !chartData.value || !chartData.value[dataPointIndex]) {
+          return '';
+        }
+        
         const dataPoint = chartData.value[dataPointIndex];
         const formattedDate = formatDateLabel(dataPoint.date, true);
         
         return `
-          <div class="chart-tooltip">
+          <div class="apexcharts-tooltip-custom">
             <div class="tooltip-header">${formattedDate}</div>
             <div class="tooltip-body">
               <div class="tooltip-row">
@@ -508,7 +585,7 @@ const renderChart = () => {
               </div>
               <div class="tooltip-hint">
                 <i class="bi bi-hand-index me-1"></i>
-                <strong>Click vào điểm tròn</strong> để xem chi tiết từng sách
+                <strong>Click vào điểm</strong> để xem chi tiết
               </div>
             </div>
           </div>
@@ -546,8 +623,17 @@ const renderChart = () => {
 const onPeriodChange = () => {
   console.log('📊 Period changed to:', selectedPeriod.value);
   
-  // Reset custom dates when changing away from custom
-  if (selectedPeriod.value !== 'custom') {
+  // Nếu không có custom date range thì fetch luôn
+  if (!showCustomDateRange.value) {
+    fetchChartData();
+  }
+};
+
+const toggleCustomDateRange = () => {
+  showCustomDateRange.value = !showCustomDateRange.value;
+  
+  if (!showCustomDateRange.value) {
+    // Clear custom dates và fetch với period mặc định
     fromDate.value = '';
     toDate.value = '';
     fetchChartData();
@@ -556,9 +642,16 @@ const onPeriodChange = () => {
 
 const applyCustomDateRange = () => {
   if (fromDate.value && toDate.value) {
-    console.log('📅 Applying custom date range:', fromDate.value, 'to', toDate.value);
+    console.log('📅 Applying custom date range:', fromDate.value, 'to', toDate.value, 'with period:', selectedPeriod.value);
     fetchChartData();
   }
+};
+
+const clearCustomDateRange = () => {
+  fromDate.value = '';
+  toDate.value = '';
+  showCustomDateRange.value = false;
+  fetchChartData();
 };
 
 // Helper functions
@@ -567,9 +660,14 @@ const getPeriodText = () => {
     'day': 'ngày',
     'week': 'tuần', 
     'month': 'tháng',
-    'year': 'năm',
-    'custom': 'khoảng thời gian'
+    'quarter': 'quý',
+    'year': 'năm'
   };
+  
+  if (showCustomDateRange.value && fromDate.value && toDate.value) {
+    return `${periods[selectedPeriod.value] || 'thời gian'} (${fromDate.value} đến ${toDate.value})`;
+  }
+  
   return periods[selectedPeriod.value] || 'thời gian';
 };
 
@@ -577,6 +675,18 @@ const formatDateLabel = (dateString, detailed = false) => {
   const date = new Date(dateString);
   
   if (detailed) {
+    // For detailed tooltip - check if we have quarter and dateRange from API response
+    if (selectedPeriod.value === 'quarter') {
+      // Try to find the data point that matches this date
+      const dataPoint = chartData.value.find(item => item.date === dateString);
+      if (dataPoint && dataPoint.dateRange) {
+        return dataPoint.dateRange; // "Q2 2025" from API
+      }
+      // Fallback to manual quarter calculation
+      const quarter = Math.ceil((date.getMonth() + 1) / 3);
+      return `Quý ${quarter} năm ${date.getFullYear()}`;
+    }
+    
     return date.toLocaleDateString('vi-VN', {
       weekday: 'long',
       year: 'numeric',
@@ -593,6 +703,15 @@ const formatDateLabel = (dateString, detailed = false) => {
       return `T${getWeekNumber(date)}/${date.getFullYear()}`;
     case 'month':
       return date.toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' });
+    case 'quarter':
+      // Try to use dateRange from API response first
+      const dataPoint = chartData.value.find(item => item.date === dateString);
+      if (dataPoint && dataPoint.dateRange) {
+        return dataPoint.dateRange; // "Q2 2025" from API
+      }
+      // Fallback to manual calculation
+      const quarter = Math.ceil((date.getMonth() + 1) / 3);
+      return `Q${quarter} ${date.getFullYear()}`;
     case 'year':
       return date.getFullYear().toString();
     default:
@@ -687,6 +806,20 @@ onMounted(() => {
   color: white;
 }
 
+.chart-controls .btn-outline-info {
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.3);
+  font-size: 0.875rem;
+  padding: 0.375rem 0.75rem;
+}
+
+.chart-controls .btn-outline-info:hover,
+.chart-controls .btn-outline-info.active {
+  background-color: rgba(23, 162, 184, 0.8);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
 .summary-card {
   border: none;
   border-radius: 12px;
@@ -744,17 +877,40 @@ onMounted(() => {
   cursor: pointer;
 }
 
-/* ✅ ENHANCE MARKERS - Làm nổi bật các điểm có thể click */
+/* ✅ ENHANCE MARKERS - Làm nổi bật và ổn định các điểm có thể click */
 .chart-container :deep(.apexcharts-marker) {
   pointer-events: auto;
   cursor: pointer;
   filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.3));
+  transition: all 0.2s ease-in-out;
 }
 
 .chart-container :deep(.apexcharts-marker):hover {
-  transform: scale(1.4);
-  transition: transform 0.2s ease;
+  transform: scale(1.2);
   filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.6));
+}
+
+/* ✅ STABLE HOVER AREA - Tạo vùng click lớn hơn để dễ click */
+.chart-container :deep(.apexcharts-series-markers) {
+  pointer-events: auto;
+}
+
+.chart-container :deep(.apexcharts-series-markers .apexcharts-marker) {
+  stroke-width: 12;
+  stroke: transparent;
+}
+
+/* ✅ PREVENT FLICKER - Ngăn marker nhảy loạn */
+.chart-container :deep(.apexcharts-series) {
+  pointer-events: none;
+}
+
+.chart-container :deep(.apexcharts-series .apexcharts-marker) {
+  pointer-events: auto;
+}
+
+.chart-container :deep(.apexcharts-tooltip) {
+  pointer-events: none;
 }
 
 /* ✅ CHART INFO STYLING */
@@ -778,13 +934,16 @@ onMounted(() => {
 }
 
 /* Custom tooltip styles - global */
-:global(.chart-tooltip) {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-  font-family: 'Inter', sans-serif;
+:global(.chart-tooltip),
+:global(.apexcharts-tooltip-custom) {
+  background: white !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15) !important;
+  padding: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  font-family: 'Inter', sans-serif !important;
+  max-width: 280px !important;
+  z-index: 9999 !important;
 }
 
 :global(.tooltip-header) {
@@ -866,5 +1025,24 @@ onMounted(() => {
   .summary-card .card-title {
     font-size: 1.5rem;
   }
+}
+/* Fade transition for note box */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.25s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+.note-toggle-btn {
+  outline: none;
+  box-shadow: none;
+  background: none;
+  font-size: 1.2rem;
+  color: #2563eb;
+  transition: color 0.2s;
+  margin-left: 2px;
+}
+.note-toggle-btn:hover {
+  color: #1d4ed8;
 }
 </style>

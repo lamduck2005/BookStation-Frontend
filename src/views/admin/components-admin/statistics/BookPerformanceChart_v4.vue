@@ -49,6 +49,18 @@
               type="radio" 
               class="btn-check" 
               name="chartPeriod" 
+              id="quarter" 
+              autocomplete="off" 
+              value="quarter"
+              v-model="selectedPeriod"
+              @change="onPeriodChange"
+            >
+            <label class="btn btn-outline-primary" for="quarter">Quý</label>
+
+            <input 
+              type="radio" 
+              class="btn-check" 
+              name="chartPeriod" 
               id="year" 
               autocomplete="off" 
               value="year"
@@ -462,13 +474,25 @@ const renderChart = () => {
     tooltip: {
       theme: 'light',
       shared: false,
-      intersect: true,
+      intersect: false,
+      followCursor: false,
+      style: {
+        fontSize: '13px',
+        fontFamily: 'Inter, sans-serif'
+      },
+      onDatasetHover: {
+        highlightDataSeries: false
+      },
       custom: function({series, seriesIndex, dataPointIndex, w}) {
+        if (dataPointIndex < 0 || !chartData.value || !chartData.value[dataPointIndex]) {
+          return '';
+        }
+        
         const dataPoint = chartData.value[dataPointIndex];
         const formattedDate = formatDateLabel(dataPoint.date, true);
         
         return `
-          <div class="chart-tooltip">
+          <div class="apexcharts-tooltip-custom">
             <div class="tooltip-header">${formattedDate}</div>
             <div class="tooltip-body">
               <div class="tooltip-row">
@@ -536,6 +560,7 @@ const getPeriodText = () => {
     'day': 'ngày',
     'week': 'tuần', 
     'month': 'tháng',
+    'quarter': 'quý',
     'year': 'năm',
     'custom': 'khoảng thời gian'
   };
@@ -562,6 +587,15 @@ const formatDateLabel = (dateString, detailed = false) => {
       return `T${getWeekNumber(date)}/${date.getFullYear()}`;
     case 'month':
       return date.toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' });
+    case 'quarter':
+      // Try to use dateRange from API response first
+      const dataPoint = chartData.value.find(item => item.date === dateString);
+      if (dataPoint && dataPoint.dateRange) {
+        return dataPoint.dateRange; // "Q2 2025" from API
+      }
+      // Fallback to manual calculation
+      const quarter = Math.ceil((date.getMonth() + 1) / 3);
+      return `Q${quarter} ${date.getFullYear()}`;
     case 'year':
       return date.getFullYear().toString();
     default:
@@ -702,13 +736,16 @@ onMounted(() => {
 }
 
 /* Custom tooltip styles - global */
-:global(.chart-tooltip) {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-  font-family: 'Inter', sans-serif;
+:global(.chart-tooltip),
+:global(.apexcharts-tooltip-custom) {
+  background: white !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15) !important;
+  padding: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  font-family: 'Inter', sans-serif !important;
+  max-width: 280px !important;
+  z-index: 9999 !important;
 }
 
 :global(.tooltip-header) {
