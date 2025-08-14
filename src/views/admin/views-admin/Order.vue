@@ -12,132 +12,199 @@
       <!-- Overview Cards -->
       <OverviewCards />
       
-      <!-- Revenue Chart và Location Stats -->
-      <div class="row g-4 mb-4">
-        <div class="col-lg-7">
+      <!-- Toggle Revenue Chart -->
+      <div class="mb-4">
+        <button
+          class="btn mb-2 rounded-pill px-4 fw-bold"
+          style="background: linear-gradient(90deg, #4f8cff 0%, #6ed0fa 100%); color: #fff; border: none; box-shadow: 0 2px 8px #e3e8ee;"
+          @click="showRevenueChart = !showRevenueChart"
+        >
+          <i :class="showRevenueChart ? 'bi bi-bar-chart-line-fill' : 'bi bi-bar-chart-line'" style="font-size: 1.2em;"></i>
+          <span class="ms-2">{{ showRevenueChart ? 'Ẩn biểu đồ doanh thu' : 'Hiện biểu đồ doanh thu' }}</span>
+        </button>
+        <div v-show="showRevenueChart">
           <RevenueChart />
-        </div>
-        <div class="col-lg-5">
-          <LocationStats />
         </div>
       </div>
 
     </div>
     
-    <!-- Bộ lọc -->
-    <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">
-      <div class="d-flex align-items-center mb-3 p-2 m-0 rounded-top" style="background-color: #ecae9e;">
-        <i class="bi bi-funnel-fill me-2 text-dark"></i>
-        <h5>Bộ lọc</h5>
+    <!-- Layout 2 cột: Bộ lọc bên trái, Bảng bên phải -->
+    <div class="row">
+      <!-- Cột bộ lọc (bên trái) -->
+      <div class="col-lg-2 col-xl-2">
+        <div class="card shadow-lg border-0 filter-card sticky-filter">
+          <div class="card-header bg-light border-0 py-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0 text-secondary">
+                <i class="bi bi-funnel me-2"></i>
+                Bộ lọc
+              </h6>
+              <button 
+                class="btn btn-sm btn-outline-secondary" 
+                type="button" 
+                @click="toggleFilter"
+                :aria-expanded="showFilter"
+              >
+                <i :class="showFilter ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body filter-collapse" :class="{ 'filter-collapsed': !showFilter }">
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-receipt me-1"></i>
+                Mã đơn hàng
+              </label>
+              <input 
+                type="text" 
+                class="form-control form-control-sm" 
+                placeholder="Nhập mã đơn hàng" 
+                v-model="searchCode" 
+                @input="debouncedSearch"
+                @keyup.enter="applyFilters"
+              />
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-person me-1"></i>
+                Khách hàng
+              </label>
+              <select class="form-select form-select-sm" v-model="selectedUserId" @change="applyFilters">
+                <option value="">Tất cả khách hàng</option>
+                <option v-for="user in users" :key="user.id" :value="user.id">
+                  {{ user.name }}
+                </option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-toggle-on me-1"></i>
+                Trạng thái
+              </label>
+              <select class="form-select form-select-sm" v-model="selectedStatus" @change="applyFilters">
+                <option value="">Tất cả trạng thái</option>
+                <option v-for="status in orderStatuses" :key="status.value" :value="status.value">
+                  {{ status.displayName }}
+                </option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-bag me-1"></i>
+                Loại đơn hàng
+              </label>
+              <select class="form-select form-select-sm" v-model="selectedOrderType" @change="applyFilters">
+                <option value="">Tất cả loại</option>
+                <option v-for="type in orderTypes" :key="type.value" :value="type.value">
+                  {{ type.displayName }}
+                </option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-calendar me-1"></i>
+                Từ ngày
+              </label>
+              <input 
+                type="date" 
+                class="form-control form-control-sm" 
+                v-model="startDateFilter" 
+                @change="applyFilters"
+              />
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-calendar me-1"></i>
+                Đến ngày
+              </label>
+              <input 
+                type="date" 
+                class="form-control form-control-sm" 
+                v-model="endDateFilter" 
+                @change="applyFilters"
+              />
+            </div>
+            
+            <div class="d-grid gap-2">
+              <button class="btn btn-success btn-sm" @click="applyFilters">
+                <i class="bi bi-funnel me-1"></i> Áp dụng lọc
+              </button>
+              <button class="btn btn-secondary btn-sm" @click="clearFilters">
+                <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="row g-3 m-2 mt-0 p-0">
-        <div class="col-md-3">
-          <label class="form-label">Mã đơn hàng:</label>
-          <input 
-            type="text" 
-            class="form-control" 
-            placeholder="Nhập mã đơn hàng" 
-            v-model="searchCode" 
-            @input="debouncedSearch"
-            @keyup.enter="applyFilters"
-          />
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Khách hàng</label>
-          <select class="form-select" v-model="selectedUserId" @change="applyFilters">
-            <option value="">Tất cả khách hàng</option>
-            <option v-for="user in users" :key="user.id" :value="user.id">
-              {{ user.name }}
-            </option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Trạng thái</label>
-          <select class="form-select" v-model="selectedStatus" @change="applyFilters">
-            <option value="">Tất cả trạng thái</option>
-            <option v-for="status in orderStatuses" :key="status.value" :value="status.value">
-              {{ status.displayName }}
-            </option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Loại đơn hàng</label>
-          <select class="form-select" v-model="selectedOrderType" @change="applyFilters">
-            <option value="">Tất cả loại</option>
-            <option v-for="type in orderTypes" :key="type.value" :value="type.value">
-              {{ type.displayName }}
-            </option>
-          </select>
-        </div>
-      </div>
-      <div class="row g-3 m-2 mt-2 p-0">
-        <div class="col-md-4">
-          <label class="form-label">Từ ngày:</label>
-          <input 
-            type="date" 
-            class="form-control" 
-            v-model="startDateFilter" 
-            @change="applyFilters"
-            placeholder="Chọn ngày bắt đầu"
-          />
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Đến ngày:</label>
-          <input 
-            type="date" 
-            class="form-control" 
-            v-model="endDateFilter" 
-            @change="applyFilters"
-            placeholder="Chọn ngày kết thúc"
-          />
-        </div>
-        <div class="col-md-4 d-flex align-items-end">
-          <button type="button" class="btn btn-secondary me-2" @click="clearFilters">
-            <i class="bi bi-arrow-clockwise me-1"></i>
-            Xóa bộ lọc
-          </button>
-          <button type="button" class="btn btn-primary" @click="applyFilters">
-            <i class="bi bi-search me-1"></i>
-            Tìm kiếm
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Nút thêm mới -->
-    <div class="d-flex justify-content-end mb-3">
-      <AddButton @click="openAddModal" />
-    </div>
-
-    <!-- Danh sách Order -->
-    <div class="bg-white p-3 rounded shadow-sm pt-0 ps-0 pe-0">
-      <div class="d-flex align-items-center mb-3 p-2 m-0 rounded-top" style="background-color: #ecae9e;">
-        <strong>Danh sách đơn hàng</strong>
-      </div>
-
-      <div class="p-3">
-        <div class="table-responsive">
-          <table class="table align-middle">
-            <thead>
-              <tr>
-                <th style="min-width: 50px;">STT</th>
-                <th style="min-width: 150px;">Mã đơn hàng</th>
-                <th style="min-width: 200px;">Khách hàng</th>
-                <th style="min-width: 120px;">Trạng thái</th>
-                <th style="min-width: 150px;">Địa chỉ</th>
-                <th style="min-width: 120px;">Loại đơn</th>
-                <th style="min-width: 120px;">Tạm tính</th>
-                <th style="min-width: 120px;">Phí ship</th>
-                <th style="min-width: 120px;">Giảm giá</th>
-                <th style="min-width: 120px;">Tổng tiền</th>
-                <th style="min-width: 150px;">Ngày tạo</th>
-                <th style="min-width: 150px;">Staff</th>
-                <th style="min-width: 200px;">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
+      
+      <!-- Cột bảng (bên phải) -->
+      <div class="col-lg-10 col-xl-10">
+        <!-- Danh sách Order -->
+        <div class="card shadow-lg border-0 mb-4 admin-table-card">
+          <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3">
+            <div>
+              <h5 class="mb-0 text-secondary">
+                <i class="bi bi-receipt me-2"></i>
+                Danh sách đơn hàng
+              </h5>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-info btn-sm py-2" @click="fetchOrders" :disabled="loading">
+                <i class="bi bi-arrow-repeat me-1"></i> Làm mới
+              </button>
+              <AddButton @click="openAddModal" />
+            </div>
+          </div>
+          <div class="card-body p-0" :class="{ loading: loading }">
+            <div class="loading-overlay" :class="{ show: loading }">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+              </div>
+              <p>Đang tải dữ liệu...</p>
+            </div>
+            
+            
+            <!-- Data table -->
+            <div>
+              <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0">
+                  <thead class="table-light">
+                  <tr>
+                    <th style="min-width: 50px;">STT</th>
+                    <th style="min-width: 200px;">Thao tác</th>
+                    <th style="min-width: 150px;">Mã đơn hàng</th>
+                    <th style="min-width: 200px;">Khách hàng</th>
+                    <th style="min-width: 150px;">Trạng thái</th>
+                    <th style="min-width: 150px;">Địa chỉ</th>
+                    <th style="min-width: 120px;">Loại đơn</th>
+                    <th style="min-width: 120px;">Tạm tính</th>
+                    <th style="min-width: 120px;">Phí ship</th>
+                    <th style="min-width: 120px;">Tổng tiền</th>
+                    <th style="min-width: 150px;">Ngày tạo</th>
+                    <th style="min-width: 150px;">Staff</th>
+                  </tr>
+                </thead>
+                <tbody>
               <tr v-for="(order, index) in orders" :key="order.id">
                 <td>{{ (currentPage * pageSize) + index + 1 }}</td>
+                <td>
+                  <div class="d-flex gap-2">
+                    <button 
+                      class="btn btn-outline-info btn-sm" 
+                      @click="viewOrderDetail(order)"
+                      title="Xem chi tiết"
+                    >
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    
+                  </div>
+                </td>
                 <td>
                   <strong class="text-primary">{{ order.orderCode || order.code }}</strong>
                 </td>
@@ -153,7 +220,7 @@
                     :class="getOrderStatusClass(order.orderStatus)"
                     :value="order.orderStatus"
                     @change="handleStatusChange(order, $event)"
-                    style="min-width: 110px; font-size: 0.82em; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 1px 4px rgba(0,0,0,0.07);"
+                    style="min-width: 130px; font-size: 0.82em; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); white-space: nowrap;"
                   >
                     <!-- Hiện trạng thái hiện tại -->
                     <option :value="order.orderStatus" selected>
@@ -180,12 +247,6 @@
                   <span class="text-warning">{{ formatCurrency(order.shippingFee) }}</span>
                 </td>
                 <td>
-                  <span class="text-success" v-if="order.totalVoucherDiscount > 0">
-                    -{{ formatCurrency(order.totalVoucherDiscount) }}
-                  </span>
-                  <span class="text-muted" v-else>0₫</span>
-                </td>
-                <td>
                   <strong class="text-success">{{ formatCurrency(order.finalTotal || order.totalAmount) }}</strong>
                 </td>
                 <td>
@@ -199,77 +260,29 @@
                   </div>
                   <div class="small text-muted" v-else>-</div>
                 </td>
-                <td>
-                  <div class="d-flex gap-2">
-                    <button 
-                      class="btn btn-outline-info btn-sm" 
-                      @click="viewOrderDetail(order)"
-                      title="Xem chi tiết"
-                    >
-                      <i class="bi bi-eye"></i>
-                    </button>
-                    <EditButton 
-                      @click="openEditModal(order, index)" 
-                      v-if="order.orderStatus === 'PENDING'"
-                      title="Chỉ sửa được đơn ở trạng thái Chờ xử lý"
-                    />
-                    <div class="dropdown">
-                      <button 
-                        class="btn btn-outline-secondary btn-sm dropdown-toggle" 
-                        type="button" 
-                        :id="'statusDropdown' + order.id"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
-                        title="Cập nhật trạng thái"
-                      >
-                        <i class="bi bi-arrow-repeat"></i>
-                      </button>
-                      <ul class="dropdown-menu" :aria-labelledby="'statusDropdown' + order.id">
-                        <li v-for="status in getAvailableStatusTransitionsForOrder(order)" :key="status.targetStatus || status.value">
-                          <a 
-                            class="dropdown-item" 
-                            href="#"
-                            @click.prevent="handleStatusChangeFromAction(order, status.targetStatus || status.value)"
-                          >
-                            <span class="badge me-2" :class="getOrderStatusClass(status.targetStatus || status.value)">
-                              {{ status.displayName }}
-                            </span>
-                          </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                          <a 
-                            class="dropdown-item text-danger" 
-                            href="#"
-                            @click.prevent="cancelOrder(order)"
-                            v-if="order.orderStatus === 'PENDING' || order.orderStatus === 'CONFIRMED'"
-                          >
-                            <i class="bi bi-x-circle me-2"></i>
-                            Hủy đơn hàng
-                          </a>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </td>
+                
               </tr>
             </tbody>
           </table>
         </div>
-
+        
         <!-- Pagination -->
-        <Pagination 
-          :page-number="currentPage" 
-          :total-pages="totalPages" 
-          :is-last-page="isLastPage"
-          :page-size="pageSize" 
-          :items-per-page-options="itemsPerPageOptions" 
-          :total-elements="totalElements"
-          @prev="handlePrev" 
-          @next="handleNext" 
-          @update:pageSize="handlePageSizeChange" 
-        />
+        <div class="p-3">
+          <Pagination 
+            :page-number="currentPage" 
+            :total-pages="totalPages" 
+            :is-last-page="isLastPage"
+            :page-size="pageSize" 
+            :items-per-page-options="itemsPerPageOptions" 
+            :total-elements="totalElements"
+            @prev="handlePrev" 
+            @next="handleNext" 
+            @update:pageSize="handlePageSizeChange" 
+            @goToPage="handleGoToPage"
+          />
+        </div>
       </div>
+    </div>
     </div>
   </div>
 
@@ -774,201 +787,329 @@
 
   <!-- Order Detail Modal -->
   <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
       <div class="modal-content">
-        <div class="modal-header">
+        <div class="modal-header bg-light">
           <h5 class="modal-title" id="orderDetailModalLabel">
             <i class="bi bi-file-earmark-text me-2"></i>
-            Chi tiết đơn hàng
+            Chi tiết đơn hàng #{{ selectedOrder?.orderCode || selectedOrder?.code }}
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" v-if="selectedOrder">
-          <!-- Order Info -->
-          <div class="row mb-4">
-            <div class="col-md-6">
-              <h6>Thông tin đơn hàng</h6>
-              <table class="table table-borderless table-sm">
-                <tbody>
-                  <tr>
-                    <td><strong>Mã đơn hàng:</strong></td>
-                    <td>{{ selectedOrder.orderCode || selectedOrder.code }}</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Loại đơn:</strong></td>
-                    <td>
-                      <span class="badge bg-info">{{ formatOrderType(selectedOrder.orderType) }}</span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td><strong>Trạng thái:</strong></td>
-                    <td>
-                      <StatusLabel 
-                        :status="selectedOrder.orderStatus" 
-                        :statusText="formatOrderStatus(selectedOrder.orderStatus)"
-                        :statusClass="getOrderStatusClass(selectedOrder.orderStatus)"
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td><strong>Ngày tạo:</strong></td>
-                    <td>{{ formatDate(selectedOrder.createdAt) }}</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Cập nhật lần cuối:</strong></td>
-                    <td>{{ formatDate(selectedOrder.updatedAt) }}</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Nhân viên tạo:</strong></td>
-                    <td>{{ selectedOrder.staffName || 'N/A' }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="col-md-6">
-              <h6>Thông tin khách hàng & Giao hàng</h6>
-              <table class="table table-borderless table-sm">
-                <tbody>
-                  <tr>
-                    <td><strong>Tên:</strong></td>
-                    <td>{{ selectedOrder.userName }}</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Email:</strong></td>
-                    <td>{{ selectedOrder.userEmail }}</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Địa chỉ giao hàng:</strong></td>
-                    <td>
-                      <div v-if="selectedOrder.addressDetail">
-                        {{ selectedOrder.addressDetail }}
-                      </div>
-                      <div v-else class="text-muted">Chưa có địa chỉ</div>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td><strong>Ghi chú:</strong></td>
-                    <td>{{ selectedOrder.notes || 'Không có' }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Order Items -->
-          <div class="mb-4">
-            <h6>Sản phẩm trong đơn hàng</h6>
-            <div class="table-responsive">
-              <table class="table table-striped">
-                <thead>
-                  <tr>
-                    <th>Sản phẩm</th>
-                    <th>Giá gốc</th>
-                    <th>Giá bán</th>
-                    <th>Số lượng</th>
-                    <th>Thành tiền</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="item in selectedOrder.itemDetails || selectedOrder.orderDetails" :key="item.id || item.bookId">
-                    <td>
-                      <div>
-                        <strong>{{ item.bookName || item.bookTitle }}</strong>
-                        <div class="text-muted small">
-                          Mã: {{ item.bookCode }}
-                        </div>
-                        <div v-if="item.isFlashSale" class="badge bg-danger">
-                          🔥 {{ item.flashSaleName }}
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <span v-if="item.originalPrice && item.isFlashSale" class="text-muted text-decoration-line-through">
-                        {{ formatCurrency(item.originalPrice) }}
-                      </span>
-                      <span v-else>{{ formatCurrency(item.originalPrice || item.unitPrice) }}</span>
-                    </td>
-                    <td>
-                      <strong :class="{ 'text-danger': item.isFlashSale }">
-                        {{ formatCurrency(item.unitPrice) }}
-                      </strong>
-                      <div v-if="item.savedAmount > 0" class="badge bg-success small">
-                        Tiết kiệm {{ formatCurrency(item.savedAmount) }}
-                      </div>
-                    </td>
-                    <td>{{ item.quantity }}</td>
-                    <td><strong>{{ formatCurrency(item.itemTotal || item.totalPrice) }}</strong></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Applied Vouchers -->
-          <div class="mb-4" v-if="selectedOrder.appliedVouchers && selectedOrder.appliedVouchers.length > 0">
-            <h6>Vouchers đã áp dụng</h6>
+          <!-- Order Header Info -->
+          <div class="order-detail-header mb-4">
             <div class="row">
-              <div class="col-md-6" v-for="voucher in selectedOrder.appliedVouchers" :key="voucher.voucherId">
-                <div class="card border-success">
-                  <div class="card-body py-2">
-                    <div class="d-flex justify-content-between align-items-center">
-                      <div>
-                        <strong>{{ voucher.voucherCode }}</strong>
-                        <div class="small text-muted">{{ voucher.voucherName }}</div>
-                        <div class="small">{{ voucher.description }}</div>
-                      </div>
-                      <strong class="text-success">-{{ formatCurrency(voucher.discountApplied) }}</strong>
+              <div class="col-md-8">
+                <div class="info-section">
+                  <h6 class="section-title">
+                    <i class="bi bi-receipt me-2"></i>Thông tin đơn hàng
+                  </h6>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <p><strong>Mã đơn hàng:</strong> {{ selectedOrder.orderCode || selectedOrder.code }}</p>
+                      <p><strong>Loại đơn hàng:</strong> 
+                        <span class="badge bg-info ms-2">{{ formatOrderType(selectedOrder.orderType) }}</span>
+                      </p>
+                      <p><strong>Ngày tạo:</strong> {{ formatDate(selectedOrder.createdAt) }}</p>
+                      <p><strong>Nhân viên tạo:</strong> {{ selectedOrder.staffName || 'Hệ thống' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                      <p><strong>Trạng thái:</strong> 
+                        <StatusLabel 
+                          :status="selectedOrder.orderStatus" 
+                          :statusText="formatOrderStatus(selectedOrder.orderStatus)"
+                          :statusClass="getOrderStatusClass(selectedOrder.orderStatus)"
+                        />
+                      </p>
+                      <p><strong>Cập nhật lần cuối:</strong> {{ formatDate(selectedOrder.updatedAt) }}</p>
+                      <p v-if="selectedOrder.notes"><strong>Ghi chú:</strong> {{ selectedOrder.notes }}</p>
                     </div>
                   </div>
                 </div>
               </div>
+              <div class="col-md-4">
+                <div class="info-section">
+                  <h6 class="section-title">
+                    <i class="bi bi-person me-2"></i>Thông tin khách hàng
+                  </h6>
+                  <p><strong>Tên:</strong> {{ selectedOrder.userName }}</p>
+                  <p><strong>Email:</strong> {{ selectedOrder.userEmail }}</p>
+                  <p v-if="selectedOrder.addressDetail">
+                    <strong>Địa chỉ giao hàng:</strong><br>
+                    <span class="text-muted">{{ selectedOrder.addressDetail }}</span>
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Order Summary -->
-          <div class="card">
-            <div class="card-header">
-              <h6 class="mb-0">Tổng kết đơn hàng</h6>
-            </div>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-6">
-                  <div class="d-flex justify-content-between mb-2">
-                    <span>Tạm tính:</span>
-                    <span>{{ formatCurrency(selectedOrder.subtotal || calculateOrderSubtotal(selectedOrder)) }}</span>
+          <!-- Order Items with Enhanced Display -->
+          <div class="mb-4">
+            <h6 class="section-title">
+              <i class="bi bi-bag me-2"></i>Sản phẩm trong đơn hàng
+            </h6>
+            <div class="order-items-container">
+              <div v-for="item in selectedOrder.itemDetails || selectedOrder.orderDetails" 
+                   :key="item.id || item.bookId" 
+                   class="order-item-detail">
+                <div class="row align-items-center">
+                  <div class="col-md-1">
+                    <img 
+                      :src="item.bookImage || '/src/assets/img/book-placeholder.svg'" 
+                      :alt="item.bookName || item.bookTitle"
+                      class="item-thumbnail"
+                      @error="$event.target.src = '/src/assets/img/book-placeholder.svg'"
+                    >
                   </div>
-                  <div class="d-flex justify-content-between mb-2">
-                    <span>Phí vận chuyển:</span>
-                    <span>{{ formatCurrency(selectedOrder.shippingFee || 0) }}</span>
+                  <div class="col-md-4">
+                    <div class="item-info">
+                      <h6 class="item-name">{{ item.bookName || item.bookTitle }}</h6>
+                      <p class="item-code text-muted small">Mã sách: {{ item.bookCode }}</p>
+                      <div v-if="item.isFlashSale" class="flash-sale-badge">
+                        <i class="bi bi-fire"></i>
+                        {{ item.flashSaleName }}
+                      </div>
+                    </div>
                   </div>
-                  <div class="d-flex justify-content-between mb-2" v-if="selectedOrder.regularVoucherDiscount > 0">
-                    <span>Voucher thường:</span>
-                    <span class="text-success">-{{ formatCurrency(selectedOrder.regularVoucherDiscount) }}</span>
+                  <div class="col-md-2 text-center">
+                    <div class="price-info">
+                      <div v-if="item.originalPrice && item.isFlashSale">
+                        <span class="original-price text-muted text-decoration-line-through small d-block">
+                          {{ formatCurrency(item.originalPrice) }}
+                        </span>
+                        <strong class="sale-price text-danger">
+                          {{ formatCurrency(item.unitPrice) }}
+                        </strong>
+                        <div class="badge bg-success small mt-1">
+                          Tiết kiệm {{ formatCurrency(item.savedAmount || (item.originalPrice - item.unitPrice)) }}
+                        </div>
+                      </div>
+                      <div v-else>
+                        <strong>{{ formatCurrency(item.unitPrice) }}</strong>
+                      </div>
+                    </div>
                   </div>
-                  <div class="d-flex justify-content-between mb-2" v-if="selectedOrder.shippingVoucherDiscount > 0">
-                    <span>Voucher ship:</span>
-                    <span class="text-success">-{{ formatCurrency(selectedOrder.shippingVoucherDiscount) }}</span>
+                  <div class="col-md-1 text-center">
+                    <span class="quantity-badge">{{ item.quantity }}</span>
                   </div>
-                  <div class="d-flex justify-content-between mb-2" v-if="selectedOrder.totalVoucherDiscount > 0">
-                    <span>Tổng giảm giá:</span>
-                    <span class="text-success">-{{ formatCurrency(selectedOrder.totalVoucherDiscount) }}</span>
+                  <div class="col-md-2 text-center">
+                    <strong class="item-total">{{ formatCurrency(item.itemTotal || item.totalPrice) }}</strong>
                   </div>
-                </div>
-                <div class="col-6">
-                  <div class="d-flex justify-content-between">
-                    <strong class="fs-5">Tổng cộng:</strong>
-                    <strong class="fs-5 text-primary">{{ formatCurrency(selectedOrder.finalTotal || selectedOrder.totalAmount) }}</strong>
-                  </div>
-                  <div v-if="selectedOrder.message" class="small text-info mt-2">
-                    {{ selectedOrder.message }}
+                  <div class="col-md-2">
+                    <div v-if="item.refundedQuantity && item.refundedQuantity > 0" class="refund-info-detail">
+                      <div class="refund-badge">
+                        <i class="bi bi-arrow-return-left me-1"></i>
+                        Hoàn {{ item.refundedQuantity }} sản phẩm
+                      </div>
+                      <small class="refund-reason d-block text-muted">
+                        {{ item.refundReasonDisplay || 'Không có lý do' }}
+                      </small>
+                      <span class="refund-status-badge" :class="{
+                        'badge-success': item.refundStatusDisplay === 'Đã hoàn tiền',
+                        'badge-info': item.refundStatusDisplay === 'Đang xử lý',
+                        'badge-warning': item.refundStatusDisplay === 'Chờ duyệt',
+                        'badge-danger': item.refundStatusDisplay === 'Từ chối'
+                      }">
+                        {{ item.refundStatusDisplay || 'Không xác định' }}
+                      </span>
+                    </div>
+                    <span v-else class="text-muted small">Không có hoàn hàng</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          <!-- Enhanced Vouchers Section -->
+          <div class="mb-4" v-if="(selectedOrder.vouchers && selectedOrder.vouchers.length > 0) || 
+                                   (selectedOrder.voucherDiscountAmount > 0) || 
+                                   (selectedOrder.discountAmount > 0) ||
+                                   (selectedOrder.regularVoucherDiscount > 0) || 
+                                   (selectedOrder.shippingVoucherDiscount > 0) ||
+                                   (selectedOrder.totalVoucherDiscount > 0)">
+            <h6 class="section-title">
+              <i class="bi bi-ticket-perforated me-2"></i>Vouchers đã áp dụng
+            </h6>
+            <div class="voucher-list">
+              <!-- Display vouchers from vouchers array (primary source) -->
+              <template v-if="selectedOrder.vouchers && selectedOrder.vouchers.length > 0">
+                <div v-for="voucher in selectedOrder.vouchers" :key="voucher.id" class="voucher-item-detail">
+                  <div class="voucher-header">
+                    <div class="voucher-code">{{ voucher.code }}</div>
+                    <div class="voucher-discount">-{{ formatCurrency(voucher.discountAmount || selectedOrder.voucherDiscountAmount || selectedOrder.discountAmount) }}</div>
+                  </div>
+                  <div class="voucher-name">{{ voucher.name }}</div>
+                  <div class="voucher-description small text-muted">{{ voucher.description }}</div>
+                  <div class="voucher-type small">
+                    <span class="badge" :class="{
+                      'bg-primary': voucher.voucherCategory === 'NORMAL',
+                      'bg-success': voucher.voucherCategory === 'SHIPPING',
+                      'bg-warning': voucher.voucherCategory === 'FLASHSALE'
+                    }">
+                      {{ voucher.voucherCategory === 'NORMAL' ? 'Giảm giá sản phẩm' : 
+                         voucher.voucherCategory === 'SHIPPING' ? 'Miễn phí vận chuyển' : 
+                         voucher.voucherCategory }}
+                    </span>
+                    <span class="badge bg-info ms-1">
+                      {{ voucher.discountType === 'FIXED_AMOUNT' ? 'Giảm cố định' : 'Giảm theo %' }}
+                    </span>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Fallback: Display discount info if vouchers array is empty but discount exists -->
+              <template v-else>
+                <!-- Product voucher discount -->
+                <div v-if="selectedOrder.voucherDiscountAmount > 0" class="voucher-item-detail">
+                  <div class="voucher-header">
+                    <div class="voucher-code">{{ selectedOrder.voucherCode || 'PRODUCT_DISCOUNT' }}</div>
+                    <div class="voucher-discount">-{{ formatCurrency(selectedOrder.voucherDiscountAmount) }}</div>
+                  </div>
+                  <div class="voucher-name">Voucher giảm giá sản phẩm</div>
+                  <div class="voucher-description small text-muted">Áp dụng cho tổng giá trị đơn hàng</div>
+                </div>
+
+                <!-- General discount amount -->
+                <div v-else-if="selectedOrder.discountAmount > 0" class="voucher-item-detail">
+                  <div class="voucher-header">
+                    <div class="voucher-code">DISCOUNT</div>
+                    <div class="voucher-discount">-{{ formatCurrency(selectedOrder.discountAmount) }}</div>
+                  </div>
+                  <div class="voucher-name">Giảm giá tổng</div>
+                  <div class="voucher-description small text-muted">Tổng số tiền được giảm cho đơn hàng</div>
+                </div>
+
+                <!-- Shipping discount -->
+                <div v-if="selectedOrder.discountShipping > 0" class="voucher-item-detail">
+                  <div class="voucher-header">
+                    <div class="voucher-code">{{ selectedOrder.shippingVoucherCode || 'FREE_SHIPPING' }}</div>
+                    <div class="voucher-discount">-{{ formatCurrency(selectedOrder.discountShipping) }}</div>
+                  </div>
+                  <div class="voucher-name">Voucher miễn phí vận chuyển</div>
+                  <div class="voucher-description small text-muted">Giảm giá phí giao hàng</div>
+                </div>
+
+                <!-- Regular voucher discount (alternative field) -->
+                <div v-if="selectedOrder.regularVoucherDiscount > 0" class="voucher-item-detail">
+                  <div class="voucher-header">
+                    <div class="voucher-code">{{ selectedOrder.regularVoucherCode || 'REGULAR_DISCOUNT' }}</div>
+                    <div class="voucher-discount">-{{ formatCurrency(selectedOrder.regularVoucherDiscount) }}</div>
+                  </div>
+                  <div class="voucher-name">Voucher giảm giá thường</div>
+                  <div class="voucher-description small text-muted">Voucher giảm giá cho đơn hàng</div>
+                </div>
+
+                <!-- Shipping voucher discount (alternative field) -->  
+                <div v-if="selectedOrder.shippingVoucherDiscount > 0" class="voucher-item-detail">
+                  <div class="voucher-header">
+                    <div class="voucher-code">{{ selectedOrder.shippingVoucherCode || 'SHIP_DISCOUNT' }}</div>
+                    <div class="voucher-discount">-{{ formatCurrency(selectedOrder.shippingVoucherDiscount) }}</div>
+                  </div>
+                  <div class="voucher-name">Voucher giảm phí ship</div>
+                  <div class="voucher-description small text-muted">Giảm giá phí vận chuyển</div>
+                </div>
+
+                <!-- Total voucher discount fallback -->
+                <div v-if="selectedOrder.totalVoucherDiscount > 0 && 
+                          !selectedOrder.voucherDiscountAmount && 
+                          !selectedOrder.discountAmount &&
+                          !selectedOrder.regularVoucherDiscount &&
+                          !selectedOrder.shippingVoucherDiscount" class="voucher-item-detail">
+                  <div class="voucher-header">
+                    <div class="voucher-code">TOTAL_DISCOUNT</div>
+                    <div class="voucher-discount">-{{ formatCurrency(selectedOrder.totalVoucherDiscount) }}</div>
+                  </div>
+                  <div class="voucher-name">Tổng giảm giá voucher</div>
+                  <div class="voucher-description small text-muted">Tất cả voucher đã áp dụng cho đơn hàng</div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Enhanced Order Summary -->
+          <div class="order-summary-section">
+            <h6 class="section-title mb-3">
+              <i class="bi bi-calculator me-2"></i>Chi tiết thanh toán
+            </h6>
+            <div class="summary-table">
+              <div class="summary-row">
+                <span>Tạm tính sản phẩm:</span>
+                <span>{{ formatCurrency(selectedOrder.subtotal || calculateOrderSubtotal(selectedOrder)) }}</span>
+              </div>
+              <div class="summary-row" v-if="selectedOrder.shippingFee > 0">
+                <span>Phí vận chuyển:</span>
+                <span>{{ formatCurrency(selectedOrder.shippingFee) }}</span>
+              </div>
+              
+              <!-- Voucher Discounts - Using correct API fields -->
+              <div class="summary-row discount" v-if="selectedOrder.voucherDiscountAmount > 0">
+                <span>
+                  <i class="bi bi-ticket-perforated me-1"></i>
+                  Giảm giá voucher:
+                </span>
+                <span>-{{ formatCurrency(selectedOrder.voucherDiscountAmount) }}</span>
+              </div>
+              
+              <div class="summary-row discount" v-if="selectedOrder.discountAmount > 0 && selectedOrder.discountAmount !== selectedOrder.voucherDiscountAmount">
+                <span>
+                  <i class="bi bi-percent me-1"></i>
+                  Giảm giá tổng:
+                </span>
+                <span>-{{ formatCurrency(selectedOrder.discountAmount) }}</span>
+              </div>
+              
+              <div class="summary-row discount" v-if="selectedOrder.discountShipping > 0">
+                <span>
+                  <i class="bi bi-truck me-1"></i>
+                  Giảm giá phí ship:
+                </span>
+                <span>-{{ formatCurrency(selectedOrder.discountShipping) }}</span>
+              </div>
+
+              <!-- Fallback for alternative field names -->
+              <div class="summary-row discount" v-if="selectedOrder.regularVoucherDiscount > 0 && !selectedOrder.voucherDiscountAmount">
+                <span>
+                  <i class="bi bi-ticket-perforated me-1"></i>
+                  Giảm giá voucher thường:
+                </span>
+                <span>-{{ formatCurrency(selectedOrder.regularVoucherDiscount) }}</span>
+              </div>
+              
+              <div class="summary-row discount" v-if="selectedOrder.shippingVoucherDiscount > 0 && !selectedOrder.discountShipping">
+                <span>
+                  <i class="bi bi-truck me-1"></i>
+                  Voucher phí ship:
+                </span>
+                <span>-{{ formatCurrency(selectedOrder.shippingVoucherDiscount) }}</span>
+              </div>
+
+              <!-- Refund information -->
+              <div class="summary-row refund" v-if="selectedOrder.totalRefundedAmount > 0">
+                <span>
+                  <i class="bi bi-arrow-return-left me-1"></i>
+                  Số tiền đã hoàn:
+                </span>
+                <span>-{{ formatCurrency(selectedOrder.totalRefundedAmount) }}</span>
+              </div>
+              
+              <div class="summary-row total">
+                <span><strong>Tổng cộng:</strong></span>
+                <span><strong>{{ formatCurrency(selectedOrder.totalAmount) }}</strong></span>
+              </div>
+            </div>
+            <div v-if="selectedOrder.message" class="order-message mt-3">
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                {{ selectedOrder.message }}
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-2"></i>Đóng
+          </button>
         </div>
       </div>
     </div>
@@ -1109,6 +1250,8 @@
       </div>
     </div>
   </div>
+  </div>
+  </div>
 </template>
 
 <script setup>
@@ -1121,6 +1264,15 @@ import StatusLabel from '@/components/common/StatusLabel.vue';
 // Import Statistics Components
 import OverviewCards from '@/views/admin/components-admin/statistics/OverviewCards.vue';
 import RevenueChart from '@/views/admin/components-admin/statistics/RevenueChart.vue';
+
+// Toggle for RevenueChart
+const showRevenueChart = ref(false);
+
+// Filter visibility
+const showFilter = ref(true);
+
+// State variables
+const loading = ref(false);
 import LocationStats from '@/views/admin/components-admin/statistics/LocationStats.vue';
 
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
@@ -1537,6 +1689,11 @@ const clearFilters = () => {
   startDateFilter.value = '';
   endDateFilter.value = '';
   applyFilters();
+};
+
+// Toggle filter visibility
+const toggleFilter = () => {
+  showFilter.value = !showFilter.value;
 };
 
 const openAddModal = async () => {
@@ -2863,6 +3020,9 @@ watch([currentPage, pageSize], () => {
 </script>
 
 <style scoped>
+@import "@/assets/css/admin-table-responsive.css";
+@import '@/assets/css/admin-global.css';
+
 /* Enhanced Modal Styles */
 .enhanced-modal {
   border: none;
@@ -3186,5 +3346,407 @@ watch([currentPage, pageSize], () => {
 .voucher-item.card:hover {
   border-color: #6c757d;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Filter collapse animation */
+.filter-collapse {
+  transition: all 0.3s ease;
+  max-height: 1000px;
+  overflow: hidden;
+}
+
+.filter-collapsed {
+  max-height: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Loading overlay */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.loading-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loading-overlay .spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+.loading-overlay p {
+  margin-top: 1rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.card-body.loading {
+  position: relative;
+}
+
+/* Sticky filter sidebar */
+.sticky-filter {
+  position: sticky;
+  top: 20px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+
+/* Compact filter styles */
+.filter-card .card-body {
+  padding: 1rem;
+}
+
+.filter-card .form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.filter-card .form-control-sm,
+.filter-card .form-select-sm {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.875rem;
+}
+
+/* Table status column fix */
+.table td select.form-select {
+  min-width: 140px !important;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* Force layout to stay in same row */
+.row {
+  display: flex;
+  flex-wrap: nowrap;
+  margin: 0;
+}
+
+.row > [class*="col-"] {
+  flex: 0 0 auto;
+  padding: 0 15px;
+}
+
+.col-lg-4 {
+  width: 33.333333%;
+  max-width: 33.333333%;
+}
+
+.col-lg-8 {
+  width: 66.666667%;
+  max-width: 66.666667%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+  .row {
+    flex-wrap: wrap;
+  }
+  
+  .sticky-filter {
+    position: relative;
+    top: auto;
+    max-height: none;
+    margin-bottom: 1rem;
+  }
+  
+  .col-lg-4,
+  .col-lg-8 {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Table responsive improvements */
+.table-responsive {
+  border-radius: 0.5rem;
+}
+
+.table th {
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background-color: #f8f9fa !important;
+}
+
+.table td {
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+/* Enhanced Order Detail Modal Styles */
+.modal-xl {
+  max-width: 1200px;
+}
+
+.order-detail-header .info-section {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  height: 100%;
+}
+
+.section-title {
+  color: #495057;
+  font-weight: 600;
+  margin-bottom: 12px;
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 8px;
+}
+
+.order-items-container {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+}
+
+.order-item-detail {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 12px;
+  border-left: 4px solid #007bff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.order-item-detail:last-child {
+  margin-bottom: 0;
+}
+
+.item-thumbnail {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.item-info .item-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.item-code {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.flash-sale-badge {
+  background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+  color: white;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.price-info .original-price {
+  font-size: 0.875rem;
+}
+
+.price-info .sale-price {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.quantity-badge {
+  background: #e9ecef;
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.item-total {
+  font-size: 1.125rem;
+  color: #dc3545;
+}
+
+.refund-info-detail {
+  background: #fff3cd;
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.refund-badge {
+  background: #ffc107;
+  color: #212529;
+  font-size: 0.75rem;
+  padding: 3px 6px;
+  border-radius: 10px;
+  font-weight: 500;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.refund-reason {
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.refund-status-badge {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.badge-success { background: #28a745; color: white; }
+.badge-info { background: #17a2b8; color: white; }
+.badge-warning { background: #ffc107; color: #212529; }
+.badge-danger { background: #dc3545; color: white; }
+
+/* Voucher List Styles */
+.voucher-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.voucher-item-detail {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+  border: 1px solid #2196f3;
+  border-radius: 10px;
+  padding: 15px;
+  position: relative;
+}
+
+.voucher-item-detail::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 60%;
+  background: linear-gradient(45deg, #2196f3, #9c27b0);
+  border-radius: 2px;
+}
+
+.voucher-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.voucher-code {
+  font-weight: bold;
+  color: #1976d2;
+  font-size: 1rem;
+  font-family: 'Courier New', monospace;
+}
+
+.voucher-discount {
+  color: #d32f2f;
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.voucher-name {
+  color: #424242;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.voucher-description {
+  color: #666;
+  font-style: italic;
+}
+
+/* Enhanced Summary Table */
+.order-summary-section {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.summary-table {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f3f4;
+  font-size: 0.95rem;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+.summary-row.discount {
+  color: #28a745;
+  background: rgba(40, 167, 69, 0.05);
+  margin: 5px -10px;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.summary-row.refund {
+  color: #dc3545;
+  background: rgba(220, 53, 69, 0.05);
+  margin: 5px -10px;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.summary-row.total {
+  border-top: 2px solid #007bff;
+  background: rgba(0, 123, 255, 0.05);
+  margin: 10px -10px 0;
+  padding: 15px 10px;
+  border-radius: 6px;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.order-message .alert {
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Modal Footer Styling */
+.modal-footer.bg-light {
+  border-top: 2px solid #e9ecef;
+}
+
+/* Voucher Type Styling */
+.voucher-type {
+  margin-top: 8px;
+}
+
+.voucher-type .badge {
+  font-size: 0.7rem;
+  padding: 3px 6px;
 }
 </style>

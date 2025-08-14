@@ -1,11 +1,6 @@
 <template>
   <div class="profile-orders">
-    <!-- Warning Alert -->
-    <div class="alert alert-warning d-flex align-items-center mb-4">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i>
-      <span>Bạn vui lòng cắp nhật thông tin tài khoản:</span>
-      <a href="#" class="ms-2 text-primary fw-bold">Cắp nhật thông tin ngay</a>
-    </div>
+   
 
     <!-- Page Header -->
     <div class="page-header mb-4">
@@ -48,7 +43,7 @@
             <div class="order-info">
               <span class="order-id">#{{ order.code }}</span>
               <span class="order-status" :class="getOrderStatusClass(order.orderStatus)">
-                {{ order.orderStatusDisplay }}
+                {{ order.orderStatusDisplay  }}
               </span>
             </div>
             <div class="order-date">
@@ -66,9 +61,26 @@
                 <h6 class="item-name">{{ item.bookName }}</h6>
                 <p class="item-quantity">Số lượng: {{ item.quantity }}</p>
                 <p class="item-price">{{ formatCurrency(item.totalPrice) }}</p>
+                
+                <!-- Flash Sale Badge -->
                 <div v-if="item.flashSalePrice" class="flash-sale-badge">
                   <i class="bi bi-lightning-fill"></i>
                   Flash Sale: {{ formatCurrency(item.flashSalePrice) }}
+                </div>
+
+                <!-- Refund Information -->
+                <div v-if="item.refundedQuantity && item.refundedQuantity > 0" class="refund-info mt-2">
+                  <div class="refund-badge">
+                    <i class="bi bi-arrow-return-left"></i>
+                    Đã hoàn: {{ item.refundedQuantity }} sản phẩm
+                  </div>
+                  <div class="refund-details mt-1">
+                    <small class="text-muted">
+                      <div><strong>Lý do:</strong> {{ item.refundReasonDisplay }}</div>
+                      <div><strong>Trạng thái:</strong> {{ item.refundStatusDisplay }}</div>
+                      <div><strong>Số tiền hoàn:</strong> {{ formatCurrency(item.refundedAmount) }}</div>
+                    </small>
+                  </div>
                 </div>
               </div>
             </div>
@@ -77,8 +89,46 @@
           <!-- Order Footer -->
           <div class="order-footer">
             <div class="order-total">
-              <span class="total-label">Tổng tiền:</span>
-              <span class="total-amount">{{ formatCurrency(order.totalAmount) }}</span>
+              <!-- Toggle button for financial breakdown -->
+              <div class="financial-toggle" @click="toggleFinancialBreakdown(order.id)" style="cursor: pointer;">
+                <i class="bi" :class="isFinancialExpanded(order.id) ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                <span class="ms-1">Chi tiết thanh toán</span>
+              </div>
+              
+              <!-- Collapsible breakdown -->
+              <div class="total-breakdown" :class="{ 'collapsed': !isFinancialExpanded(order.id) }">
+                <div class="total-line pt-4">
+                  <span>Tổng tiền sản phẩm:</span>
+                  <span>{{ formatCurrency(order.subtotal) }}</span>
+                </div>
+                <div class="total-line">
+                  <span>Phí vận chuyển:</span>
+                  <span>{{ formatCurrency(order.shippingFee) }}</span>
+                </div>
+                <div v-if="order.voucherDiscountAmount > 0" class="total-line discount">
+                  <span 
+                    class="voucher-text" 
+                    :title="`Voucher: ${order.voucherCode || 'Không xác định'} - Giảm ${formatCurrency(order.voucherDiscountAmount)}`"
+                    style="cursor: help; text-decoration: underline dotted;">
+                    Tổng giảm giá voucher:
+                  </span>
+                  <span>-{{ formatCurrency(order.voucherDiscountAmount) }}</span>
+                </div>
+                <div v-if="order.discountShipping > 0" class="total-line discount">
+                  <span>Giảm phí vận chuyển:</span>
+                  <span>-{{ formatCurrency(order.discountShipping) }}</span>
+                </div>
+                <div v-if="order.totalRefundedAmount > 0" class="total-line refund">
+                  <span>Đã hoàn trả:</span>
+                  <span>-{{ formatCurrency(order.totalRefundedAmount) }}</span>
+                </div>
+              </div>
+              
+              <!-- Always visible final total -->
+              <div class="total-line final">
+                <span class="total-label"><strong>Tổng thanh toán:</strong></span>
+                <span class="total-amount"><strong>{{ formatCurrency(order.totalAmount) }}</strong></span>
+              </div>
             </div>
             <div class="order-actions">
               <!-- Hủy đơn (chỉ khi PENDING) -->
@@ -127,6 +177,150 @@
                 <i class="bi bi-eye"></i> Chi tiết
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="orderDetailModalLabel">Chi tiết đơn hàng</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div v-if="selectedOrderForDetail" class="order-detail-content">
+              <!-- Order Information -->
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <div class="info-section">
+                    <h6>Thông tin đơn hàng</h6>
+                    <p><strong>Mã đơn hàng:</strong> {{ selectedOrderForDetail.code }}</p>
+                    <p><strong>Ngày đặt:</strong> {{ formatDate(selectedOrderForDetail.orderDate) }}</p>
+                    <p><strong>Trạng thái:</strong> 
+                      <span class="order-status" :class="getOrderStatusClass(selectedOrderForDetail.orderStatus)">
+                        {{ selectedOrderForDetail.orderStatusDisplay || selectedOrderForDetail.orderStatus }}
+                      </span>
+                    </p>
+                    <p><strong>Loại đơn hàng:</strong> {{ formatOrderType(selectedOrderForDetail.orderType) }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-section">
+                    <h6>Thông tin giao hàng</h6>
+                    <p><strong>Người nhận:</strong> {{ selectedOrderForDetail.recipientName }}</p>
+                    <p><strong>Số điện thoại:</strong> {{ selectedOrderForDetail.phoneNumber }}</p>
+                    <p><strong>Địa chỉ:</strong> {{ selectedOrderForDetail.addressDetail }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Order Items -->
+              <div class="mb-4">
+                <h6>Sản phẩm đã đặt</h6>
+                <div class="table-responsive">
+                  <table class="table table-bordered">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Sản phẩm</th>
+                        <th>Đơn giá</th>
+                        <th>Số lượng</th>
+                        <th>Thành tiền</th>
+                        <th>Hoàn hàng</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="item in selectedOrderForDetail.orderDetails" :key="item.bookId">
+                        <td>
+                          <div class="d-flex align-items-center">
+                            <img :src="item.bookImageUrl || '/src/assets/img/book-placeholder.svg'" 
+                                 :alt="item.bookName" 
+                                 class="refund-item-image me-2" />
+                            <div>
+                              <div class="fw-bold">{{ item.bookName }}</div>
+                              <small class="text-muted">{{ item.bookCode }}</small>
+                              <div v-if="item.isFlashSale" class="flash-sale-badge mt-1">
+                                <i class="bi bi-lightning-fill"></i>
+                                Flash Sale: {{ formatCurrency(item.flashSalePrice) }}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>{{ formatCurrency(item.unitPrice) }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ formatCurrency(item.totalPrice) }}</td>
+                        <td>
+                          <div v-if="item.refundedQuantity && item.refundedQuantity > 0" class="refund-detail">
+                            <div class="refund-badge mb-1">
+                              <i class="bi bi-arrow-return-left"></i>
+                              Đã hoàn: {{ item.refundedQuantity }}
+                            </div>
+                            <div class="small">
+                              <div><strong>Lý do:</strong> {{ item.refundReasonDisplay }}</div>
+                              <div><strong>Trạng thái:</strong> {{ item.refundStatusDisplay }}</div>
+                              <div><strong>Số tiền:</strong> {{ formatCurrency(item.refundedAmount) }}</div>
+                            </div>
+                          </div>
+                          <div v-else class="text-muted">
+                            <small>Chưa hoàn</small>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Vouchers Applied -->
+              <div v-if="selectedOrderForDetail.vouchers && selectedOrderForDetail.vouchers.length > 0" class="mb-4">
+                <h6>Voucher đã sử dụng</h6>
+                <div class="voucher-list">
+                  <div v-for="voucher in selectedOrderForDetail.vouchers" :key="voucher.id" class="voucher-item-detail">
+                    <div class="voucher-code">{{ voucher.code }}</div>
+                    <div class="voucher-name">{{ voucher.name }}</div>
+                    <div class="voucher-discount">
+                      Giảm: {{ formatCurrency(voucher.discountAmount) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Order Summary -->
+              <div class="order-summary">
+                <h6>Tổng kết đơn hàng</h6>
+                <div class="summary-table">
+                  <div class="summary-row">
+                    <span>Tổng tiền sản phẩm:</span>
+                    <span>{{ formatCurrency(selectedOrderForDetail.subtotal) }}</span>
+                  </div>
+                  <div class="summary-row">
+                    <span>Phí vận chuyển:</span>
+                    <span>{{ formatCurrency(selectedOrderForDetail.shippingFee) }}</span>
+                  </div>
+                  <div v-if="selectedOrderForDetail.voucherDiscountAmount > 0" class="summary-row discount">
+                    <span>Tổng giảm giá voucher:</span>
+                    <span>-{{ formatCurrency(selectedOrderForDetail.voucherDiscountAmount) }}</span>
+                  </div>
+                  <div v-if="selectedOrderForDetail.discountShipping > 0" class="summary-row discount">
+                    <span>Giảm phí vận chuyển:</span>
+                    <span>-{{ formatCurrency(selectedOrderForDetail.discountShipping) }}</span>
+                  </div>
+                  <div v-if="selectedOrderForDetail.totalRefundedAmount > 0" class="summary-row refund">
+                    <span>Đã hoàn trả:</span>
+                    <span>-{{ formatCurrency(selectedOrderForDetail.totalRefundedAmount) }}</span>
+                  </div>
+                  <div class="summary-row total">
+                    <span><strong>Tổng thanh toán:</strong></span>
+                    <span><strong>{{ formatCurrency(selectedOrderForDetail.totalAmount) }}</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
           </div>
         </div>
       </div>
@@ -320,6 +514,8 @@ export default {
     const buyingAgainOrderId = ref(null)
     const submittingRefund = ref(false)
     const selectedOrderForRefund = ref(null)
+    const selectedOrderForDetail = ref(null)
+    const expandedFinancial = ref(new Set()) // Track which orders have expanded financial breakdown
     
     // Refund form
     const refundForm = reactive({
@@ -437,6 +633,15 @@ export default {
       }).format(amount)
     }
 
+    const formatOrderType = (type) => {
+      const types = {
+        'ONLINE': 'Đặt hàng online',
+        'COUNTER': 'Bán tại quầy',
+        'NORMAL': 'Đơn hàng thông thường'
+      }
+      return types[type] || type
+    }
+
     const canCancelOrder = (status) => {
       return orderService.canCancelOrder(status)
     }
@@ -492,6 +697,7 @@ export default {
         // Add all items from the order to cart
         for (const item of order.orderDetails) {
           await cartService.addToCart({
+            userId: getUserId(),
             bookId: item.bookId,
             quantity: item.quantity
           })
@@ -519,8 +725,19 @@ export default {
       }
     }
 
-    const viewOrderDetail = (order) => {
-      router.push(`/profile/orders/${order.id}`)
+    const viewOrderDetail = async (order) => {
+      try {
+        // Load chi tiết đơn hàng từ API
+        const response = await orderService.getOrderDetails(order.id)
+        selectedOrderForDetail.value = response.data
+        
+        // Hiển thị modal chi tiết đơn hàng
+        const modal = new Modal(document.getElementById('orderDetailModal'))
+        modal.show()
+      } catch (error) {
+        console.error('Error loading order detail:', error)
+        Swal.fire('Lỗi', 'Không thể tải chi tiết đơn hàng', 'error')
+      }
     }
 
     const openRefundModal = async (order) => {
@@ -876,8 +1093,6 @@ export default {
             title: 'Thành công!',
             html: `
               <div class="text-start">
-                <p><strong>Mã yêu cầu:</strong> ${refundInfo.trackingCode}</p>
-                <p><strong>Số tiền hoàn:</strong> ${formatCurrency(refundInfo.totalRefundAmount)}</p>
                 <p class="text-muted mt-3">${response.message}</p>
               </div>
             `,
@@ -923,6 +1138,8 @@ export default {
       buyingAgainOrderId,
       submittingRefund,
       selectedOrderForRefund,
+      selectedOrderForDetail,
+      expandedFinancial,
       refundForm,
       
       // Computed
@@ -936,6 +1153,15 @@ export default {
       getOrderStatusClass,
       formatDate,
       formatCurrency,
+      formatOrderType,
+      toggleFinancialBreakdown: (orderId) => {
+        if (expandedFinancial.value.has(orderId)) {
+          expandedFinancial.value.delete(orderId)
+        } else {
+          expandedFinancial.value.add(orderId)
+        }
+      },
+      isFinancialExpanded: (orderId) => expandedFinancial.value.has(orderId),
       canCancelOrder,
       canRefundOrder,
       cancelOrderConfirm,
@@ -1179,6 +1405,194 @@ export default {
   height: 80px;
   object-fit: cover;
   border-radius: 4px;
+}
+
+.evidence-preview {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* Refund Information Styles */
+.refund-info {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.refund-badge {
+  background: #ffc107;
+  color: #212529;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.refund-details small {
+  line-height: 1.4;
+}
+
+.refund-detail {
+  font-size: 0.875rem;
+}
+
+/* Financial Toggle Styles */
+.financial-toggle {
+  color: #007bff;
+  font-weight: 500;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.financial-toggle:hover {
+  color: #0056b3;
+}
+
+.total-breakdown {
+  max-height: 200px;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.total-breakdown.collapsed {
+  max-height: 0;
+  margin-bottom: 0;
+}
+
+.voucher-text {
+  position: relative;
+}
+
+.voucher-text:hover {
+  color: #007bff;
+}
+
+/* Order Total Breakdown */
+.total-breakdown {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.total-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.total-line:last-child {
+  border-bottom: none;
+}
+
+.total-line.discount {
+  color: #28a745;
+}
+
+.total-line.refund {
+  color: #dc3545;
+}
+
+.total-line.final {
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-top: 2px solid #dee2e6;
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+/* Order Detail Modal */
+.order-detail-content .info-section {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.order-detail-content .info-section h6 {
+  color: #495057;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.order-detail-content .info-section p {
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+/* Voucher Display */
+.voucher-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.voucher-item-detail {
+  background: #e3f2fd;
+  border: 1px solid #2196f3;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.voucher-code {
+  font-weight: bold;
+  color: #1976d2;
+  font-size: 0.9rem;
+}
+
+.voucher-name {
+  color: #424242;
+  margin: 4px 0;
+}
+
+.voucher-discount {
+  color: #d32f2f;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Order Summary Table */
+.summary-table {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  border: 1px solid #dee2e6;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+.summary-row.discount {
+  color: #28a745;
+}
+
+.summary-row.refund {
+  color: #dc3545;
+}
+
+.summary-row.total {
+  border-top: 2px solid #dee2e6;
+  margin-top: 8px;
+  padding-top: 12px;
+  font-size: 1.1rem;
 }
 
 /* Responsive */

@@ -13,6 +13,7 @@ import OrderSuccess from "@/views/client/OrderSuccess.vue";
 import Cart from "@/views/client/Cart.vue";
 import DetailProduct from "@/views/client/DetailProduct.vue";
 import Trend from "@/views/client/Trend.vue";
+import PoliciesPage from "@/views/client/PoliciesPage.vue";
 
 // Import profile components
 import ProfileLayout from "@/views/client/profile/ProfileLayout.vue";
@@ -126,6 +127,11 @@ const router = createRouter({
           path: "trend",
           name: "trend",
           component: Trend,
+        },
+        {
+          path: "policies",
+          name: "policies",
+          component: PoliciesPage,
         },
         {
           path: "profile",

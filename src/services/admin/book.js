@@ -262,6 +262,17 @@ export const getActiveBooksForEdit = async () => {
   }
 };
 
+// Lấy danh sách đơn hàng đang xử lý của sách
+export const getBookProcessingOrders = async (bookId) => {
+  try {
+    const response = await client.get(`/api/books/${bookId}/processing-orders`);
+    return response.data;
+  } catch (error) {
+    console.error(`Lỗi khi lấy đơn hàng đang xử lý cho sách ${bookId}:`, error);
+    throw error;
+  }
+};
+
 // Lấy sách theo ISBN (dùng cho POS quét barcode/ISBN)
 export const getBookByIsbn = async (isbn) => {
   try {

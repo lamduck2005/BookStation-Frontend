@@ -52,6 +52,7 @@ export const formatOrderStatus = (status) => {
     'SHIPPED': 'Đang giao hàng',
     'DELIVERED': 'Đã giao hàng',
     'CANCELED': 'Đã hủy',
+    'REFUND_REQUESTED': 'Yêu cầu hoàn trả',
     'REFUNDING': 'Đang hoàn tiền',
     'REFUNDED': 'Đã hoàn tiền',
     'RETURNED': 'Đã trả hàng',

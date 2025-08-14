@@ -60,27 +60,7 @@
         </div>
       </div>
 
-      <!-- Shipping & COD Card -->
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card shipping-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper shipping-icon">
-                <i class="bi bi-truck"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value">{{ formatPercentage(data?.codRateToday) }}</div>
-                <div class="stat-label">Tỷ lệ COD</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small class="text-muted">
-                Phí ship: <strong>{{ formatCurrency(data?.totalShippingCostToday) }}</strong>
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
+  <!-- ...đã xoá card phí ship... -->
 
       <!-- Returns & Cancellations Card -->
       <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
@@ -133,12 +113,7 @@
                  
                 </div>
               </div>
-              <div class="col-md-3">
-                <div class="insight-item">
-                  <div class="insight-value text-warning">{{ formatPercentage(data.codRateThisMonth) }}</div>
-                  <div class="insight-label">Tỷ lệ COD</div>
-                </div>
-              </div>
+              <!-- Bỏ insight tỷ lệ COD tháng này -->
             </div>
           </div>
         </div>
@@ -262,31 +237,6 @@ onMounted(() => {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
-.stats-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-}
-
-.orders-card::before {
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-}
-
-.revenue-card::before {
-  background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
-}
-
-.shipping-card::before {
-  background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.returns-card::before {
-  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
-}
 
 .card-body {
   padding: 1.5rem;

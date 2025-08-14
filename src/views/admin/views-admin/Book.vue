@@ -1,412 +1,465 @@
 <template>
   <div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="mb-0">
-        <i class="bi bi-book text-primary me-2"></i>
-        Quản lý sách
-      </h2>
-      <AddButton @click="openAddModal" text="Thêm sách mới" />
+    <!-- Breadcrumb -->
+    <div class="mb-3">
+      <h6 class="text-muted">
+        Admin / <strong>Quản lý sách</strong>
+      </h6>
     </div>
 
-    <!-- Filters -->
-    <div class="card mb-4 shadow-lg border-0">
-      <div class="card-header bg-light border-0 py-3">
-        <h5 class="mb-0 text-secondary">
-          <i class="bi bi-funnel me-2"></i>
-          Bộ lọc tìm kiếm
-        </h5>
-      </div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-4">
-            <label for="searchQuery" class="form-label">
-              <i class="bi bi-search me-1"></i>
-              Tìm kiếm theo tên sách
-            </label>
-            <input
-              type="text"
-              class="form-control"
-              id="searchQuery"
-              v-model="searchQuery"
-              @input="debouncedSearch"
-              placeholder="Nhập tên sách..."
-            />
-          </div>
-          <div class="col-md-2">
-            <label for="bookCodeFilter" class="form-label">
-              <i class="bi bi-upc-scan me-1"></i>
-              Mã sách
-            </label>
-            <input
-              type="text"
-              class="form-control"
-              id="bookCodeFilter"
-              v-model="bookCodeFilter"
-              @input="debouncedSearch"
-              placeholder="Mã sách..."
-            />
-          </div>
-          <div class="col-md-2">
-            <label for="categoryFilter" class="form-label">
-              <i class="bi bi-tags me-1"></i>
-              Danh mục
-            </label>
-            <select
-              class="form-select"
-              id="categoryFilter"
-              v-model="selectedCategory"
-              @change="applyFilters"
-            >
-              <option value="">Tất cả danh mục</option>
-              <option
-                v-for="category in categories"
-                :key="category.id"
-                :value="category.id"
+    <!-- Layout 2 cột: Bộ lọc bên trái, Bảng bên phải -->
+    <div class="row">
+      <!-- Cột bộ lọc (bên trái) -->
+      <div class="col-lg-2 col-xl-2">
+        <div class="card shadow-lg border-0 filter-card sticky-filter">
+          <div class="card-header bg-light border-0 py-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0 text-secondary">
+                <i class="bi bi-funnel me-2"></i>
+                Bộ lọc
+              </h6>
+              <button 
+                class="btn btn-sm btn-outline-secondary" 
+                type="button" 
+                @click="toggleFilter"
+                :aria-expanded="showFilter"
               >
-                {{category.categoryName}}
-              </option>
-            </select>
+                <i :class="showFilter ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+              </button>
+            </div>
           </div>
-          <div class="col-md-2">
-            <label for="supplierFilter" class="form-label">
-              <i class="bi bi-truck me-1"></i>
-              Nhà cung cấp
-            </label>
-            <select
-              class="form-select"
-              id="supplierFilter"
-              v-model="selectedSupplier"
-              @change="applyFilters"
-            >
-              <option value="">Tất cả nhà cung cấp</option>
-              <option
-                v-for="supplier in suppliers"
-                :key="supplier.id"
-                :value="supplier.id"
-              >
-                {{ supplier.name }}
-              </option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <label for="publisherFilter" class="form-label">
-              <i class="bi bi-journal-bookmark me-1"></i>
-              Nhà xuất bản
-            </label>
-            <select
-              class="form-select"
-              id="publisherFilter"
-              v-model="selectedPublisher"
-              @change="applyFilters"
-            >
-              <option value="">Tất cả nhà xuất bản</option>
-              <option
-                v-for="publisher in publishers"
-                :key="publisher.id"
-                :value="publisher.id"
-              >
-                {{ publisher.name }}
-              </option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <label for="statusFilter" class="form-label">
-              <i class="bi bi-toggle-on me-1"></i>
-              Trạng thái
-            </label>
-            <select
-              class="form-select"
-              id="statusFilter"
-              v-model="selectedStatus"
-              @change="applyFilters"
-            >
-              <option value="">Tất cả trạng thái</option>
-              <option value="1">Hoạt động</option>
-              <option value="0">Không hoạt động</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Price Range -->
-        <div class="row g-3 mt-2">
-          <div class="col-md-2">
-            <label for="minPrice" class="form-label">
-              <i class="bi bi-currency-dollar me-1"></i>
-              Giá tối thiểu
-            </label>
-            <input
-              type="number"
-              class="form-control"
-              id="minPrice"
-              v-model="minPrice"
-              @input="debouncedSearch"
-              placeholder="0"
-              min="0"
-            />
-          </div>
-          <div class="col-md-2">
-            <label for="maxPrice" class="form-label">
-              <i class="bi bi-currency-dollar me-1"></i>
-              Giá tối đa
-            </label>
-            <input
-              type="number"
-              class="form-control"
-              id="maxPrice"
-              v-model="maxPrice"
-              @input="debouncedSearch"
-              placeholder="1000000"
-              min="0"
-            />
-          </div>
-          <div class="col-md-8 d-flex align-items-end">
-            <button
-              class="btn btn-outline-secondary me-2"
-              @click="clearFilters"
-            >
-              <i class="bi bi-arrow-clockwise me-1"></i>
-              Xóa bộ lọc
-            </button>
+          <div class="card-body filter-collapse" :class="{ 'filter-collapsed': !showFilter }">
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-book me-1"></i>
+                Tên sách
+              </label>
+              <input 
+                type="text" 
+                class="form-control form-control-sm" 
+                placeholder="Nhập tên sách" 
+                v-model="searchQuery" 
+                @input="debouncedSearch"
+                @keyup.enter="applyFilters"
+              />
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-upc-scan me-1"></i>
+                Mã sách
+              </label>
+              <input 
+                type="text" 
+                class="form-control form-control-sm" 
+                placeholder="Nhập mã sách" 
+                v-model="bookCodeFilter" 
+                @input="debouncedSearch"
+                @keyup.enter="applyFilters"
+              />
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-tags me-1"></i>
+                Danh mục
+              </label>
+              <select class="form-select form-select-sm" v-model="selectedCategory" @change="applyFilters">
+                <option value="">Tất cả danh mục</option>
+                <option v-for="category in categories" :key="category.id" :value="category.id">
+                  {{ category.categoryName || category.name }}
+                </option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-truck me-1"></i>
+                Nhà cung cấp
+              </label>
+              <select class="form-select form-select-sm" v-model="selectedSupplier" @change="applyFilters">
+                <option value="">Tất cả nhà cung cấp</option>
+                <option v-for="supplier in suppliers" :key="supplier.id" :value="supplier.id">
+                  {{ supplier.name }}
+                </option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-building me-1"></i>
+                Nhà xuất bản
+              </label>
+              <select class="form-select form-select-sm" v-model="selectedPublisher" @change="applyFilters">
+                <option value="">Tất cả nhà XB</option>
+                <option v-for="publisher in publishers" :key="publisher.id" :value="publisher.id">
+                  {{ publisher.name }}
+                </option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-toggle-on me-1"></i>
+                Trạng thái
+              </label>
+              <select class="form-select form-select-sm" v-model="selectedStatus" @change="applyFilters">
+                <option value="">Tất cả trạng thái</option>
+                <option value="1">Hoạt động</option>
+                <option value="0">Không hoạt động</option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-currency-dollar me-1"></i>
+                Giá từ
+              </label>
+              <input 
+                type="number" 
+                class="form-control form-control-sm" 
+                placeholder="Giá tối thiểu" 
+                v-model="minPrice" 
+                @input="debouncedSearch"
+                min="0"
+              />
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-currency-dollar me-1"></i>
+                Giá đến
+              </label>
+              <input 
+                type="number" 
+                class="form-control form-control-sm" 
+                placeholder="Giá tối đa" 
+                v-model="maxPrice" 
+                @input="debouncedSearch"
+                min="0"
+              />
+            </div>
+            
+            <div class="d-grid gap-2">
+              <button class="btn btn-success btn-sm" @click="applyFilters">
+                <i class="bi bi-funnel me-1"></i> Áp dụng lọc
+              </button>
+              <button class="btn btn-secondary btn-sm" @click="clearFilters">
+                <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Data Table -->
-    <div class="card shadow-lg border-0">
-      <div class="card-header bg-white border-0 py-3">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0 text-secondary">
-            <i class="bi bi-table me-2"></i>
-            Danh sách sách ({{ totalElements }} sách)
-          </h5>
+      
+      <!-- Cột bảng (bên phải) -->
+      <div class="col-lg-10 col-xl-10">
+        <!-- Statistics Section -->
+        <div class="statistics-section">
+          <div class="section-header mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0 text-secondary">
+                <i class="bi bi-graph-up me-2"></i>
+                Thống kê sách
+              </h5>
+              
+            </div>
+          </div>
+          
+          <!-- Overview Cards -->
+          <BookOverviewCards ref="overviewCardsRef" />
+          
+          <!-- Charts Section -->
+          <div class="row mt-4">
+            <div class="col-12">
+              <div class="d-flex gap-2 mb-3 flex-wrap">
+                <!-- Performance Chart Toggle -->
+                <button 
+                  class="btn btn-sm"
+                  :class="showPerformanceChart ? 'btn-primary' : 'btn-outline-primary'"
+                  @click="togglePerformanceChart"
+                >
+                  <i class="bi bi-graph-up-arrow me-1"></i>
+                  {{ showPerformanceChart ? 'Ẩn biểu đồ' : 'Hiệu suất sách' }}
+                </button>
+              </div>
+              
+              <!-- Performance Chart -->
+              <div v-show="showPerformanceChart" class="mb-4">
+                <BookPerformanceChart ref="performanceChartRef" />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-bordered table-hover align-middle">
-            <thead class="table-light">
-              <tr>
-                <th style="width: 20px; min-width: 20px; text-align: center;">STT</th>
-                <th style="width: 180px; min-width: 120px;">Ảnh</th>
-                <th>ID & Tên sách</th>
-                <th>Mã sách & ISBN</th>
-                <th>Giá & Giảm giá</th>
-                <th>Số lượng & Đã bán</th>
-                <th>Hình thức & Flash Sale</th>
-                <th>Thể loại & NXB</th>
-                <th>Nhà cung cấp</th>
-                <th>Thông tin bổ sung</th>
-                <th>Trạng thái</th>
-                <th>Tác giả</th>
-                <th>Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="books.length === 0">
-                <td colspan="12" class="text-center py-4 text-muted">
-                  <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                  Không có dữ liệu
-                </td>
-              </tr>
-              <tr v-for="(book, index) in books" :key="book.id">
-                <td style="text-align: center;">{{ currentPage * pageSize + index + 1 }}</td>
-                <td>
-                  <!-- 🔥 HIỂN THỊ ẢNH TỪ TRƯỜNG IMAGES (MẢNG URL) - THEO TÀI LIỆU API -->
-                  <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                    <template v-if="book.images && book.images.length">
-                      <img
-                        v-for="(img, idx) in book.images"
-                        :key="idx"
-                        :src="img"
-                        alt="Ảnh sách"
-                        style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; margin: 2px; cursor: pointer; transition: box-shadow 0.2s;"
-                        @click="openImagePreview(img)"
-                        @mouseover="event.target.style.boxShadow = '0 0 0 2px #ff7e5f'"
-                        @mouseleave="event.target.style.boxShadow = ''"
-                      />
-                    </template>
-                    <template v-else>
-                      <span class="text-muted small">Không có ảnh</span>
-                    </template>
-                  </div>
-                </td>
-                <td>
-                  <div>
-                    <span class="badge bg-danger  me-2">id : {{ book.id }}</span>
-                    <strong>{{ book.bookName }}</strong>
-                    <div v-if="book.description" class="small text-muted mt-1">
-                      {{ book.description.length > 40 ? book.description.substring(0, 40) + '...' : book.description }}
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div>
-                    <code class="text-primary d-block">{{ book.bookCode }}</code>
-                    <small v-if="book.isbn" class="text-muted">ISBN: {{ book.isbn }}</small>
-                    <small v-else class="text-muted">Chưa có ISBN</small>
-                  </div>
-                </td>
-                <td>
-                  <div>
-                    <!-- Nếu có giảm giá (discountActive = true) -->
-                    <template v-if="book.discountActive && (book.discountValue > 0 || book.discountPercent > 0)">
-                      <strong class="text-danger d-block">
-                        Giá gốc: <span style="text-decoration: line-through;">{{ formatCurrency(book.price) }}</span>
-                      </strong>
-                      <strong class="text-success d-block">
-                        Giá đang bán: {{ formatCurrency(book.calculatedFinalPrice || book.finalPrice || book.price) }}
-                      </strong>
-                      <div class="small mt-1">
-                        <span v-if="book.discountValue && book.discountValue > 0" class="badge bg-warning text-dark">
-                          Giảm: {{ formatCurrency(book.discountValue) }}
-                        </span>
-                        <span v-if="book.discountPercent && book.discountPercent > 0" class="badge bg-warning text-dark mx-1">
-                          Giảm: {{ book.discountPercent }}%
-                        </span>
-                        <span class="badge bg-success ms-1">
-                          Đang giảm giá
-                        </span>
-                      </div>
-                    </template>
-                    <!-- Nếu không có giảm giá -->
-                    <template v-else>
-                      <strong class="text-success d-block">
-                        {{ formatCurrency(book.price) }}
-                      </strong>
-                      <small class="text-muted">Không giảm giá</small>
-                    </template>
-                  </div>
-                </td>
-                <td>
-                  <div>
-                    <span 
-                      :class="book.stockQuantity === 0 ? 'badge bg-danger' : (book.stockQuantity < 10 ? 'badge bg-warning text-dark' : 'text-dark fw-bold')"
-                      class="d-block"
-                    >
-                      Tồn: {{ book.stockQuantity }}
-                    </span>
-                    <small class="text-info d-block">
-                      Đã bán: {{ book.soldCount || 0 }}
-                    </small>
-                    <small class="text-warning d-block">
-                      Đang xử lý: {{ book.processingQuantity || 0 }}
-                    </small>
-                  </div>
-                </td>
-                <td>
-                  <div>
-                    <!-- Book Format -->
-                    <div class="mb-2">
-                      <span class="badge" :class="getBookFormatClass(book.bookFormat)">
-                        {{ getBookFormatText(book.bookFormat) }}
-                      </span>
-                    </div>
-                    <!-- Flash Sale Info -->
-                    <div v-if="book.isInFlashSale" class="text-center">
-                      <button 
-                        class="btn btn-danger btn-sm mb-1" 
-                        @click="goToFlashSaleManagement(book.id)"
-                        title="Xem Flash Sale"
-                      >
-                        <i class="bi bi-lightning-fill"></i> FLASH SALE
-                      </button>
-                      <div class="small">
-                        <div class="text-danger fw-bold">{{ formatCurrency(book.flashSalePrice) }}</div>
-                        <div class="text-muted">Đã bán: {{ book.flashSaleSoldCount || 0 }}</div>
-                        <div class="text-muted">Tồn : {{ book.flashSaleStock || 0 }}</div>
-                        <div v-if="book.flashSaleEndTime" class="text-muted">
-                          Kết thúc: {{ formatDateTime(book.flashSaleEndTime) }}
+        
+        <!-- Danh sách Book -->
+        <div class="card shadow-lg border-0 mb-4 admin-table-card">
+          <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3">
+            <div>
+              <h5 class="mb-0 text-secondary">
+                <i class="bi bi-book me-2"></i>
+                Danh sách sách ({{ totalElements }} sách)
+              </h5>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-info btn-sm py-2" @click="fetchBooks" :disabled="loading">
+                <i class="bi bi-arrow-repeat me-1"></i> Làm mới
+              </button>
+              <AddButton @click="openAddModal" />
+            </div>
+          </div>
+          <div class="card-body p-0" :class="{ loading: loading }">
+            <div class="loading-overlay" :class="{ show: loading }">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+              </div>
+              <p>Đang tải dữ liệu...</p>
+            </div>
+            
+            <!-- Data table -->
+            <div>
+              <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th style="min-width: 50px;">STT</th>
+                      <th style="min-width: 100px;">Thao tác</th>
+                      <th style="min-width: 120px;">Ảnh</th>
+                      <th style="min-width: 200px;">ID & Tên sách</th>
+                      <th style="min-width: 120px;">Mã sách & ISBN</th>
+                      <th style="min-width: 150px;">Giá & Giảm giá</th>
+                      <th style="min-width: 120px;">Số lượng & Đã bán</th>
+                      <th style="min-width: 150px;">Hình thức & Flash Sale</th>
+                      <th style="min-width: 150px;">Thể loại & NXB</th>
+                      <th style="min-width: 120px;">Nhà cung cấp</th>
+                      <th style="min-width: 150px;">Thông tin bổ sung</th>
+                      <th style="min-width: 100px;">Trạng thái</th>
+                      <th style="min-width: 150px;">Tác giả</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-if="books.length === 0">
+                      <td colspan="13" class="text-center py-4 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        Không có dữ liệu
+                      </td>
+                    </tr>
+                    <tr v-for="(book, index) in books" :key="book.id">
+                      <td style="text-align: center;">{{ currentPage * pageSize + index + 1 }}</td>
+                      <td>
+                        <div class="d-flex gap-1">
+                          <EditButton @click="openEditModal(book, index)" />
                         </div>
-                      </div>
-                    </div>
-                    <span v-else class="text-muted small">Không có Flash Sale</span>
-                  </div>
-                </td>
-                <td>
-                  <div>
-                    <div class="mb-1">
-                      <span class="badge bg-info text-dark">
-                        {{ book.categoryName || 'Chưa phân loại' }}
-                      </span>
-                    </div>
-                    <div>
-                      <span class="badge bg-secondary">
-                        {{ book.publisherName || 'Chưa có NXB' }}
-                      </span>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span class="badge bg-secondary">
-                    {{ book.supplierName || 'Chưa có nhà cung cấp' }}
-                  </span>
-                </td>
-                <td>
-                  <div class="small">
-                    <div v-if="book.language">
-                      <strong>Ngôn ngữ:</strong> {{ book.language }}
-                    </div>
-                    <div v-if="book.pageCount">
-                      <strong>Số trang:</strong> {{ book.pageCount }}
-                    </div>
-                    <div v-if="book.weight">
-                      <strong>Trọng lượng:</strong> {{ book.weight }}g
-                    </div>
-                    <div v-if="book.dimensions">
-                      <strong>Kích thước:</strong> {{ book.dimensions }}
-                    </div>
-                    <div v-if="book.translator">
-                      <strong>Dịch giả:</strong> {{ book.translator }}
-                    </div>
-                    <div v-if="book.publicationDate">
-                      <strong>Ngày XB:</strong> {{ formatDate(book.publicationDate) }}
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <StatusLabel
-                    :status="book.status"
-                    :statusText="getStatusText(book.status)"
-                    :statusClass="getStatusClass(book.status)"
-                    :clickable="true"
-                    @toggle="handleToggleStatus(book.id, index)"
-                  />
-                </td>
-                <td>
-                  <div v-if="book.authors && book.authors.length">
-                    <span 
-                      v-for="(author, index) in book.authors" 
-                      :key="author.id"
-                      class="badge bg-primary me-1 mb-1"
-                    >
-                      {{ author.authorName }}
-                    </span>
-                  </div>
-                  <span v-else class="text-muted small">Chưa có tác giả</span>
-                </td>
-                <td>
-                  <div class="d-flex gap-1">
-                    <EditButton @click="openEditModal(book, index)" />
-                  </div>
-                </td>
-              </tr>          </tbody>
-        </table>
+                      </td>
+                      <td>
+                        <!-- 🔥 HIỂN THỊ ẢNH TỪ TRƯỜNG IMAGES (MẢNG URL) - THEO TÀI LIỆU API -->
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                          <template v-if="book.images && book.images.length">
+                            <img
+                              v-for="(img, idx) in book.images"
+                              :key="idx"
+                              :src="img"
+                              alt="Ảnh sách"
+                              style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #eee; margin: 2px; cursor: pointer; transition: box-shadow 0.2s;"
+                              @click="openImagePreview(img)"
+                              @mouseover="event.target.style.boxShadow = '0 0 0 2px #ff7e5f'"
+                              @mouseleave="event.target.style.boxShadow = ''"
+                            />
+                          </template>
+                          <template v-else>
+                            <span class="text-muted small">Không có ảnh</span>
+                          </template>
+                        </div>
+                      </td>
+                      <td>
+                        <div>
+                          <span class="badge bg-danger me-2">id : {{ book.id }}</span>
+                          <strong>{{ book.bookName }}</strong>
+                          <div v-if="book.description" class="small text-muted mt-1">
+                            {{ book.description.length > 40 ? book.description.substring(0, 40) + '...' : book.description }}
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div>
+                          <code class="text-primary d-block">{{ book.bookCode }}</code>
+                          <small v-if="book.isbn" class="text-muted">ISBN: {{ book.isbn }}</small>
+                          <small v-else class="text-muted">Chưa có ISBN</small>
+                        </div>
+                      </td>
+                      <td>
+                        <div>
+                          <!-- Nếu có giảm giá (discountActive = true) -->
+                          <template v-if="book.discountActive && (book.discountValue > 0 || book.discountPercent > 0)">
+                            <strong class="text-danger d-block">
+                              Giá gốc: <span style="text-decoration: line-through;">{{ formatCurrency(book.price) }}</span>
+                            </strong>
+                            <strong class="text-success d-block">
+                              Giá đang bán: {{ formatCurrency(book.calculatedFinalPrice || book.finalPrice || book.price) }}
+                            </strong>
+                            <div class="small mt-1">
+                              <span v-if="book.discountValue && book.discountValue > 0" class="badge bg-warning text-dark">
+                                Giảm: {{ formatCurrency(book.discountValue) }}
+                              </span>
+                              <span v-if="book.discountPercent && book.discountPercent > 0" class="badge bg-warning text-dark mx-1">
+                                Giảm: {{ book.discountPercent }}%
+                              </span>
+                              <span class="badge bg-success ms-1">
+                                Đang giảm giá
+                              </span>
+                            </div>
+                          </template>
+                          <!-- Nếu không có giảm giá -->
+                          <template v-else>
+                            <strong class="text-success d-block">
+                              {{ formatCurrency(book.price) }}
+                            </strong>
+                            <small class="text-muted">Không giảm giá</small>
+                          </template>
+                        </div>
+                      </td>
+                      <td>
+                        <div>
+                          <span 
+                            :class="book.stockQuantity === 0 ? 'badge bg-danger' : (book.stockQuantity < 10 ? 'badge bg-warning text-dark' : 'text-dark fw-bold')"
+                            class="d-block"
+                          >
+                            Tồn: {{ book.stockQuantity }}
+                          </span>
+                          <small class="text-info d-block">
+                            Đã bán: {{ book.soldCount || 0 }}
+                          </small>
+                          <small class="text-warning d-block">
+                            <span 
+                              v-if="book.processingQuantity && book.processingQuantity > 0"
+                              class="processing-quantity-hover"
+                              @mouseenter="showProcessingOrdersPopup($event, book)"
+                              @mouseleave="hideProcessingOrdersPopup"
+                              :title="'Click để xem chi tiết ' + (book.processingQuantity || 0) + ' cuốn đang xử lý'"
+                            >
+                              <i class="bi bi-hourglass-split me-1"></i>
+                              Đang xử lý: {{ book.processingQuantity }}
+                            </span>
+                            <span v-else>
+                              <i class="bi bi-check-circle me-1"></i>
+                              Đang xử lý: {{ book.processingQuantity || 0 }}
+                            </span>
+                          </small>
+                        </div>
+                      </td>
+                      <td>
+                        <div>
+                          <!-- Book Format -->
+                          <div class="mb-2">
+                            <span class="badge" :class="getBookFormatClass(book.bookFormat)">
+                              {{ getBookFormatText(book.bookFormat) }}
+                            </span>
+                          </div>
+                          <!-- Flash Sale Info -->
+                          <div v-if="book.isInFlashSale" class="text-center">
+                            <button 
+                              class="btn btn-danger btn-sm mb-1" 
+                              @click="goToFlashSaleManagement(book.id)"
+                              title="Xem Flash Sale"
+                            >
+                              <i class="bi bi-lightning-fill"></i> FLASH SALE
+                            </button>
+                            <div class="small">
+                              <div class="text-danger fw-bold">{{ formatCurrency(book.flashSalePrice) }}</div>
+                              <div class="text-muted">Đã bán: {{ book.flashSaleSoldCount || 0 }}</div>
+                              <div class="text-muted">Tồn : {{ book.flashSaleStock || 0 }}</div>
+                              <div v-if="book.flashSaleEndTime" class="text-muted">
+                                Kết thúc: {{ formatDateTime(book.flashSaleEndTime) }}
+                              </div>
+                            </div>
+                          </div>
+                          <span v-else class="text-muted small">Không có Flash Sale</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div>
+                          <div class="mb-1">
+                            <span class="badge bg-info text-dark">
+                              {{ book.categoryName || 'Chưa phân loại' }}
+                            </span>
+                          </div>
+                          <div>
+                            <span class="badge bg-secondary">
+                              {{ book.publisherName || 'Chưa có NXB' }}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="badge bg-secondary">
+                          {{ book.supplierName || 'Chưa có nhà cung cấp' }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="small">
+                          <div v-if="book.language">
+                            <strong>Ngôn ngữ:</strong> {{ book.language }}
+                          </div>
+                          <div v-if="book.pageCount">
+                            <strong>Số trang:</strong> {{ book.pageCount }}
+                          </div>
+                          <div v-if="book.weight">
+                            <strong>Trọng lượng:</strong> {{ book.weight }}g
+                          </div>
+                          <div v-if="book.dimensions">
+                            <strong>Kích thước:</strong> {{ book.dimensions }}
+                          </div>
+                          <div v-if="book.translator">
+                            <strong>Dịch giả:</strong> {{ book.translator }}
+                          </div>
+                          <div v-if="book.publicationDate">
+                            <strong>Ngày XB:</strong> {{ formatDate(book.publicationDate) }}
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <StatusLabel
+                          :status="book.status"
+                          :statusText="getStatusText(book.status)"
+                          :statusClass="getStatusClass(book.status)"
+                          :clickable="true"
+                          @toggle="handleToggleStatus(book.id, index)"
+                        />
+                      </td>
+                      <td>
+                        <div v-if="book.authors && book.authors.length">
+                          <span 
+                            v-for="(author, index) in book.authors" 
+                            :key="author.id"
+                            class="badge bg-primary me-1 mb-1"
+                          >
+                            {{ author.authorName }}
+                          </span>
+                        </div>
+                        <span v-else class="text-muted small">Chưa có tác giả</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- Pagination -->
+              <div class="p-3">
+                <Pagination 
+                  :page-number="currentPage" 
+                  :total-pages="totalPages" 
+                  :is-last-page="isLastPage"
+                  :page-size="pageSize" 
+                  :items-per-page-options="itemsPerPageOptions" 
+                  :total-elements="totalElements"
+                  @prev="handlePrev" 
+                  @next="handleNext" 
+                  @update:pageSize="handlePageSizeChange" 
+                />
+              </div>
+            </div>
+          </div>
         </div>
-
-        <!-- Pagination -->
-        <Pagination 
-          :page-number="currentPage" 
-          :total-pages="totalPages" 
-          :is-last-page="isLastPage"
-          :page-size="pageSize" 
-          :items-per-page-options="itemsPerPageOptions" 
-          :total-elements="totalElements"
-          @prev="handlePrev" 
-          @next="handleNext" 
-          @update:pageSize="handlePageSizeChange" 
-        />
       </div>
     </div>
   </div>
@@ -954,6 +1007,16 @@
 
   <!-- Image Preview Modal -->
   <ImagePreviewModal :show="showImagePreview" :image-url="previewImageUrl" @close="closeImagePreview" />
+
+  <!-- Processing Orders Popup -->
+  <ProcessingOrdersPopup
+    :show="showProcessingPopup"
+    :book-id="processingPopupBookId"
+    :book-info="processingPopupBookInfo"
+    :mouse-position="mousePosition"
+    @close="hideProcessingOrdersPopup"
+    @keep-open="cancelHideProcessingOrdersPopup"
+  />
 </template>
 
 <script setup>
@@ -963,12 +1026,23 @@ import AddButton from '@/components/common/AddButton.vue';
 import StatusLabel from '@/components/common/StatusLabel.vue';
 import MultiImageUpload from '@/components/common/MultiImageUpload.vue';
 import ImagePreviewModal from '@/components/common/ImagePreviewModal.vue';
+import ProcessingOrdersPopup from '@/components/common/ProcessingOrdersPopup.vue';
+import BookOverviewCards from '@/views/admin/components-admin/statistics/BookOverviewCards.vue';
+import BookPerformanceChart from '@/views/admin/components-admin/statistics/BookPerformanceChart.vue';
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { Modal } from 'bootstrap';
 import { getBooks, createBook, updateBook, getAuthorsDropdown, getCategoriesDropdown, getSuppliersDropdown, toggleBookStatus, calculatePrice } from '@/services/admin/book';
 import { getPublishersDropdown } from '@/services/admin/publisher';
 import Swal from 'sweetalert2';
 import { getAllCategoriesParentExcepNotNull, getAllCategoriesParentNotNull } from '@/services/admin/category';
+
+// Statistics chart toggle
+const showPerformanceChart = ref(false);
+const overviewCardsRef = ref(null);
+const performanceChartRef = ref(null);
+
+// Filter collapse toggle
+const showFilter = ref(true);
 
 // Search and filter states
 const searchQuery = ref('');
@@ -979,6 +1053,9 @@ const selectedPublisher = ref('');
 const selectedStatus = ref('');
 const minPrice = ref('');
 const maxPrice = ref('');
+
+// Loading state
+const loading = ref(false);
 
 // New/Edit book form data
 const newBook = ref({
@@ -1588,6 +1665,10 @@ const handleToggleStatus = async (bookId, index) => {
 // Delete book function
 
 // Filter functions
+const toggleFilter = () => {
+  showFilter.value = !showFilter.value;
+};
+
 const applyFilters = () => {
   console.log('Applying filters:', {
     searchQuery: searchQuery.value,
@@ -1856,6 +1937,44 @@ const closeImagePreview = () => {
   previewImageUrl.value = '';
 };
 
+// State for processing orders popup
+const showProcessingPopup = ref(false);
+const processingPopupBookId = ref(null);
+const processingPopupBookInfo = ref({});
+const mousePosition = ref({ x: 0, y: 0 });
+const hidePopupTimeout = ref(null);
+
+const cancelHideProcessingOrdersPopup = () => {
+  if (hidePopupTimeout.value) {
+    clearTimeout(hidePopupTimeout.value);
+    hidePopupTimeout.value = null;
+  }
+};
+
+const showProcessingOrdersPopup = (event, book) => {
+  // Clear any pending hide timeout first
+  cancelHideProcessingOrdersPopup();
+  if (!showProcessingPopup.value) {
+    mousePosition.value = { x: event.clientX, y: event.clientY };
+    processingPopupBookId.value = book.id;
+    processingPopupBookInfo.value = {
+      bookName: book.bookName,
+      bookCode: book.bookCode,
+      processingQuantity: book.processingQuantity
+    };
+    showProcessingPopup.value = true;
+  }
+};
+
+const hideProcessingOrdersPopup = () => {
+  cancelHideProcessingOrdersPopup();
+  hidePopupTimeout.value = setTimeout(() => {
+    showProcessingPopup.value = false;
+    processingPopupBookId.value = null;
+    processingPopupBookInfo.value = {};
+  }, 250); // slight increase for user move
+};
+
 // Format date function
 const formatDate = (timestamp) => {
   if (!timestamp) return 'Chưa có';
@@ -1893,9 +2012,43 @@ const goToFlashSaleManagement = (bookId) => {
     confirmButtonText: 'OK'
   });
 };
+
+// Toggle function for performance chart
+const togglePerformanceChart = () => {
+  showPerformanceChart.value = !showPerformanceChart.value;
+  if (showPerformanceChart.value && performanceChartRef.value) {
+    // Refresh performance chart data when opened
+    setTimeout(() => {
+      performanceChartRef.value.fetchChartData();
+    }, 100);
+  }
+};
+
+const refreshStatistics = () => {
+  // Refresh overview cards
+  if (overviewCardsRef.value) {
+    overviewCardsRef.value.fetchOverviewStats();
+  }
+  
+  // Refresh performance chart if it's open
+  if (showPerformanceChart.value && performanceChartRef.value) {
+    performanceChartRef.value.fetchChartData();
+  }
+  
+  Swal.fire({
+    icon: 'success',
+    title: 'Đã làm mới!',
+    text: 'Dữ liệu thống kê đã được cập nhật',
+    timer: 1500,
+    timerProgressBar: true
+  });
+};
 </script>
 
 <style scoped>
+@import "@/assets/css/admin-table-responsive.css";
+@import '@/assets/css/admin-global.css';
+
 .table th,
 .table td {
   vertical-align: middle;
@@ -2311,6 +2464,31 @@ const goToFlashSaleManagement = (bookId) => {
   background: #555;
 }
 
+/* Processing quantity hover effect */
+.processing-quantity-hover {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid transparent;
+}
+
+.processing-quantity-hover:hover {
+  background: rgba(255, 193, 7, 0.2);
+  border: 1px solid rgba(255, 193, 7, 0.5);
+  color: #d39e00 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+.processing-quantity-hover:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(255, 193, 7, 0.4);
+}
+
 /* Responsive table fixes */
 @media (max-width: 1400px) {
   .table-responsive table {
@@ -2334,5 +2512,77 @@ const goToFlashSaleManagement = (bookId) => {
   .table-responsive table {
     min-width: 900px;
   }
+}
+
+/* Filter Card Styles (từ Order.vue) */
+.filter-card {
+  position: sticky;
+  top: 20px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+.sticky-filter {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+}
+
+.filter-collapse {
+  transition: all 0.3s ease;
+  max-height: 1000px;
+  overflow: hidden;
+}
+
+.filter-collapsed {
+  max-height: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  opacity: 0;
+}
+
+.admin-table-card {
+  min-height: 600px;
+}
+
+/* Loading overlay */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.loading-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loading-overlay .spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+.loading {
+  position: relative;
+}
+
+/* Statistics section */
+.statistics-section {
+  background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(226, 232, 240, 0.5);
 }
 </style>

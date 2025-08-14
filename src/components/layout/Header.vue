@@ -323,6 +323,11 @@
             <li class="nav-item">
               <a class="nav-link text-dark" href="#">Khuyến mãi</a>
             </li>
+            <li class="nav-item">
+              <RouterLink class="nav-link text-dark" to="/policies"
+                >Chính sách</RouterLink
+              >
+            </li>
           </ul>
 
           <div class="d-flex align-items-center gap-3">
