@@ -9,9 +9,9 @@
             <div class="logo me-4">
               <RouterLink to="/">
                 <img
-                  src="/src/assets/img/logo.png"
+                  src="/src/assets/img/sidebar-logo.png"
                   alt="BookStation Logo"
-                  style="height: 55px; width: 55px"
+                  style="height: 50px; width: auto"
                 />
               </RouterLink>
             </div>
