@@ -1,7 +1,7 @@
 <template>
     <div class="notifications-page">
         <!-- Header -->
-        <Header />
+        <!-- <Header /> -->
         
         <!-- Main Content -->
         <div class="container my-4">
