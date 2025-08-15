@@ -13,7 +13,7 @@
         <li class="user-link">
           <a href="#">
             <img
-              src="../../../assets/img/account.jpg"
+              src="../../../assets/img/avatar.png"
               alt="account"
               class="avatar"
             />
