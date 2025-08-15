@@ -1,5 +1,10 @@
 <template>
   <div class="container-fluid py-4">
+    <!-- Publisher Statistics Section -->
+    <div class="mb-4">
+      <PublisherStatisticsCards />
+    </div>
+
     <!-- Breadcrumb -->
     <div class="mb-3">
       <h6 class="text-muted">
@@ -334,6 +339,7 @@ import {
 import Pagination from '@/components/common/Pagination.vue'
 import { showNotification } from '@/utils/notification'
 import EditButton from '@/components/common/EditButton.vue'
+import PublisherStatisticsCards from '@/views/admin/components-admin/statistics/PublisherStatisticsCards.vue'
 
 // Reactive data
 const publishers = ref([])

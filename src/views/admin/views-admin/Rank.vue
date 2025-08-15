@@ -1,5 +1,10 @@
 <template>
   <div class="container-fluid py-4">
+    <!-- Rank Statistics Section -->
+    <div class="mb-4">
+      <RankStatisticsCards />
+    </div>
+
     <!-- Breadcrumb -->
     <div class="mb-3">
       <h6 class="text-muted">
@@ -313,6 +318,7 @@ import EditButton from '@/components/common/EditButton.vue';
 import DeleteButton from '@/components/common/DeleteButton.vue';
 import StatusLabel from '@/components/common/StatusLabel.vue';
 import Pagination from '@/components/common/Pagination.vue';
+import RankStatisticsCards from '@/views/admin/components-admin/statistics/RankStatisticsCards.vue';
 
 // Reactive data
 const ranks = ref([]);

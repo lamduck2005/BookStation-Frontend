@@ -280,7 +280,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, computed } from 'vue';
+import { ref, onMounted, nextTick, computed, watch } from 'vue';
 // State for note open/close
 const noteOpen = ref(false);
 import { getBookStatsSummary } from '@/services/admin/bookStatistics';
@@ -299,6 +299,8 @@ const showCustomDateRange = ref(false);
 
 // Chart instance
 let chart = null;
+// Chart ready state
+const chartReady = ref(false);
 
 // Popup state
 const showPopup = ref(false);
@@ -348,11 +350,11 @@ const fetchChartData = async () => {
         if (response && response.status === 200 && response.data) {
           chartData.value = response.data; // Mảng [{date: "2025-08-01", totalBooksSold: 87}, ...]
           console.log('✅ Chart data processed:', chartData.value);
-          
-          // Wait for DOM to update then render
+          // Đánh dấu chartReady false để watcher xử lý lại
+          chartReady.value = false;
           await nextTick();
           await new Promise(resolve => setTimeout(resolve, 100));
-          renderChart();
+          // chartReady sẽ được watcher set true nếu đủ điều kiện
         } else {
           throw new Error(response.message || 'Failed to fetch summary data');
         }
@@ -360,7 +362,7 @@ const fetchChartData = async () => {
         console.error('❌ Error fetching summary data:', err);
         error.value = err.response?.data?.message || err.message || 'Không thể tải dữ liệu biểu đồ';
         chartData.value = [];
-        
+        chartReady.value = false;
         Swal.fire({
           title: 'Lỗi!',
           text: 'Không thể tải dữ liệu thống kê',
@@ -387,8 +389,10 @@ const renderChart = () => {
     chart = null;
   }
 
+
   if (!chartData.value || chartData.value.length === 0) {
     console.log('❌ No summary data available:', chartData.value);
+    chartReady.value = false;
     return;
   }
 
@@ -397,9 +401,7 @@ const renderChart = () => {
   const chartElement = document.querySelector('#bookPerformanceChart');
   if (!chartElement) {
     console.error('❌ Chart element #bookPerformanceChart not found!');
-    setTimeout(() => {
-      renderChart();
-    }, 100);
+    chartReady.value = false;
     return;
   }
 
@@ -745,6 +747,22 @@ const onPopupLimitChange = (newLimit) => {
 defineExpose({
   fetchChartData
 });
+
+// Watcher: Khi chartData có dữ liệu và không loading, chart container đã xuất hiện, thì render chart
+watch(
+  [chartData, loading],
+  async ([data, isLoading]) => {
+    if (!isLoading && data && data.length > 0) {
+      await nextTick();
+      const chartElement = document.querySelector('#bookPerformanceChart');
+      if (chartElement) {
+        chartReady.value = true;
+        renderChart();
+      }
+    }
+  },
+  { immediate: false }
+);
 
 // Initialize
 onMounted(() => {

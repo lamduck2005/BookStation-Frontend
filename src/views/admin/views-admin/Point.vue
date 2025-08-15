@@ -1,5 +1,10 @@
 <template>
   <div class="container-fluid py-4">
+    <!-- Point Statistics Section -->
+    <div class="mb-4">
+      <PointStatisticsCards />
+    </div>
+
     <!-- Breadcrumb -->
     <div class="mb-3">
       <h6 class="text-muted">
@@ -238,6 +243,7 @@
 import EditButton from '@/components/common/EditButton.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import DeleteButton from '@/components/common/DeleteButton.vue';
+import PointStatisticsCards from '@/views/admin/components-admin/statistics/PointStatisticsCards.vue';
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Modal } from 'bootstrap';
 import { getPointHistory, createPoint, getOrderIdByOrderCode, updatePoint } from '@/services/admin/point.js';

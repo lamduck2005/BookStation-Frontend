@@ -1,5 +1,10 @@
 <template>
   <div class="container-fluid py-4">
+    <!-- User Statistics Section -->
+    <div class="mb-4">
+      <UserStatisticsCards />
+    </div>
+
     <!-- Breadcrumb -->
     <div class="mb-3">
       <h6 class="text-muted">
@@ -144,13 +149,10 @@
                       <td>{{ (currentPage * pageSize) + idx + 1 }}</td>
                       <td>
                         <div class="d-flex gap-2">
-                          <button
-                            class="btn btn-sm btn-outline-primary"
-                            @click="openEditModal(user)"
-                            title="Chỉnh sửa"
-                          >
-                            <i class="bi bi-pencil"></i>
-                          </button>
+                          <EditButton
+                            :user="user"
+                            @edit="openEditModal(user)"
+                          />
                         </div>
                       </td>
                       <td>
@@ -364,6 +366,7 @@
 </template>
 <script setup>
 import Pagination from "@/components/common/Pagination.vue";
+import UserStatisticsCards from "@/views/admin/components-admin/statistics/UserStatisticsCards.vue";
 import { ref, computed, onMounted, watch } from "vue";
 import { Modal } from "bootstrap";
 import Swal from "sweetalert2";
@@ -375,6 +378,7 @@ import {
   toggleUserStatus,
   getDropdownRoles,
 } from "@/services/admin/user";
+import EditButton from "@/components/common/EditButton.vue";
 
 const users = ref([]);
 const totalElements = ref(0);

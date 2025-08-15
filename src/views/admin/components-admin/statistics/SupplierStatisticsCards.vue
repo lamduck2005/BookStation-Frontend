@@ -1,0 +1,742 @@
+<template>
+  <div class="supplier-statistics-cards">
+    <!-- Loading State -->
+    <div v-if="loading" class="row g-3">
+      <div v-for="i in 4" :key="i" class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+        <div class="card stats-card loading-card">
+          <div class="card-body">
+            <div class="placeholder-glow">
+              <div class="placeholder col-6 mb-2"></div>
+              <div class="placeholder col-8 mb-3"></div>
+              <div class="placeholder col-4"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div v-else class="row g-3">
+      <!-- Total Suppliers Card -->
+      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+        <div class="card stats-card suppliers-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div class="icon-wrapper suppliers-icon">
+                <i class="bi bi-truck"></i>
+              </div>
+              <div class="text-end">
+                <div class="stat-value">{{ getTotalSuppliers() }}</div>
+                <div class="stat-label">Nhà cung cấp</div>
+              </div>
+            </div>
+            <div class="stat-footer">
+              <small class="text-muted">
+                Đang hoạt động
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Books Card -->
+      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+        <div class="card stats-card books-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div class="icon-wrapper books-icon">
+                <i class="bi bi-boxes"></i>
+              </div>
+              <div class="text-end">
+                <div class="stat-value">{{ getTotalBooks() }}</div>
+                <div class="stat-label">Tổng đầu sách</div>
+              </div>
+            </div>
+            <div class="stat-footer">
+              <small class="text-info">
+                Từ tất cả NCC
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Revenue Card -->
+      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+        <div class="card stats-card revenue-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div class="icon-wrapper revenue-icon">
+                <i class="bi bi-cash-coin"></i>
+              </div>
+              <div class="text-end">
+                <div class="stat-value small-text">{{ formatCurrency(getTotalRevenue()) }}</div>
+                <div class="stat-label">Tổng doanh thu</div>
+              </div>
+            </div>
+            <div class="stat-footer">
+              <small class="text-success">
+                Từ tất cả NCC
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Total Quantity Sold Card -->
+      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+        <div class="card stats-card quantity-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div class="icon-wrapper quantity-icon">
+                <i class="bi bi-graph-up-arrow"></i>
+              </div>
+              <div class="text-end">
+                <div class="stat-value">{{ formatNumber(getTotalQuantitySold()) }}</div>
+                <div class="stat-label">Sách đã bán</div>
+              </div>
+            </div>
+            <div class="stat-footer">
+              <small class="text-warning">
+                Tất cả thời gian
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Book Statistics by Supplier Row -->
+    <div v-if="!loading && data?.bookStatistics && data.bookStatistics.length > 0" class="row g-3 mt-2">
+      <div class="col-12">
+        <div class="card insights-card">
+          <div class="card-body">
+            <h6 class="card-title mb-3">
+              <i class="bi bi-bar-chart me-2 text-primary"></i>
+              Số đầu sách theo nhà cung cấp
+            </h6>
+            <div class="row g-3">
+              <div 
+                v-for="supplier in data.bookStatistics.slice(0, 8)" 
+                :key="supplier.supplierName"
+                class="col-lg-3 col-md-4 col-sm-6"
+              >
+                <div class="supplier-item-card">
+                  <div class="d-flex align-items-center">
+                    <div class="supplier-icon me-3">
+                      <i class="bi bi-truck-front-fill"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                      <div class="supplier-name">{{ truncateText(supplier.supplierName, 15) }}</div>
+                      <div class="supplier-stats">
+                        <div class="stat-row">
+                          <span class="stat-label">Đầu sách:</span>
+                          <span class="stat-value-inline">{{ formatNumber(supplier.totalBooks) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Suppliers by Revenue Row -->
+    <div v-if="!loading && data?.topSuppliersByRevenue && data.topSuppliersByRevenue.length > 0" class="row g-3 mt-2">
+      <div class="col-lg-8">
+        <div class="card insights-card">
+          <div class="card-body">
+            <h6 class="card-title mb-3">
+              <i class="bi bi-trophy me-2 text-warning"></i>
+              Top nhà cung cấp theo doanh thu
+            </h6>
+            <div class="row g-2">
+              <div 
+                v-for="(supplier, index) in data.topSuppliersByRevenue.slice(0, 5)" 
+                :key="supplier.supplierName"
+                class="col-md-12"
+              >
+                <div class="d-flex align-items-center p-3 border rounded top-supplier-item">
+                  <div class="rank-badge me-3" :class="getRankBadgeClass(index)">{{ index + 1 }}</div>
+                  <div class="flex-grow-1">
+                    <div class="fw-bold">{{ supplier.supplierName }}</div>
+                    <small class="text-muted">Đã bán: {{ formatNumber(supplier.totalQuantitySold) }} cuốn</small>
+                  </div>
+                  <div class="text-end">
+                    <div class="fw-bold text-success">{{ formatCurrency(supplier.totalRevenue) }}</div>
+                    <small class="text-muted">doanh thu</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card insights-card">
+          <div class="card-body">
+            <h6 class="card-title mb-3">
+              <i class="bi bi-graph-up-arrow me-2 text-success"></i>
+              Top theo số lượng bán
+            </h6>
+            <div class="quantity-rankings">
+              <div 
+                v-for="(supplier, index) in data.topSuppliersByQuantity?.slice(0, 3) || []" 
+                :key="supplier.supplierName"
+                class="quantity-item"
+              >
+                <div class="d-flex align-items-center">
+                  <div class="quantity-rank">{{ index + 1 }}</div>
+                  <div class="flex-grow-1">
+                    <div class="supplier-name-small">{{ truncateText(supplier.supplierName, 12) }}</div>
+                    <div class="quantity-value">{{ formatNumber(supplier.totalQuantitySold) }} cuốn</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue vs Quantity Comparison -->
+    <div v-if="!loading && data?.revenueStatistics && data.revenueStatistics.length > 0" class="row g-3 mt-2">
+      <div class="col-12">
+        <div class="card insights-card">
+          <div class="card-body">
+            <h6 class="card-title mb-3">
+              <i class="bi bi-graph-up me-2 text-info"></i>
+              So sánh doanh thu và số lượng bán
+            </h6>
+            <div class="row g-3">
+              <div 
+                v-for="supplier in data.revenueStatistics.slice(0, 6)" 
+                :key="supplier.supplierName"
+                class="col-lg-4 col-md-6"
+              >
+                <div class="comparison-card">
+                  <div class="supplier-header">
+                    <div class="supplier-icon-small">
+                      <i class="bi bi-building"></i>
+                    </div>
+                    <div class="supplier-name-comparison">{{ truncateText(supplier.supplierName, 18) }}</div>
+                  </div>
+                  <div class="comparison-stats">
+                    <div class="comparison-row">
+                      <div class="comparison-label">
+                        <i class="bi bi-cash-coin me-1 text-success"></i>
+                        Doanh thu
+                      </div>
+                      <div class="comparison-value text-success">{{ formatCurrency(supplier.totalRevenue) }}</div>
+                    </div>
+                    <div class="comparison-row">
+                      <div class="comparison-label">
+                        <i class="bi bi-cart-check me-1 text-primary"></i>
+                        Số lượng
+                      </div>
+                      <div class="comparison-value text-primary">{{ formatNumber(supplier.totalQuantitySold) }}</div>
+                    </div>
+                    <div class="comparison-row">
+                      <div class="comparison-label">
+                        <i class="bi bi-calculator me-1 text-warning"></i>
+                        Giá TB
+                      </div>
+                      <div class="comparison-value text-warning">{{ formatCurrency(getAveragePrice(supplier)) }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions Row -->
+    <div v-if="!loading" class="row g-3 mt-2">
+      <div class="col-12">
+        <div class="card actions-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="card-title mb-1">
+                  <i class="bi bi-lightning-charge me-2 text-warning"></i>
+                  Hành động nhanh
+                </h6>
+                <small class="text-light">Quản lý thông tin nhà cung cấp</small>
+              </div>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline-light btn-sm" @click="refreshData">
+                  <i class="bi bi-arrow-clockwise me-1"></i>
+                  Làm mới
+                </button>
+                <button class="btn btn-outline-light btn-sm" @click="exportData">
+                  <i class="bi bi-download me-1"></i>
+                  Xuất báo cáo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+import { getSupplierStatistics, formatNumber, formatCurrency } from '@/services/admin/moduleStatistics';
+import Swal from 'sweetalert2';
+
+const loading = ref(true);
+const data = ref(null);
+
+const fetchSupplierStatistics = async () => {
+  loading.value = true;
+  try {
+    const response = await getSupplierStatistics();
+    if (response.status === 200) {
+      data.value = response.data;
+    } else {
+      throw new Error('Failed to fetch supplier statistics');
+    }
+  } catch (error) {
+    console.error('Error fetching supplier statistics:', error);
+    
+    // Fallback data để tránh lỗi hiển thị
+    data.value = {
+      bookStatistics: [
+        { supplierName: "Công ty ABC", totalBooks: 800 },
+        { supplierName: "Công ty XYZ", totalBooks: 650 },
+        { supplierName: "Công ty DEF", totalBooks: 720 }
+      ],
+      revenueStatistics: [
+        { supplierName: "Công ty ABC", totalRevenue: 45000000.00, totalQuantitySold: 2250 },
+        { supplierName: "Công ty XYZ", totalRevenue: 42000000.00, totalQuantitySold: 2100 }
+      ],
+      topSuppliersByRevenue: [
+        { supplierName: "Công ty ABC", totalRevenue: 45000000.00, totalQuantitySold: 2250 },
+        { supplierName: "Công ty XYZ", totalRevenue: 42000000.00, totalQuantitySold: 2100 }
+      ],
+      topSuppliersByQuantity: [
+        { supplierName: "Công ty XYZ", totalQuantitySold: 2500, totalRevenue: 42000000.00 },
+        { supplierName: "Công ty ABC", totalQuantitySold: 2250, totalRevenue: 45000000.00 }
+      ]
+    };
+    
+    Swal.fire({
+      title: 'Lỗi!',
+      text: 'Không thể tải dữ liệu thống kê nhà cung cấp - Hiển thị dữ liệu mẫu',
+      icon: 'warning',
+      timer: 3000,
+      showConfirmButton: false
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+
+const getTotalSuppliers = () => {
+  if (data.value?.bookStatistics) {
+    return data.value.bookStatistics.length;
+  }
+  return 0;
+};
+
+const getTotalBooks = () => {
+  if (data.value?.bookStatistics) {
+    return data.value.bookStatistics.reduce((total, supplier) => total + (supplier.totalBooks || 0), 0);
+  }
+  return 0;
+};
+
+const getTotalRevenue = () => {
+  if (data.value?.revenueStatistics) {
+    return data.value.revenueStatistics.reduce((total, supplier) => total + (supplier.totalRevenue || 0), 0);
+  }
+  return 0;
+};
+
+const getTotalQuantitySold = () => {
+  if (data.value?.revenueStatistics) {
+    return data.value.revenueStatistics.reduce((total, supplier) => total + (supplier.totalQuantitySold || 0), 0);
+  }
+  return 0;
+};
+
+const getAveragePrice = (supplier) => {
+  if (supplier.totalQuantitySold && supplier.totalQuantitySold > 0) {
+    return supplier.totalRevenue / supplier.totalQuantitySold;
+  }
+  return 0;
+};
+
+const getRankBadgeClass = (index) => {
+  if (index === 0) return 'gold-badge';
+  if (index === 1) return 'silver-badge';
+  if (index === 2) return 'bronze-badge';
+  return 'default-badge';
+};
+
+const truncateText = (text, maxLength) => {
+  if (!text) return '';
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + '...';
+};
+
+const refreshData = async () => {
+  await fetchSupplierStatistics();
+  Swal.fire({
+    title: 'Thành công!',
+    text: 'Đã làm mới dữ liệu thống kê nhà cung cấp',
+    icon: 'success',
+    timer: 2000,
+    showConfirmButton: false
+  });
+};
+
+const exportData = () => {
+  Swal.fire({
+    title: 'Xuất báo cáo',
+    text: 'Tính năng xuất báo cáo sẽ được triển khai sớm',
+    icon: 'info',
+    timer: 2000,
+    showConfirmButton: false
+  });
+};
+
+onMounted(() => {
+  fetchSupplierStatistics();
+});
+</script>
+
+<style scoped>
+/* Statistics Cards Styling */
+.stats-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.stats-card .card-body {
+  padding: 1.5rem;
+}
+
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.suppliers-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.books-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.revenue-icon { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+.quantity-icon { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #2d3748;
+}
+
+.stat-value.small-text {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #718096;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.stat-footer {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Insights Card */
+.insights-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  background: white;
+}
+
+/* Supplier Item Card */
+.supplier-item-card {
+  background: linear-gradient(145deg, #f8f9fa 0%, #ffffff 100%);
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.supplier-item-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.supplier-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: white;
+}
+
+.supplier-name {
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+}
+
+.supplier-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+
+.stat-label {
+  color: #718096;
+}
+
+.stat-value-inline {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+/* Top Supplier Item */
+.top-supplier-item {
+  transition: all 0.3s ease;
+  background: #f8f9fa;
+}
+
+.top-supplier-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.rank-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+.gold-badge {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #fff;
+}
+
+.silver-badge {
+  background: linear-gradient(135deg, #C0C0C0 0%, #808080 100%);
+  color: #fff;
+}
+
+.bronze-badge {
+  background: linear-gradient(135deg, #CD7F32 0%, #A0522D 100%);
+  color: #fff;
+}
+
+.default-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+}
+
+/* Quantity Rankings */
+.quantity-rankings {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.quantity-item {
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.quantity-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.quantity-rank {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  margin-right: 0.75rem;
+}
+
+.supplier-name-small {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 0.875rem;
+}
+
+.quantity-value {
+  font-weight: 700;
+  color: #4facfe;
+  font-size: 0.875rem;
+}
+
+/* Comparison Card */
+.comparison-card {
+  background: linear-gradient(145deg, #f8f9fa 0%, #ffffff 100%);
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.comparison-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.supplier-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.supplier-icon-small {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: white;
+  margin-right: 0.75rem;
+}
+
+.supplier-name-comparison {
+  font-weight: 700;
+  color: #2d3748;
+  font-size: 0.875rem;
+}
+
+.comparison-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.comparison-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.comparison-label {
+  font-size: 0.875rem;
+  color: #718096;
+  display: flex;
+  align-items: center;
+}
+
+.comparison-value {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* Actions Card */
+.actions-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.actions-card .card-title {
+  color: white;
+}
+
+/* Loading Cards */
+.loading-card {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+
+.placeholder {
+  background-color: #dee2e6;
+  border-radius: 4px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .stats-card .card-body {
+    padding: 1rem;
+  }
+  
+  .stat-value {
+    font-size: 1.5rem;
+  }
+  
+  .icon-wrapper {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+  
+  .supplier-item-card {
+    padding: 0.75rem;
+  }
+  
+  .comparison-card {
+    padding: 0.75rem;
+  }
+  
+  .quantity-rankings {
+    gap: 0.75rem;
+  }
+}
+</style>

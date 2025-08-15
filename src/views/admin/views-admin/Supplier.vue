@@ -1,5 +1,10 @@
 <template>
   <div class="container-fluid py-4">
+    <!-- Supplier Statistics Section -->
+    <div class="mb-4">
+      <SupplierStatisticsCards />
+    </div>
+
     <!-- Breadcrumb -->
     <div class="mb-3">
       <h6 class="text-muted">
@@ -364,6 +369,7 @@ import EditButton from '@/components/common/EditButton.vue';
 import DeleteButton from '@/components/common/DeleteButton.vue';
 import ToggleStatus from '@/components/common/ToggleStatus.vue';
 import Pagination from '@/components/common/Pagination.vue';
+import SupplierStatisticsCards from '@/views/admin/components-admin/statistics/SupplierStatisticsCards.vue';
 
 // Reactive data
 const suppliers = ref([]);

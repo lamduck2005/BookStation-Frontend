@@ -19,14 +19,21 @@
     <div v-else class="row g-3">
       <!-- Total Books Card -->
       <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card books-card">
+        <div class="card stats-card books-card fancy-card">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper books-icon">
-                <i class="bi bi-book"></i>
+              <div class="icon-wrapper books-icon gradient-border">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="24" height="24" rx="8" fill="#4F8A8B"/>
+                  <path d="M6 19V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M6 19h12" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M9 10h6" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                </svg>
               </div>
               <div class="text-end">
-                <div class="stat-value">{{ data?.totalBooks || 0 }}</div>
+                <div class="stat-value text-gradient-primary stat-animated">
+                  <AnimatedCounter :value="data?.totalBooks || 0" />
+                </div>
                 <div class="stat-label">Tổng số sách</div>
               </div>
             </div>
@@ -41,14 +48,21 @@
 
       <!-- Stock Status Card -->
       <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card inventory-card">
+        <div class="card stats-card inventory-card fancy-card">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper inventory-icon">
-                <i class="bi bi-boxes"></i>
+              <div class="icon-wrapper inventory-icon gradient-border">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="24" height="24" rx="8" fill="#F9B208"/>
+                  <path d="M7 17V7a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v10" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M7 17h10" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M10 10h4" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                </svg>
               </div>
               <div class="text-end">
-                <div class="stat-value">{{ data?.totalBooksInStock || 0 }}</div>
+                <div class="stat-value text-gradient-warning stat-animated">
+                  <AnimatedCounter :value="data?.totalBooksInStock || 0" />
+                </div>
                 <div class="stat-label">Còn hàng</div>
               </div>
             </div>
@@ -63,14 +77,21 @@
 
       <!-- Discount Card -->
       <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card discount-card">
+        <div class="card stats-card discount-card fancy-card">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper discount-icon">
-                <i class="bi bi-percent"></i>
+              <div class="icon-wrapper discount-icon gradient-border">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="24" height="24" rx="8" fill="#43C59E"/>
+                  <path d="M8 16l8-8" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                  <circle cx="9.5" cy="14.5" r="1.5" fill="#fff"/>
+                  <circle cx="14.5" cy="9.5" r="1.5" fill="#fff"/>
+                </svg>
               </div>
               <div class="text-end">
-                <div class="stat-value">{{ data?.totalBooksWithDiscount || 0 }}</div>
+                <div class="stat-value text-gradient-success stat-animated">
+                  <AnimatedCounter :value="data?.totalBooksWithDiscount || 0" />
+                </div>
                 <div class="stat-label">Đang giảm giá</div>
               </div>
             </div>
@@ -85,14 +106,19 @@
 
       <!-- Flash Sale Card -->
       <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card flash-sale-card">
+        <div class="card stats-card flash-sale-card fancy-card">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper flash-sale-icon">
-                <i class="bi bi-lightning-charge"></i>
+              <div class="icon-wrapper flash-sale-icon gradient-border">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="24" height="24" rx="8" fill="#F76E11"/>
+                  <path d="M13 2L3 14h9l-1 8L21 10h-8l1-8z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
               </div>
               <div class="text-end">
-                <div class="stat-value">{{ data?.totalBooksInFlashSale || 0 }}</div>
+                <div class="stat-value text-gradient-danger stat-animated">
+                  <AnimatedCounter :value="data?.totalBooksInFlashSale || 0" />
+                </div>
                 <div class="stat-label">Flash Sale</div>
               </div>
             </div>
@@ -169,8 +195,51 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, defineComponent, watch } from 'vue';
 import axios from '@/utils/axios';
+
+// AnimatedCounter component
+const AnimatedCounter = defineComponent({
+  name: 'AnimatedCounter',
+  props: {
+    value: {
+      type: Number,
+      required: true
+    },
+    duration: {
+      type: Number,
+      default: 900 // ms
+    }
+  },
+  setup(props) {
+    const display = ref(props.value);
+    let frame;
+    let start;
+    let from = props.value;
+    let to = props.value;
+
+    const animate = (timestamp) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / props.duration, 1);
+      display.value = Math.floor(from + (to - from) * progress);
+      if (progress < 1) {
+        frame = requestAnimationFrame(animate);
+      } else {
+        display.value = to;
+      }
+    };
+
+    watch(() => props.value, (newVal, oldVal) => {
+      from = display.value;
+      to = newVal;
+      start = null;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(animate);
+    });
+
+    return () => display.value.toLocaleString();
+  }
+});
 
 // Data
 const data = ref(null);
@@ -279,8 +348,38 @@ defineExpose({
 .stat-value {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #2d3748;
   line-height: 1.2;
+  /* Gradient text mặc định cho mọi số */
+  background: linear-gradient(90deg, #43C59E, #4F8A8B);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Gradient riêng cho từng loại số */
+.text-gradient-primary {
+  background: linear-gradient(90deg, #4F8A8B, #43C59E);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-warning {
+  background: linear-gradient(90deg, #F9B208, #F76E11);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-success {
+  background: linear-gradient(90deg, #43C59E, #3D56B2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.text-gradient-danger {
+  background: linear-gradient(90deg, #F76E11, #F44336);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .stat-label {
