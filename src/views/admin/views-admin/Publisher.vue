@@ -1,378 +1,320 @@
 <template>
   <div class="container-fluid py-4">
-    <div class="row mb-4">
-      <div class="col-md-6">
-        <h2>Quản lý Nhà Xuất Bản</h2>
-        <p class="text-muted">Quản trị viên / <strong>Nhà xuất bản</strong></p>
-      </div>
-      <div class="col-md-6 d-flex justify-content-end align-items-center">
-        <AddButton @click="openAddModal" text="Thêm nhà xuất bản mới" />
-      </div>
+    <!-- Breadcrumb -->
+    <div class="mb-3">
+      <h6 class="text-muted">
+        Admin / <strong>Quản lý nhà xuất bản</strong>
+      </h6>
     </div>
 
-    <!-- Filters -->
-    <div class="card mb-4">
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-3 mb-3">
-            <label class="form-label">Tìm kiếm theo tên</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <i class="bi bi-search"></i>
-              </span>
+    <!-- Layout 2 cột: Bộ lọc bên trái, Bảng bên phải -->
+    <div class="row">
+      <!-- Cột bộ lọc (bên trái) -->
+      <div class="col-lg-2 col-xl-2">
+        <div class="card shadow-lg border-0 filter-card sticky-filter">
+          <div class="card-header bg-light border-0 py-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0 text-secondary">
+                <i class="bi bi-funnel me-2"></i>
+                Bộ lọc
+              </h6>
+              <button 
+                class="btn btn-sm btn-outline-secondary" 
+                type="button" 
+                @click="toggleFilter"
+                :aria-expanded="showFilter"
+              >
+                <i :class="showFilter ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body filter-collapse" :class="{ 'filter-collapsed': !showFilter }">
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-search me-1"></i>
+                Tên nhà xuất bản
+              </label>
               <input
                 type="text"
-                class="form-control"
+                class="form-control form-control-sm"
                 placeholder="Nhập tên nhà xuất bản..."
                 v-model="searchQuery"
                 @input="debouncedSearch"
               />
             </div>
-          </div>
 
-          <div class="col-md-3 mb-3">
-            <label class="form-label">Tìm kiếm theo email</label>
-            <div class="input-group">
-              <span class="input-group-text">
-                <i class="bi bi-envelope"></i>
-              </span>
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-envelope me-1"></i>
+                Email
+              </label>
               <input
                 type="text"
-                class="form-control"
+                class="form-control form-control-sm"
                 placeholder="Nhập email..."
                 v-model="emailFilter"
                 @input="debouncedSearch"
               />
             </div>
-          </div>
 
-          <div class="col-md-2 mb-3">
-            <label class="form-label">Trạng thái</label>
-            <select
-              class="form-select"
-              v-model="selectedStatus"
-              @change="applyFilters"
-            >
-              <option value="">Tất cả</option>
-              <option value="1">Hoạt động</option>
-              <option value="0">Không hoạt động</option>
-            </select>
-          </div>
-
-          <div class="col-md-4 d-flex align-items-end">
-            <button class="btn btn-primary me-2" @click="applyFilters">
-              <i class="bi bi-filter me-1"></i> Lọc
-            </button>
-            <button class="btn btn-outline-secondary" @click="clearFilters">
-              <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
-            </button>
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-toggle-on me-1"></i>
+                Trạng thái
+              </label>
+              <select
+                class="form-select form-select-sm"
+                v-model="selectedStatus"
+                @change="applyFilters"
+              >
+                <option value="">Tất cả</option>
+                <option value="1">Hoạt động</option>
+                <option value="0">Không hoạt động</option>
+              </select>
+            </div>
+            
+            <div class="d-grid gap-2">
+              <button class="btn btn-success btn-sm" @click="applyFilters">
+                <i class="bi bi-funnel me-1"></i> Áp dụng lọc
+              </button>
+              <button class="btn btn-secondary btn-sm" @click="clearFilters">
+                <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- Publishers Table -->
-    <div class="card">
-      <div class="table-responsive">
-        <table class="table align-items-center mb-0">
-          <thead>
-            <tr>
-              <th class="text-uppercase text-xxs font-weight-bolder opacity-7">
-                ID
-              </th>
-              <th class="text-uppercase text-xxs font-weight-bolder opacity-7">
-                Tên nhà xuất bản
-              </th>
-              <th class="text-uppercase text-xxs font-weight-bolder opacity-7">
-                Trạng thái
-              </th>
-              <th class="text-uppercase text-xxs font-weight-bolder opacity-7">
-                Email
-              </th>
-              <th class="text-uppercase text-xxs font-weight-bolder opacity-7">
-                Hành động
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(publisher, index) in publishers" :key="publisher.id">
-              <td>
-                <p class="text-xs font-weight-bold mb-0">{{ publisher.id }}</p>
-              </td>
-              <td>
-                <div class="d-flex px-2 py-1">
-                  <div class="d-flex flex-column justify-content-center">
-                    <h6 class="mb-0 text-sm">{{ publisher.publisherName }}</h6>
-                    <p
-                      class="text-xs text-secondary mb-0"
-                      v-if="publisher.website"
-                    >
-                      <a :href="publisher.website" target="_blank">{{
-                        publisher.website
-                      }}</a>
-                    </p>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <StatusLabel
-                  :status="publisher.status === '1'"
-                  :activeText="'Hoạt động'"
-                  :inactiveText="'Không hoạt động'"
-                  @click="handleToggleStatus(publisher.id, index)"
+      
+      <!-- Cột bảng (bên phải) -->
+      <div class="col-lg-10 col-xl-10">
+        <!-- Publishers Table -->
+        <div class="card shadow-lg border-0 mb-4 admin-table-card">
+          <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3">
+            <div>
+              <h5 class="mb-0 text-secondary">
+                <i class="bi bi-building me-2"></i>
+                Danh sách nhà xuất bản
+              </h5>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-info btn-sm py-2" @click="fetchPublishers" :disabled="loading">
+                <i class="bi bi-arrow-repeat me-1"></i> Làm mới
+              </button>
+              <button
+                class="btn btn-success btn-sm"
+                @click="openAddModal"
+              >
+                <i class="bi bi-plus-circle me-2"></i> Thêm mới
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-0" :class="{ loading: loading }">
+            <div class="loading-overlay" :class="{ show: loading }">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+              </div>
+              <p>Đang tải dữ liệu...</p>
+            </div>
+            
+            <!-- Data table -->
+            <div>
+              <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th style="min-width: 50px;">STT</th>
+                      <th style="min-width: 120px;">Thao tác</th>
+                      <th style="min-width: 200px;">Tên nhà xuất bản</th>
+                      <th style="min-width: 150px;">Email</th>
+                      <th style="min-width: 120px;">Điện thoại</th>
+                      <th style="min-width: 200px;">Địa chỉ</th>
+                      <th style="min-width: 100px;">Trạng thái</th>
+                      <th style="min-width: 150px;">Ngày tạo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(publisher, index) in publishers" :key="publisher.id">
+                      <td>{{ (currentPage * pageSize) + index + 1 }}</td>
+                      <td>
+                        <div class="d-flex gap-2">
+                          <EditButton @click="openEditModal(publisher, index)" />
+                        </div>
+                        
+                      </td>
+                      <td>
+                        <strong>{{ publisher.publisherName }}</strong>
+                      </td>
+                      <td>{{ publisher.email }}</td>
+                      <td>{{ publisher.phone }}</td>
+                      <td>{{ publisher.address }}</td>
+                      <td>
+                        <span :class="['badge', publisher.status === '1' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger']">
+                          {{ publisher.status === '1' ? 'Hoạt động' : 'Không hoạt động' }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="small">
+                          {{ formatDate(publisher.createdAt) }}
+                        </div>
+                      </td>
+                    </tr>
+                    <tr v-if="publishers.length === 0">
+                      <td colspan="8" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox display-1 text-muted d-block mb-3"></i>
+                        Không có dữ liệu nhà xuất bản
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- Pagination -->
+              <div class="p-3">
+                <Pagination
+                  :page-number="currentPage"
+                  :total-pages="totalPages"
+                  :is-last-page="isLastPage"
+                  :page-size="pageSize"
+                  :items-per-page-options="itemsPerPageOptions"
+                  :total-elements="totalElements"
+                  @prev="handlePrev"
+                  @next="handleNext"
+                  @update:pageSize="handlePageSizeChange"
                 />
-              </td>
-              <td>
-                <p class="text-xs font-weight-bold mb-0">
-                  {{ publisher.email }}
-                </p>
-              </td>
-              <td>
-                <div class="d-flex gap-2">
-                  <EditButton @click="openEditModal(publisher, index)" />
-                </div>
-              </td>
-            </tr>
-            <tr v-if="publishers.length === 0">
-              <td colspan="7" class="text-center py-4">
-                <p class="text-muted">Không có dữ liệu nhà xuất bản</p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="card-footer d-flex justify-content-end">
-        <Pagination
-          :page-number="currentPage"
-          :total-pages="totalPages"
-          :is-last-page="isLastPage"
-          :page-size="pageSize"
-          :items-per-page-options="itemsPerPageOptions"
-          :total-elements="totalElements"
-          @prev="handlePrev"
-          @next="handleNext"
-          @update:pageSize="handlePageSizeChange"
-        />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Add/Edit Publisher Modal -->
-  <div
-    class="modal fade"
-    id="addPublisherModal"
-    tabindex="-1"
-    aria-labelledby="addPublisherModalLabel"
-    aria-hidden="true"
-  >
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-      <div class="modal-content enhanced-modal">
-        <div class="modal-header gradient-header">
-          <h5 class="modal-title" id="addPublisherModalLabel">
+  <!-- Modal thêm/chỉnh sửa nhà xuất bản -->
+  <div class="modal fade" id="publisherModal" tabindex="-1" aria-hidden="true" ref="publisherModalElement">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title">
             <i class="bi bi-building me-2"></i>
-            {{ isEditMode ? "Cập nhật nhà xuất bản" : "Thêm nhà xuất bản mới" }}
+            {{ isEditing ? 'Chỉnh sửa nhà xuất bản' : 'Thêm nhà xuất bản mới' }}
           </h5>
-          <button
-            type="button"
-            class="custom-close-btn"
-            aria-label="Close"
-            @click="closeModal"
-          >
-            <i class="bi bi-x-lg"></i>
-          </button>
+          <button type="button" class="btn-close" @click="closeModal" aria-label="Close"></button>
         </div>
-        <div class="modal-body enhanced-body">
-          <!-- Basic Information Section -->
-          <div class="form-section">
-            <div class="section-header">
-              <span class="section-icon"
-                ><i class="bi bi-info-circle"></i
-              ></span>
-              <h5 class="section-title">Thông tin cơ bản</h5>
-            </div>
-
+        <div class="modal-body">
+          <form @submit.prevent="submitForm">
             <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="enhanced-label">
-                  Tên nhà xuất bản <span class="text-danger">*</span>
-                </label>
-                <input
-                  type="text"
-                  class="form-control enhanced-input"
-                  :class="{ 'is-invalid': formErrors.publisherName }"
-                  placeholder="Nhập tên nhà xuất bản"
-                  v-model="newPublisher.publisherName"
-                  required
-                />
-                <div class="invalid-feedback" v-if="formErrors.publisherName">
-                  {{ formErrors.publisherName }}
-                </div>
-                <div class="form-text" v-else>
-                  Tên nhà xuất bản phải là duy nhất, tối đa 255 ký tự
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label required">
+                    <i class="bi bi-building me-1"></i>
+                    Tên nhà xuất bản
+                  </label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    v-model="publisherForm.publisherName"
+                    placeholder="Nhập tên nhà xuất bản..."
+                    required
+                  />
                 </div>
               </div>
-
-              <div class="col-md-6 mb-3">
-                <label class="enhanced-label"> Email </label>
-                <input
-                  type="email"
-                  class="form-control enhanced-input"
-                  :class="{ 'is-invalid': formErrors.email }"
-                  placeholder="Nhập email"
-                  v-model="newPublisher.email"
-                />
-                <div class="invalid-feedback" v-if="formErrors.email">
-                  {{ formErrors.email }}
-                </div>
-                <div class="form-text" v-else>
-                  Email phải đúng định dạng và duy nhất
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="bi bi-envelope me-1"></i>
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    class="form-control"
+                    v-model="publisherForm.email"
+                    placeholder="Nhập email..."
+                  />
                 </div>
               </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="enhanced-label"> Số điện thoại </label>
-                <input
-                  type="text"
-                  class="form-control enhanced-input"
-                  :class="{ 'is-invalid': formErrors.phone }"
-                  placeholder="Nhập số điện thoại"
-                  v-model="newPublisher.phone"
-                />
-                <div class="invalid-feedback" v-if="formErrors.phone">
-                  {{ formErrors.phone }}
-                </div>
-                <div class="form-text" v-else>
-                  Số điện thoại liên hệ của nhà xuất bản
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="bi bi-telephone me-1"></i>
+                    Điện thoại
+                  </label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    v-model="publisherForm.phone"
+                    placeholder="Nhập số điện thoại..."
+                  />
                 </div>
               </div>
-
-              <div class="col-md-6 mb-3">
-                <label class="enhanced-label"> Người liên hệ </label>
-                <input
-                  type="text"
-                  class="form-control enhanced-input"
-                  :class="{ 'is-invalid': formErrors.contactName }"
-                  placeholder="Nhập tên người liên hệ"
-                  v-model="newPublisher.contactName"
-                />
-                <div class="invalid-feedback" v-if="formErrors.contactName">
-                  {{ formErrors.contactName }}
-                </div>
-                <div class="form-text" v-else>
-                  Tên người đại diện liên hệ của nhà xuất bản
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="bi bi-toggle2-on me-1"></i>
+                    Trạng thái
+                  </label>
+                  <select class="form-select" v-model="publisherForm.status">
+                    <option value="1">Hoạt động</option>
+                    <option value="0">Không hoạt động</option>
+                  </select>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <!-- Additional Information Section -->
-          <div class="form-section">
-            <div class="section-header">
-              <span class="section-icon"><i class="bi bi-card-text"></i></span>
-              <h5 class="section-title">Thông tin bổ sung</h5>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="enhanced-label"> Website </label>
-                <input
-                  type="url"
-                  class="form-control enhanced-input"
-                  :class="{ 'is-invalid': formErrors.website }"
-                  placeholder="https://example.com"
-                  v-model="newPublisher.website"
-                />
-                <div class="invalid-feedback" v-if="formErrors.website">
-                  {{ formErrors.website }}
-                </div>
-                <div class="form-text" v-else>
-                  Website chính thức của nhà xuất bản
+              <div class="col-12">
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="bi bi-geo-alt me-1"></i>
+                    Địa chỉ
+                  </label>
+                  <textarea
+                    class="form-control"
+                    v-model="publisherForm.address"
+                    placeholder="Nhập địa chỉ..."
+                    rows="3"
+                  ></textarea>
                 </div>
               </div>
-
-              <div class="col-md-6 mb-3">
-                <label class="enhanced-label"> Trạng thái </label>
-                <select
-                  class="form-select enhanced-input"
-                  v-model="newPublisher.status"
-                >
-                  <option value="1">Hoạt động</option>
-                  <option value="0">Không hoạt động</option>
-                </select>
-                <div class="form-text">
-                  Trạng thái hoạt động của nhà xuất bản trong hệ thống
+              <div class="col-12">
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="bi bi-globe me-1"></i>
+                    Website
+                  </label>
+                  <input
+                    type="url"
+                    class="form-control"
+                    v-model="publisherForm.website"
+                    placeholder="https://example.com"
+                  />
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="mb-3">
+                  <label class="form-label">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Mô tả
+                  </label>
+                  <textarea
+                    class="form-control"
+                    v-model="publisherForm.description"
+                    placeholder="Mô tả về nhà xuất bản..."
+                    rows="3"
+                  ></textarea>
                 </div>
               </div>
             </div>
-
-            <div class="row">
-              <div class="col-12 mb-3">
-                <label class="enhanced-label"> Địa chỉ </label>
-                <textarea
-                  class="form-control enhanced-input"
-                  :class="{ 'is-invalid': formErrors.address }"
-                  placeholder="Nhập địa chỉ nhà xuất bản"
-                  v-model="newPublisher.address"
-                  rows="2"
-                ></textarea>
-                <div class="invalid-feedback" v-if="formErrors.address">
-                  {{ formErrors.address }}
-                </div>
-                <div class="form-text" v-else>
-                  Địa chỉ chính của nhà xuất bản
-                </div>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-12 mb-3">
-                <label class="enhanced-label"> Mô tả </label>
-                <textarea
-                  class="form-control enhanced-input"
-                  :class="{ 'is-invalid': formErrors.description }"
-                  placeholder="Nhập mô tả về nhà xuất bản"
-                  v-model="newPublisher.description"
-                  rows="3"
-                ></textarea>
-                <div class="invalid-feedback" v-if="formErrors.description">
-                  {{ formErrors.description }}
-                </div>
-                <div class="form-text" v-else>
-                  Thông tin mô tả thêm về nhà xuất bản
-                </div>
-              </div>
-            </div>
-          </div>
+          </form>
         </div>
-        <div class="modal-footer enhanced-footer">
-          <button
-            type="button"
-            class="btn btn-outline-warning btn-sm rounded-pill fake-data-btn"
-            @click="fillFakeData"
-            v-if="!isEditMode"
-            title="Điền dữ liệu mẫu để test nhanh"
-          >
-            <i class="bi bi-lightning me-1"></i> Dữ liệu mẫu
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-secondary" @click="closeModal">
+            <i class="bi bi-x-circle me-1"></i>
+            Hủy
           </button>
-          <div class="ms-auto">
-            <button
-              type="button"
-              class="btn btn-cancel me-2"
-              @click="closeModal"
-            >
-              <i class="bi bi-x-circle me-1"></i> Hủy
-            </button>
-            <button
-              type="button"
-              class="btn btn-submit"
-              @click="handleSubmitPublisher"
-            >
-              <i class="bi bi-check-circle me-1"></i>
-              {{ isEditMode ? "Cập nhật" : "Thêm mới" }}
-            </button>
-          </div>
+          <button type="button" class="btn btn-success" @click="submitForm" :disabled="loading">
+            <div v-if="loading" class="spinner-border spinner-border-sm me-2" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <i v-else class="bi bi-check2 me-1"></i>
+            {{ isEditing ? 'Cập nhật' : 'Thêm mới' }}
+          </button>
         </div>
       </div>
     </div>
@@ -380,862 +322,292 @@
 </template>
 
 <script setup>
-import EditButton from "@/components/common/EditButton.vue";
-import Pagination from "@/components/common/Pagination.vue";
-import AddButton from "@/components/common/AddButton.vue";
-import StatusLabel from "@/components/common/StatusLabel.vue";
-import { ref, onMounted, onUnmounted, watch } from "vue";
-import { Modal } from "bootstrap";
-import {
-  getPublishers,
-  createPublisher,
-  updatePublisher,
-  updatePublisherStatus,
-  deletePublisher,
-} from "@/services/admin/publisher";
-import { showQuickConfirm, showToast } from "@/utils/swalHelper";
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { Modal } from 'bootstrap'
+import Swal from 'sweetalert2'
+import { 
+  getPublishers, 
+  createPublisher, 
+  updatePublisher, 
+  deletePublisher 
+} from '@/services/admin/publisher'
+import Pagination from '@/components/common/Pagination.vue'
+import { showNotification } from '@/utils/notification'
+import EditButton from '@/components/common/EditButton.vue'
 
-const searchQuery = ref("");
-const emailFilter = ref("");
-const selectedStatus = ref("");
+// Reactive data
+const publishers = ref([])
+const loading = ref(false)
+const searchQuery = ref('')
+const emailFilter = ref('')
+const selectedStatus = ref('')
 
-// New/Edit publisher form data
-const newPublisher = ref({
-  id: "",
-  publisherName: "",
-  address: "",
-  contactName: "",
-  email: "",
-  phone: "",
-  website: "",
-  description: "",
-  status: "1", // Default status is active
-  createdBy: "admin",
-  updatedBy: "admin",
-});
+// Filter toggle
+const showFilter = ref(true)
 
-// Track edit mode and index
-const isEditMode = ref(false);
-const editIndex = ref(null);
+// Pagination
+const currentPage = ref(0)
+const pageSize = ref(10)
+const totalPages = ref(0)
+const totalElements = ref(0)
+const isLastPage = ref(false)
+const itemsPerPageOptions = ref([5, 10, 20, 50])
 
-// Form validation
-const formErrors = ref({
-  publisherName: "",
-  email: "",
-  phone: "",
-  contactName: "",
-  website: "",
-  address: "",
-  description: "",
-});
+// Modal refs
+const publisherModalElement = ref(null)
+let publisherModal = null
 
-// Pagination state
-const currentPage = ref(0);
-const pageSize = ref(5);
-const totalPages = ref(1);
-const totalElements = ref(0);
-const itemsPerPageOptions = ref([5, 10, 25, 50]);
-const isLastPage = ref(false);
+// Modal state
+const isEditing = ref(false)
+const editingIndex = ref(-1)
+const publisherForm = reactive({
+  id: null,
+  publisherName: '',
+  email: '',
+  phone: '',
+  address: '',
+  website: '',
+  description: '',
+  status: '1'
+})
 
-// Publishers data
-const publishers = ref([]);
+// Computed properties
+const debouncedSearch = computed(() => {
+  let timeout
+  return () => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => {
+      applyFilters()
+    }, 500)
+  }
+})
 
+// Methods
 const fetchPublishers = async () => {
+  loading.value = true
   try {
     const params = {
       page: currentPage.value,
       size: pageSize.value,
-    };
-
-    if (searchQuery.value) {
-      params.name = searchQuery.value;
+      ...(searchQuery.value && { search: searchQuery.value }),
+      ...(emailFilter.value && { email: emailFilter.value }),
+      ...(selectedStatus.value !== '' && { status: selectedStatus.value })
     }
 
-    if (emailFilter.value) {
-      params.email = emailFilter.value;
-    }
-
-    if (selectedStatus.value) {
-      params.status = selectedStatus.value;
-    }
-
-    const response = await getPublishers(params);
-    console.log("API Response:", response);
-
-    // Theo tài liệu API, response có cấu trúc { status: 200, message: "...", data: {...} }
-    if (response && response.status === 200 && response.data) {
-      publishers.value = response.data.content || [];
-      totalPages.value = response.data.totalPages || 1;
-      totalElements.value = response.data.totalElements || 0;
-      isLastPage.value =
-        response.data.last || currentPage.value >= totalPages.value - 1;
-    } else {
-      console.error("Invalid API response structure:", response);
-      publishers.value = [];
-      totalPages.value = 1;
-      totalElements.value = 0;
-      isLastPage.value = true;
-    }
+    const response = await getPublishers(params)
+    publishers.value = response.data.content
+    totalPages.value = response.data.totalPages
+    totalElements.value = response.data.totalElements
+    isLastPage.value = response.data.last
   } catch (error) {
-    console.error("Error fetching publishers:", error);
-    showToast("error", "Không thể tải danh sách nhà xuất bản");
-    publishers.value = [];
-    totalPages.value = 1;
-    totalElements.value = 0;
-    isLastPage.value = true;
+    console.error('Error fetching publishers:', error)
+    showNotification('Lỗi khi tải danh sách nhà xuất bản!', 'error')
+  } finally {
+    loading.value = false
   }
-};
+}
 
-// Watch filters and pagination
-watch([pageSize], () => {
-  currentPage.value = 0; // Reset to first page when changing page size
-  fetchPublishers();
-});
-
-watch([currentPage], () => {
-  fetchPublishers();
-});
-
-// Debounce search to avoid too many API calls
-const debounce = (func, delay) => {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func.apply(null, args), delay);
-  };
-};
-
-const debouncedFetchPublishers = debounce(() => {
-  currentPage.value = 0;
-  fetchPublishers();
-}, 300);
-
-watch([searchQuery, emailFilter, selectedStatus], () => {
-  debouncedFetchPublishers();
-});
-
-// Format date function
-const formatDate = (timestamp) => {
-  if (!timestamp) return "";
-  const date = new Date(timestamp);
-  return date.toLocaleDateString("vi-VN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-// Modal functions
-const resetFormErrors = () => {
-  Object.keys(formErrors.value).forEach((key) => (formErrors.value[key] = ""));
-};
-
-const openAddModal = () => {
-  console.log("Opening add modal");
-  isEditMode.value = false;
-  resetFormErrors();
-
-  newPublisher.value = {
-    id: "",
-    publisherName: "",
-    address: "",
-    contactName: "",
-    email: "",
-    phone: "",
-    website: "",
-    description: "",
-    status: "1",
-    createdBy: "admin",
-    updatedBy: "admin",
-  };
-
-  try {
-    const modalElement = document.getElementById("addPublisherModal");
-    if (modalElement) {
-      const modal = Modal.getOrCreateInstance(modalElement);
-      modal.show();
-    } else {
-      console.error("Modal element not found");
-    }
-  } catch (error) {
-    console.error("Error opening modal:", error);
-  }
-};
-
-const openEditModal = (publisher, index) => {
-  isEditMode.value = true;
-  editIndex.value = index;
-  resetFormErrors();
-
-  newPublisher.value = {
-    id: publisher.id,
-    publisherName: publisher.publisherName,
-    address: publisher.address || "",
-    contactName: publisher.contactName || "",
-    email: publisher.email || "",
-    phone: publisher.phone || "",
-    website: publisher.website || "",
-    description: publisher.description || "",
-    status: publisher.status || "1",
-    createdBy: publisher.createdBy || "admin",
-    updatedBy: "admin", // Always set current user as updater
-  };
-
-  try {
-    const modalElement = document.getElementById("addPublisherModal");
-    if (modalElement) {
-      const modal = Modal.getOrCreateInstance(modalElement);
-      modal.show();
-    } else {
-      console.error("Modal element not found when trying to open edit modal");
-    }
-  } catch (error) {
-    console.error("Error opening edit modal:", error);
-  }
-};
-
-const handleSubmitPublisher = async () => {
-  // Reset validation errors
-  Object.keys(formErrors.value).forEach((key) => (formErrors.value[key] = ""));
-
-  // Validate form
-  let isValid = true;
-
-  // Validate publisher name
-  if (
-    !newPublisher.value.publisherName ||
-    newPublisher.value.publisherName.trim() === ""
-  ) {
-    formErrors.value.publisherName = "Vui lòng nhập tên nhà xuất bản";
-    isValid = false;
-  } else if (newPublisher.value.publisherName.length > 255) {
-    formErrors.value.publisherName =
-      "Tên nhà xuất bản không được vượt quá 255 ký tự";
-    isValid = false;
-  }
-
-  // Validate email if provided
-  if (newPublisher.value.email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newPublisher.value.email)) {
-      formErrors.value.email = "Email không đúng định dạng";
-      isValid = false;
-    }
-  }
-
-  // Validate website if provided
-  if (newPublisher.value.website) {
-    try {
-      new URL(newPublisher.value.website);
-    } catch (err) {
-      formErrors.value.website = "Website không đúng định dạng URL";
-      isValid = false;
-    }
-  }
-
-  if (!isValid) {
-    showToast("error", "Vui lòng kiểm tra lại thông tin nhập");
-    return;
-  }
-
-  try {
-    if (isEditMode.value) {
-      // Update existing publisher - sử dụng PUT với body thay vì path ID
-      await updatePublisher(newPublisher.value.id, newPublisher.value);
-      showToast("success", "Cập nhật nhà xuất bản thành công");
-
-      // Update the publisher in the local array
-      if (editIndex.value !== null) {
-        publishers.value[editIndex.value] = {
-          ...publishers.value[editIndex.value],
-          ...newPublisher.value,
-        };
-      }
-    } else {
-      // Create new publisher
-      await createPublisher(newPublisher.value);
-      showToast("success", "Thêm nhà xuất bản thành công");
-
-      // Refresh the list to see the new publisher
-      await fetchPublishers();
-    }
-
-    closeModal();
-  } catch (error) {
-    console.error("Error submitting publisher:", error);
-
-    if (error.response) {
-      if (error.response.data && error.response.data.errors) {
-        // Process validation errors from backend
-        const backendErrors = error.response.data.errors;
-        Object.keys(backendErrors).forEach((key) => {
-          const fieldName = key.charAt(0).toLowerCase() + key.slice(1);
-          if (formErrors.value.hasOwnProperty(fieldName)) {
-            formErrors.value[fieldName] = backendErrors[key];
-          }
-        });
-        showToast("error", "Vui lòng kiểm tra lại thông tin nhập liệu");
-      } else if (error.response.data && error.response.data.message) {
-        showToast("error", error.response.data.message);
-      } else if (error.response.data && error.response.data.error) {
-        showToast("error", error.response.data.error);
-      } else {
-        showToast(
-          "error",
-          "Có lỗi xảy ra, vui lòng kiểm tra lại thông tin nhập."
-        );
-      }
-    } else if (error.code === "NETWORK_ERROR") {
-      showToast(
-        "error",
-        "Lỗi kết nối mạng. Vui lòng kiểm tra kết nối và thử lại."
-      );
-    } else {
-      showToast(
-        "error",
-        "Không thể lưu thông tin nhà xuất bản. Vui lòng thử lại sau."
-      );
-    }
-  }
-};
-
-const closeModal = () => {
-  try {
-    const modalElement = document.getElementById("addPublisherModal");
-    if (modalElement) {
-      // Sử dụng Bootstrap Modal API đúng cách
-      const modal = Modal.getOrCreateInstance(modalElement);
-      modal.hide();
-
-      // Cleanup sau khi modal đã đóng
-      modalElement.addEventListener(
-        "hidden.bs.modal",
-        () => {
-          forceCleanupModal();
-        },
-        { once: true }
-      );
-    }
-  } catch (error) {
-    console.error("Error closing modal:", error);
-    forceCleanupModal();
-  }
-};
-
-// Helper function để force cleanup modal
-const forceCleanupModal = () => {
-  // Remove all backdrops
-  const backdrops = document.querySelectorAll(".modal-backdrop");
-  backdrops.forEach((backdrop) => backdrop.remove());
-
-  // Remove modal classes from body
-  document.body.classList.remove("modal-open");
-  document.body.style.removeProperty("overflow");
-  document.body.style.removeProperty("padding-right");
-
-  // Hide modal element
-  const modalElement = document.getElementById("addPublisherModal");
-  if (modalElement) {
-    modalElement.classList.remove("show");
-    modalElement.style.display = "none";
-    modalElement.setAttribute("aria-hidden", "true");
-    modalElement.removeAttribute("aria-modal");
-  }
-};
-
-// Toggle status function
-const handleToggleStatus = async (publisherId, index) => {
-  try {
-    const publisher = publishers.value[index];
-    const newStatus = publisher.status === "1" ? "0" : "1";
-
-    await updatePublisherStatus(publisherId, newStatus, "admin");
-
-    // Update the local array
-    publishers.value[index].status = newStatus;
-
-    showToast(
-      "success",
-      `Đã ${newStatus === "1" ? "kích hoạt" : "vô hiệu hóa"} nhà xuất bản`
-    );
-  } catch (error) {
-    console.error("Error toggling publisher status:", error);
-    showToast("error", "Không thể cập nhật trạng thái nhà xuất bản");
-  }
-};
-
-// Delete publisher function
-const handleDeletePublisher = async (publisherId, index) => {
-  try {
-    const result = await showQuickConfirm(
-      "Xác nhận xóa",
-      "Bạn có chắc muốn xóa nhà xuất bản này không? Hành động này không thể hoàn tác.",
-      "question",
-      "Xóa",
-      "Hủy",
-      "btn-danger",
-      "btn-secondary"
-    );
-
-    if (result.isConfirmed) {
-      await deletePublisher(publisherId);
-
-      // Remove from local array
-      publishers.value.splice(index, 1);
-
-      showToast("success", "Xóa nhà xuất bản thành công");
-    }
-  } catch (error) {
-    console.error("Error deleting publisher:", error);
-
-    if (error.response && error.response.status === 500) {
-      showToast(
-        "error",
-        "Không thể xóa nhà xuất bản đang được sử dụng bởi sách"
-      );
-    } else {
-      showToast("error", "Không thể xóa nhà xuất bản");
-    }
-  }
-};
-
-// Filter functions
 const applyFilters = () => {
-  currentPage.value = 0;
-  fetchPublishers();
-};
+  currentPage.value = 0
+  fetchPublishers()
+}
 
 const clearFilters = () => {
-  searchQuery.value = "";
-  emailFilter.value = "";
-  selectedStatus.value = "";
-  currentPage.value = 0;
-  fetchPublishers();
-};
+  searchQuery.value = ''
+  emailFilter.value = ''
+  selectedStatus.value = ''
+  applyFilters()
+}
 
-// Debounce function for search input
-const debouncedSearch = () => {
-  debouncedFetchPublishers();
-};
+const toggleFilter = () => {
+  showFilter.value = !showFilter.value
+}
 
-// Pagination functions
+// Pagination methods
 const handlePrev = () => {
   if (currentPage.value > 0) {
-    currentPage.value--;
+    currentPage.value--
+    fetchPublishers()
   }
-};
+}
 
 const handleNext = () => {
   if (!isLastPage.value) {
-    currentPage.value++;
+    currentPage.value++
+    fetchPublishers()
   }
-};
+}
 
 const handlePageSizeChange = (newSize) => {
-  pageSize.value = newSize;
-  currentPage.value = 0;
-};
+  pageSize.value = newSize
+  currentPage.value = 0
+  fetchPublishers()
+}
 
-// Fake data function
-const fillFakeData = () => {
-  newPublisher.value = {
-    publisherName: "Nhà xuất bản Trẻ",
-    address: "161B Lý Chính Thắng, Phường 7, Quận 3, TP. Hồ Chí Minh",
-    contactName: "Nguyễn Văn A",
-    email: "contact@nxbtre.com.vn",
-    phone: "(028) 3931 6289",
-    website: "https://www.nxbtre.com.vn",
-    description:
-      "Nhà xuất bản Trẻ là nhà xuất bản của Thành Đoàn Thành phố Hồ Chí Minh, được thành lập năm 1981.",
-    status: "1",
-    createdBy: "admin",
-    updatedBy: "admin",
-  };
-};
+// Modal methods
+const openAddModal = () => {
+  resetForm()
+  isEditing.value = false
+  editingIndex.value = -1
+  publisherModal.show()
+}
 
-let modalElement = null;
+const openEditModal = (publisher, index) => {
+  resetForm()
+  Object.assign(publisherForm, publisher)
+  isEditing.value = true
+  editingIndex.value = index
+  publisherModal.show()
+}
 
-onMounted(() => {
-  modalElement = document.getElementById("addPublisherModal");
-  if (modalElement) {
-    modalElement.addEventListener("hidden.bs.modal", () => {
-      // Reset form state when modal is hidden
-      resetFormErrors();
-    });
+const closeModal = () => {
+  publisherModal.hide()
+  resetForm()
+}
+
+const resetForm = () => {
+  Object.assign(publisherForm, {
+    id: null,
+    publisherName: '',
+    email: '',
+    phone: '',
+    address: '',
+    website: '',
+    description: '',
+    status: '1'
+  })
+}
+
+const submitForm = async () => {
+  loading.value = true
+  try {
+    if (isEditing.value) {
+      const response = await updatePublisher(publisherForm.id, publisherForm)
+      publishers.value[editingIndex.value] = response.data
+      showNotification('Cập nhật nhà xuất bản thành công!', 'success')
+    } else {
+      const response = await createPublisher(publisherForm)
+      fetchPublishers()
+      showNotification('Thêm nhà xuất bản thành công!', 'success')
+    }
+    closeModal()
+  } catch (error) {
+    console.error('Error submitting form:', error)
+    showNotification(
+      isEditing.value ? 'Lỗi khi cập nhật nhà xuất bản!' : 'Lỗi khi thêm nhà xuất bản!',
+      'error'
+    )
+  } finally {
+    loading.value = false
   }
-  fetchPublishers();
-});
+}
 
-onUnmounted(() => {
-  if (modalElement) {
-    modalElement.removeEventListener("hidden.bs.modal", () => {
-      resetFormErrors();
-    });
+const handleDeletePublisher = (id, index) => {
+  Swal.fire({
+    title: 'Xác nhận xóa',
+    text: 'Bạn có chắc chắn muốn xóa nhà xuất bản này?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Xóa',
+    cancelButtonText: 'Hủy'
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      try {
+        await deletePublisher(id)
+        publishers.value.splice(index, 1)
+        showNotification('Xóa nhà xuất bản thành công!', 'success')
+        
+        // Refresh if current page is empty
+        if (publishers.value.length === 0 && currentPage.value > 0) {
+          currentPage.value--
+          fetchPublishers()
+        }
+      } catch (error) {
+        console.error('Error deleting publisher:', error)
+        showNotification('Lỗi khi xóa nhà xuất bản!', 'error')
+      }
+    }
+  })
+}
+
+const formatDate = (dateString) => {
+  if (!dateString) return '-'
+  const date = new Date(dateString)
+  return date.toLocaleDateString('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+// Lifecycle hooks
+onMounted(async () => {
+  await fetchPublishers()
+  
+  await nextTick()
+  if (publisherModalElement.value) {
+    publisherModal = new Modal(publisherModalElement.value)
   }
-});
+})
 </script>
 
 <style scoped>
-.table th,
-.table td {
-  white-space: nowrap;
-  padding: 0.75rem 1rem;
+@import '@/assets/css/admin-table-responsive.css';
+@import '@/assets/css/admin-global.css';
+
+/* Sticky filter sidebar */
+.sticky-filter {
+  position: sticky;
+  top: 20px;
+  height: fit-content;
 }
 
-/* Enhanced Modal Styles */
-.modal-lg {
-  max-width: 800px;
-}
-
-.modal-dialog-scrollable {
-  display: flex;
-  max-height: calc(100% - 1rem);
-}
-
-.modal-dialog-scrollable .modal-body {
-  overflow-y: auto;
-}
-
-.enhanced-modal {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  animation: modalFadeIn 0.4s ease-out;
-}
-
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.gradient-header {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  color: white;
-  padding: 1.2rem;
-  position: relative;
+/* Filter toggle animation */
+.filter-collapse {
+  transition: all 0.3s ease-in-out;
   overflow: hidden;
 }
 
-.gradient-header::after {
-  content: "";
+.filter-collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
+/* Loading overlay */
+.loading-overlay {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    135deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.1) 100%
-  );
-  animation: gradientShift 3s ease infinite alternate;
-}
-
-@keyframes gradientShift {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 100% 50%;
-  }
-}
-
-.modal-title {
-  font-size: 1.4rem;
-  font-weight: 600;
-  position: relative;
-  z-index: 1;
-}
-
-.enhanced-body {
-  padding: 1.5rem;
-}
-
-.enhanced-footer {
-  padding: 1rem 1.5rem;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
   display: flex;
-  justify-content: space-between;
-  background-color: #f9fafc;
-  border-top: 1px solid #eaedf2;
-}
-
-/* Form Section Styles */
-.form-section {
-  background-color: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid #eaedf2;
-  transition: all 0.3s ease;
-  animation: slideInUp 0.5s ease;
-}
-
-.form-section:hover {
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-  transform: translateY(-2px);
-}
-
-.form-section:nth-child(1) {
-  animation-delay: 0.1s;
-}
-
-.form-section:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.form-section:nth-child(3) {
-  animation-delay: 0.3s;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1.2rem;
-  padding-bottom: 0.7rem;
-  border-bottom: 1px solid #eaedf2;
-  position: relative;
-}
-
-.section-header::after {
-  content: "";
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 60px;
-  height: 3px;
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  border-radius: 1px;
-  transition: width 0.3s ease;
-}
-
-.form-section:hover .section-header::after {
-  width: 100px;
-}
-
-.section-icon {
-  font-size: 1.5rem;
-  color: #4facfe;
-  margin-right: 10px;
-  transition: transform 0.3s ease;
-}
-
-.form-section:hover .section-icon {
-  transform: scale(1.1) rotate(5deg);
-}
-
-.section-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin: 0;
-  color: #2d3748;
-}
-
-/* Enhanced Form Controls */
-.enhanced-label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  color: #2d3748;
-  display: block;
-}
-
-.enhanced-label .text-danger {
-  font-weight: bold;
-}
-
-.enhanced-input {
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  padding: 10px 16px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background-color: #f8f9fa;
-}
-
-.enhanced-input:focus {
-  border-color: #4facfe;
-  box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
-  background-color: white;
-}
-
-.enhanced-input:hover {
-  background-color: white;
-  border-color: #cbd5e1;
-}
-
-.enhanced-input.is-invalid {
-  border-color: #ef4444;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23ef4444' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23ef4444' stroke='none'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right calc(0.375em + 0.1875rem) center;
-  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-}
-
-.enhanced-input.is-invalid:focus {
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
-}
-
-/* Button Styles */
-.fake-data-btn {
-  background-color: #fff8eb;
-  color: #b45309;
-  font-weight: 500;
-  border: 1px dashed #fbbf24;
-  font-size: 0.875rem;
-  box-shadow: none;
-  transition: all 0.2s ease;
-}
-
-.fake-data-btn:hover {
-  background-color: #fef3c7;
-  color: #92400e;
-  border-color: #f59e0b;
-}
-
-.btn-submit {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-  border: none;
-  color: white;
-  font-weight: 500;
-  padding: 10px 24px;
-  transition: all 0.3s ease;
-}
-
-.btn-submit:hover {
-  box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
-  transform: translateY(-1px);
-}
-
-.btn-cancel {
-  background-color: #fff;
-  border: 1px solid #e2e8f0;
-  color: #475569;
-  font-weight: 500;
-  padding: 10px 24px;
-  transition: all 0.3s ease;
-}
-
-.btn-cancel:hover {
-  background-color: #f8fafc;
-  color: #1e293b;
-}
-
-.custom-close-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: none;
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  color: white;
-  font-size: 1rem;
+  align-items: center;
+  z-index: 10;
+  opacity: 0;
+  visibility: hidden;
   transition: all 0.3s ease;
 }
 
-.custom-close-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: rotate(90deg);
+.loading-overlay.show {
+  opacity: 1;
+  visibility: visible;
 }
 
-/* Status Styles */
-.status-active {
-  color: #10b981;
+.loading-overlay p {
+  margin-top: 1rem;
+  color: #6c757d;
+  font-weight: 500;
 }
 
-.status-inactive {
-  color: #ef4444;
-}
-
-.text-muted {
-  color: #94a3b8 !important;
-}
-
-.small {
-  font-size: 0.875rem;
-}
-
-.text-danger {
-  color: #ef4444 !important;
-}
-
-.badge {
-  font-size: 0.75rem;
-  padding: 0.35em 0.65em;
-  font-weight: 600;
-  border-radius: 6px;
-}
-
-.bg-info {
-  background-color: #38bdf8 !important;
-}
-
-/* Responsive adjustments */
-@media (max-width: 1200px) {
-  .modal-lg {
-    max-width: 95%;
-  }
-}
-
-@media (max-width: 992px) {
-  .section-title {
-    font-size: 1.1rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .form-section {
-    padding: 1rem;
-  }
-}
-
-/* Modal positioning fix */
-.modal-dialog {
-  margin-top: 2rem;
-}
-
-@media (min-height: 600px) {
-  .modal-dialog {
-    margin-top: calc(5vh);
-  }
-}
-
-/* Animation for form sections */
-.form-section {
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-.form-section:nth-child(1) {
-  animation: slideInUp 0.5s ease 0.1s forwards;
-}
-
-.form-section:nth-child(2) {
-  animation: slideInUp 0.5s ease 0.2s forwards;
-}
-
-.form-section:nth-child(3) {
-  animation: slideInUp 0.5s ease 0.3s forwards;
-}
-
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.required::after {
+  content: ' *';
+  color: #dc3545;
 }
 </style>

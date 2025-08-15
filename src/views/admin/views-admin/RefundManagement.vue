@@ -1,247 +1,302 @@
 <template>
-  <div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-      <h1 class="h3 mb-0 text-gray-800">Quản lý hoàn hàng</h1>
+  <div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <div class="mb-3">
+      <h6 class="text-muted">
+        Admin / <strong>Quản lý hoàn hàng</strong>
+      </h6>
     </div>
 
-    <!-- Filter Controls -->
-    <div class="card shadow mb-4">
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-2">
-            <label class="form-label">Trạng thái</label>
-            <select v-model="filters.status" @change="applyFilters" class="form-select">
-              <option value="">Tất cả trạng thái</option>
-              <option value="PENDING">Chờ phê duyệt</option>
-              <option value="APPROVED">Đã phê duyệt</option>
-              <option value="REJECTED">Đã từ chối</option>
-              <option value="COMPLETED">Hoàn thành</option>
-            </select>
+    <!-- Layout 2 cột: Bộ lọc bên trái, Bảng bên phải -->
+    <div class="row">
+      <!-- Cột bộ lọc (bên trái) -->
+      <div class="col-lg-2 col-xl-2">
+        <div class="card shadow-lg border-0 filter-card sticky-filter">
+          <div class="card-header bg-light border-0 py-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0 text-secondary">
+                <i class="bi bi-funnel me-2"></i>
+                Bộ lọc
+              </h6>
+              <button 
+                class="btn btn-sm btn-outline-secondary" 
+                type="button" 
+                @click="toggleFilter"
+                :aria-expanded="showFilter"
+              >
+                <i :class="showFilter ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+              </button>
+            </div>
           </div>
-          <div class="col-md-2">
-            <label class="form-label">Loại hoàn hàng</label>
-            <select v-model="filters.refundType" @change="applyFilters" class="form-select">
-              <option value="">Tất cả loại</option>
-              <option value="FULL">Hoàn toàn bộ</option>
-              <option value="PARTIAL">Hoàn một phần</option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">Từ ngày</label>
-            <input
-              v-model="filters.startDate"
-              @change="applyFilters"
-              type="date"
-              class="form-control"
-            />
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">Đến ngày</label>
-            <input
-              v-model="filters.endDate"
-              @change="applyFilters"
-              type="date"
-              class="form-control"
-            />
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">Số tiền (min)</label>
-            <input
-              v-model="filters.minAmount"
-              @input="applyFilters"
-              type="number"
-              class="form-control"
-              placeholder="0"
-            />
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">Số tiền (max)</label>
-            <input
-              v-model="filters.maxAmount"
-              @input="applyFilters"
-              type="number"
-              class="form-control"
-              placeholder="1000000"
-            />
+          <div class="card-body filter-collapse" :class="{ 'filter-collapsed': !showFilter }">
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-toggle-on me-1"></i>
+                Trạng thái
+              </label>
+              <select class="form-select form-select-sm" v-model="filters.status" @change="applyFilters">
+                <option value="">Tất cả trạng thái</option>
+                <option value="PENDING">Chờ phê duyệt</option>
+                <option value="APPROVED">Đã phê duyệt</option>
+                <option value="REJECTED">Đã từ chối</option>
+                <option value="COMPLETED">Hoàn thành</option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-box me-1"></i>
+                Loại hoàn hàng
+              </label>
+              <select class="form-select form-select-sm" v-model="filters.refundType" @change="applyFilters">
+                <option value="">Tất cả loại</option>
+                <option value="FULL">Hoàn toàn bộ</option>
+                <option value="PARTIAL">Hoàn một phần</option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-calendar me-1"></i>
+                Từ ngày
+              </label>
+              <input 
+                type="date" 
+                class="form-control form-control-sm" 
+                v-model="filters.startDate" 
+                @change="applyFilters"
+              />
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-calendar me-1"></i>
+                Đến ngày
+              </label>
+              <input 
+                type="date" 
+                class="form-control form-control-sm" 
+                v-model="filters.endDate" 
+                @change="applyFilters"
+              />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-currency-dollar me-1"></i>
+                Số tiền (min)
+              </label>
+              <input 
+                type="number" 
+                class="form-control form-control-sm" 
+                placeholder="Nhập số tiền tối thiểu" 
+                v-model="filters.minAmount" 
+                @change="applyFilters"
+              />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-currency-dollar me-1"></i>
+                Số tiền (max)
+              </label>
+              <input 
+                type="number" 
+                class="form-control form-control-sm" 
+                placeholder="Nhập số tiền tối đa" 
+                v-model="filters.maxAmount" 
+                @change="applyFilters"
+              />
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-search me-1"></i>
+                Tìm kiếm
+              </label>
+              <input 
+                type="text" 
+                class="form-control form-control-sm" 
+                placeholder="Nhập mã đơn, email..." 
+                v-model="filters.search" 
+                @input="debouncedSearch"
+                @keyup.enter="applyFilters"
+              />
+            </div>
+            
+            <div class="d-grid gap-2">
+              <button class="btn btn-success btn-sm" @click="applyFilters">
+                <i class="bi bi-funnel me-1"></i> Áp dụng lọc
+              </button>
+              <button class="btn btn-secondary btn-sm" @click="clearFilters">
+                <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
+              </button>
+            </div>
           </div>
         </div>
-        <div class="row mt-3">
-          <div class="col-md-4">
-            <label class="form-label">Tìm kiếm</label>
-            <input
-              v-model="filters.search"
-              @input="applyFilters"
-              type="text"
-              class="form-control"
-              placeholder="Mã đơn hàng, tên khách hàng, tracking code..."
-            />
+      </div>
+      
+      <!-- Cột bảng (bên phải) -->
+      <div class="col-lg-10 col-xl-10">
+        <!-- Danh sách Refund -->
+        <div class="card shadow-lg border-0 mb-4 admin-table-card">
+          <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3">
+            <div>
+              <h5 class="mb-0 text-secondary">
+                <i class="bi bi-arrow-counterclockwise me-2"></i>
+                Danh sách yêu cầu hoàn hàng
+              </h5>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-info btn-sm py-2" @click="fetchRefundRequests" :disabled="loading">
+                <i class="bi bi-arrow-repeat me-1"></i> Làm mới
+              </button>
+            </div>
           </div>
-          <div class="col-md-8 d-flex align-items-end">
-            <button @click="applyFilters" class="btn btn-primary me-2">
-              <i class="fas fa-search"></i> Tìm kiếm
-            </button>
-            <button @click="clearFilters" class="btn btn-outline-secondary">
-              <i class="fas fa-times"></i> Xóa filter
-            </button>
+          <div class="card-body p-0" :class="{ loading: loading }">
+            <div class="loading-overlay" :class="{ show: loading }">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+              </div>
+              <p>Đang tải dữ liệu...</p>
+            </div>
+            
+            <!-- Data table -->
+            <div>
+              <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th style="min-width: 50px;">STT</th>
+                      <th style="min-width: 120px;">Thao tác</th>
+                      <th style="min-width: 150px;">Mã đơn hàng</th>
+                      <th style="min-width: 150px;">Khách hàng</th>
+                      <th style="min-width: 120px;">Trạng thái</th>
+                      <th style="min-width: 100px;">Loại</th>
+                      <th style="min-width: 130px;">Số tiền hoàn</th>
+                      <th style="min-width: 150px;">Ngày tạo</th>
+                      <th style="min-width: 100px;">Bằng chứng</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(refund, index) in filteredRefunds" :key="refund.refundRequestId || refund.id">
+                      <td>{{ (pagination.currentPage * pagination.perPage) + index + 1 }}</td>
+                      <td>
+                        <div class="btn-group" role="group">
+                          <button 
+                            @click="viewRefundDetails(refund)"
+                            class="btn btn-sm btn-outline-info"
+                            title="Xem chi tiết"
+                          >
+                            <i class="bi bi-eye"></i>
+                          </button>
+                          <button
+                            v-if="refund.refundStatus === 'PENDING'"
+                            @click="approveRefundRequest(refund)"
+                            class="btn btn-sm btn-outline-success"
+                            title="Phê duyệt"
+                          >
+                            <i class="bi bi-check-circle"></i>
+                          </button>
+                          <button
+                            v-if="refund.refundStatus === 'PENDING'"
+                            @click="rejectRefundRequest(refund)"
+                            class="btn btn-sm btn-outline-danger"
+                            title="Từ chối"
+                          >
+                            <i class="bi bi-x-circle"></i>
+                          </button>
+                          <button
+                            v-if="refund.refundStatus === 'APPROVED'"
+                            @click="processRefundRequest(refund.refundRequestId)"
+                            class="btn btn-sm btn-outline-warning"
+                            title="Xử lý hoàn trả"
+                          >
+                            <i class="bi bi-arrow-repeat"></i>
+                          </button>
+                        </div>
+                      </td>
+                      <td>
+                        <strong class="text-primary">{{ refund.orderCode }}</strong>
+                      </td>
+                      <td>
+                        <div>
+                          <strong>{{ refund.customerName || refund.userName }}</strong>
+                          <div class="text-muted small">{{ refund.customerEmail || refund.userEmail }}</div>
+                        </div>
+                      </td>
+                      <td>
+                        <StatusLabel 
+                          :status="refund.refundStatus"
+                          :status-text="getStatusText(refund.refundStatus)"
+                          :status-class="getStatusType(refund.refundStatus)"
+                        />
+                      </td>
+                      <td>
+                        <span class="badge bg-info">{{ refund.refundType }}</span>
+                      </td>
+                      <td>
+                        <span class="text-danger fw-bold">{{ formatCurrency(refund.totalRefundAmount) }}</span>
+                      </td>
+                      <td>
+                        <div class="small">
+                          {{ formatDate(refund.createdAt) }}
+                          <div class="text-muted">{{ formatTime(refund.createdAt) }}</div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="d-flex gap-1">
+                          <button
+                            v-if="refund.evidenceFiles?.images?.length || refund.evidenceImages?.length"
+                            @click="viewEvidence(refund, 'images')"
+                            class="btn btn-sm btn-outline-primary"
+                            title="Xem hình ảnh"
+                          >
+                            <i class="bi bi-image"></i>
+                          </button>
+                          <button
+                            v-if="refund.evidenceFiles?.videos?.length || refund.evidenceVideos?.length"
+                            @click="viewEvidence(refund, 'videos')"
+                            class="btn btn-sm btn-outline-info"
+                            title="Xem video"
+                          >
+                            <i class="bi bi-play-circle"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr v-if="filteredRefunds.length === 0">
+                      <td colspan="9" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox display-1 text-muted d-block mb-3"></i>
+                        Không có dữ liệu yêu cầu hoàn hàng
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- Pagination -->
+              <div class="p-3">
+                <Pagination 
+                  :page-number="pagination.currentPage" 
+                  :total-pages="pagination.totalPages" 
+                  :is-last-page="pagination.currentPage >= pagination.totalPages - 1"
+                  :page-size="pagination.perPage" 
+                  :items-per-page-options="[10, 20, 50, 100]" 
+                  :total-elements="pagination.totalItems"
+                  @prev="handlePrev" 
+                  @next="handleNext" 
+                  @update:pageSize="handlePageSizeChange"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Refund Requests Table -->
-    <div class="card shadow mb-4">
-      <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Danh sách yêu cầu hoàn hàng</h6>
-      </div>
-      <div class="card-body">
-        <!-- Loading State -->
-        <div v-if="loading" class="text-center">
-          <div class="spinner-border" role="status">
-            <span class="visually-hidden">Đang tải...</span>
-          </div>
-        </div>
-
-        <!-- Error State -->
-        <div v-else-if="error" class="alert alert-danger" role="alert">
-          {{ error }}
-        </div>
-
-        <!-- Empty State -->
-        <div v-else-if="!filteredRefunds.length" class="text-center py-4">
-          <p class="text-muted">Không có yêu cầu hoàn hàng nào</p>
-        </div>
-
-        <!-- Refund Requests Table -->
-        <div v-else class="table-responsive">
-          <table class="table table-hover">
-            <thead class="table-light">
-              <tr>
-                <th width="8%">Mã đơn hàng</th>
-                <th width="10%">Tracking Code</th>
-                <th width="12%">Khách hàng</th>
-                <th width="10%">Ngày yêu cầu</th>
-                <th width="8%">Loại hoàn</th>
-                <th width="10%">Số tiền</th>
-                <th width="10%">Trạng thái</th>
-                <th width="15%">Lý do</th>
-                <th width="8%">Minh chứng</th>
-                <th width="9%">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="refund in filteredRefunds" :key="refund.refundRequestId || refund.id">
-                <td>
-                  <strong class="text-primary">#{{ refund.orderCode }}</strong>
-                </td>
-                <td>
-                  <span class="badge bg-info text-dark">{{ refund.trackingCode || 'N/A' }}</span>
-                </td>
-                <td>
-                  <div>
-                    <div class="fw-bold">{{ refund.userFullName }}</div>
-                    <small class="text-muted">ID: {{ refund.orderId }}</small>
-                  </div>
-                </td>
-                <td>
-                  <div>{{ formatDate(refund.createdAt) }}</div>
-                  <small class="text-muted">{{ formatTime(refund.createdAt) }}</small>
-                </td>
-                <td>
-                  <span class="badge" :class="refund.refundType === 'FULL' ? 'bg-warning text-dark' : 'bg-info'">
-                    {{ refund.refundType === 'FULL' ? 'Hoàn toàn bộ' : 'Hoàn một phần' }}
-                  </span>
-                </td>
-                <td>
-                  <span class="fw-bold text-success">{{ formatCurrency(refund.totalRefundAmount) }}</span>
-                </td>
-                <td>
-                      <StatusLabel 
-                        :status="refund.refundStatus || refund.status" 
-                        :statusText="refund.refundStatusDisplay || refund.statusDisplay" 
-                      />
-                </td>
-                <td>
-                  <div class="text-truncate" style="max-width: 150px;" :title="(refund.reasonDisplay || refund.reason) + (refund.customerNote ? ' - ' + refund.customerNote : '')">
-                    {{ refund.reasonDisplay || refund.reason }}
-                  </div>
-                </td>
-                <td>
-                  <div class="btn-group" role="group">
-                    <button
-                      v-if="(refund.evidenceFiles?.images && refund.evidenceFiles.images.length > 0) || (refund.evidenceImages && refund.evidenceImages.length > 0)"
-                      @click="viewEvidence(refund, 'images')"
-                      class="btn btn-sm btn-outline-info"
-                      title="Xem hình ảnh"
-                    >
-                      <i class="fas fa-image"></i>
-                      {{ (refund.evidenceFiles?.images || refund.evidenceImages || []).length }}
-                    </button>
-                    <button
-                      v-if="(refund.evidenceFiles?.videos && refund.evidenceFiles.videos.length > 0) || (refund.evidenceVideos && refund.evidenceVideos.length > 0)"
-                      @click="viewEvidence(refund, 'videos')"
-                      class="btn btn-sm btn-outline-warning"
-                      title="Xem video"
-                    >
-                      <i class="fas fa-video"></i>
-                      {{ (refund.evidenceFiles?.videos || refund.evidenceVideos || []).length }}
-                    </button>
-                    <span
-                      v-if="(!refund.evidenceFiles?.images || refund.evidenceFiles.images.length === 0) && 
-                            (!refund.evidenceImages || refund.evidenceImages.length === 0) &&
-                            (!refund.evidenceFiles?.videos || refund.evidenceFiles.videos.length === 0) &&
-                            (!refund.evidenceVideos || refund.evidenceVideos.length === 0)"
-                      class="text-muted small"
-                    >
-                      Không có
-                    </span>
-                  </div>
-                </td>
-                <td>
-                  <div class="btn-group" role="group">
-                    <button
-                      @click="viewRefundDetails(refund)"
-                      class="btn btn-sm btn-outline-primary"
-                      title="Xem chi tiết"
-                    >
-                      <i class="fas fa-eye"></i>
-                    </button>
-                    <button
-                      v-if="(refund.refundStatus || refund.status) === 'PENDING'"
-                      @click="handleProcessRefund(refund)"
-                      class="btn btn-sm btn-outline-success"
-                      title="Phê duyệt/Từ chối"
-                    >
-                      <i class="fas fa-cog"></i>
-                    </button>
-                    <button
-                      v-if="(refund.refundStatus || refund.status) === 'APPROVED'"
-                      @click="processRefundRequest(refund.refundRequestId || refund.id)"
-                      class="btn btn-sm btn-success"
-                      title="Hoàn trả ngay"
-                    >
-                      <i class="fas fa-check-circle"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination -->
-        <Pagination
-          v-if="pagination.totalPages > 1"
-          :current-page="pagination.currentPage"
-          :total-pages="pagination.totalPages"
-          :total-items="pagination.totalItems"
-          :per-page="pagination.perPage"
-          @page-changed="changePage"
-        />
-      </div>
-    </div>
-
-    <!-- Refund Details Modal -->
+  <!-- Modals -->
     <div
       class="modal fade"
       id="refundDetailsModal"
@@ -511,7 +566,6 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup>
@@ -711,6 +765,29 @@ const applyFilters = () => {
   fetchRefundRequests()
 }
 
+// Search function with debounce
+const debounce = (func, wait) => {
+  let timeout
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout)
+      func(...args)
+    }
+    clearTimeout(timeout)
+    timeout = setTimeout(later, wait)
+  }
+}
+
+const debouncedSearch = debounce(() => {
+  applyFilters()
+}, 300)
+
+// UI functions
+const showFilter = ref(true)
+const toggleFilter = () => {
+  showFilter.value = !showFilter.value
+}
+
 const clearFilters = () => {
   filters.status = ''
   filters.refundType = ''
@@ -724,6 +801,27 @@ const clearFilters = () => {
 
 const changePage = (page) => {
   pagination.currentPage = page - 1 // Convert to 0-based index
+  fetchRefundRequests()
+}
+
+// Pagination handlers
+const handlePrev = () => {
+  if (pagination.currentPage > 0) {
+    pagination.currentPage--
+    fetchRefundRequests()
+  }
+}
+
+const handleNext = () => {
+  if (pagination.currentPage < pagination.totalPages - 1) {
+    pagination.currentPage++
+    fetchRefundRequests()
+  }
+}
+
+const handlePageSizeChange = (newSize) => {
+  pagination.perPage = newSize
+  pagination.currentPage = 0
   fetchRefundRequests()
 }
 
@@ -1174,32 +1272,72 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.table-responsive {
-  border-radius: 0.375rem;
+<style>
+@import '@/assets/css/admin-table-responsive.css';
+@import '@/assets/css/admin-global.css';
+
+.filter-card {
+  position: sticky;
+  top: 20px;
 }
 
-.btn-group .btn {
-  margin-right: 2px;
+.admin-table-card {
+  background: white;
+  border: 1px solid #e3e6f0;
+  border-radius: 0.35rem;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
 }
 
-.btn-group .btn:last-child {
-  margin-right: 0;
+.admin-table-card .card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-bottom: 1px solid #e3e6f0;
+  padding: 1rem 1.25rem;
 }
 
-.text-truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.admin-table-card .card-header h6 {
+  color: white;
+  font-weight: 700;
+  margin: 0;
 }
 
-.modal-xl {
-  max-width: 90%;
+.admin-table-card .card-body {
+  padding: 0;
+  position: relative;
 }
 
-.spinner-border {
-  width: 3rem;
-  height: 3rem;
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 0 0 0.35rem 0.35rem;
+}
+
+.page-breadcrumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+  padding: 1rem 1.5rem;
+  color: white;
+}
+
+.page-breadcrumb .breadcrumb {
+  background: transparent;
+  margin: 0;
+  padding: 0;
+}
+
+.page-breadcrumb .breadcrumb-item a {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.page-breadcrumb .breadcrumb-item.active {
+  color: white;
 }
 
 /* Timeline styles */
@@ -1243,6 +1381,17 @@ onMounted(() => {
 
 .border-4 {
   border-width: 4px !important;
+}
+
+@media (max-width: 991.98px) {
+  .filter-card {
+    position: static;
+    margin-bottom: 1rem;
+  }
+  
+  .responsive-sidebar {
+    margin-bottom: 1rem;
+  }
 }
 
 @media (max-width: 768px) {

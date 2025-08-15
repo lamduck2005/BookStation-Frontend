@@ -3,264 +3,357 @@
     <!-- Breadcrumb -->
     <div class="mb-3">
       <h6 class="text-muted">
-        Quản trị viên / <strong>Nhà cung cấp</strong>
+        Admin / <strong>Quản lý nhà cung cấp</strong>
       </h6>
     </div>
-    
-    <!-- Bộ lọc -->
-    <div class="bg-light-darker p-3 rounded mb-4 border pt-0 ps-0 pe-0">
-       <div
-        class="d-flex align-items-center mb-3 p-3 m-0 rounded-top"
-        style="background-color: #f3fcf9"  >
-        <i class="bi bi-funnel-fill me-2 text-green"></i>
-        <h5 class="mb-0 text-secondary">
-          
-              Bộ lọc tìm kiếm
-            </h5>
-      </div>
-      <div class="row g-3 m-2 mt-0 p-0">
-        <div class="col-md-3">
-          <label class="form-label">Tên nhà cung cấp:</label>
-          <input 
-            type="text" 
-            class="form-control" 
-            placeholder="Nhập tên nhà cung cấp" 
-            v-model="searchQuery" 
-            @input="debouncedSearch"
-            @keyup.enter="applyFilters"
-          />
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Tên liên hệ:</label>
-          <input 
-            type="text" 
-            class="form-control" 
-            placeholder="Nhập tên liên hệ" 
-            v-model="contactName" 
-            @input="debouncedSearch"
-            @keyup.enter="applyFilters"
-          />
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Email:</label>
-          <input 
-            type="email" 
-            class="form-control" 
-            placeholder="Nhập email" 
-            v-model="email" 
-            @input="debouncedSearch"
-            @keyup.enter="applyFilters"
-          />
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Trạng thái</label>
-          <select class="form-select" v-model="selectedStatus" @change="applyFilters">
-            <option value="">Tất cả trạng thái</option>
-            <option value="1">Hoạt động</option>
-            <option value="0">Không hoạt động</option>
-          </select>
-        </div>
-      </div>
-      <div class="row g-3 m-2 mt-2 p-0">
-        <div class="col-md-6">
-          <label class="form-label">Địa chỉ:</label>
-          <input 
-            type="text" 
-            class="form-control" 
-            placeholder="Nhập địa chỉ" 
-            v-model="address" 
-            @input="debouncedSearch"
-            @keyup.enter="applyFilters"
-          />
-        </div>
-        <div class="col-md-6 d-flex align-items-end">
-          <button type="button" class="btn btn-secondary me-2" @click="clearFilters">
-            <i class="bi bi-arrow-clockwise me-1"></i>
-            Xóa bộ lọc
-          </button>
-          <button type="button" class="btn btn-primary" @click="applyFilters">
-            <i class="bi bi-search me-1"></i>
-            Tìm kiếm
-          </button>
-        </div>
-      </div>
-    </div>
 
-    <!-- Nút thêm mới -->
-    <div class="d-flex justify-content-end mb-3">
-      <AddButton @click="openAddModal" />
-    </div>
+    <!-- Layout 2 cột: Bộ lọc bên trái, Bảng bên phải -->
+    <div class="row">
+      <!-- Cột bộ lọc (bên trái) -->
+      <div class="col-lg-2 col-xl-2">
+        <div class="card shadow-lg border-0 filter-card sticky-filter">
+          <div class="card-header bg-light border-0 py-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0 text-secondary">
+                <i class="bi bi-funnel me-2"></i>
+                Bộ lọc
+              </h6>
+              <button 
+                class="btn btn-sm btn-outline-secondary" 
+                type="button" 
+                @click="toggleFilter"
+                :aria-expanded="showFilter"
+              >
+                <i :class="showFilter ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+              </button>
+            </div>
+          </div>
+          <div class="card-body filter-collapse" :class="{ 'filter-collapsed': !showFilter }">
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-search me-1"></i>
+                Tên nhà cung cấp
+              </label>
+              <input 
+                type="text" 
+                class="form-control form-control-sm" 
+                placeholder="Nhập tên nhà cung cấp" 
+                v-model="searchQuery" 
+                @input="debouncedSearch"
+                @keyup.enter="applyFilters"
+              />
+            </div>
 
-    <!-- Danh sách Supplier -->
-    <div class="bg-white p-3 rounded shadow-sm pt-0 ps-0 pe-0">
-      <div class="d-flex align-items-center mb-3 p-3 m-0 rounded-top" style="background-color: #475569;">
-        <strong style="color: white;">Danh sách Nhà cung cấp</strong>
-      </div>
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-person me-1"></i>
+                Tên liên hệ
+              </label>
+              <input 
+                type="text" 
+                class="form-control form-control-sm" 
+                placeholder="Nhập tên liên hệ" 
+                v-model="contactName" 
+                @input="debouncedSearch"
+                @keyup.enter="applyFilters"
+              />
+            </div>
 
-      <div class="p-3">
-        <div class="table-responsive">
-          <table class="table align-middle">
-            <thead>
-              <tr>
-                <th style="min-width: 50px;">STT</th>
-                <th style="min-width: 200px;">Tên nhà cung cấp</th>
-                <th style="min-width: 150px;">Email</th>
-                <th style="min-width: 120px;">Số điện thoại</th>
-                <th style="min-width: 120px;">Địa chỉ</th>
-                <th style="min-width: 120px;">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(supplier, index) in suppliers" :key="supplier.id">
-                <td>{{ (currentPage * pageSize) + index + 1 }}</td>
-                <td>
-                  <div>
-                    <strong>{{ supplier.supplierName }}</strong>
-                  </div>
-                </td>
-                <td>{{ supplier.email }}</td>
-                <td>{{ supplier.phoneNumber }}</td>
-                <td>{{ supplier.address }}</td>
-                <td>
-                  <div class="d-flex gap-2">
-                    <EditButton @click="openEditModal(supplier, index)" />
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-envelope me-1"></i>
+                Email
+              </label>
+              <input 
+                type="email" 
+                class="form-control form-control-sm" 
+                placeholder="Nhập email" 
+                v-model="email" 
+                @input="debouncedSearch"
+                @keyup.enter="applyFilters"
+              />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-geo-alt me-1"></i>
+                Địa chỉ
+              </label>
+              <input 
+                type="text" 
+                class="form-control form-control-sm" 
+                placeholder="Nhập địa chỉ" 
+                v-model="address" 
+                @input="debouncedSearch"
+                @keyup.enter="applyFilters"
+              />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-toggle-on me-1"></i>
+                Trạng thái
+              </label>
+              <select class="form-select form-select-sm" v-model="selectedStatus" @change="applyFilters">
+                <option value="">Tất cả trạng thái</option>
+                <option value="1">Hoạt động</option>
+                <option value="0">Không hoạt động</option>
+              </select>
+            </div>
+            
+            <div class="d-grid gap-2">
+              <button class="btn btn-success btn-sm" @click="applyFilters">
+                <i class="bi bi-funnel me-1"></i> Áp dụng lọc
+              </button>
+              <button class="btn btn-secondary btn-sm" @click="clearFilters">
+                <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
+              </button>
+            </div>
+          </div>
         </div>
-
-        <!-- Pagination -->
-        <Pagination 
-          :page-number="currentPage" 
-          :total-pages="totalPages" 
-          :is-last-page="isLastPage"
-          :page-size="pageSize" 
-          :items-per-page-options="itemsPerPageOptions" 
-          :total-elements="totalElements"
-          @prev="handlePrev" 
-          @next="handleNext" 
-          @update:pageSize="handlePageSizeChange" 
-        />
+      </div>
+      
+      <!-- Cột bảng (bên phải) -->
+      <div class="col-lg-10 col-xl-10">
+        <!-- Danh sách Supplier -->
+        <div class="card shadow-lg border-0 mb-4 admin-table-card">
+          <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3">
+            <div>
+              <h5 class="mb-0 text-secondary">
+                <i class="bi bi-truck me-2"></i>
+                Danh sách nhà cung cấp
+              </h5>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-info btn-sm py-2" @click="fetchSuppliers" :disabled="loading">
+                <i class="bi bi-arrow-repeat me-1"></i> Làm mới
+              </button>
+              <button
+                class="btn btn-success btn-sm"
+                @click="openAddModal"
+              >
+                <i class="bi bi-plus-circle me-2"></i> Thêm mới
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-0" :class="{ loading: loading }">
+            <div class="loading-overlay" :class="{ show: loading }">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+              </div>
+              <p>Đang tải dữ liệu...</p>
+            </div>
+            
+            <!-- Data table -->
+            <div>
+              <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th style="min-width: 50px;">STT</th>
+                      <th style="min-width: 120px;">Thao tác</th>
+                      <th style="min-width: 200px;">Tên nhà cung cấp</th>
+                      <th style="min-width: 150px;">Tên liên hệ</th>
+                      <th style="min-width: 150px;">Email</th>
+                      <th style="min-width: 120px;">Số điện thoại</th>
+                      <th style="min-width: 200px;">Địa chỉ</th>
+                      <th style="min-width: 100px;">Trạng thái</th>
+                      <th style="min-width: 150px;">Ngày tạo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(supplier, index) in suppliers" :key="supplier.id">
+                      <td>{{ (currentPage * pageSize) + index + 1 }}</td>
+                      <td>
+                        <div class="d-flex gap-2">
+                           <EditButton  @click="openEditModal(supplier, index)" />
+                        </div>
+                      </td>
+                      <td>
+                        <strong>{{ supplier.supplierName }}</strong>
+                      </td>
+                      <td>{{ supplier.contactName }}</td>
+                      <td>{{ supplier.email }}</td>
+                      <td>{{ supplier.phoneNumber }}</td>
+                      <td>{{ supplier.address }}</td>
+                      <td>
+                        <span :class="['badge', supplier.status == 1 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger']">
+                          {{ supplier.status == 1 ? 'Hoạt động' : 'Không hoạt động' }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="small">
+                          {{ formatDate(supplier.createdAt) }}
+                        </div>
+                      </td>
+                    </tr>
+                    <tr v-if="suppliers.length === 0">
+                      <td colspan="9" class="text-center text-muted">
+                        Không có dữ liệu
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- Pagination -->
+              <div class="p-3">
+                <Pagination 
+                  :page-number="currentPage" 
+                  :total-pages="totalPages" 
+                  :is-last-page="isLastPage"
+                  :page-size="pageSize" 
+                  :items-per-page-options="itemsPerPageOptions" 
+                  :total-elements="totalElements"
+                  @prev="handlePrev" 
+                  @next="handleNext" 
+                  @update:pageSize="handlePageSizeChange" 
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Add/Edit Supplier Modal -->
-  <div class="modal fade" :class="{ show: showModal }" tabindex="-1" style="display: block;" v-if="showModal">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-      <div class="modal-content enhanced-modal">
-        <div class="modal-header gradient-header">
-          <h5 class="modal-title">
-            <i class="bi me-2" :class="isEditMode ? 'bi-pencil-square' : 'bi-plus-circle'"></i>
-            {{ isEditMode ? 'Sửa Nhà cung cấp' : 'Thêm Nhà cung cấp' }}
+  <div
+    class="modal fade"
+    id="supplierModal"
+    tabindex="-1"
+    aria-labelledby="supplierModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header" style="background-color: #ecae9e">
+          <h5 class="modal-title" id="supplierModalLabel">
+            <i
+              class="bi me-2"
+              :class="isEditMode ? 'bi-pencil' : 'bi-plus-circle'"
+            ></i>
+            {{ isEditMode ? "Sửa Nhà cung cấp" : "Thêm Nhà cung cấp" }}
           </h5>
-          <button type="button" class="custom-close-btn" @click="closeModal">
-            <i class="bi bi-x-lg"></i>
+          <button
+            type="button"
+            class="custom-close-btn"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          >
+            <img
+              src="https://cdn-icons-png.flaticon.com/128/694/694604.png"
+              alt="Close"
+            />
           </button>
         </div>
-        <div class="modal-body enhanced-body">
-          <!-- Nút Fake Data ở đầu modal body -->
-          <div v-if="!isEditMode" class="mb-3 text-end">
-            <button 
-              type="button" 
-              class="btn btn-outline-warning btn-sm rounded-pill fake-data-btn"
-              @click="fillFakeData"
-              title="Điền dữ liệu mẫu để test nhanh"
-            >
-              🎲 Fake Data (Test)
-            </button>
-          </div>
-          
+        <div class="modal-body">
           <form @submit.prevent="handleSubmit">
-            <!-- Section 1: Thông tin cơ bản -->
-            <div class="form-section">
-              <div class="section-header">
-                <i class="bi bi-info-circle section-icon"></i>
-                <h6 class="section-title">Thông tin cơ bản</h6>
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label"
+                  >Tên nhà cung cấp <span class="text-danger">*</span></label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  v-model="formData.supplierName"
+                  required
+                />
               </div>
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label class="form-label enhanced-label">Tên nhà cung cấp <span class="text-danger">*</span></label>
-                  <input 
-                    type="text" 
-                    class="form-control enhanced-input" 
-                    v-model="formData.supplierName"
-                    placeholder="Nhập tên nhà cung cấp"
-                    required
-                  />
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label enhanced-label">Tên người liên hệ <span class="text-danger">*</span></label>
-                  <input 
-                    type="text" 
-                    class="form-control enhanced-input" 
-                    v-model="formData.contactName"
-                    placeholder="Nhập tên người liên hệ"
-                    required
-                  />
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label enhanced-label">Số điện thoại <span class="text-danger">*</span></label>
-                  <input 
-                    type="text" 
-                    class="form-control enhanced-input" 
-                    v-model="formData.phoneNumber"
-                    placeholder="Nhập số điện thoại"
-                    required
-                  />
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label enhanced-label">Email <span class="text-danger">*</span></label>
-                  <input 
-                    type="email" 
-                    class="form-control enhanced-input" 
-                    v-model="formData.email"
-                    placeholder="Nhập email"
-                    required
-                  />
-                </div>
-                <div class="col-md-12">
-                  <label class="form-label enhanced-label">Địa chỉ <span class="text-danger">*</span></label>
-                  <input 
-                    type="text" 
-                    class="form-control enhanced-input" 
-                    v-model="formData.address"
-                    placeholder="Nhập địa chỉ"
-                    required
-                  />
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label enhanced-label">Trạng thái <span class="text-danger">*</span></label>
-                  <select class="form-select enhanced-input" v-model="formData.status" required>
-                    <option value="">Chọn trạng thái</option>
-                    <option value="1">Hoạt động</option>
-                    <option value="0">Không hoạt động</option>
-                  </select>
-                </div>
+              <div class="col-12">
+                <label class="form-label"
+                  >Tên người liên hệ <span class="text-danger">*</span></label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  v-model="formData.contactName"
+                  required
+                />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label"
+                  >Email <span class="text-danger">*</span></label
+                >
+                <input
+                  type="email"
+                  class="form-control"
+                  v-model="formData.email"
+                  required
+                />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label"
+                  >Số điện thoại <span class="text-danger">*</span></label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  v-model="formData.phoneNumber"
+                  required
+                />
+              </div>
+              <div class="col-12">
+                <label class="form-label"
+                  >Địa chỉ <span class="text-danger">*</span></label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  v-model="formData.address"
+                  required
+                />
+              </div>
+              <div class="col-12">
+                <label class="form-label"
+                  >Trạng thái <span class="text-danger">*</span></label
+                >
+                <select class="form-select" v-model="formData.status" required>
+                  <option value="">Chọn trạng thái</option>
+                  <option value="1">Hoạt động</option>
+                  <option value="0">Không hoạt động</option>
+                </select>
               </div>
             </div>
           </form>
         </div>
-        <div class="modal-footer enhanced-footer">
-          <button type="button" class="btn btn-secondary btn-cancel" @click="closeModal">
-            <i class="bi bi-x-circle me-1"></i>
-            Hủy
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-outline-warning btn-sm rounded-pill fake-data-btn"
+            @click="fillFakeData"
+            v-if="!isEditMode"
+            title="Điền dữ liệu mẫu để test nhanh"
+          >
+            <i class="bi bi-lightning me-1"></i> Dữ liệu mẫu
           </button>
-          <button type="button" class="btn btn-primary btn-submit" @click="handleSubmit">
-            <i class="bi bi-check-circle me-1"></i>
-            {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }}
-          </button>
+          <div class="ms-auto">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Hủy
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              @click="handleSubmit"
+              style="background-color: #33304e; border-color: #33304e"
+            >
+              {{ isEditMode ? "Cập nhật" : "Thêm mới" }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
   </div>
-  <div v-if="showModal" class="modal-backdrop fade show"></div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
+import { Modal } from 'bootstrap';
 import { getSuppliers, createSupplier, updateSupplier, deleteSupplier, updateSupplierStatus } from '@/services/admin/supplier.js';
 import { showToast, showQuickConfirm } from '@/utils/swalHelper';
 import { debounce } from '@/utils/utils';
@@ -286,9 +379,9 @@ const totalElements = ref(0);
 const itemsPerPageOptions = ref([5, 10, 25, 50]);
 const isLastPage = ref(false);
 const loading = ref(false);
+const showFilter = ref(true);
 
 // Modal
-const showModal = ref(false);
 const isEditMode = ref(false);
 const editingIndex = ref(-1);
 const formData = ref({
@@ -303,11 +396,19 @@ const formData = ref({
   updatedBy: 'admin'
 });
 
-// Computed
-const debouncedSearch = computed(() => debounce(() => {
-  currentPage.value = 0;
-  fetchSuppliers();
-}, 500));
+// UI functions
+const toggleFilter = () => {
+  showFilter.value = !showFilter.value;
+};
+
+// Debounce search function
+let searchTimeout = null;
+const debouncedSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    applyFilters();
+  }, 300);
+};
 
 // Methods
 const fetchSuppliers = async () => {
@@ -404,7 +505,7 @@ const openAddModal = () => {
     createdBy: 'admin',
     updatedBy: 'admin'
   };
-  showModal.value = true;
+  showSupplierModal();
 };
 
 const openEditModal = (supplier, index) => {
@@ -421,22 +522,13 @@ const openEditModal = (supplier, index) => {
     createdBy: supplier.createdBy,
     updatedBy: 'admin'
   };
-  showModal.value = true;
+  showSupplierModal();
 };
 
-const closeModal = () => {
-  showModal.value = false;
-  formData.value = {
-    id: null,
-    supplierName: '',
-    contactName: '',
-    phoneNumber: '',
-    email: '',
-    address: '',
-    status: '',
-    createdBy: 'admin',
-    updatedBy: 'admin'
-  };
+const showSupplierModal = () => {
+  const el = document.getElementById('supplierModal');
+  const modal = Modal.getOrCreateInstance(el);
+  modal.show();
 };
 
 const handleSubmit = async () => {
@@ -454,7 +546,7 @@ const handleSubmit = async () => {
       showToast('success', 'Thêm nhà cung cấp thành công!', 2000);
     }
     
-    closeModal();
+    Modal.getOrCreateInstance(document.getElementById('supplierModal')).hide();
     fetchSuppliers();
   } catch (error) {
     console.error('Lỗi khi xử lý supplier:', error);
@@ -495,6 +587,12 @@ const handleDelete = async (supplier) => {
       showToast('error', message, 3000);
     }
   }
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('vi-VN');
 };
 
 const fillFakeData = () => {
@@ -589,255 +687,187 @@ onMounted(() => {
 });
 </script>
 
+
 <style scoped>
-.table th,
-.table td {
-  vertical-align: middle;
+@import "@/assets/css/admin-table-responsive.css";
+@import '@/assets/css/admin-global.css';
+
+.filter-card {
+  position: sticky;
+  top: 20px;
 }
 
-.custom-close-btn {
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  transition: all 0.15s ease-in-out;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  outline: none;
-  color: #2c2c54;
-  font-size: 1.2rem;
+.admin-table-card {
+  background: white;
+  border: 1px solid #e3e6f0;
+  border-radius: 0.35rem;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
 }
 
-.custom-close-btn:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-  transform: scale(1.05);
-}
-
-.modal-backdrop {
-  z-index: 1040;
-}
-
-.modal {
-  z-index: 1050;
-}
-
-/* Enhanced Modal Styles */
-.enhanced-modal {
-  border-radius: 15px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  border: none;
-  overflow: hidden;
-}
-
-.gradient-header {
-  background: linear-gradient(135deg, #ecae9e 0%, #d49489 100%);
-  border-bottom: none;
-  border-radius: 15px 15px 0 0;
+.admin-table-card .card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-bottom: 1px solid #e3e6f0;
   padding: 1rem 1.25rem;
+}
+
+.admin-table-card .card-header h5 {
+  color: white;
+  font-weight: 700;
+  margin: 0;
+}
+
+.admin-table-card .card-body {
+  padding: 0;
   position: relative;
 }
 
-.gradient-header::after {
-  content: '';
+.loading-overlay {
   position: absolute;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
-  background-size: 300% 100%;
-  animation: gradientShift 3s ease infinite;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 0 0 0.35rem 0.35rem;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
 }
 
-@keyframes gradientShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+.loading-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loading-overlay .spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Sticky filter sidebar */
+.sticky-filter {
+  position: sticky;
+  top: 20px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+
+/* Compact filter styles */
+.filter-card .card-body {
+  padding: 1rem;
+}
+
+.filter-card .form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.filter-card .form-control-sm,
+.filter-card .form-select-sm {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.875rem;
+}
+
+/* Filter collapse */
+.filter-collapse {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.filter-collapsed {
+  max-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  opacity: 0;
+}
+
+/* Enhanced Modal Styles */
+.modal-dialog {
+  max-width: 600px !important;
+}
+
+.modal-content {
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  border: none;
+}
+
+.modal-header {
+  border-bottom: 2px solid #ecae9e;
+  border-radius: 15px 15px 0 0;
+  padding: 0.8rem 1.2rem;
+  position: relative;
 }
 
 .modal-title {
   font-weight: 600;
   color: #2c2c54;
   font-size: 1.1rem;
-  display: flex;
-  align-items: center;
 }
 
-.enhanced-body {
-  padding: 1.25rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-}
-
-.enhanced-footer {
-  background: #f8f9fa;
-  border-top: 1px solid #e9ecef;
-  padding: 0.875rem 1.25rem;
-  border-radius: 0 0 15px 15px;
-}
-
-/* Form Section Styles */
-.form-section {
-  margin-bottom: 1.75rem;
-  background: white;
-  border-radius: 12px;
-  padding: 1.25rem;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-  border-left: 4px solid #ecae9e;
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.form-section:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-  transform: translateY(-1px);
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #f1f3f4;
-  position: relative;
-}
-
-.section-header::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  width: 40px;
-  height: 1px;
-  background: linear-gradient(90deg, #ecae9e, #4ecdc4);
-  border-radius: 1px;
-}
-
-.section-icon {
-  font-size: 1rem;
-  color: #ecae9e;
-  margin-right: 0.5rem;
-  padding: 0.4rem;
-  background: rgba(236, 174, 158, 0.1);
-  border-radius: 50%;
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.section-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #2c2c54;
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.enhanced-label {
-  font-weight: 500;
-  color: #2c2c54;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.enhanced-input {
-  border-radius: 8px;
-  border: 1px solid #e1e5e9;
-  padding: 0.75rem 1rem;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-  background: #fff;
-}
-
-.enhanced-input:focus {
-  border-color: #ecae9e;
-  box-shadow: 0 0 0 0.2rem rgba(236, 174, 158, 0.25);
-  outline: none;
-}
-
-.enhanced-input:hover {
-  border-color: #d0d7de;
-}
-
-.btn-cancel {
-  background: #6c757d;
-  border-color: #6c757d;
-  color: white;
-  border-radius: 8px;
-  padding: 0.5rem 1.5rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.btn-cancel:hover {
-  background: #5a6268;
-  border-color: #5a6268;
-  transform: translateY(-1px);
-}
-
-.btn-submit {
-  background: #ecae9e;
-  border-color: #ecae9e;
-  color: white;
-  border-radius: 8px;
-  padding: 0.5rem 1.5rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.btn-submit:hover {
-  background: #d49489;
-  border-color: #d49489;
-  transform: translateY(-1px);
-}
-
-.fake-data-btn {
-  background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+.custom-close-btn {
+  background: none;
   border: none;
-  color: #2c2c54;
+  padding: 0.5rem;
+  cursor: pointer;
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.custom-close-btn img {
+  width: 30px;
+  height: 30px;
+}
+
+/* Fake data button styling */
+.fake-data-btn {
+  background-color: #fff3cd !important;
+  border-color: #ffeaa7 !important;
+  color: #856404 !important;
   font-weight: 500;
-  padding: 0.5rem 1rem;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(254, 202, 87, 0.3);
 }
 
 .fake-data-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(254, 202, 87, 0.4);
-  background: linear-gradient(135deg, #ff9ff3 0%, #feca57 100%);
+  background-color: #ffeaa7 !important;
+  border-color: #fdcb6e !important;
+  color: #6c5ce7 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .fake-data-btn:active {
   transform: translateY(0);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .enhanced-modal {
-    border-radius: 0;
-    margin: 0;
-    height: 100vh;
-  }
-  
-  .gradient-header {
-    border-radius: 0;
-  }
-  
-  .enhanced-footer {
-    border-radius: 0;
-  }
-  
-  .form-section {
+.modal-footer {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.modal-footer .ms-auto {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 991.98px) {
+  .filter-card {
+    position: static;
     margin-bottom: 1rem;
-    padding: 1rem;
   }
   
-  .section-header {
-    margin-bottom: 0.75rem;
-  }
-  
-  .enhanced-input {
-    font-size: 16px; /* Prevent zoom on iOS */
+  .responsive-sidebar {
+    margin-bottom: 1rem;
   }
 }
 </style>

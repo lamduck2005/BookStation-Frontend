@@ -3,114 +3,191 @@
     <!-- Breadcrumb -->
     <div class="mb-3">
       <h6 class="text-muted">
-        Quản trị viên / <strong>Điểm</strong>
+        Admin / <strong>Quản lý điểm</strong>
       </h6>
-    </div> <!-- Bộ lọc -->
-    <div class="bg-light p-3 rounded mb-4 border pt-0 ps-0 pe-0">
-      <div class="d-flex align-items-center mb-3 p-2 m-0 rounded-top" style="background-color: #ecae9e;">
-        <i class="bi bi-funnel-fill me-2 text-dark"></i>
-        <h5>Bộ lọc</h5>
-      </div>      <div class="row g-3 m-2 mt-0 p-0">
-        <div class="col-md-3">
-          <label class="form-label">Tìm kiếm:</label>
-          <input type="text" class="form-control" placeholder="Nhập mã đơn hàng, email" v-model="searchQuery" @input="handleSearchInput" />
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Trạng thái</label>
-          <select class="form-select" v-model="selectedStatus" @change="handleFilterChange">
-            <option value="">Tất cả trạng thái</option>
-            <option value="1">Hoạt động</option>
-            <option value="0">Không hoạt động</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Điểm sử dụng</label>
-          <input type="number" class="form-control" placeholder="Nhập điểm sử dụng" v-model="pointSpentFilter" @input="handlePointSpentInput" min="0" />
-        </div>
-        <div class="col-md-3 d-flex align-items-end">
-          <button class="btn btn-outline-secondary w-100" @click="clearFilters">
-            <i class="bi bi-x-circle me-1"></i>Xóa bộ lọc
-          </button>
-        </div>
-      </div>    </div>    <!-- Nút thêm mới -->
-    <div class="d-flex justify-content-end mb-3 gap-2">
-      <button class="btn btn-outline-info btn-sm py-2" @click="reloadPage" :disabled="loading">
-        <i class="bi bi-arrow-repeat me-1"></i> Làm mới dữ liệu
-      </button>
-      <button class="btn btn-primary btn-sm py-2" @click="openAddModal"
-        style="background-color: #33304e; border-color: #33304e;">
-        <i class="bi bi-plus-circle me-1"></i> Thêm mới
-      </button>
     </div>
 
-    <!-- Danh sách Rank -->
-    <div class="bg-white p-3 rounded shadow-sm pt-0 ps-0 pe-0">
-      <div class="d-flex align-items-center mb-3 p-2 m-0 rounded-top" style="background-color: #ecae9e;">
-        <strong>Lịch sử Point</strong>
-      </div>      <div class="p-3">
-        <!-- Loading state -->
-        <div v-if="loading" class="text-center py-4">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Đang tải...</span>
+    <!-- Layout 2 cột: Bộ lọc bên trái, Bảng bên phải -->
+    <div class="row">
+      <!-- Cột bộ lọc (bên trái) -->
+      <div class="col-lg-2 col-xl-2">
+        <div class="card shadow-lg border-0 filter-card sticky-filter">
+          <div class="card-header bg-light border-0 py-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="mb-0 text-secondary">
+                <i class="bi bi-funnel me-2"></i>
+                Bộ lọc
+              </h6>
+              <button 
+                class="btn btn-sm btn-outline-secondary" 
+                type="button" 
+                @click="toggleFilter"
+                :aria-expanded="showFilter"
+              >
+                <i :class="showFilter ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+              </button>
+            </div>
           </div>
-          <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+          <div class="card-body filter-collapse" :class="{ 'filter-collapsed': !showFilter }">
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-search me-1"></i>
+                Tìm kiếm
+              </label>
+              <input 
+                type="text" 
+                class="form-control form-control-sm" 
+                placeholder="Nhập mã đơn hàng, email" 
+                v-model="searchQuery" 
+                @input="handleSearchInput"
+                @keyup.enter="applyFilters"
+              />
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-toggle-on me-1"></i>
+                Trạng thái
+              </label>
+              <select class="form-select form-select-sm" v-model="selectedStatus" @change="handleFilterChange">
+                <option value="">Tất cả trạng thái</option>
+                <option value="1">Hoạt động</option>
+                <option value="0">Không hoạt động</option>
+              </select>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-coins me-1"></i>
+                Điểm sử dụng
+              </label>
+              <input 
+                type="number" 
+                class="form-control form-control-sm" 
+                placeholder="Nhập điểm sử dụng" 
+                v-model="pointSpentFilter" 
+                @input="handlePointSpentInput" 
+                min="0"
+              />
+            </div>
+            
+            <div class="d-grid gap-2">
+              <button class="btn btn-success btn-sm" @click="applyFilters">
+                <i class="bi bi-funnel me-1"></i> Áp dụng lọc
+              </button>
+              <button class="btn btn-secondary btn-sm" @click="clearFilters">
+                <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
+              </button>
+            </div>
+          </div>
         </div>
-
-        <!-- Error state -->
-        <div v-else-if="error" class="alert alert-danger" role="alert">
-          <i class="bi bi-exclamation-triangle-fill me-2"></i>
-          {{ error }}
-          <button class="btn btn-sm btn-outline-danger ms-2" @click="loadPointHistory">
-            Thử lại
-          </button>
-        </div>
-
-        <!-- Data table -->
-        <div v-else>
-          <table class="table align-middle">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>email</th>
-                <th>mã đơn hàng</th>
-                <th>số điểm nhận</th>
-                <th>chi tiêu tối thiểu</th>
-                <th>điểm sử dụng</th>
-                <th>mô tả</th>
-                <th style="width: 100px;">Chức năng</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="points.length === 0">
-                <td colspan="8" class="text-center py-4 text-muted">
-                  <i class="bi bi-inbox me-2"></i>
-                  Không có dữ liệu
-                </td>
-              </tr>              <tr v-for="(point, index) in points" :key="point.id">
-                <td>{{ (currentPage * pageSize) + index + 1 }}</td>
-                <td>{{ point.email || 'N/A' }}</td>
-                <td>{{ point.orderCode || 'N/A' }}</td>
-                <td>{{ point.pointEarned || 0 }}</td>
-                <td>{{ point.minSpent !== null && point.minSpent !== undefined ? Number(point.minSpent).toLocaleString() + ' VND' : 'N/A' }}</td>
-                <td>{{ point.pointSpent || 0 }}</td>
-                <td>{{ point.description || 'N/A' }}</td>
-                <td style="width: 100px;" class="d-flex gap-1">
-                  <EditButton @click="openEditModal(point, index)" />
-                  <DeleteButton @click="handleDeletePoint(index)" />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination -->
-        <Pagination :page-number="currentPage" :total-pages="totalPages" :is-last-page="isLastPage"
-          :page-size="pageSize" :items-per-page-options="itemsPerPageOptions" :total-elements="totalElements"
-          @prev="handlePrev" @next="handleNext" @update:pageSize="handlePageSizeChange" />
       </div>
-
+      
+      <!-- Cột bảng (bên phải) -->
+      <div class="col-lg-10 col-xl-10">
+        <!-- Danh sách Point -->
+        <div class="card shadow-lg border-0 mb-4 admin-table-card">
+          <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3">
+            <div>
+              <h5 class="mb-0 text-secondary">
+                <i class="bi bi-coin me-2"></i>
+                Lịch sử điểm
+              </h5>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-info btn-sm py-2" @click="reloadPage" :disabled="loading">
+                <i class="bi bi-arrow-repeat me-1"></i> Làm mới
+              </button>
+              <button
+                class="btn btn-success btn-sm"
+                @click="openAddModal"
+              >
+                <i class="bi bi-plus-circle me-2"></i> Thêm mới
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-0" :class="{ loading: loading }">
+            <div class="loading-overlay" :class="{ show: loading }">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+              </div>
+              <p>Đang tải dữ liệu...</p>
+            </div>
+            
+            <!-- Data table -->
+            <div>
+              <div class="table-responsive">
+                <table class="table align-middle table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th style="min-width: 50px;">STT</th>
+                      <th style="min-width: 120px;">Thao tác</th>
+                      <th style="min-width: 200px;">Email</th>
+                      <th style="min-width: 150px;">Mã đơn hàng</th>
+                      <th style="min-width: 120px;">Điểm nhận</th>
+                      <th style="min-width: 140px;">Chi tiêu tối thiểu</th>
+                      <th style="min-width: 120px;">Điểm sử dụng</th>
+                      <th style="min-width: 200px;">Mô tả</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(point, index) in points" :key="point.id">
+                      <td>{{ (currentPage * pageSize) + index + 1 }}</td>
+                      <td>
+                        <div class="d-flex gap-2">
+                          <EditButton @click="openEditModal(point, index)" />
+                          <DeleteButton @click="handleDeletePoint(index)" />
+                        </div>
+                      </td>
+                      <td>
+                        <div>{{ point.email }}</div>
+                      </td>
+                      <td>
+                        <span class="badge bg-info">{{ point.orderCode || '-' }}</span>
+                      </td>
+                      <td>
+                        <span class="text-success">+{{ point.pointEarned || 0 }}</span>
+                      </td>
+                      <td>
+                        <span class="text-primary">{{ formatCurrency(point.minSpent || 0) }}</span>
+                      </td>
+                      <td>
+                        <span class="text-danger">-{{ point.pointSpent || 0 }}</span>
+                      </td>
+                      <td>
+                        <div class="text-wrap">{{ point.description || '-' }}</div>
+                      </td>
+                    </tr>
+                    <tr v-if="points.length === 0">
+                      <td colspan="8" class="text-center text-muted">
+                        Không có dữ liệu
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <!-- Pagination -->
+              <div class="p-3">
+                <Pagination 
+                  :page-number="currentPage" 
+                  :total-pages="totalPages" 
+                  :is-last-page="isLastPage"
+                  :page-size="pageSize" 
+                  :items-per-page-options="itemsPerPageOptions" 
+                  :total-elements="totalElements"
+                  @prev="handlePrev" 
+                  @next="handleNext" 
+                  @update:pageSize="handlePageSizeChange"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-
+  </div>
+          
     <!-- Modal Thêm/Sửa Point -->
     <div class="modal fade" id="addRankModal" tabindex="-1" aria-labelledby="addRankModalLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -156,7 +233,6 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 <script setup>
 import EditButton from '@/components/common/EditButton.vue';
@@ -170,9 +246,28 @@ import { showToast } from '@/utils/swalHelper.js';
 const searchQuery = ref('');
 const selectedStatus = ref('');
 const pointSpentFilter = ref('');
+const showFilter = ref(true);
 
 // Debounce timer để tránh gọi API quá nhiều lần
 let searchTimeout = null;
+
+// Filter functions
+const toggleFilter = () => {
+  showFilter.value = !showFilter.value;
+};
+
+const applyFilters = () => {
+  currentPage.value = 0;
+  loadPointHistory(0, pageSize.value);
+};
+
+const formatCurrency = (amount) => {
+  if (!amount) return '0 VND';
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND'
+  }).format(amount);
+};
 
 // New/Edit rank form data
 const newRank = ref({
@@ -476,59 +571,160 @@ const clearFilters = () => {
 
 // Hàm reload lại trang
 const reloadPage = () => {
-  window.location.reload();
+  loadPointHistory();
 };
 </script>
 
 <style scoped>
-.table th,
+@import "@/assets/css/admin-table-responsive.css";
+@import '@/assets/css/admin-global.css';
+
+/* Loading Overlay */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.loading-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loading-overlay .spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Sticky filter sidebar */
+.sticky-filter {
+  position: sticky;
+  top: 20px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+
+/* Compact filter styles */
+.filter-card .card-body {
+  padding: 1rem;
+}
+
+.filter-card .form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.filter-card .form-control-sm,
+.filter-card .form-select-sm {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.875rem;
+}
+
+/* Filter collapse */
+.filter-collapse {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.filter-collapsed {
+  max-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  opacity: 0;
+}
+
+/* Force layout to stay in same row */
+.row {
+  display: flex;
+  flex-wrap: nowrap;
+  margin: 0;
+}
+
+.row > [class*="col-"] {
+  flex: 0 0 auto;
+  padding: 0 15px;
+}
+
+.col-lg-2 {
+  width: 16.666667%;
+  max-width: 16.666667%;
+}
+
+.col-lg-10 {
+  width: 83.333333%;
+  max-width: 83.333333%;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+  .row {
+    flex-wrap: wrap;
+  }
+  
+  .sticky-filter {
+    position: relative;
+    top: auto;
+    max-height: none;
+    margin-bottom: 1rem;
+  }
+  
+  .col-lg-2,
+  .col-lg-10 {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Table responsive improvements */
+.table-responsive {
+  border-radius: 0.5rem;
+}
+
+.table th {
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background-color: #f8f9fa !important;
+}
+
 .table td {
+  font-size: 0.875rem;
   vertical-align: middle;
 }
 
-.modal-dialog {
-  max-width: 600px !important;
+/* Admin table card styling */
+.admin-table-card {
+  border-radius: 0.75rem;
+  overflow: hidden;
 }
 
-.modal-content {
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  border: none;
+.admin-table-card .card-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
 
-.modal-header {
-  border-bottom: 2px solid #ecae9e;
-  border-radius: 15px 15px 0 0;
-  padding: 0.8rem 1.2rem;
-  position: relative;
-}
-
-.modal-title {
+.admin-table-card .card-header h5 {
+  margin: 0;
   font-weight: 600;
-  color: #2c2c54;
-  font-size: 1.1rem;
 }
 
-.custom-close-btn {
-  background: none;
-  border: none;
-  padding: 0.5rem;
-  cursor: pointer;
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.custom-close-btn img {
-  width: 30px;
-  height: 30px;
-}
-
-.modal-body {
-  min-height: 320px;
-  max-height: 70vh;
-  overflow-y: auto;
+/* Text wrap for description */
+.text-wrap {
+  white-space: normal;
+  word-wrap: break-word;
+  max-width: 200px;
 }
 
 
