@@ -25,9 +25,27 @@ export const getAllBookStock = async () => {
   const res = await apiClient.get("/dashboard/stats/stock");
   return res.data.data;
 };
-export const getRevenueStats = async (type, year, month) => {
-  const res = await apiClient.get("/dashboard/stats/revenue", { params: { type, year, month } });
-  return res.data.data;
+export const getRevenueStats = async (...args) => {
+  // Custom range: { startDate, endDate, groupBy }
+  if (args.length === 1 && typeof args[0] === "object") {
+    const { startDate, endDate, groupBy } = args[0];
+    
+    const res = await apiClient.get("/dashboard/stats/revenue", {
+      params: {
+        type: groupBy,     // 'day' | 'week' | 'month' | 'year'
+        startDate,         // yyyy-MM-dd
+        endDate,           // yyyy-MM-dd
+      },
+    });
+    return res.data?.data ?? res.data;
+  }
+
+  // Preset: getRevenueStats('month', 2025, 8)
+  const [type, year, month] = args;
+  const res = await apiClient.get("/dashboard/stats/revenue", {
+    params: { type, year, month },
+  });
+  return res.data?.data ?? res.data;
 };
 export const getMonthlySoldQuantity = async () => {
   const res = await apiClient.get("/dashboard/stats/sold-quantity");
