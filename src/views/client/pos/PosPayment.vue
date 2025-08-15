@@ -132,13 +132,122 @@
     <!-- Confirm Payment Button -->
     <button 
       class="confirm-btn" 
-      @click="confirmPayment"
+      @click="showConfirmationPopup"
       :disabled="!canConfirmPayment"
     >
       <i class="bi bi-check-circle"></i>
       Xác nhận thanh toán (F9)
       <span class="payment-amount">{{ formatCurrency(totalAmount) }}</span>
     </button>
+
+    <!-- Payment Confirmation Popup -->
+    <div v-if="showConfirmPopup" class="popup-overlay" @click="closeConfirmPopup">
+      <div class="confirm-popup" @click.stop>
+        <div class="popup-header">
+          <h4 class="popup-title">
+            <i class="bi bi-exclamation-circle"></i>
+            Xác nhận thanh toán
+          </h4>
+          <button class="close-btn" @click="closeConfirmPopup">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+        
+        <div class="popup-content">
+          <div class="confirmation-message">
+            <p>Vui lòng kiểm tra lại thông tin đơn hàng trước khi thanh toán:</p>
+          </div>
+
+          <!-- Order Items Summary -->
+          <div class="order-summary">
+            <h5 class="summary-title">Chi tiết đơn hàng:</h5>
+            <div class="items-list">
+              <div 
+                v-for="item in orderItems" 
+                :key="item.id" 
+                class="item-row"
+              >
+                <div class="item-info">
+                  <div class="item-name">{{ item.title || item.name }}</div>
+                  <div class="item-details">
+                    <div class="item-code">{{ item.bookCode }}</div>
+                    <div class="item-price-detail">{{ item.quantity }} × {{ formatCurrency(item.unitPrice) }}</div>
+                    <div v-if="item.isFlashSale" class="flash-sale-badge">
+                      <i class="bi bi-lightning-fill"></i> Flash Sale
+                    </div>
+                  </div>
+                </div>
+                <div class="item-total">
+                  {{ formatCurrency(item.quantity * item.unitPrice) }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Applied Vouchers -->
+          <div v-if="appliedVouchers.length > 0" class="vouchers-summary">
+            <h5 class="summary-title">Voucher áp dụng:</h5>
+            <div class="voucher-item" v-for="voucher in appliedVouchers" :key="voucher.id">
+              <span class="voucher-name">{{ voucher.name }}</span>
+              <span class="voucher-discount">-{{ formatCurrency(voucher.discountAmount) }}</span>
+            </div>
+          </div>
+
+          <!-- Payment Summary -->
+          <div class="payment-summary-popup">
+            <div class="summary-row">
+              <span>Tổng tiền hàng:</span>
+              <span>{{ formatCurrency(calculateSubtotal()) }}</span>
+            </div>
+            <div v-if="totalVoucherDiscount > 0" class="summary-row discount-row">
+              <span>Giảm giá voucher:</span>
+              <span>-{{ formatCurrency(totalVoucherDiscount) }}</span>
+            </div>
+            <div class="summary-row total-row">
+              <span>Tổng thanh toán:</span>
+              <span>{{ formatCurrency(totalAmount) }}</span>
+            </div>
+          </div>
+
+          <!-- Payment Method Info -->
+          <div class="payment-method-info">
+            <h5 class="summary-title">Phương thức thanh toán:</h5>
+            <div class="method-details">
+              <i :class="paymentMethod === 'CASH' ? 'bi bi-cash' : 'bi bi-bank'"></i>
+              <span>{{ paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản' }}</span>
+            </div>
+            
+            <div v-if="paymentMethod === 'CASH'" class="cash-info">
+              <div class="cash-row">
+                <span>Tiền khách đưa:</span>
+                <span>{{ formatCurrency(customerPaid) }}</span>
+              </div>
+              <div class="cash-row" v-if="changeAmount > 0">
+                <span>Tiền thừa:</span>
+                <span>{{ formatCurrency(changeAmount) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Order Notes -->
+          <div v-if="orderNotes.trim()" class="notes-info">
+            <h5 class="summary-title">Ghi chú:</h5>
+            <p class="notes-text">{{ orderNotes }}</p>
+          </div>
+        </div>
+        
+        <div class="popup-footer">
+          <button class="cancel-btn" @click="closeConfirmPopup">
+            <i class="bi bi-x-circle"></i>
+            Hủy
+          </button>
+          <button class="proceed-btn" @click="proceedPayment">
+            <i class="bi bi-check-circle"></i>
+            Xác nhận thanh toán
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -172,6 +281,7 @@ const voucherSearchTerm = ref('');
 const voucherSearchResults = ref([]);
 const appliedVouchers = ref([]);
 const showVoucherResults = ref(false);
+const showConfirmPopup = ref(false);
 let voucherSearchTimeout = null;
 
 // Computed
@@ -182,6 +292,14 @@ const canConfirmPayment = computed(() => {
   }
   return true;
 });
+
+const totalVoucherDiscount = computed(() => {
+  return appliedVouchers.value.reduce((total, voucher) => total + voucher.discountAmount, 0);
+});
+
+const calculateSubtotal = () => {
+  return props.orderItems.reduce((total, item) => total + (item.quantity * item.unitPrice), 0);
+};
 
 // Methods
 const formatCurrency = (amount) => {
@@ -283,7 +401,7 @@ const removeVoucher = (voucherId) => {
   }
 };
 
-const confirmPayment = () => {
+const showConfirmationPopup = () => {
   if (!canConfirmPayment.value) {
     if (paymentMethod.value === 'CASH' && customerPaid.value < props.totalAmount) {
       alert('Số tiền khách đưa phải lớn hơn hoặc bằng tổng tiền đơn hàng');
@@ -291,7 +409,14 @@ const confirmPayment = () => {
     }
     return;
   }
-  
+  showConfirmPopup.value = true;
+};
+
+const closeConfirmPopup = () => {
+  showConfirmPopup.value = false;
+};
+
+const proceedPayment = () => {
   const paymentData = {
     paymentMethod: paymentMethod.value,
     notes: orderNotes.value.trim(),
@@ -302,7 +427,12 @@ const confirmPayment = () => {
   
   console.log('Payment data being emitted:', paymentData);
   
+  showConfirmPopup.value = false;
   emit('payment-confirmed', paymentData);
+};
+
+const confirmPayment = () => {
+  showConfirmationPopup();
 };
 
 const handleClickOutside = (event) => {
@@ -331,7 +461,10 @@ onMounted(() => {
       document.querySelector('.voucher-input')?.focus();
     } else if (e.key === 'F9') {
       e.preventDefault();
-      confirmPayment();
+      showConfirmationPopup();
+    } else if (e.key === 'Escape' && showConfirmPopup.value) {
+      e.preventDefault();
+      closeConfirmPopup();
     }
   });
   
@@ -694,6 +827,346 @@ onUnmounted(() => {
   
   .payment-amount {
     font-size: 16px;
+  }
+}
+
+/* Popup Styles */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.confirm-popup {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  animation: popupSlideIn 0.3s ease-out;
+}
+
+@keyframes popupSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 2px solid #f1f5f9;
+  background: linear-gradient(135deg, #00bfae 0%, #009688 100%);
+  color: white;
+}
+
+.popup-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.popup-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.confirmation-message {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.confirmation-message p {
+  font-size: 15px;
+  color: #64748b;
+  margin: 0;
+}
+
+.order-summary,
+.vouchers-summary,
+.payment-summary-popup,
+.payment-method-info,
+.notes-info {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.summary-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.item-row:last-child {
+  border-bottom: none;
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.item-details {
+  font-size: 12px;
+  color: #64748b;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item-code {
+  font-family: monospace;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #64748b;
+  align-self: flex-start;
+}
+
+.item-price-detail {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.flash-sale-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+.item-total {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-left: 12px;
+}
+
+.voucher-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.voucher-name {
+  font-size: 13px;
+  color: #374151;
+}
+
+.voucher-discount {
+  font-size: 13px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.payment-summary-popup .summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.discount-row {
+  color: #dc2626;
+}
+
+.total-row {
+  border-top: 2px solid #e5e7eb;
+  padding-top: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  color: #1e293b;
+}
+
+.payment-method-info .method-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.cash-info {
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 8px;
+}
+
+.cash-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 13px;
+}
+
+.cash-row:first-child {
+  color: #374151;
+}
+
+.cash-row:last-child {
+  color: #059669;
+  font-weight: 600;
+}
+
+.notes-text {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.popup-footer {
+  display: flex;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 2px solid #f1f5f9;
+  background: #fafbfc;
+}
+
+.cancel-btn,
+.proceed-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.cancel-btn {
+  background: #f8f9fa;
+  border: 2px solid #e5e7eb;
+  color: #64748b;
+}
+
+.cancel-btn:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.proceed-btn {
+  background: linear-gradient(135deg, #00bfae 0%, #009688 100%);
+  border: none;
+  color: white;
+}
+
+.proceed-btn:hover {
+  background: linear-gradient(135deg, #009688 0%, #00796b 100%);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .confirm-popup {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .popup-header {
+    padding: 16px 20px;
+  }
+  
+  .popup-title {
+    font-size: 16px;
+  }
+  
+  .popup-content {
+    padding: 16px 20px;
+  }
+  
+  .popup-footer {
+    padding: 16px 20px;
+  }
+  
+  .cancel-btn,
+  .proceed-btn {
+    padding: 10px 16px;
+    font-size: 13px;
   }
 }
 </style>
