@@ -1,6 +1,7 @@
 <template>
   <div class="admin-page container-fluid py-4">
     <OverviewStatsComponent :stats="stats" />
+
     <!-- ========== BỘ LỌC FLASH SALE ========== -->
     <div class="card mb-5 shadow-lg border-0 filter-card">
       <div class="card-header bg-light border-0 py-3">
@@ -220,7 +221,7 @@
     </div>
     <!-- ================== HẾT PHẦN BẢNG DANH SÁCH FLASH SALE ================== -->
 
-    <!-- Modal Thêm/Sửa  -->
+    <!-- Modal Thêm/Sửa -->
     <div
       class="modal fade"
       id="formModal"
@@ -231,69 +232,76 @@
     >
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-header">
+          <!-- ✅ Đổi từ .modal-header thành .form-modal-header -->
+          <div class="modal-header form-modal-header">
             <h5 class="modal-title" id="formModalLabel">
-              {{ isEditMode ? "Chỉnh sửa" : "Thêm mới" }}
+              <i class="bi bi-lightning-charge me-2"></i>
+              {{ isEditMode ? "Chỉnh sửa Flash Sale" : "Thêm Flash Sale mới" }}
             </h5>
             <button type="button" class="custom-close-btn" @click="closeModal">
-              <i class="bx bx-x-circle"></i>
+              <i class="bi bi-x-lg"></i>
             </button>
           </div>
-          <div class="modal-body">
-            <form @submit.prevent="handleSubmitForm">
-              <div class="mb-3">
-                <label class="form-label"
-                  >Tên chương trình <span class="text-danger">*</span></label
-                >
-                <input
-                  type="text"
-                  class="form-control"
-                  v-model="formData.name"
-                  required
-                  placeholder="Nhập tên flash sale"
-                />
-              </div>
-              <div class="mb-3">
-                <label class="form-label"
-                  >Thời gian bắt đầu <span class="text-danger">*</span></label
-                >
-                <input
-                  type="datetime-local"
-                  class="form-control"
-                  v-model="formData.startTime"
-                  required
-                />
-              </div>
-              <div class="mb-3">
-                <label class="form-label"
-                  >Thời gian kết thúc <span class="text-danger">*</span></label
-                >
-                <input
-                  type="datetime-local"
-                  class="form-control"
-                  v-model="formData.endTime"
-                  required
-                />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Trạng thái</label>
-                <select class="form-select" v-model="formData.status">
-                  <option value="1">Hoạt động</option>
-                  <option value="0">Không hoạt động</option>
-                </select>
-              </div>
-            </form>
+          <!-- ✅ Đổi từ .modal-body thành .form-modal-body -->
+          <div class="modal-body form-modal-body">
+            <div class="mb-3">
+              <label class="form-label">
+                Tên chương trình <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                v-model="formData.name"
+                required
+                placeholder="Nhập tên flash sale (3-100 ký tự)"
+                maxlength="100"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">
+                Thời gian bắt đầu <span class="text-danger">*</span>
+              </label>
+              <input
+                type="datetime-local"
+                class="form-control"
+                v-model="formData.startTime"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">
+                Thời gian kết thúc <span class="text-danger">*</span>
+              </label>
+              <input
+                type="datetime-local"
+                class="form-control"
+                v-model="formData.endTime"
+                required
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Trạng thái</label>
+              <select class="form-select" v-model="formData.status">
+                <option value="1">Hoạt động</option>
+                <option value="0">Không hoạt động</option>
+              </select>
+            </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="closeModal">
+            <!-- ✅ Đổi button classes -->
+            <button
+              type="button"
+              class="btn form-btn-secondary"
+              @click="closeModal"
+            >
               Đóng
             </button>
             <button
               type="button"
-              class="btn btn-primary"
+              class="btn form-btn-primary"
               @click="handleSubmitForm"
             >
-              Xác nhận
+              {{ isEditMode ? "Cập nhật" : "Thêm mới" }}
             </button>
           </div>
         </div>
@@ -301,6 +309,7 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import EditButton from "@/components/common/EditButton.vue";
 import Pagination from "@/components/common/Pagination.vue";
@@ -621,80 +630,55 @@ const toggleFilter = () => {
 
 <style scoped>
 @import "@/assets/css/admin-global.css";
+@import "@/assets/css/form-global.css";
 
-/* Chỉ giữ lại các style cho modal, filter-collapse, loading-overlay */
+/* ========== FLASH SALE SPECIFIC OVERRIDES ========== */
+.form-modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: #ffffff !important;
+}
+
+.form-modal-body {
+  background-color: #ffffff !important;
+}
+
+/* ========== MODAL SPECIFIC ========== */
+.modal-content {
+  border-radius: 15px !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
+  border: none !important;
+  overflow: hidden;
+}
 
 .modal-dialog {
   max-width: 600px !important;
 }
 
-.modal-content {
-  border-radius: 15px;
-  border: none;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+.modal-footer {
+  background-color: #f8f9fa !important;
+  border-top: 1px solid #dee2e6 !important;
+  padding: 1rem 2rem !important;
 }
 
-.modal-header {
-  padding: 0.8rem 1.2rem;
-  border-bottom: 2px solid #ecae9e;
-  position: relative;
-}
-
-.modal-title {
-  font-weight: 600;
-  padding: 0.8rem 1.2rem;
-  color: #2c2c54;
-  position: relative;
-  font-size: 1.1rem;
-}
-
-.custom-close-btn {
-  background: none;
-  color: #2c2c54;
-  border: none;
-  font-size: 1.1rem;
-  padding: 0.5rem;
-  cursor: pointer;
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.custom-close-btn img {
-  width: 30px;
-  height: 30px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-/* Modal body */
-.modal-body {
-  min-height: 320px;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-/* Admin global styles */
-@import "@/assets/css/admin-global.css";
-
-/* Bộ lọc tìm kiếm - ẩn hiện */
+/* ========== FILTER COLLAPSE ========== */
 .filter-collapse {
   transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
   max-height: 500px;
   opacity: 1;
+  overflow: hidden;
 }
 
 .filter-collapsed {
   max-height: 0;
   opacity: 0;
-  overflow: hidden;
+  padding: 0 1.25rem;
 }
 
-/* Loading overlay */
+/* ========== LOADING OVERLAY ========== */
 .card-body {
   position: relative;
 }
+
 .loading-overlay {
   position: absolute;
   top: 0;
@@ -721,5 +705,35 @@ const toggleFilter = () => {
   width: 3rem;
   height: 3rem;
   margin-bottom: 0.5rem;
+}
+
+/* ========== TABLE STYLING ========== */
+.admin-table-card {
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.admin-table-card .card-header {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
+  border-bottom: 2px solid #e9ecef !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.admin-table-card .card-header h5 {
+  font-weight: 700 !important;
+  color: #333 !important;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .modal-dialog {
+    max-width: 95vw !important;
+    margin: 1rem auto !important;
+  }
+
+  .form-modal-body {
+    padding: 1rem !important;
+  }
 }
 </style>

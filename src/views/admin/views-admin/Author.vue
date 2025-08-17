@@ -190,7 +190,8 @@
     >
       <div class="modal-dialog" style="max-width: 600px">
         <div class="modal-content">
-          <div class="modal-header author-modal-header">
+          <!-- ✅ Đổi từ author-modal-header thành form-modal-header -->
+          <div class="modal-header form-modal-header">
             <h5 class="modal-title">
               <i class="bi bi-plus-circle me-2"></i>
               Thêm tác giả
@@ -199,7 +200,8 @@
               <i class="bx bx-x-circle"></i>
             </button>
           </div>
-          <div class="modal-body author-modal-body">
+          <!-- ✅ Đổi từ author-modal-body thành form-modal-body -->
+          <div class="modal-body form-modal-body">
             <form @submit.prevent="add">
               <div class="mb-3">
                 <label class="form-label">
@@ -237,19 +239,18 @@
                   min="1900-01-01"
                 />
               </div>
-              <!-- ✅ BỎ select trạng thái -->
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="closeModal">
-              Hủy
-            </button>
+            <!-- ✅ Đổi từ author-form-btn thành form-btn -->
             <button
               type="button"
-              class="btn btn-primary"
-              style="background-color: #33304e; border-color: #33304e"
-              @click="add"
+              class="btn form-btn-secondary"
+              @click="closeModal"
             >
+              Hủy
+            </button>
+            <button type="button" class="btn form-btn-primary" @click="add">
               Thêm
             </button>
           </div>
@@ -266,7 +267,8 @@
     >
       <div class="modal-dialog" style="max-width: 600px">
         <div class="modal-content">
-          <div class="modal-header" style="background-color: #ecae9e">
+          <!-- ✅ Đổi từ author-modal-header thành form-modal-header -->
+          <div class="modal-header form-modal-header">
             <h5 class="modal-title">
               <i class="bi bi-info-circle me-2"></i>
               Chi tiết tác giả
@@ -276,14 +278,11 @@
               class="custom-close-btn"
               @click="closeDetailModal"
             >
-              <img
-                src="https://cdn-icons-png.flaticon.com/128/694/694604.png"
-                alt="Close"
-              />
+              <i class="bx bx-x-circle"></i>
             </button>
           </div>
-
-          <div class="modal-body">
+          <!-- ✅ Đổi từ author-modal-body thành form-modal-body -->
+          <div class="modal-body form-modal-body">
             <div class="mb-2"><b>ID:</b> {{ detailAuthor.id }}</div>
             <div class="mb-2">
               <b>Tên tác giả:</b> {{ detailAuthor.authorName }}
@@ -292,7 +291,6 @@
             <div class="mb-2">
               <b>Ngày sinh:</b> {{ detailAuthor.birthDate }}
             </div>
-            <!-- ✅ BỎ hiển thị trạng thái -->
             <div class="mb-2">
               <b>Ngày tạo:</b> {{ detailAuthor.createdAt }}
             </div>
@@ -307,9 +305,10 @@
             </div>
           </div>
           <div class="modal-footer">
+            <!-- ✅ Đổi từ author-form-btn thành form-btn -->
             <button
               type="button"
-              class="btn btn-secondary"
+              class="btn form-btn-secondary"
               @click="closeDetailModal"
             >
               Đóng
@@ -328,7 +327,8 @@
     >
       <div class="modal-dialog" style="max-width: 600px">
         <div class="modal-content">
-          <div class="modal-header author-modal-header">
+          <!-- ✅ Đổi từ author-modal-header thành form-modal-header -->
+          <div class="modal-header form-modal-header">
             <h5 class="modal-title">
               <i class="bi bi-pencil-square me-2"></i>
               Sửa tác giả
@@ -341,55 +341,61 @@
               <i class="bx bx-x-circle"></i>
             </button>
           </div>
-          <div class="modal-body author-modal-body">
-            <form @submit.prevent="handleUpdateAuthor(editData.id, editData)">
-              <div class="mb-3">
-                <label class="form-label"
-                  >Tên tác giả <span class="text-danger">*</span></label
-                >
-                <input
-                  v-model="editData.authorName"
-                  class="form-control"
-                  required
-                  placeholder="Nhập tên tác giả (2-100 ký tự)"
-                  maxlength="100"
-                />
+          <!-- ✅ Đổi từ author-modal-body thành form-modal-body -->
+          <div class="modal-body form-modal-body">
+            <div class="mb-3">
+              <label class="form-label">
+                Tên tác giả <span class="text-danger">*</span>
+              </label>
+              <input
+                v-model="editData.authorName"
+                class="form-control"
+                required
+                placeholder="Nhập tên tác giả (2-100 ký tự)"
+                maxlength="100"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Tiểu sử</label>
+              <textarea
+                v-model="editData.biography"
+                class="form-control"
+                placeholder="Nhập tiểu sử (tối đa 1000 ký tự)"
+                maxlength="1000"
+                rows="4"
+              ></textarea>
+              <div class="form-text">
+                {{ editData.biography ? editData.biography.length : 0 }}/1000 ký
+                tự
               </div>
-              <div class="mb-3">
-                <label class="form-label">Tiểu sử</label>
-                <textarea
-                  v-model="editData.biography"
-                  class="form-control"
-                  placeholder="Nhập tiểu sử (tối đa 1000 ký tự)"
-                  maxlength="1000"
-                  rows="4"
-                ></textarea>
-                <div class="form-text">
-                  {{ editData.biography ? editData.biography.length : 0 }}/1000
-                  ký tự
-                </div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Ngày sinh</label>
-                <input
-                  v-model="editData.birthDate"
-                  type="date"
-                  class="form-control"
-                  :max="new Date().toISOString().split('T')[0]"
-                  min="1900-01-01"
-                />
-              </div>
-              <div class="modal-footer px-0">
-                <button
-                  type="button"
-                  class="btn btn-secondary"
-                  @click="showEditModal = false"
-                >
-                  Đóng
-                </button>
-                <button type="submit" class="btn btn-primary">Lưu</button>
-              </div>
-            </form>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Ngày sinh</label>
+              <input
+                v-model="editData.birthDate"
+                type="date"
+                class="form-control"
+                :max="new Date().toISOString().split('T')[0]"
+                min="1900-01-01"
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <!-- ✅ Đổi từ author-form-btn thành form-btn -->
+            <button
+              type="button"
+              class="btn form-btn-secondary"
+              @click="showEditModal = false"
+            >
+              Đóng
+            </button>
+            <button
+              type="button"
+              class="btn form-btn-primary"
+              @click="handleUpdateAuthor(editData.id, editData)"
+            >
+              Lưu
+            </button>
           </div>
         </div>
       </div>
@@ -405,7 +411,6 @@ import {
   addAuthor,
   updateAuthor,
   deleteAuthor,
-  // ✅ BỎ import toggleStatus
 } from "../../../services/admin/author";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import Swal from "sweetalert2";
@@ -413,7 +418,6 @@ import AddButton from "@/components/common/AddButton.vue";
 import EditButton from "@/components/common/EditButton.vue";
 import DeleteButton from "@/components/common/DeleteButton.vue";
 import Pagination from "@/components/common/Pagination.vue";
-// ✅ BỎ import ToggleStatus component
 import { debounce } from "@/utils/utils";
 
 const authors = ref([]);
@@ -422,14 +426,12 @@ const author = ref({
   authorName: "",
   biography: "",
   birthDate: "",
-  // ✅ BỎ status field
 });
 const detailAuthor = ref({
   id: "",
   authorName: "",
   biography: "",
   birthDate: "",
-  // ✅ BỎ status field
   createdAt: "",
   updatedAt: "",
   createdBy: "",
@@ -442,7 +444,6 @@ const editData = ref({
   authorName: "",
   biography: "",
   birthDate: "",
-  // ✅ BỎ status field
 });
 const currentPage = ref(0);
 const pageSize = ref(5);
@@ -451,7 +452,6 @@ const totalElements = ref(0);
 const itemsPerPageOptions = ref([5, 10, 25, 50]);
 const isLastPage = ref(false);
 const searchQuery = ref("");
-// ✅ BỎ selectedStatus
 const loading = ref(false);
 const error = ref(null);
 const showFilter = ref(true);
@@ -471,7 +471,6 @@ const searchWithFilter = () => {
 
 const clearFilters = () => {
   searchQuery.value = "";
-  // ✅ BỎ reset selectedStatus
   currentPage.value = 0;
   fetchAuthors();
 };
@@ -549,7 +548,6 @@ const resetForm = () => {
     authorName: "",
     biography: "",
     birthDate: "",
-    // ✅ BỎ status: 1
   };
 };
 
@@ -559,7 +557,6 @@ const resetEditForm = () => {
     authorName: "",
     biography: "",
     birthDate: "",
-    // ✅ BỎ status: 1
   };
 };
 
@@ -572,7 +569,6 @@ const editAuthor = async (id) => {
       authorName: data.authorName,
       biography: data.biography,
       birthDate: data.birthDate,
-      // ✅ BỎ status: data.status
     };
     showEditModal.value = true;
   } catch (error) {
@@ -594,15 +590,12 @@ const closeDetailModal = () => {
     authorName: "",
     biography: "",
     birthDate: "",
-    // ✅ BỎ status: 1
     createdAt: "",
     updatedAt: "",
     createdBy: "",
     updatedBy: "",
   };
 };
-
-// ✅ BỎ hàm handleToggleStatus hoàn toàn
 
 // ✅ Sửa lại validateAuthorForm - bỏ validation status
 const validateAuthorForm = () => {
@@ -709,7 +702,116 @@ const validateAuthorForm = () => {
     }
   }
 
-  // ✅ BỎ validation status
+  return true;
+};
+
+// ✅ Thêm validateEditAuthorForm function (tương tự validateAuthorForm nhưng cho editData)
+const validateEditAuthorForm = () => {
+  // 1. Validate tên tác giả (bắt buộc)
+  if (!editData.value.authorName || editData.value.authorName.trim() === "") {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Vui lòng nhập tên tác giả",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // 2. Validate độ dài tên tác giả
+  const authorName = editData.value.authorName.trim();
+  if (authorName.length < 2) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tên tác giả phải có ít nhất 2 ký tự",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  if (authorName.length > 100) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tên tác giả không được vượt quá 100 ký tự",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // 3. Validate ký tự đặc biệt
+  const nameRegex = /^[a-zA-ZÀ-ỹ0-9\s\.\-]+$/;
+  if (!nameRegex.test(authorName)) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tên tác giả chỉ được chứa chữ cái, số, khoảng trắng, dấu chấm và dấu gạch ngang",
+      timer: 3000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // 4. Validate tiểu sử (nếu có)
+  if (
+    editData.value.biography &&
+    editData.value.biography.trim().length > 1000
+  ) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cảnh báo!",
+      text: "Tiểu sử không được vượt quá 1000 ký tự",
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return false;
+  }
+
+  // 5. Validate ngày sinh (nếu có)
+  if (editData.value.birthDate) {
+    const birthDate = new Date(editData.value.birthDate);
+    const currentDate = new Date();
+    const minDate = new Date("1900-01-01");
+
+    if (birthDate > currentDate) {
+      Swal.fire({
+        icon: "warning",
+        title: "Cảnh báo!",
+        text: "Ngày sinh không thể là ngày trong tương lai",
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return false;
+    }
+
+    if (birthDate < minDate) {
+      Swal.fire({
+        icon: "warning",
+        title: "Cảnh báo!",
+        text: "Ngày sinh không hợp lệ",
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return false;
+    }
+
+    // Kiểm tra tuổi hợp lý (không quá 150 tuổi)
+    const age = currentDate.getFullYear() - birthDate.getFullYear();
+    if (age > 150) {
+      Swal.fire({
+        icon: "warning",
+        title: "Cảnh báo!",
+        text: "Tuổi tác giả không hợp lý",
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return false;
+    }
+  }
 
   return true;
 };
@@ -725,7 +827,6 @@ const handleUpdateAuthor = async (id, authorData) => {
       authorName: authorData.authorName.trim(),
       biography: authorData.biography?.trim() || "",
       birthDate: authorData.birthDate || null,
-      // ✅ BỎ status: parseInt(authorData.status)
     };
 
     await updateAuthor(id, payload);
@@ -763,8 +864,6 @@ const handleUpdateAuthor = async (id, authorData) => {
   }
 };
 
-// ✅ Sửa lại validateEditAuthorForm - bỏ validation status (tương tự validateAuthorForm)
-
 // ✅ Sửa lại fetchAuthors - bỏ param status
 const fetchAuthors = async () => {
   loading.value = true;
@@ -774,7 +873,6 @@ const fetchAuthors = async () => {
       page: currentPage.value,
       size: pageSize.value,
       name: searchQuery.value || undefined,
-      // ✅ BỎ status: selectedStatus.value || undefined
     };
 
     const response = await getAllAuthors(params);
@@ -870,50 +968,112 @@ const handleDeleteAuthor = async (id) => {
 
 <style scoped>
 @import "@/assets/css/admin-global.css";
+@import "@/assets/css/form-global.css";
 
-/* Chỉ giữ lại style cho modal và phần riêng */
-.modal-dialog {
-  max-width: 600px !important;
+/* ========== AUTHOR SPECIFIC OVERRIDES ========== */
+.form-modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: #ffffff !important;
 }
+
+.form-modal-body {
+  background-color: #ffffff !important;
+}
+
+/* ========== TABLE STYLING ========== */
+.author-table-custom thead th {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+  font-weight: 700 !important;
+  color: #333 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #dee2e6 !important;
+}
+
+.author-table-custom tbody tr:hover {
+  background-color: #f8f9ff !important;
+  transition: all 0.3s ease;
+}
+
+.author-table-custom tbody td {
+  font-weight: 500 !important;
+  color: #444 !important;
+}
+
+.author-table-custom tbody td.fw-bold {
+  font-weight: 700 !important;
+  color: #333 !important;
+}
+
+/* ========== MODAL SPECIFIC ========== */
 .modal-content {
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  border: none;
+  border-radius: 15px !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
+  border: none !important;
+  overflow: hidden;
 }
-.author-modal-header {
-  border-bottom: 2px solid #ecae9e;
-  border-radius: 15px 15px 0 0;
-  padding: 0.8rem 1.2rem;
-  position: relative;
-  background: #f8fafc;
-}
-.modal-title {
-  font-weight: 600;
-  color: #2c2c54;
-  font-size: 1.1rem;
-}
-.custom-close-btn {
-  background: none;
-  border: none;
-  padding: 0.5rem;
-  cursor: pointer;
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1.5rem;
-  color: #333;
-}
-.author-modal-body {
-  min-height: 320px;
-  max-height: 70vh;
-  overflow-y: auto;
-  padding: 1.5rem 1.2rem 0.5rem 1.2rem;
-}
+
 .modal-footer {
-  border-top: none;
-  background: none;
-  padding: 1rem 0 0 0;
-  justify-content: flex-end;
+  background-color: #f8f9fa !important;
+  border-top: 1px solid #dee2e6 !important;
+  padding: 1rem 2rem !important;
+}
+
+/* ========== CARD STYLING ========== */
+.admin-table-card {
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.admin-table-card .card-header {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
+  border-bottom: 2px solid #e9ecef !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.admin-table-card .card-header h5 {
+  font-weight: 700 !important;
+  color: #333 !important;
+}
+
+/* ========== ACTION BUTTONS ========== */
+.action-btn {
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ========== OVERRIDE INLINE STYLES ========== */
+.btn-primary[style*="background-color: #33304e"] {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.75rem 2rem !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+}
+
+.btn-primary[style*="background-color: #33304e"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4) !important;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .modal-dialog {
+    max-width: 95vw !important;
+    margin: 1rem auto !important;
+  }
+
+  .author-modal-body {
+    padding: 1rem !important;
+  }
 }
 </style>

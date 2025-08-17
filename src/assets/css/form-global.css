@@ -1,0 +1,439 @@
+/* =========================== FORM GLOBAL STYLES =========================== */
+
+/* ========== NAVIGATION BAR STYLING ========== */
+.navbar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-bottom: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.navbar-brand {
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.navbar-nav .nav-link {
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  padding: 0.75rem 1rem !important;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.navbar-nav .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* ========== SEARCH BAR IN NAVBAR ========== */
+.navbar .form-control {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 25px !important;
+  color: #333 !important;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.navbar .form-control:focus {
+  background-color: #ffffff !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  transform: translateY(-1px);
+}
+
+.navbar .form-control::placeholder {
+  color: #666 !important;
+  font-weight: 400;
+}
+
+.navbar .btn-outline-light {
+  border: 2px solid rgba(255, 255, 255, 0.8) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border-radius: 25px !important;
+  padding: 0.5rem 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.navbar .btn-outline-light:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ========== DROPDOWN MENU ========== */
+.navbar .dropdown-menu {
+  background-color: #ffffff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+  padding: 0.5rem 0;
+}
+
+.navbar .dropdown-item {
+  font-weight: 500 !important;
+  color: #333 !important;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.navbar .dropdown-item:hover {
+  background-color: #f8f9ff !important;
+  color: #667eea !important;
+  font-weight: 600 !important;
+}
+
+/* ========== MODAL STYLING GLOBAL ========== */
+.form-modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: #ffffff !important;
+  border-bottom: none !important;
+  border-radius: 15px 15px 0 0 !important;
+  padding: 1.5rem 2rem !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.form-modal-header .modal-title {
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  font-size: 1.25rem !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  margin: 0 !important;
+  flex: 1 !important;
+}
+
+.form-modal-header .custom-close-btn {
+  color: #ffffff !important;
+  font-size: 1.5rem !important;
+  font-weight: 400 !important;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+  background: none !important;
+  border: none !important;
+  padding: 0.5rem !important;
+  cursor: pointer;
+  position: absolute !important;
+  right: 1.5rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 10 !important;
+}
+
+.form-modal-header .custom-close-btn:hover {
+  font-weight: 700 !important;
+  opacity: 1;
+}
+
+/* ========== MODAL BODY STYLING ========== */
+.form-modal-body {
+  background-color: #ffffff !important;
+  padding: 2rem !important;
+  border-radius: 0 0 15px 15px;
+}
+
+.form-modal-body .form-label {
+  font-weight: 600 !important;
+  color: #333 !important;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.form-modal-body .form-control {
+  border: 2px solid #e9ecef !important;
+  border-radius: 8px !important;
+  padding: 0.75rem 1rem !important;
+  font-weight: 500 !important;
+  color: #333 !important;
+  transition: all 0.3s ease;
+  background-color: #fafbfc;
+}
+
+.form-modal-body .form-control:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+  background-color: #ffffff !important;
+}
+
+.form-modal-body .form-control::placeholder {
+  color: #888 !important;
+  font-weight: 400;
+}
+
+.form-modal-body .form-text {
+  color: #666 !important;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.form-modal-body .text-danger {
+  color: #dc3545 !important;
+  font-weight: 600 !important;
+}
+
+.form-modal-body .form-select {
+  border: 2px solid #e9ecef !important;
+  border-radius: 8px !important;
+  padding: 0.75rem 1rem !important;
+  font-weight: 500 !important;
+  color: #333 !important;
+  transition: all 0.3s ease;
+  background-color: #fafbfc;
+}
+
+.form-modal-body .form-select:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+  background-color: #ffffff !important;
+}
+
+/* ========== FORM BUTTONS STYLING ========== */
+.form-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.75rem 2rem !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  color: #ffffff !important;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.form-btn-primary:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%) !important;
+  color: #ffffff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.form-btn-secondary {
+  background-color: #6c757d !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.75rem 2rem !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  color: #ffffff !important;
+  transition: all 0.3s ease;
+}
+
+.form-btn-secondary:hover {
+  background-color: #5a6268 !important;
+  color: #ffffff !important;
+  transform: translateY(-2px);
+}
+
+/* ========== TABLE HEADERS BOLD ========== */
+.table thead th {
+  font-weight: 700 !important;
+  color: #333 !important;
+  background-color: #f8f9fa !important;
+  border-bottom: 2px solid #dee2e6 !important;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+.table tbody td {
+  font-weight: 500 !important;
+  color: #444 !important;
+  vertical-align: middle;
+}
+
+.table tbody td.fw-bold {
+  font-weight: 700 !important;
+  color: #333 !important;
+}
+
+/* ========== FILTER CARD STYLING ========== */
+.filter-card .card-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+  border-bottom: 2px solid #dee2e6 !important;
+}
+
+.filter-card .card-header h5 {
+  font-weight: 700 !important;
+  color: #333 !important;
+}
+
+.filter-card .form-label {
+  font-weight: 600 !important;
+  color: #333 !important;
+}
+
+.filter-card .form-control {
+  border: 2px solid #e9ecef !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease;
+}
+
+.filter-card .form-control:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+}
+
+/* ========== ACTION BUTTONS STYLING ========== */
+.btn-success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+  border: none !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #218838 0%, #1ca085 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-outline-info {
+  border: 2px solid #17a2b8 !important;
+  color: #17a2b8 !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-info:hover {
+  background-color: #138496 !important;
+  border-color: #138496 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+/* ========== LOADING OVERLAY ========== */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.loading-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.loading-overlay .spinner-border {
+  color: #667eea !important;
+  width: 3rem;
+  height: 3rem;
+}
+
+.loading-overlay p {
+  margin-top: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+/* ========== ALERT STYLING ========== */
+.alert-danger {
+  background-color: #f8d7da !important;
+  border-color: #f5c6cb !important;
+  color: #721c24 !important;
+  border-radius: 8px !important;
+  font-weight: 500;
+}
+
+/* ========== RESPONSIVE ADJUSTMENTS ========== */
+@media (max-width: 768px) {
+  .navbar .form-control {
+    margin: 0.5rem 0;
+  }
+  
+  .form-modal-body {
+    padding: 1rem !important;
+  }
+  
+  .modal-dialog {
+    margin: 0.5rem !important;
+  }
+  
+  .form-modal-header .custom-close-btn {
+    right: 1rem !important;
+  }
+}
+
+/* ========== CUSTOM ANIMATIONS ========== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal.show .modal-dialog {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* ========== TOOLTIP STYLING ========== */
+.tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-bubble {
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: #fff;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.tooltip-wrapper:hover .tooltip-bubble {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tooltip-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #333;
+}
