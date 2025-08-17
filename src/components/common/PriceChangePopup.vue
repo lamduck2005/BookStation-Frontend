@@ -27,7 +27,7 @@
             Giá sản phẩm đã được cập nhật
           </h6>
           <p class="mb-0">
-            Chúng tôi phát hiện giá một số sản phẩm trong đơn hàng của bạn đã thay đổi. 
+            Chúng tôi phát hiện giá tổng trong đơn hàng của bạn đã thay đổi. 
             Vui lòng xem chi tiết bên dưới và quyết định có tiếp tục mua không.
           </p>
         </div>

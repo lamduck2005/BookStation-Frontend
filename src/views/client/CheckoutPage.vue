@@ -797,6 +797,17 @@ const validateWithPriceCheck = async () => {
         const unitPriceChanged = Math.abs(oldItem.unitPrice - newItem.unitPrice) > 0
         const totalPriceChanged = Math.abs(oldItem.totalPrice - newItem.totalPrice) > 0
         
+        console.log(`🔍 Item comparison for ${newItem.bookTitle}:`, {
+          oldUnitPrice: oldItem.unitPrice,
+          newUnitPrice: newItem.unitPrice,
+          unitPriceChanged,
+          oldTotalPrice: oldItem.totalPrice,
+          newTotalPrice: newItem.totalPrice,
+          totalPriceChanged,
+          isFlashSale: newItem.isFlashSale,
+          originalPrice: newItem.originalPrice
+        })
+        
         if (unitPriceChanged || totalPriceChanged) {
           hasItemPriceChange = true
           itemChanges.push({
@@ -869,6 +880,8 @@ const validateWithPriceCheck = async () => {
 
 // Function để force validate với snapshot ban đầu (test mục đích)
 const validateWithInitialSnapshot = async () => {
+  console.log('🧪 validateWithInitialSnapshot triggered')
+  
   if (!initialSessionSnapshot.value) {
     console.warn('⚠️ No initial snapshot available')
     return await validateWithPriceCheck()
@@ -891,35 +904,83 @@ const validateWithInitialSnapshot = async () => {
     const oldTotal = initialSessionSnapshot.value.totalAmount
 
     console.log('🔍 Comparing with initial snapshot:', {
-      initial: initialSessionSnapshot.value,
-      current: { currentSubtotal, currentVoucherDiscount, currentTotal }
+      initial: {
+        baselineSubtotal: initialSessionSnapshot.value.subtotal,
+        currentSubtotal: initialSessionSnapshot.value.originalSubtotal,
+        baselineTotal: initialSessionSnapshot.value.totalAmount,
+        currentTotal: initialSessionSnapshot.value.originalTotalAmount,
+        totalVoucherDiscount: initialSessionSnapshot.value.totalVoucherDiscount,
+        items: initialSessionSnapshot.value.checkoutItems.map(item => ({
+          bookId: item.bookId,
+          baselinePrice: item.unitPrice,
+          currentPrice: item.currentUnitPrice,
+          originalPrice: item.originalPrice,
+          isFlashSale: item.isFlashSale
+        }))
+      },
+      current: { 
+        currentSubtotal, 
+        currentVoucherDiscount, 
+        currentTotal,
+        items: currentItems.map(item => ({
+          bookId: item.bookId,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice,
+          originalPrice: item.originalPrice,
+          isFlashSale: item.isFlashSale
+        }))
+      }
     })
 
-    // Kiểm tra thay đổi
+    // Kiểm tra thay đổi - so sánh baseline vs current  
     const hasSubtotalChange = Math.abs(oldSubtotal - currentSubtotal) > 0
     const hasVoucherChange = Math.abs(oldVoucherDiscount - currentVoucherDiscount) > 0
     const hasTotalChange = Math.abs(oldTotal - currentTotal) > 0
 
-    // Kiểm tra thay đổi từng item
+    // Kiểm tra thay đổi từng item - so sánh baseline vs current
     const itemChanges = []
     initialSessionSnapshot.value.checkoutItems.forEach(oldItem => {
       const currentItem = currentItems.find(item => item.bookId === oldItem.bookId)
-      if (currentItem && Math.abs(oldItem.unitPrice - currentItem.unitPrice) > 0) {
-        itemChanges.push({
-          bookId: currentItem.bookId,
-          bookTitle: currentItem.bookTitle,
-          bookImage: currentItem.bookImage,
-          quantity: currentItem.quantity,
-          oldUnitPrice: oldItem.unitPrice,
-          newUnitPrice: currentItem.unitPrice,
-          changeReason: currentItem.isFlashSale ? 'Flash Sale' : 
-                       currentItem.unitPrice < oldItem.unitPrice ? 'Giảm giá' : 'Tăng giá'
-        })
+      if (currentItem) {
+        // So sánh baseline price (originalPrice cho flash sale) vs current price
+        const priceChange = Math.abs(oldItem.unitPrice - currentItem.unitPrice) > 0
+        
+        if (priceChange) {
+          itemChanges.push({
+            bookId: currentItem.bookId,
+            bookTitle: currentItem.bookTitle,
+            bookImage: currentItem.bookImage,
+            quantity: currentItem.quantity,
+            oldUnitPrice: oldItem.unitPrice, // Baseline price (originalPrice nếu flash sale)
+            newUnitPrice: currentItem.unitPrice, // Current price (flash sale price)
+            changeReason: currentItem.isFlashSale ? 'Flash Sale' : 
+                         currentItem.unitPrice < oldItem.unitPrice ? 'Giảm giá' : 'Tăng giá'
+          })
+          
+          console.log(`📊 Item price change detected for ${currentItem.bookTitle}:`, {
+            baselinePrice: oldItem.unitPrice,
+            currentPrice: currentItem.unitPrice,
+            isFlashSale: currentItem.isFlashSale,
+            originalPrice: currentItem.originalPrice,
+            savings: oldItem.unitPrice - currentItem.unitPrice
+          })
+        }
       }
     })
 
     if (hasSubtotalChange || hasVoucherChange || hasTotalChange || itemChanges.length > 0) {
       console.log('🚨 Changes detected compared to initial snapshot!')
+      console.log('📊 Price changes details:', {
+        hasSubtotalChange,
+        hasVoucherChange, 
+        hasTotalChange,
+        itemChanges: itemChanges.length,
+        oldSubtotal,
+        currentSubtotal,
+        oldTotal,
+        currentTotal,
+        itemDetails: itemChanges
+      })
       
       priceChanges.value = {
         oldSubtotal,
@@ -972,17 +1033,50 @@ const loadLatestSession = async (userId) => {
       sessionId.value = response.data.data.id
 
       // Lưu snapshot ban đầu của session để so sánh sau này
-      initialSessionSnapshot.value = {
-        subtotal: session.value.subtotal,
-        totalVoucherDiscount: session.value.totalVoucherDiscount || session.value.totalDiscount || 0,
-        totalAmount: session.value.totalAmount,
-        checkoutItems: session.value.checkoutItems?.map(item => ({
+      // Đối với flash sale items, tạo baseline để so sánh với giá gốc
+      const baselineItems = session.value.checkoutItems?.map(item => {
+        // Nếu là flash sale, tính baseline price từ originalPrice
+        const baselinePrice = item.isFlashSale ? item.originalPrice : item.unitPrice
+        
+        return {
           bookId: item.bookId,
-          unitPrice: item.unitPrice,
-          totalPrice: item.totalPrice,
-          originalPrice: item.originalPrice
-        })) || []
+          bookTitle: item.bookTitle,
+          bookImage: item.bookImage,
+          quantity: item.quantity,
+          unitPrice: baselinePrice, // Baseline price (originalPrice nếu flash sale)
+          totalPrice: baselinePrice * item.quantity,
+          originalPrice: item.originalPrice,
+          isFlashSale: item.isFlashSale,
+          currentUnitPrice: item.unitPrice // Lưu giá hiện tại để reference
+        }
+      }) || []
+      
+      // Tính baseline subtotal
+      const baselineSubtotal = baselineItems.reduce((sum, item) => sum + item.totalPrice, 0)
+      
+      initialSessionSnapshot.value = {
+        subtotal: baselineSubtotal, // Baseline subtotal (theo originalPrice)
+        originalSubtotal: session.value.subtotal, // Subtotal hiện tại từ API
+        totalVoucherDiscount: session.value.totalVoucherDiscount || session.value.totalDiscount || 0,
+        totalAmount: baselineSubtotal + (session.value.shippingFee || 0) - (session.value.totalVoucherDiscount || session.value.totalDiscount || 0),
+        originalTotalAmount: session.value.totalAmount, // Total hiện tại từ API
+        checkoutItems: baselineItems
       }
+
+      console.log('📸 Initial snapshot created with baseline prices:', {
+        currentSubtotal: session.value.subtotal,
+        baselineSubtotal: baselineSubtotal,
+        currentTotal: session.value.totalAmount,
+        baselineTotal: initialSessionSnapshot.value.totalAmount,
+        items: baselineItems.map(item => ({
+          bookId: item.bookId,
+          baselinePrice: item.unitPrice,
+          currentPrice: item.currentUnitPrice,
+          originalPrice: item.originalPrice,
+          isFlashSale: item.isFlashSale,
+          savings: item.isFlashSale ? (item.unitPrice - item.currentUnitPrice) * item.quantity : 0
+        }))
+      })
 
       console.log('✅ Latest session loaded with initial snapshot:', {
         sessionId: sessionId.value,
@@ -1475,8 +1569,49 @@ const handleNotesChange = async (notes) => {
 
 // Function xử lý validate thủ công
 const handleManualValidation = async () => {
+  console.log('🔧 Manual validation triggered')
   debugSessionInfo()
   await validateWithPriceCheck()
+}
+
+// Function để debug session info
+const debugSessionInfo = () => {
+  console.log('🔍 === FULL SESSION DEBUG INFO ===')
+  console.log('📋 Current session:', session.value)
+  console.log('📸 Initial snapshot:', initialSessionSnapshot.value)
+  
+  if (session.value?.checkoutItems) {
+    console.log('📦 Current items details:')
+    session.value.checkoutItems.forEach((item, index) => {
+      console.log(`   Item ${index + 1}:`, {
+        bookId: item.bookId,
+        title: item.bookTitle,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+        originalPrice: item.originalPrice,
+        isFlashSale: item.isFlashSale,
+        savings: item.isFlashSale ? (item.originalPrice - item.unitPrice) * item.quantity : 0
+      })
+    })
+  }
+  
+  console.log('💰 Financial breakdown:', {
+    subtotal: session.value?.subtotal,
+    totalVoucherDiscount: session.value?.totalVoucherDiscount,
+    totalDiscount: session.value?.totalDiscount,
+    shippingFee: session.value?.shippingFee,
+    totalAmount: session.value?.totalAmount
+  })
+  
+  if (initialSessionSnapshot.value) {
+    console.log('📊 Baseline vs Current comparison:')
+    console.log('   Baseline subtotal:', initialSessionSnapshot.value.subtotal)
+    console.log('   Current subtotal:', session.value?.subtotal)
+    console.log('   Difference:', (session.value?.subtotal || 0) - initialSessionSnapshot.value.subtotal)
+  }
+  
+  console.log('🔍 === END DEBUG INFO ===')
 }
 
 // Function để cập nhật ghi chú
