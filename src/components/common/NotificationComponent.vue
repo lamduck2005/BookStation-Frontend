@@ -6,8 +6,8 @@
              @click="toggleDropdown" 
              ref="trigger">
             <i class="bi bi-bell fs-5"></i>
-            <small class="text-muted" style="font-size: 11px;">Thông Báo</small>
-            <span v-if="unreadCount > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+            <small class="text-muted" style="font-size: 11px;">Thông báo</small>
+            <span v-if="unreadCount > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger mt-2" 
                   style="font-size: 9px;">{{ unreadCount }}</span>
         </div>
 

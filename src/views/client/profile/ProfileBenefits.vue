@@ -39,11 +39,11 @@
               Thành viên {{ userRank.rank.rankName || "Không xác định" }}
             </span>
             <div class="member-points">
-              F-Point tích lũy {{ user.total_point || 0 }}
+              B-Point tích lũy {{ user.total_point || 0 }}
             </div>
           </div>
         </div>
-      </div> -->
+      </div> 
 
       <!-- Benefits Summary -->
       <div class="benefits-summary mt-5">
@@ -71,7 +71,7 @@
               <div class="benefit-icon">
                 <i class="bi bi-percent text-warning"></i>
               </div>
-              <h5>Tỉ lệ tích lũy F-Point trên giá trị đơn hàng</h5>
+              <h5>Tỉ lệ tích lũy B-Point trên giá trị đơn hàng</h5>
               <p>Tích lũy điểm thưởng với tỷ lệ hấp dẫn: 0,5%</p>
             </div>
           </div>

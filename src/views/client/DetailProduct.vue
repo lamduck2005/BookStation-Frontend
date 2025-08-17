@@ -531,6 +531,7 @@ export default {
         
         showToast('error', errorMessage)
       } finally {
+        window.dispatchEvent(new CustomEvent('updateCartCount'));
         this.addingToCart = false
       }
     },

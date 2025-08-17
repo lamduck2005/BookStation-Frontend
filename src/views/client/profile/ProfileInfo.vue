@@ -13,11 +13,7 @@
     <!-- User Benefits & Stats Card -->
     <div v-if="user" class="benefits-stats-card mb-4">
       <!-- Mascot -->
-      <div class="mascot-section">
-        <div class="mascot-bg">
-          <img src="/src/assets/img/duck.png" alt="Mascot" class="mascot-img" />
-        </div>
-      </div>
+      
 
       <!-- Benefits & Stats Content -->
       <div class="stats-content">
@@ -26,7 +22,7 @@
             <h4 class="section-title">Ưu đãi của bạn</h4>
             <div class="stats-grid">
               <div class="stat-item">
-                <span class="stat-label">F-Point hiện có</span>
+                <span class="stat-label">B-Point hiện có</span>
                 <span class="stat-value text-danger">{{
                   user.totalPoint || 0
                 }}</span>
@@ -41,7 +37,7 @@
           </div>
 
           <div class="col-md-6">
-            <h4 class="section-title">Thành tích năm 2025</h4>
+            <h4 class="section-title">Thành tích của bạn</h4>
             <div class="stats-grid">
               <div class="stat-item">
                 <span class="stat-label">Số đơn hàng</span>
@@ -60,7 +56,7 @@
         </div>
 
         <!-- Member Tier Progress -->
-        <div class="member-tier-section mt-4">
+        <!-- <div class="member-tier-section mt-4">
           <h5 class="tier-title">Quyền lợi thành viên tại Fahasa.com</h5>
           <div class="tier-progress">
             <div class="tier-tabs">
@@ -103,13 +99,13 @@
               </div>
               <div class="benefit-row">
                 <span class="benefit-label"
-                  >- Tỉ lệ tích lũy F-Point trên giá trị đơn hàng:</span
+                  >- Tỉ lệ tích lũy B-Point trên giá trị đơn hàng:</span
                 >
                 <span class="benefit-status">0,5%</span>
               </div>
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
     </div>
 
@@ -234,9 +230,7 @@ onMounted(async () => {
 
       console.log("Mapped user data:", user.value);
 
-      if (!user.value.phoneNumber || !user.value.fullName) {
-        setAlert("Bạn vui lòng cập nhật đầy đủ thông tin tài khoản.");
-      }
+      
     } else {
       // ✅ SỬA: Xử lý khi response không đúng structure
       console.error("Invalid response structure:", response);

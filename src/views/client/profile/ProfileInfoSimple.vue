@@ -8,7 +8,7 @@
       <h3>Thống kê tài khoản</h3>
       <div class="stats-grid">
         <div class="stat-item">
-          <span class="stat-label">F-Point hiện có</span>
+                          <span class="stat-label">B-Point hiện có</span>
           <span class="stat-value">0</span>
         </div>
         <div class="stat-item">

@@ -26,6 +26,7 @@ export const getCartItems = async (userId) => {
   }
 }
 
+
 // Update cart item quantity
 export const updateCartItem = async (cartItemId, quantity) => {
   try {
@@ -74,11 +75,23 @@ export const validateCart = async (userId) => {
   }
 }
 
+// Get cart items count
+export const getCartItemsCount = async (userId) => {
+  try {
+    const response = await axiosClient.get(`/api/carts/user/${userId}/count`)
+    return response
+  } catch (error) {
+    console.error('Error getting cart items:', error)
+    throw error
+  }
+}
+
 export default {
   addToCart,
   getCartItems,
   updateCartItem,
   removeCartItem,
   selectCartItem,
-  validateCart
+  validateCart,
+  getCartItemsCount
 }

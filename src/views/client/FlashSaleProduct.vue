@@ -79,53 +79,74 @@ onUnmounted(() => {
 
 <style scoped>
 .flash-sale-banner {
-  background: #ff6f6f;
-  border-radius: 10px;
-  padding: 16px 24px;
+  background: linear-gradient(135deg, #ff4757 0%, #ff3742 50%, #ff2f3a 100%);
+  border-radius: 16px;
+  padding: 20px 28px;
   display: flex;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(255, 71, 87, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .flash-sale-title {
   display: flex;
   align-items: center;
   width: 100%;
-  gap: 12px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 .flash-sale-icon {
-  color: #ff9800;
-  font-size: 28px;
-  font-weight: bold;
-  margin-right: 8px;
+  color: #ffd700;
+  font-size: 32px;
+  font-weight: 900;
+  margin-right: 0;
+  text-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
 }
 .flash-sale-name {
-  font-size: 22px;
-  font-weight: 900; /* Đậm hơn */
-  color: #ff9800;
-  font-style: italic;
-  margin-right: 18px;
+  font-size: 24px;
+  font-weight: 900;
+  color: #ffffff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin-right: 20px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
 }
 .flash-sale-end-text {
-  color: #222;
-  margin-right: 8px;
+  color: #ffffff;
+  margin-right: 12px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  opacity: 0.9;
 }
 .flash-sale-countdown {
   display: flex;
   align-items: center;
-  gap: 2px;
-  font-size: 20px;
-  font-family: monospace;
-  margin-right: 18px;
+  gap: 4px;
+  font-size: 22px;
+  font-family: 'Courier New', monospace;
+  margin-right: 20px;
+  font-weight: 700;
 }
 .countdown-block {
-  background: #111;
-  color: #fff;
-  border-radius: 6px;
-  padding: 2px 8px;
-  font-size: 20px;
-  min-width: 32px;
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 22px;
+  min-width: 40px;
   text-align: center;
   display: inline-block;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 .flash-sale-link {
   color: #1976d2;
@@ -138,11 +159,12 @@ onUnmounted(() => {
   text-decoration: underline;
 }
 .flash-sale-product {
-  background: #fff;
-  border-radius: 8px;
-  padding: 18px 16px 12px 16px;
-  box-shadow: 0 2px 8px #0000000a;
-  margin-bottom: 24px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px 20px 20px 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin-bottom: 32px;
+  border: 1px solid #f1f3f4;
 }
 .flash-sale-header {
   font-weight: 600;
@@ -159,9 +181,9 @@ onUnmounted(() => {
 }
 .flash-sale-list {
   display: flex;
-  gap: 28px;
+  gap: 24px;
   overflow-x: auto;
-  padding: 8px 0;
+  padding: 12px 0;
   justify-content: flex-start;
 }
 </style>

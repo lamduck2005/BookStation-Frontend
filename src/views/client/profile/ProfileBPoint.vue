@@ -1,46 +1,25 @@
 <template>
-  <div class="profile-fpoint">
-    <!-- Warning Alert -->
-    <div class="alert alert-warning d-flex align-items-center mb-4">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i>
-      <span>Bạn vui lòng cắp nhật thông tin tài khoản:</span>
-      <a href="#" class="ms-2 text-primary fw-bold">Cắp nhật thông tin ngay</a>
-    </div>
+  <div class="profile-bpoint">
 
     <!-- Page Header -->
     <div class="page-header mb-4">
-      <h2 class="page-title">Tài khoản F-Point</h2>
+      <h2 class="page-title">Tài khoản B-Point</h2>
     </div>
 
-    <!-- F-Point Balance Card -->
-    <div class="fpoint-balance-card mb-4">
+    <!-- B-Point Balance Card -->
+    <div class="bpoint-balance-card mb-4">
       <div class="balance-info">
         <div class="balance-icon">
           <i class="bi bi-coin"></i>
         </div>
         <div class="balance-details">
-          <h3 class="balance-title">{{ fPointBalance }} F-Point</h3>
-          <div class="top-up-section">
-            <label for="topupAmount" class="form-label">Nạp điểm F-Point / Freeship</label>
-            <div class="input-group">
-              <input 
-                type="text" 
-                class="form-control" 
-                id="topupAmount"
-                v-model="topupAmount"
-                placeholder="Nhập mã của bạn..."
-              />
-              <button class="btn btn-primary" @click="topUpFPoint">
-                Nạp điểm
-              </button>
-            </div>
-          </div>
+          <h3 class="balance-title">{{ bPointBalance }} B-Point</h3>
         </div>
       </div>
     </div>
 
-    <!-- F-Point History -->
-    <div class="fpoint-history">
+    <!-- B-Point History -->
+    <div class="bpoint-history">
       <div class="history-header">
         <div class="history-tabs">
           <button 
@@ -109,7 +88,7 @@ import { ref, computed } from 'vue'
 
 const activeTab = ref('all')
 const topupAmount = ref('')
-const fPointBalance = ref(0)
+const bPointBalance = ref(0)
 
 const historyTabs = [
   { key: 'all', label: 'Thời gian' },
@@ -128,14 +107,14 @@ const filteredHistory = computed(() => {
   return transactionHistory.value.filter(transaction => transaction.category === activeTab.value)
 })
 
-// Top up F-Point
-const topUpFPoint = () => {
+// Top up B-Point
+const topUpBPoint = () => {
   if (!topupAmount.value.trim()) {
     alert('Vui lòng nhập mã nạp điểm')
     return
   }
   
-  // TODO: API call to top up F-Point
+  // TODO: API call to top up B-Point
   alert(`Đã nạp điểm với mã: ${topupAmount.value}`)
   topupAmount.value = ''
 }
@@ -157,7 +136,7 @@ const formatTime = (dateString) => {
 </script>
 
 <style scoped>
-.profile-fpoint {
+.profile-bpoint {
   background: white;
   border-radius: 8px;
   padding: 24px;
@@ -176,7 +155,7 @@ const formatTime = (dateString) => {
   margin: 0;
 }
 
-.fpoint-balance-card {
+.bpoint-balance-card {
   background: linear-gradient(135deg, #FFB74D 0%, #FF9800 100%);
   border-radius: 12px;
   padding: 24px;
@@ -251,7 +230,7 @@ const formatTime = (dateString) => {
   border-color: rgba(255, 255, 255, 0.5);
 }
 
-.fpoint-history {
+.bpoint-history {
   background: #f8f9fa;
   border-radius: 8px;
   overflow: hidden;
@@ -370,7 +349,7 @@ const formatTime = (dateString) => {
 }
 
 @media (max-width: 768px) {
-  .profile-fpoint {
+  .profile-bpoint {
     padding: 16px;
   }
   

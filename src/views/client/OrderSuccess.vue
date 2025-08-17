@@ -159,8 +159,7 @@ onMounted(() => {
     return
   }
 
-  // Có thể gọi API để lấy chi tiết đơn hàng nếu cần
-  // loadOrderDetails()
+  window.dispatchEvent(new CustomEvent('updateCartCount'));
 })
 </script>
 

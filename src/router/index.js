@@ -22,7 +22,7 @@ import ProfileOrders from "@/views/client/profile/ProfileOrders.vue";
 import ProfileAddresses from "@/views/client/profile/ProfileAddresses.vue";
 import ProfileChangePassword from "@/views/client/profile/ProfileChangePassword.vue";
 import ProfileVouchers from "@/views/client/profile/ProfileVouchers.vue";
-import ProfileFPoint from "@/views/client/profile/ProfileFPoint.vue";
+import ProfileBPoint from "@/views/client/profile/ProfileBPoint.vue";
 import ProfileNotifications from "@/views/client/profile/ProfileNotifications.vue";
 import ProfileFavorites from "@/views/client/profile/ProfileFavorites.vue";
 import ProfileReviews from "@/views/client/profile/ProfileReviews.vue";
@@ -175,9 +175,9 @@ const router = createRouter({
               component: ProfileVouchers,
             },
             {
-              path: "fpoint",
-              name: "profile-fpoint",
-              component: ProfileFPoint,
+              path: "bpoint",
+              name: "profile-bpoint",
+              component: ProfileBPoint,
             },
             {
               path: "notifications",

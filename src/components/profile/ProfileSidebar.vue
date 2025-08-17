@@ -18,7 +18,7 @@
         <span class="rank-badge">Thành viên {{ userRank.rank.rankName }}</span>
       </div>
       <div class="user-points" v-if="user && user.total_point !== undefined">
-        F-Point tích lũy {{ user.total_point }}
+        B-Point tích lũy {{ user.total_point }}
       </div>
       <!-- <div class="rank-progress">
         Thêm <span class="highlight">30.000</span> để nâng hạng Vàng
@@ -57,11 +57,7 @@
                 >Đổi mật khẩu</RouterLink
               >
             </li>
-            <li>
-              <RouterLink to="/profile/invoice" class="nav-sublink"
-                >Thông tin xuất hóa đơn GTGT</RouterLink
-              >
-            </li>
+           
             <li>
               <RouterLink
                 to="/profile/benefits"
@@ -91,9 +87,9 @@
         </li>
 
         <li class="nav-item">
-          <RouterLink to="/profile/fpoint" class="nav-link">
+          <RouterLink to="/profile/bpoint" class="nav-link">
             <i class="bi bi-coin"></i>
-            <span>Tài Khoản F-Point / Freeship</span>
+            <span>Tài Khoản B-Point / Freeship</span>
           </RouterLink>
         </li>
 
@@ -104,12 +100,7 @@
           </RouterLink>
         </li>
 
-        <li class="nav-item">
-          <RouterLink to="/profile/favorites" class="nav-link">
-            <i class="bi bi-heart"></i>
-            <span>Sản phẩm yêu thích</span>
-          </RouterLink>
-        </li>
+       
       </ul>
     </nav>
   </div>
@@ -125,7 +116,7 @@ import {
 import { getUserId } from "@/utils/utils";
 
 const isAccountMenuOpen = ref(true);
-const voucherCount = ref(37);
+const voucherCount = ref();
 const user = ref(null);
 const userRank = ref({ rank: { rankName: "Vô Hạng" } });
 
@@ -360,8 +351,9 @@ const nextRankMessage = computed(() => {
 }
 
 .nav-sublink.member-benefits {
-  color: #dc3545;
-  font-weight: 500;
+  /* color: #bb0013; */
+  /* font-weight: bold; */
+  font-style: italic;
 }
 
 .nav-item {

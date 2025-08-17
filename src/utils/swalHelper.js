@@ -8,17 +8,18 @@ export const showToast = (icon, title, position = "top-end", showProgress = true
     icon,
     title,
     showConfirmButton: false,
+    showCloseButton: true,
     timer,
     timerProgressBar: showProgress,
     customClass: {
       popup: "animated-toast",
     },
     didOpen: (toast) => {
-      toast.style.animation =
-        "slideIn 0.5s ease-out, fadeOut 0.5s ease-in-out " +
-        (timer - 500) +
-        "ms forwards";
+      toast.style.animation = "slideIn 0.5s ease-out"; // chỉ chạy vào
     },
+    willClose: (toast) => {
+      toast.style.animation = "fadeOut 0.5s ease-in-out"; // cho ra ngoài
+    }
   });
 };
 

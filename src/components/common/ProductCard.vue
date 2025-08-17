@@ -271,6 +271,10 @@ const getFlashSaleStockQuantity = () => {
   transition: all 0.3s ease;
 }
 
+.product-card .card {
+  transition: all 0.3s ease;
+}
+
 .cursor-pointer {
   cursor: pointer;
 }
@@ -282,28 +286,31 @@ const getFlashSaleStockQuantity = () => {
 .product-card:hover .card {
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
-
 .product-image-container {
-  height: 180px;
-  overflow: hidden;
+  height: 180px; /* cố định khung */
+  width: 100%;
   position: relative;
+  overflow: hidden !important; /* cắt phần ảnh thừa */
 }
 
 .product-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
+  object-fit: contain;
+  display: block;
+  transition: all 0.3s ease;
 }
 
 .product-card:hover .product-image {
-  transform: scale(1.05);
+  transform: scale(1.1);
+  filter: brightness(1.1);
 }
 
 .sale-badge {
   z-index: 2;
   font-size: 0.8rem;
   padding: 0.3rem 0.6rem;
+  transition: all 0.3s ease;
 }
 
 .flash-sale-badge {
@@ -311,6 +318,7 @@ const getFlashSaleStockQuantity = () => {
   color: white !important;
   font-weight: bold;
   animation: pulse 2s infinite;
+  transition: all 0.3s ease;
 }
 
 @keyframes pulse {
@@ -338,22 +346,27 @@ const getFlashSaleStockQuantity = () => {
   text-overflow: ellipsis;
   word-break: break-word;
   white-space: normal; /* Cho phép xuống dòng */
+  transition: all 0.3s ease;
 }
 
 .current-price {
   font-size: 1.1rem;
+  transition: all 0.3s ease;
 }
 
 .original-price {
   font-size: 0.8rem;
+  transition: all 0.3s ease;
 }
 
 .discount-badge {
   font-size: 0.75rem;
+  transition: all 0.3s ease;
 }
 
 .product-category .badge {
   font-size: 0.7rem;
+  transition: all 0.3s ease;
 }
 
 .z-index-1 {
@@ -371,6 +384,7 @@ const getFlashSaleStockQuantity = () => {
   letter-spacing: 0.5px;
   animation: shake 0.5s ease-in-out;
   box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+  transition: all 0.3s ease;
 }
 
 @keyframes shake {

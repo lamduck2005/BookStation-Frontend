@@ -482,11 +482,13 @@ const removeItem = async (itemId) => {
   const productName = item?.bookName || 'sản phẩm này'
   
   const result = await showQuickConfirm(
-    `Bạn có chắc muốn xóa "${productName}" khỏi giỏ hàng?`,
     'Xóa sản phẩm',
-    'Xóa',
-    'Hủy',
-    'question'
+    `Bạn có chắc muốn xóa "${productName}" khỏi giỏ hàng?`,
+    'question',
+    'Xác nhận xoá',
+    'Huỷ',
+    'btn-danger',
+    'btn-primary'
   )
   
   if (!result.isConfirmed) {
@@ -501,6 +503,8 @@ const removeItem = async (itemId) => {
   } catch (error) {
     console.error('❌ Error removing item:', error)
     showToast('error', 'Không thể xóa sản phẩm')
+  } finally {
+    window.dispatchEvent(new CustomEvent('updateCartCount'));
   }
 }
 

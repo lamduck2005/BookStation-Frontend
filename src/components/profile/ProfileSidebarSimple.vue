@@ -3,7 +3,7 @@
     <!-- User Rank Card -->
     <div class="rank-card">
       <div class="rank-badge">Thành viên Bạc</div>
-      <div class="rank-points">F-Point tích lũy 0</div>
+              <div class="rank-points">B-Point tích lũy 0</div>
       <div class="rank-progress">
         Thêm <span class="highlight">30.000</span> để nâng hạng Vàng
       </div>
@@ -43,11 +43,11 @@
           </RouterLink>
         </li>
 
-        <!-- F-Point -->
+        <!-- B-Point -->
         <li class="nav-item">
           <RouterLink to="/profile/fpoint" class="nav-link">
             <i class="bi bi-coin"></i>
-            <span>F-Point / Freeship</span>
+            <span>B-Point / Freeship</span>
           </RouterLink>
         </li>
 

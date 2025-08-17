@@ -24,12 +24,13 @@ import ProfileSidebar from '@/components/profile/ProfileSidebar.vue'
 
 <style scoped>
 .profile-layout {
-  background-color: #ccd5db;
+  background-color: f8f9fa;
   min-height: 100vh;
 }
 
 .profile-content {
-  background-color: transparent;
+  /* background-color: transparent; */
+  /* background-color: #f0f0f0; */
   padding: 0;
 }
 
