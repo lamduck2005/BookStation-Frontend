@@ -604,24 +604,28 @@ const goToCheckout = async () => {
       // Navigate to checkout page
       router.push('/checkout')
     } else {
-      throw new Error(response.message || 'Không thể tạo phiên thanh toán')
+      throw new Error(response.data.message || 'Không thể tạo phiên thanh toán')
     }
   } catch (error) {
     console.error('❌ Error creating checkout session:', error)
     
-    let errorMessage = error.message || 'Không thể tạo phiên thanh toán. Vui lòng thử lại.'
-    
+    // Ưu tiên lấy message chi tiết từ backend nếu có
+    let errorMessage =
+      error?.response?.data?.message ||
+      error.message ||
+      'Không thể tạo phiên thanh toán. Vui lòng thử lại.'
+
     // Xử lý các lỗi đặc biệt theo document
-    if (error.message?.includes('trống')) {
+    if (errorMessage?.includes('trống')) {
       errorMessage = 'Giỏ hàng trống, không thể thanh toán'
-    } else if (error.message?.includes('không có sản phẩm nào được chọn')) {
+    } else if (errorMessage?.includes('không có sản phẩm nào được chọn')) {
       errorMessage = 'Không có sản phẩm nào được chọn để checkout'
-    } else if (error.message?.includes('hết hàng')) {
+    } else if (errorMessage?.includes('hết hàng')) {
       errorMessage = 'Có sản phẩm đã hết hàng, vui lòng cập nhật giỏ hàng'
       // Reload cart to update stock status
       await loadCartItems()
     }
-    
+
     showToast('error', errorMessage)
   } finally {
     sessionCreating.value = false
