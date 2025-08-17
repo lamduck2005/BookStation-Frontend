@@ -30,7 +30,7 @@ onMounted(async () => {
 
   const orders = await getTotalDeliveredOrders();
   stats.value[1].value = orders.toLocaleString();
-
+console.log("Total delivered orders:", orders);
   const users = await getTotalUsers();
   stats.value[2].value = users.toLocaleString(); // Gán số người dùng
 

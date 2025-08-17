@@ -264,7 +264,8 @@
   >
     <div class="modal-dialog" style="max-width: 600px">
       <div class="modal-content">
-        <div class="modal-header category-modal-header">
+        <!-- ✅ Đổi từ category-modal-header thành form-modal-header -->
+        <div class="modal-header form-modal-header">
           <h5 class="modal-title">
             <i class="bi bi-plus-circle me-2"></i>
             Thêm danh mục
@@ -273,48 +274,54 @@
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
-        <div class="modal-body">
-          <form @submit.prevent="add">
-            <div class="mb-3">
-              <label class="form-label">
-                Tên danh mục <span class="text-danger">*</span>
-              </label>
-              <input
-                v-model="category.categoryName"
-                class="form-control"
-                required
-                placeholder="Nhập tên danh mục"
-              />
+        <!-- ✅ Đổi từ category-modal-body thành form-modal-body -->
+        <div class="modal-body form-modal-body">
+          <div class="mb-3">
+            <label class="form-label">
+              Tên danh mục <span class="text-danger">*</span>
+            </label>
+            <input
+              v-model="category.categoryName"
+              class="form-control"
+              required
+              placeholder="Nhập tên danh mục (2-100 ký tự)"
+              maxlength="100"
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Danh Mục Cha</label>
+            <select v-model="category.parentCategory.id" class="form-select">
+              <option :value="null">Chọn danh mục</option>
+              <option v-for="cat in dataGetAll" :key="cat.id" :value="cat.id">
+                {{ cat.categoryName }}
+              </option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Mô tả</label>
+            <textarea
+              v-model="category.description"
+              class="form-control"
+              placeholder="Nhập mô tả (tối đa 500 ký tự)"
+              maxlength="500"
+              rows="4"
+            ></textarea>
+            <div class="form-text">
+              {{ category.description ? category.description.length : 0 }}/500
+              ký tự
             </div>
-            <div class="mb-3">
-              <label class="form-label">Danh Mục Cha</label>
-              <select v-model="category.parentCategory.id" class="form-select">
-                <option :value="null">Chọn danh mục</option>
-                <option v-for="cat in dataGetAll" :key="cat.id" :value="cat.id">
-                  {{ cat.categoryName }}
-                </option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Mô tả</label>
-              <textarea
-                v-model="category.description"
-                class="form-control"
-                placeholder="Nhập mô tả"
-              ></textarea>
-            </div>
-          </form>
+          </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" @click="closeModal">
-            Hủy
-          </button>
+          <!-- ✅ Đổi từ category-form-btn thành form-btn -->
           <button
             type="button"
-            class="btn btn-primary"
-            style="background-color: #33304e; border-color: #33304e"
-            @click="add"
+            class="btn form-btn-secondary"
+            @click="closeModal"
           >
+            Hủy
+          </button>
+          <button type="button" class="btn form-btn-primary" @click="add">
             Thêm
           </button>
         </div>
@@ -331,7 +338,8 @@
   >
     <div class="modal-dialog" style="max-width: 450px">
       <div class="modal-content">
-        <div class="modal-header" style="background-color: #ecae9e">
+        <!-- ✅ Đổi từ category-modal-header thành form-modal-header -->
+        <div class="modal-header form-modal-header">
           <h5 class="modal-title">
             <i class="bi bi-info-circle me-2"></i>
             Chi tiết danh mục
@@ -341,13 +349,11 @@
             class="custom-close-btn"
             @click="closeDetailModal"
           >
-            <img
-              src="https://cdn-icons-png.flaticon.com/128/694/694604.png"
-              alt="Close"
-            />
+            <i class="bi bi-x-lg"></i>
           </button>
         </div>
-        <div class="modal-body">
+        <!-- ✅ Đổi từ category-modal-body thành form-modal-body -->
+        <div class="modal-body form-modal-body">
           <div class="mb-2"><b>ID:</b> {{ detailCategory.id }}</div>
           <div class="mb-2">
             <b>Tên danh mục:</b> {{ detailCategory.categoryName }}
@@ -371,9 +377,10 @@
           </div>
         </div>
         <div class="modal-footer">
+          <!-- ✅ Đổi từ category-form-btn thành form-btn -->
           <button
             type="button"
-            class="btn btn-secondary"
+            class="btn form-btn-secondary"
             @click="closeDetailModal"
           >
             Đóng
@@ -392,7 +399,8 @@
   >
     <div class="modal-dialog" style="max-width: 600px">
       <div class="modal-content">
-        <div class="modal-header" style="background-color: #ecae9e">
+        <!-- ✅ Đổi từ category-modal-header thành form-modal-header -->
+        <div class="modal-header form-modal-header">
           <h5 class="modal-title d-flex align-items-center gap-2">
             <i class="bi bi-pencil-square me-2"></i> Sửa danh mục
           </h5>
@@ -401,56 +409,59 @@
             class="custom-close-btn"
             @click="showEditModal = false"
           >
-            <img
-              src="https://cdn-icons-png.flaticon.com/128/694/694604.png"
-              alt="Close"
-            />
+            <i class="bi bi-x-lg"></i>
           </button>
         </div>
-        <div class="modal-body">
-          <form @submit.prevent="update">
-            <div class="mb-3">
-              <label class="form-label">
-                Tên danh mục <span class="text-danger">*</span>
-              </label>
-              <input
-                v-model="editData.categoryName"
-                class="form-control"
-                required
-                placeholder="Nhập tên danh mục"
-              />
+        <!-- ✅ Đổi từ category-modal-body thành form-modal-body -->
+        <div class="modal-body form-modal-body">
+          <div class="mb-3">
+            <label class="form-label">
+              Tên danh mục <span class="text-danger">*</span>
+            </label>
+            <input
+              v-model="editData.categoryName"
+              class="form-control"
+              required
+              placeholder="Nhập tên danh mục (2-100 ký tự)"
+              maxlength="100"
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Danh Mục Cha</label>
+            <select v-model="editData.parentCategory" class="form-select">
+              <option :value="null">Chọn danh mục</option>
+              <option v-for="cat in dataGetAll" :key="cat.id" :value="cat">
+                {{ cat.categoryName }}
+              </option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Mô tả</label>
+            <textarea
+              v-model="editData.description"
+              class="form-control"
+              placeholder="Nhập mô tả (tối đa 500 ký tự)"
+              maxlength="500"
+              rows="4"
+            ></textarea>
+            <div class="form-text">
+              {{ editData.description ? editData.description.length : 0 }}/500
+              ký tự
             </div>
-            <div class="mb-3">
-              <label class="form-label">Danh Mục Cha</label>
-              <select v-model="editData.parentCategory" class="form-select">
-                <option :value="null">Chọn danh mục</option>
-                <option v-for="cat in dataGetAll" :key="cat.id" :value="cat">
-                  {{ cat.categoryName }}
-                </option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Mô tả</label>
-              <textarea
-                v-model="editData.description"
-                class="form-control"
-                placeholder="Nhập mô tả"
-              ></textarea>
-            </div>
-          </form>
+          </div>
         </div>
         <div class="modal-footer">
+          <!-- ✅ Đổi từ category-form-btn thành form-btn -->
           <button
             type="button"
-            class="btn btn-secondary"
+            class="btn form-btn-secondary"
             @click="showEditModal = false"
           >
             Hủy
           </button>
           <button
             type="button"
-            class="btn btn-primary"
-            style="background-color: #33304e; border-color: #33304e"
+            class="btn form-btn-primary"
             @click="handleUpdateCategory(editData.id, editData)"
           >
             Lưu
@@ -1011,50 +1022,156 @@ const clearFilters = () => {
 
 <style scoped>
 @import "@/assets/css/admin-global.css";
+@import "@/assets/css/form-global.css";
 
-/* Chỉ giữ lại các style cho modal, custom-close-btn, ... */
-.modal-dialog {
-  max-width: 600px !important;
+/* ========== CATEGORY SPECIFIC OVERRIDES ========== */
+.form-modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: #ffffff !important;
 }
+
+.form-modal-body {
+  background-color: #ffffff !important;
+}
+
+/* ========== TABLE STYLING ========== */
+.category-table-custom thead th {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+  font-weight: 700 !important;
+  color: #333 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #dee2e6 !important;
+}
+
+.category-table-custom tbody tr:hover {
+  background-color: #f8f9ff !important;
+  transition: all 0.3s ease;
+}
+
+.category-table-custom tbody td {
+  font-weight: 500 !important;
+  color: #444 !important;
+}
+
+.category-table-custom tbody td.fw-bold {
+  font-weight: 700 !important;
+  color: #333 !important;
+}
+
+/* ========== MODAL SPECIFIC ========== */
 .modal-content {
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  border: none;
+  border-radius: 15px !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
+  border: none !important;
+  overflow: hidden;
 }
-.category-modal-header {
-  border-bottom: 2px solid #ecae9e;
-  border-radius: 15px 15px 0 0;
-  padding: 0.8rem 1.2rem;
-  position: relative;
-  background: #f8fafc;
+
+.modal-footer {
+  background-color: #f8f9fa !important;
+  border-top: 1px solid #dee2e6 !important;
+  padding: 1rem 2rem !important;
 }
-.modal-title {
+
+/* ========== CARD STYLING ========== */
+.admin-table-card {
+  border-radius: 12px !important;
+  border: none !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.admin-table-card .card-header {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
+  border-bottom: 2px solid #e9ecef !important;
+  border-radius: 12px 12px 0 0 !important;
+}
+
+.admin-table-card .card-header h5 {
+  font-weight: 700 !important;
+  color: #333 !important;
+}
+
+/* ========== ACTION BUTTONS ========== */
+.action-btn {
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ========== OVERRIDE INLINE STYLES ========== */
+.btn-primary[style*="background-color: #33304e"] {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.75rem 2rem !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+}
+
+.btn-primary[style*="background-color: #33304e"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4) !important;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .modal-dialog {
+    max-width: 95vw !important;
+    margin: 1rem auto !important;
+  }
+
+  .form-modal-body {
+    padding: 1rem !important;
+  }
+}
+
+/* ========== CATEGORY SPECIFIC STYLES ========== */
+.parent-row {
+  background-color: #f8f9fa;
+}
+
+.child-row {
+  background-color: #ffffff;
+}
+
+.toggle-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-name {
   font-weight: 600;
-  color: #2c2c54;
-  font-size: 1.1rem;
-}
-.custom-close-btn {
-  background: none;
-  border: none;
-  padding: 0.5rem;
-  cursor: pointer;
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 1.5rem;
   color: #333;
 }
-.modal-body {
-  min-height: 320px;
-  max-height: 70vh;
-  overflow-y: auto;
-  padding: 1.5rem 1.2rem 0.5rem 1.2rem;
+
+.child-category-name {
+  font-weight: 500;
+  color: #555;
 }
-.modal-footer {
-  border-top: none;
-  background: none;
-  padding: 1rem 0 0 0;
-  justify-content: flex-end;
+
+.description-text {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-collapse {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.filter-collapsed {
+  max-height: 0;
+  padding: 0 1.25rem;
 }
 </style>
