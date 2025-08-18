@@ -28,13 +28,6 @@
         :class="{ 'filter-collapsed': !showFilter }"
       >
         <div class="row g-4">
-          <!-- <div class="col-md-2">
-            <label class="form-label">
-              <i class="bi bi-lightning-charge me-1"></i>
-              FlashSale ID
-            </label>
-            <input type="number" class="form-control" v-model="filter.flashSaleId" placeholder="FlashSale ID" />
-          </div> -->
           <div class="col-md-2">
             <label class="form-label">
               <i class="bi bi-book me-1"></i>
@@ -46,17 +39,6 @@
               v-model="filter.bookName"
               placeholder="Nhập tên sách..."
             />
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">
-              <i class="bi bi-toggle-on me-1"></i>
-              Trạng thái
-            </label>
-            <select class="form-select" v-model="filter.status">
-              <option value="">Tất cả</option>
-              <option value="1">Hoạt động</option>
-              <option value="0">Không hoạt động</option>
-            </select>
           </div>
           <div class="col-md-2">
             <label class="form-label">Giá giảm tối thiểu</label>
@@ -77,7 +59,7 @@
             />
           </div>
           <div class="col-md-2">
-            <label class="form-label">% giảm tối thiểu</label>
+            <label class="form-label">Phần trăm giảm tối thiểu</label>
             <input
               type="number"
               class="form-control"
@@ -86,7 +68,7 @@
             />
           </div>
           <div class="col-md-2">
-            <label class="form-label">% giảm tối đa</label>
+            <label class="form-label">Phần trăm giảm tối đa</label>
             <input
               type="number"
               class="form-control"
@@ -183,16 +165,15 @@
                 <th style="width: 40px">#</th>
                 <th>Sách</th>
                 <th>Giá giảm</th>
-                <th>% Giảm</th>
+                <th>phần trămGiảm</th>
                 <th>Số lượng sản phẩm khuyến mãi</th>
                 <th>Giới hạn/người</th>
-                <th style="width: 200px">Trạng thái</th>
                 <th style="width: 120px">Chức năng</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="items.length === 0">
-                <td colspan="8" class="text-center py-4 text-muted">
+                <td colspan="7" class="text-center py-4 text-muted">
                   <i class="bi bi-inbox me-2"></i>
                   Không có dữ liệu
                 </td>
@@ -204,17 +185,6 @@
                 <td class="py-3">{{ item.discountPercentage }}%</td>
                 <td class="py-3">{{ item.stockQuantity }}</td>
                 <td class="py-3">{{ item.maxPurchasePerUser }}</td>
-                <td class="py-3">
-                  <ToggleStatus
-                    :id="item.id"
-                    v-model="item.status"
-                    :true-value="1"
-                    :false-value="0"
-                    active-text="Hoạt động"
-                    inactive-text="Không hoạt động"
-                    @change="handleStatusChange(item)"
-                  />
-                </td>
                 <td class="py-3">
                   <EditButton @click="openEditForm(item)" />
                 </td>
@@ -250,7 +220,6 @@
     >
       <div class="modal-dialog">
         <div class="modal-content">
-          <!-- ✅ Đổi từ .modal-header thành .form-modal-header -->
           <div class="modal-header form-modal-header">
             <h5 class="modal-title" id="formModalLabel">
               <i class="bi bi-bag-plus me-2"></i>
@@ -264,7 +233,6 @@
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
-          <!-- ✅ Đổi từ .modal-body thành .form-modal-body -->
           <div class="modal-body form-modal-body">
             <div class="mb-3">
               <label class="form-label">
@@ -332,7 +300,7 @@
             <div v-if="selectedBookInfo">
               <div class="mb-3">
                 <label class="form-label">
-                  % Giảm <span class="text-danger">*</span>
+                  Phần trăm giảm <span class="text-danger">*</span>
                 </label>
                 <input
                   type="number"
@@ -342,7 +310,7 @@
                   required
                   :min="0"
                   :max="100"
-                  placeholder="Nhập % giảm (0-100)"
+                  placeholder="Nhập phần trăm giảm (0-100)"
                 />
                 <div
                   v-if="formData.discountPrice"
@@ -432,16 +400,8 @@
                 placeholder="Nhập giới hạn mỗi người"
               />
             </div>
-            <div class="mb-3">
-              <label class="form-label">Trạng thái</label>
-              <select class="form-select" v-model="formData.status">
-                <option :value="1">Hoạt động</option>
-                <option :value="0">Không hoạt động</option>
-              </select>
-            </div>
           </div>
           <div class="modal-footer">
-            <!-- ✅ Đổi button classes -->
             <button
               type="button"
               class="btn form-btn-secondary"
@@ -474,12 +434,10 @@ import { Modal } from "bootstrap";
 import { showToast } from "@/utils/swalHelper.js";
 import EditButton from "@/components/common/EditButton.vue";
 import Pagination from "@/components/common/Pagination.vue";
-import ToggleStatus from "@/components/common/ToggleStatus.vue";
 import {
   getAllFlashSaleItem,
   addFlashSaleItem,
   updateFlashSaleItem,
-  toggleStatusFlashSaleItem,
   getFlashSaleItemStats,
 } from "@/services/admin/flashSaleItem.js";
 import { useRoute } from "vue-router";
@@ -496,7 +454,6 @@ const defaultFlashSaleId = route.params.id ? parseInt(route.params.id) : "";
 const filter = ref({
   flashSaleId: defaultFlashSaleId,
   bookName: "", // ✅ Đổi từ bookId thành bookName
-  status: "",
   minPrice: "",
   maxPrice: "",
   minPercent: "",
@@ -527,7 +484,6 @@ const formData = ref({
   discountPercentage: "",
   stockQuantity: "",
   maxPurchasePerUser: "",
-  status: 1,
 });
 
 // Books loading
@@ -551,53 +507,18 @@ function formatCurrency(value) {
   });
 }
 
-// ✅ Computed để hiển thị thông tin sách đã chọn
+// Computed để hiển thị thông tin sách đã chọn
 const selectedBookInfo = computed(() => {
-  console.log("=== selectedBookInfo DEBUG ===");
-  console.log("formData.bookId:", formData.value.bookId);
-  console.log("availableBooks.length:", availableBooks.value.length);
-
   if (!formData.value.bookId || !availableBooks.value.length) {
-    console.log("❌ No bookId or no books available");
     return null;
   }
 
   const bookId = parseInt(formData.value.bookId);
-  console.log("Looking for book with ID:", bookId);
-
-  // ✅ SỬA: Dùng book.bookId thay vì book.id
   const foundBook = availableBooks.value.find((book) => {
-    const match = book.bookId === bookId;
-    console.log(`Checking: ${book.bookId} === ${bookId} ? ${match}`);
-    return match;
+    return book.bookId === bookId;
   });
 
-  if (foundBook) {
-    console.log("✅ Found book object:", foundBook);
-    console.log("✅ Book details:", {
-      bookId: foundBook.bookId,
-      name: foundBook.bookName,
-      price: foundBook.price,
-      stock: foundBook.stockQuantity,
-    });
-  } else {
-    console.log("❌ Book not found!");
-    console.log(
-      "Available bookIds:",
-      availableBooks.value.map((b) => b.bookId)
-    );
-  }
-
   return foundBook;
-});
-
-const computedDiscountPrice = computed(() => {
-  if (!selectedBookInfo.value || !formData.value.discountPercentage) return "";
-  const price = selectedBookInfo.value.price;
-  const percent = parseFloat(formData.value.discountPercentage);
-  if (isNaN(price) || isNaN(percent)) return "";
-  // Tính giá giảm
-  return Math.round(price * (1 - percent / 100));
 });
 
 // Load books for Add mode
@@ -605,9 +526,6 @@ const loadAvailableBooks = async () => {
   try {
     loadingBooks.value = true;
     const response = await getActiveBooksWithStock();
-
-    console.log("=== DEBUG: Books API Response ===");
-    console.log("Full response:", response);
 
     let booksData = [];
     if (response && response.data && response.data.data) {
@@ -621,7 +539,6 @@ const loadAvailableBooks = async () => {
     }
 
     availableBooks.value = booksData;
-    console.log("Available books:", availableBooks.value);
   } catch (error) {
     console.error("Lỗi khi tải danh sách sách:", error);
     availableBooks.value = [];
@@ -637,9 +554,6 @@ const loadBooksForEdit = async () => {
     loadingBooks.value = true;
     const response = await getActiveBooksForEdit();
 
-    console.log("=== DEBUG: Books For Edit API Response ===");
-    console.log("Full response:", response);
-
     let booksData = [];
     if (response && response.data && response.data.data) {
       booksData = response.data.data;
@@ -652,7 +566,6 @@ const loadBooksForEdit = async () => {
     }
 
     availableBooks.value = booksData;
-    console.log("Books for edit loaded:", availableBooks.value);
   } catch (error) {
     console.error("Lỗi khi tải danh sách sách cho edit:", error);
     availableBooks.value = [];
@@ -730,7 +643,6 @@ const clearFilters = () => {
   filter.value = {
     flashSaleId: defaultFlashSaleId,
     bookName: "", // ✅ Đổi từ bookId thành bookName
-    status: "",
     minPrice: "",
     maxPrice: "",
     minPercent: "",
@@ -746,16 +658,6 @@ const reloadPage = () => {
   getDataFromApi(currentPage.value, pageSize.value);
 };
 
-// Toggle status
-const handleStatusChange = async (item) => {
-  try {
-    await toggleStatusFlashSaleItem(defaultFlashSaleId, item.id);
-    showToast("success", "Thay đổi trạng thái thành công!");
-  } catch (error) {
-    showToast("error", error.response?.data?.message || "Có lỗi xảy ra!");
-  }
-};
-
 // Reset form data
 const resetFormData = () => {
   formData.value = {
@@ -765,7 +667,6 @@ const resetFormData = () => {
     discountPercentage: "",
     stockQuantity: "",
     maxPurchasePerUser: "",
-    status: 1,
   };
 };
 
@@ -789,7 +690,6 @@ const openEditForm = async (item) => {
     discountPercentage: item.discountPercentage,
     stockQuantity: item.stockQuantity,
     maxPurchasePerUser: item.maxPurchasePerUser,
-    status: item.status,
   };
   const modal = Modal.getOrCreateInstance(document.getElementById("formModal"));
   modal.show();
@@ -803,7 +703,6 @@ const validateForm = () => {
     return false;
   }
 
-  // ✅ Kiểm tra tồn kho flash sale không được vượt quá tồn kho sách
   if (
     selectedBookInfo.value &&
     formData.value.stockQuantity &&
@@ -818,11 +717,11 @@ const validateForm = () => {
     f.discountPercentage === null ||
     isNaN(f.discountPercentage)
   ) {
-    showToast("error", "Vui lòng nhập % giảm!");
+    showToast("error", "Vui lòng nhập phần trăm giảm!");
     return false;
   }
   if (f.discountPercentage < 0 || f.discountPercentage > 100) {
-    showToast("error", "% giảm phải từ 0 đến 100!");
+    showToast("error", "Phần trăm giảm phải từ 0 đến 100!");
     return false;
   }
   if (
@@ -866,10 +765,6 @@ const validateForm = () => {
     showToast("error", "Giới hạn mỗi người phải lớn hơn 0!");
     return false;
   }
-  if (f.status !== 0 && f.status !== 1) {
-    showToast("error", "Vui lòng chọn trạng thái!");
-    return false;
-  }
 
   return true;
 };
@@ -884,7 +779,6 @@ const handleSubmitForm = async () => {
       discountPercentage: parseFloat(formData.value.discountPercentage),
       stockQuantity: parseInt(formData.value.stockQuantity),
       maxPurchasePerUser: parseInt(formData.value.maxPurchasePerUser),
-      status: parseInt(formData.value.status),
     };
     if (!isEditMode.value) {
       await addFlashSaleItem(defaultFlashSaleId, submitData);
