@@ -675,8 +675,6 @@ const toggleFilter = () => {
   overflow-y: auto;
 }
 
-/* Admin global styles */
-@import "@/assets/css/admin-global.css";
 
 /* Bộ lọc tìm kiếm - ẩn hiện */
 .filter-collapse {
