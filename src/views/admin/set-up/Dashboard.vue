@@ -37,46 +37,60 @@ import LocationStats from "@/views/admin/components-admin/statistics/LocationSta
 .dashboard-overview {
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  padding: 24px 32px;
-  background: #f7fafd;
+  gap: 24px;
+  padding: 16px 24px;
+  background: #f8fafc;
   min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Sửa lại charts thành dạng cột */
+/* Charts column styling */
 .charts-col {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 24px;
 }
 
 .charts-col > * {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px #e3e8ee;
-  padding: 24px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  border: 1px solid #e2e8f0;
+  padding: 20px;
   min-width: 0;
 }
 
+/* Top tables row styling */
 .top-tables-row {
   display: flex;
-  gap: 32px;
+  gap: 24px;
 }
 
 .top-tables-row > * {
   flex: 1;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px #e3e8ee;
-  padding: 24px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  border: 1px solid #e2e8f0;
+  padding: 20px;
   min-width: 0;
 }
 
 @media (max-width: 900px) {
+  .dashboard-overview {
+    padding: 12px 16px;
+    gap: 16px;
+  }
+
   .charts-col,
   .top-tables-row {
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
+  }
+
+  .charts-col > *,
+  .top-tables-row > * {
+    padding: 16px;
   }
 }
 </style>

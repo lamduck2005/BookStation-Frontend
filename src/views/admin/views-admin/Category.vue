@@ -1034,31 +1034,6 @@ const clearFilters = () => {
   background-color: #ffffff !important;
 }
 
-/* ========== TABLE STYLING ========== */
-.category-table-custom thead th {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
-  font-weight: 700 !important;
-  color: #333 !important;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 2px solid #dee2e6 !important;
-}
-
-.category-table-custom tbody tr:hover {
-  background-color: #f8f9ff !important;
-  transition: all 0.3s ease;
-}
-
-.category-table-custom tbody td {
-  font-weight: 500 !important;
-  color: #444 !important;
-}
-
-.category-table-custom tbody td.fw-bold {
-  font-weight: 700 !important;
-  color: #333 !important;
-}
-
 /* ========== MODAL SPECIFIC ========== */
 .modal-content {
   border-radius: 15px !important;
