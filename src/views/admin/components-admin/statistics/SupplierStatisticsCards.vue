@@ -26,7 +26,7 @@
                 <i class="bi bi-truck"></i>
               </div>
               <div class="text-end">
-                <div class="stat-value">{{ getTotalSuppliers() }}</div>
+                <div class="stat-value stat-value-gradient text-gradient-info">{{ getTotalSuppliers() }}</div>
                 <div class="stat-label">Nhà cung cấp</div>
               </div>
             </div>
@@ -48,7 +48,7 @@
                 <i class="bi bi-boxes"></i>
               </div>
               <div class="text-end">
-                <div class="stat-value">{{ getTotalBooks() }}</div>
+                <div class="stat-value stat-value-gradient text-gradient-purple">{{ getTotalBooks() }}</div>
                 <div class="stat-label">Tổng đầu sách</div>
               </div>
             </div>
@@ -61,49 +61,6 @@
         </div>
       </div>
 
-      <!-- Total Revenue Card -->
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card revenue-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper revenue-icon">
-                <i class="bi bi-cash-coin"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value small-text">{{ formatCurrency(getTotalRevenue()) }}</div>
-                <div class="stat-label">Tổng doanh thu</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small class="text-success">
-                Từ tất cả NCC
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Total Quantity Sold Card -->
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card quantity-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper quantity-icon">
-                <i class="bi bi-graph-up-arrow"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value">{{ formatNumber(getTotalQuantitySold()) }}</div>
-                <div class="stat-label">Sách đã bán</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small class="text-warning">
-                Tất cả thời gian
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Book Statistics by Supplier Row -->
@@ -149,11 +106,21 @@
       <div class="col-lg-8">
         <div class="card insights-card">
           <div class="card-body">
-            <h6 class="card-title mb-3">
-              <i class="bi bi-trophy me-2 text-warning"></i>
-              Top nhà cung cấp theo doanh thu
-            </h6>
-            <div class="row g-2">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-trophy me-2 text-warning"></i>
+                Top nhà cung cấp theo doanh thu từ sách
+              </h6>
+              <button 
+                class="btn btn-sm btn-outline-secondary" 
+                type="button" 
+                @click="showRevenueChart = !showRevenueChart"
+                :aria-expanded="showRevenueChart"
+              >
+                <i :class="showRevenueChart ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+              </button>
+            </div>
+            <div v-show="showRevenueChart" class="row g-2">
               <div 
                 v-for="(supplier, index) in data.topSuppliersByRevenue.slice(0, 5)" 
                 :key="supplier.supplierName"
@@ -179,11 +146,21 @@
       <div class="col-lg-4">
         <div class="card insights-card">
           <div class="card-body">
-            <h6 class="card-title mb-3">
-              <i class="bi bi-graph-up-arrow me-2 text-success"></i>
-              Top theo số lượng bán
-            </h6>
-            <div class="quantity-rankings">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-graph-up-arrow me-2 text-success"></i>
+                Top theo số lượng bán
+              </h6>
+              <button 
+                class="btn btn-sm btn-outline-secondary" 
+                type="button" 
+                @click="showQuantityChart = !showQuantityChart"
+                :aria-expanded="showQuantityChart"
+              >
+                <i :class="showQuantityChart ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+              </button>
+            </div>
+            <div v-show="showQuantityChart" class="quantity-rankings">
               <div 
                 v-for="(supplier, index) in data.topSuppliersByQuantity?.slice(0, 3) || []" 
                 :key="supplier.supplierName"
@@ -210,7 +187,7 @@
           <div class="card-body">
             <h6 class="card-title mb-3">
               <i class="bi bi-graph-up me-2 text-info"></i>
-              So sánh doanh thu và số lượng bán
+              So sánh số lượng sách bán được theo nhà cung cấp
             </h6>
             <div class="row g-3">
               <div 
@@ -226,13 +203,7 @@
                     <div class="supplier-name-comparison">{{ truncateText(supplier.supplierName, 18) }}</div>
                   </div>
                   <div class="comparison-stats">
-                    <div class="comparison-row">
-                      <div class="comparison-label">
-                        <i class="bi bi-cash-coin me-1 text-success"></i>
-                        Doanh thu
-                      </div>
-                      <div class="comparison-value text-success">{{ formatCurrency(supplier.totalRevenue) }}</div>
-                    </div>
+                    
                     <div class="comparison-row">
                       <div class="comparison-label">
                         <i class="bi bi-cart-check me-1 text-primary"></i>
@@ -294,6 +265,8 @@ import Swal from 'sweetalert2';
 
 const loading = ref(true);
 const data = ref(null);
+const showRevenueChart = ref(false);
+const showQuantityChart = ref(false);
 
 const fetchSupplierStatistics = async () => {
   loading.value = true;
@@ -415,6 +388,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import '@/assets/css/gradient-stats.css';
+
 /* Statistics Cards Styling */
 .stats-card {
   border: none;

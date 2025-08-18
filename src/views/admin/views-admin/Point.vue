@@ -15,7 +15,7 @@
     <!-- Layout 2 cột: Bộ lọc bên trái, Bảng bên phải -->
     <div class="row">
       <!-- Cột bộ lọc (bên trái) -->
-      <div class="col-lg-2 col-xl-2">
+      <div class="filter-sidebar" :class="{ 'filter-sidebar-collapsed': !showFilter }">
         <div class="card shadow-lg border-0 filter-card sticky-filter">
           <div class="card-header bg-light border-0 py-3">
             <div class="d-flex justify-content-between align-items-center">
@@ -29,7 +29,7 @@
                 @click="toggleFilter"
                 :aria-expanded="showFilter"
               >
-                <i :class="showFilter ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+                <i :class="showFilter ? 'bi bi-chevron-left' : 'bi bi-chevron-right'"></i>
               </button>
             </div>
           </div>
@@ -89,7 +89,7 @@
       </div>
       
       <!-- Cột bảng (bên phải) -->
-      <div class="col-lg-10 col-xl-10">
+      <div class="table-main-content" :class="{ 'table-main-content-expanded': !showFilter }">
         <!-- Danh sách Point -->
         <div class="card shadow-lg border-0 mb-4 admin-table-card">
           <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3">
@@ -584,6 +584,51 @@ const reloadPage = () => {
 <style scoped>
 @import "@/assets/css/admin-table-responsive.css";
 @import '@/assets/css/admin-global.css';
+
+/* Filter Sidebar - Thu sang trái */
+.filter-sidebar {
+  width: 250px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.filter-sidebar-collapsed {
+  width: 60px;
+}
+
+.filter-sidebar-collapsed .filter-card .card-body {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.filter-sidebar-collapsed .filter-card .card-header h6 {
+  opacity: 0;
+}
+
+.filter-sidebar-collapsed .filter-card .card-header {
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.filter-sidebar-collapsed .filter-card .card-header .d-flex {
+  justify-content: center !important;
+}
+
+.filter-sidebar-collapsed .filter-card .card-header .btn {
+  margin: 0;
+}
+
+/* Table content - Mở rộng khi filter đóng */
+.table-main-content {
+  flex: 1;
+  transition: all 0.3s ease;
+  margin-left: 15px;
+}
+
+.table-main-content-expanded {
+  margin-left: 15px;
+}
 
 /* Loading Overlay */
 .loading-overlay {

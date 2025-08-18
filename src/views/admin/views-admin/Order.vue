@@ -361,6 +361,7 @@
                 <div class="col-md-4">
                   <label class="form-label enhanced-label">Phí vận chuyển <span class="text-danger">*</span></label>
                   <input 
+                  readonly
                     type="number" 
                     class="form-control enhanced-input" 
                     v-model="newOrder.shippingFee"
@@ -387,16 +388,7 @@
                     {{ newOrder.orderType === 'COUNTER' ? 'Đơn tại quầy' : 'Đơn online' }}
                   </small>
                 </div>
-                <div class="col-md-4">
-                  <label class="form-label enhanced-label">Nhân viên tạo đơn</label>
-                  <input 
-                    type="text" 
-                    class="form-control enhanced-input" 
-                    :value="getUserId()"
-                    placeholder="Auto-fill từ session"
-                    readonly
-                  />
-                </div>
+                
               </div>
               <div class="row g-3 mt-2">
                 <div class="col-12">
@@ -483,17 +475,7 @@
                 <h6 class="section-title">Sản phẩm trong đơn hàng</h6>
               </div>
               
-              <!-- Add product button -->
-              <div class="mb-3">
-                <button 
-                  type="button" 
-                  class="btn btn-outline-primary btn-sm"
-                  @click="addProductRow"
-                >
-                  <i class="bi bi-plus-circle me-1"></i>
-                  Thêm sản phẩm
-                </button>
-              </div>
+             
 
               <!-- Product Search -->
               <div class="mb-4">
@@ -686,7 +668,7 @@
                           </div>
                           <div class="summary-item">
                             <span>Phí vận chuyển:</span>
-                            <strong>{{ formatCurrency(orderCalculation.shippingFee) }}</strong>
+                            <strong  >{{ formatCurrency(orderCalculation.shippingFee) }}</strong>
                           </div>
                           <div class="summary-item" v-if="orderCalculation.regularVoucherDiscount > 0">
                             <span>Voucher thường:</span>
@@ -1046,15 +1028,15 @@
               <div class="summary-row discount" v-if="selectedOrder.voucherDiscountAmount > 0">
                 <span>
                   <i class="bi bi-ticket-perforated me-1"></i>
-                  Giảm giá voucher:
+                  Tổng giảm giá voucher:
                 </span>
                 <span>-{{ formatCurrency(selectedOrder.voucherDiscountAmount) }}</span>
               </div>
               
               <div class="summary-row discount" v-if="selectedOrder.discountAmount > 0 && selectedOrder.discountAmount !== selectedOrder.voucherDiscountAmount">
                 <span>
-                  <i class="bi bi-percent me-1"></i>
-                  Giảm giá tổng:
+                  <i class="bi bi-cash-coin me-1"></i>
+                   Tổng giảm giá sản phẩm:
                 </span>
                 <span>-{{ formatCurrency(selectedOrder.discountAmount) }}</span>
               </div>
@@ -1094,8 +1076,13 @@
               </div>
               
               <div class="summary-row total">
-                <span><strong>Tổng cộng:</strong></span>
-                <span><strong>{{ formatCurrency(selectedOrder.totalAmount) }}</strong></span>
+                <span class="d-flex align-items-center gap-2">
+                  <i class="bi bi-currency-exchange text-warning fs-4"></i>
+                  <strong class="text-gradient" style="font-size: 1.25rem; letter-spacing: 1px;">Tổng cộng:</strong>
+                </span>
+                <span>
+                  <strong class="text-success" style="font-size: 1.5rem; text-shadow: 0 2px 8px #e3e8ee; letter-spacing: 1px;">{{ formatCurrency(selectedOrder.totalAmount) }}</strong>
+                </span>
               </div>
             </div>
             <div v-if="selectedOrder.message" class="order-message mt-3">

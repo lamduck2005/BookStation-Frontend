@@ -4,7 +4,7 @@
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">
           <i class="bi bi-graph-up me-2 text-primary"></i>
-          Biểu đồ doanh thu
+          Biểu đồ doanh thu 
         </h5>
         <div class="chart-controls">
           <div class="btn-group btn-group-sm me-2" role="group">
