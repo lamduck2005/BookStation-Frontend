@@ -292,16 +292,18 @@
               <b>Ngày sinh:</b> {{ detailAuthor.birthDate }}
             </div>
             <div class="mb-2">
-              <b>Ngày tạo:</b> {{ detailAuthor.createdAt }}
+              <b>Ngày tạo:</b>
+              {{ timestampToDatetimeLocal(detailAuthor.createdAt) }}
             </div>
             <div class="mb-2">
-              <b>Ngày cập nhật:</b> {{ detailAuthor.updatedAt }}
+              <b>Ngày cập nhật:</b>
+              {{ timestampToDatetimeLocal(detailAuthor.updatedAt) }}
             </div>
             <div class="mb-2">
-              <b>Người tạo:</b> {{ detailAuthor.createdBy }}
+              <b>Người tạo:</b> {{ detailAuthor.createdBy || "—" }}
             </div>
             <div class="mb-2">
-              <b>Người cập nhật:</b> {{ detailAuthor.updatedBy }}
+              <b>Người cập nhật:</b> {{ detailAuthor.updatedBy || "—" }}
             </div>
           </div>
           <div class="modal-footer">
@@ -419,6 +421,7 @@ import EditButton from "@/components/common/EditButton.vue";
 import DeleteButton from "@/components/common/DeleteButton.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import { debounce } from "@/utils/utils";
+import { timestampToDatetimeLocal } from "@/utils/utils"; // ✅ Import hàm
 
 const authors = ref([]);
 const showModal = ref(false);
@@ -969,87 +972,4 @@ const handleDeleteAuthor = async (id) => {
 <style scoped>
 @import "@/assets/css/admin-global.css";
 @import "@/assets/css/form-global.css";
-
-/* ========== AUTHOR SPECIFIC OVERRIDES ========== */
-.form-modal-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  color: #ffffff !important;
-}
-
-.form-modal-body {
-  background-color: #ffffff !important;
-}
-
-
-/* ========== MODAL SPECIFIC ========== */
-.modal-content {
-  border-radius: 15px !important;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
-  border: none !important;
-  overflow: hidden;
-}
-
-.modal-footer {
-  background-color: #f8f9fa !important;
-  border-top: 1px solid #dee2e6 !important;
-  padding: 1rem 2rem !important;
-}
-
-/* ========== CARD STYLING ========== */
-.admin-table-card {
-  border-radius: 12px !important;
-  border: none !important;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
-}
-
-.admin-table-card .card-header {
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
-  border-bottom: 2px solid #e9ecef !important;
-  border-radius: 12px 12px 0 0 !important;
-}
-
-.admin-table-card .card-header h5 {
-  font-weight: 700 !important;
-  color: #333 !important;
-}
-
-/* ========== ACTION BUTTONS ========== */
-.action-btn {
-  border-radius: 6px !important;
-  font-weight: 600 !important;
-  transition: all 0.3s ease !important;
-}
-
-.action-btn:hover {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-}
-
-/* ========== OVERRIDE INLINE STYLES ========== */
-.btn-primary[style*="background-color: #33304e"] {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  border: none !important;
-  border-radius: 8px !important;
-  padding: 0.75rem 2rem !important;
-  font-weight: 600 !important;
-  transition: all 0.3s ease !important;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
-}
-
-.btn-primary[style*="background-color: #33304e"]:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4) !important;
-}
-
-/* ========== RESPONSIVE ========== */
-@media (max-width: 768px) {
-  .modal-dialog {
-    max-width: 95vw !important;
-    margin: 1rem auto !important;
-  }
-
-  .author-modal-body {
-    padding: 1rem !important;
-  }
-}
 </style>

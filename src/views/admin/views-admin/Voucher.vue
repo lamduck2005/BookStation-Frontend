@@ -243,9 +243,9 @@
       tabindex="-1"
       style="display: block; background: rgba(0, 0, 0, 0.2); z-index: 1050"
     >
-      <div class="modal-dialog modal-dialog-centered" style="max-width: 800px">
+      <div class="modal-dialog modal-dialog-centered form-modal-dialog">
         <div class="modal-content">
-          <div class="modal-header author-modal-header">
+          <div class="modal-header form-modal-header">
             <h5 class="modal-title">
               <i class="bi bi-plus-circle me-2"></i>
               {{ isEdit ? "Cập nhật voucher" : "Thêm voucher mới" }}
@@ -260,7 +260,7 @@
               <i class="bx bx-x-circle"></i>
             </button>
           </div>
-          <div class="modal-body author-modal-body">
+          <div class="modal-body form-modal-body">
             <form @submit.prevent="submitVoucher">
               <div class="row">
                 <div class="mb-2 col-6">
@@ -288,7 +288,6 @@
                 <div class="mb-2 col-6">
                   <label class="form-label">
                     Loại voucher <span style="color: red">*</span>
-                    <!-- ✅ Thêm text cho biết không thể sửa -->
                     <small v-if="isEdit" class="text-muted ms-2"
                       >(Không thể thay đổi)</small
                     >
@@ -304,7 +303,6 @@
                     <option value="NORMAL">Thường</option>
                     <option value="SHIPPING">Giảm Giá SHIPPING</option>
                   </select>
-                  <!-- ✅ Thêm thông báo dưới dropdown -->
                   <div v-if="isEdit" class="form-text text-warning">
                     <i class="bi bi-exclamation-triangle me-1"></i>
                     Loại voucher không thể thay đổi sau khi tạo
@@ -448,18 +446,130 @@
           <div class="modal-footer">
             <button
               type="button"
-              class="btn btn-secondary"
+              class="btn form-btn-secondary"
               @click="closeFormModal"
             >
               Hủy
             </button>
             <button
               type="button"
-              class="btn btn-primary"
-              style="background-color: #33304e; border-color: #33304e"
+              class="btn form-btn-primary"
               @click="submitVoucher"
             >
               {{ isEdit ? "Cập nhật" : "Thêm mới" }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Chi tiết Voucher -->
+    <div
+      v-if="showDetailModal"
+      class="modal fade show"
+      tabindex="-1"
+      style="display: block; background: rgba(0, 0, 0, 0.2); z-index: 1050"
+    >
+      <div class="modal-dialog modal-dialog-centered form-modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header form-modal-header">
+            <h5 class="modal-title">
+              <i class="bi bi-info-circle me-2"></i>
+              Chi tiết voucher: {{ selectedVoucher.name || "Trống" }}
+            </h5>
+            <button
+              type="button"
+              class="custom-close-btn"
+              @click="closeDetailModal"
+              aria-label="Đóng"
+              title="Đóng"
+            >
+              <i class="bx bx-x-circle"></i>
+            </button>
+          </div>
+          <div class="modal-body form-modal-body">
+            <div class="row">
+              <div class="col-6 mb-3">
+                <label class="form-label">Mã voucher:</label>
+                <div class="form-control bg-light">
+                  {{ selectedVoucher.code || "Trống" }}
+                </div>
+              </div>
+              <div class="col-6 mb-3">
+                <label class="form-label">Tên voucher:</label>
+                <div class="form-control bg-light">
+                  {{ selectedVoucher.name || "Trống" }}
+                </div>
+              </div>
+              <div class="col-6 mb-3">
+                <label class="form-label">Loại voucher:</label>
+                <div class="form-control bg-light">
+                  {{
+                    selectedVoucher.voucherCategory === "NORMAL"
+                      ? "Thường"
+                      : selectedVoucher.voucherCategory === "SHIPPING"
+                      ? "Giảm Giá SHIPPING"
+                      : "Trống"
+                  }}
+                </div>
+              </div>
+              <div class="col-6 mb-3">
+                <label class="form-label">Kiểu giảm giá:</label>
+                <div class="form-control bg-light">
+                  {{
+                    selectedVoucher.discountType === "PERCENTAGE"
+                      ? "Phần trăm"
+                      : selectedVoucher.discountType === "FIXED_AMOUNT"
+                      ? "Số tiền"
+                      : "Trống"
+                  }}
+                </div>
+              </div>
+              <div class="col-6 mb-3">
+                <label class="form-label">Ngày bắt đầu:</label>
+                <div class="form-control bg-light">
+                  {{ selectedVoucher.start_time || "Trống" }}
+                </div>
+              </div>
+              <div class="col-6 mb-3">
+                <label class="form-label">Ngày kết thúc:</label>
+                <div class="form-control bg-light">
+                  {{ selectedVoucher.end_time || "Trống" }}
+                </div>
+              </div>
+              <div class="col-6 mb-3">
+                <label class="form-label">Giá trị đơn tối thiểu:</label>
+                <div class="form-control bg-light">
+                  {{ selectedVoucher.minOrderValue || "0" }}
+                </div>
+              </div>
+              <div class="col-6 mb-3">
+                <label class="form-label">Giới hạn lượt dùng:</label>
+                <div class="form-control bg-light">
+                  {{ selectedVoucher.usageLimit || "0" }}
+                </div>
+              </div>
+              <div class="col-6 mb-3">
+                <label class="form-label">Giới hạn/người:</label>
+                <div class="form-control bg-light">
+                  {{ selectedVoucher.usageLimitPerUser || "0" }}
+                </div>
+              </div>
+              <div class="col-12 mb-3">
+                <label class="form-label">Mô tả:</label>
+                <div class="form-control bg-light">
+                  {{ selectedVoucher.description || "Trống" }}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn form-btn-secondary"
+              @click="closeDetailModal"
+            >
+              Đóng
             </button>
           </div>
         </div>
@@ -693,62 +803,8 @@ export default {
     }
 
     function showDetail(voucher) {
-      Swal.fire({
-        title: `Chi tiết voucher: ${voucher.name ?? "Trống"}`,
-        html: `
-          <div style="max-height:400px;overflow:auto">
-            <table class="table table-bordered text-start">
-              <tr><th>Mã</th><td>${voucher.code ?? "Trống"}</td></tr>
-              <tr><th>Tên</th><td>${voucher.name ?? "Trống"}</td></tr>
-              <tr><th>Mô tả</th><td>${voucher.description ?? "Trống"}</td></tr>
-             <tr><th>Loại</th><td>${
-               voucher.voucherCategory === "NORMAL"
-                 ? "Thường"
-                 : voucher.voucherCategory === "SHIPPING"
-                 ? "Giảm Giá SHIPPING"
-                 : "Trống"
-             }</td></tr>
-<tr><th>Kiểu giảm giá</th><td>${
-          voucher.discountType === "PERCENTAGE"
-            ? "Phần trăm"
-            : voucher.discountType === "FIXED_AMOUNT"
-            ? "Số tiền"
-            : "Trống"
-        }</td></tr>
-
-              <tr><th>Phần trăm giảm</th><td>${
-                voucher.discountPercentage ?? "0"
-              }</td></tr>
-              <tr><th>Số tiền giảm</th><td>${
-                voucher.discountAmount ?? "0"
-              }</td></tr>
-              <tr><th>Bắt đầu</th><td>${voucher.start_time ?? "Trống"}</td></tr>
-              <tr><th>Kết thúc</th><td>${voucher.end_time ?? "Trống"}</td></tr>
-              <tr><th>Đơn tối thiểu</th><td>${
-                voucher.minOrderValue ?? "0"
-              }</td></tr>
-              <tr><th>Giảm tối đa</th><td>${
-                voucher.maxDiscountValue ?? "0"
-              }</td></tr>
-              <tr><th>Giới hạn lượt dùng</th><td>${
-                voucher.usageLimit ?? "0"
-              }</td></tr>
-              <tr><th>Đã dùng</th><td>${voucher.usedCount ?? "0"}</td></tr>
-              <tr><th>Giới hạn/người</th><td>${
-                voucher.usageLimitPerUser ?? "0"
-              }</td></tr>
-              <tr><th>Người tạo</th><td>${
-                voucher.createdBy ?? "Trống"
-              }</td></tr>
-              <tr><th>Người cập nhật</th><td>${
-                voucher.updatedBy ?? "Trống"
-              }</td></tr>
-            </table>
-          </div>
-        `,
-        width: 600,
-        confirmButtonText: "Đóng",
-      });
+      selectedVoucher.value = voucher;
+      showDetailModal.value = true;
     }
 
     function closeDetailModal() {
@@ -1048,7 +1104,7 @@ export default {
 
 <style scoped>
 @import "@/assets/css/admin-global.css";
-
+@import "@/assets/css/form-global.css";
 /* Chỉ giữ lại style cho modal và phần riêng */
 .modal-dialog {
   max-width: 800px !important;

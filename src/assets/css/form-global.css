@@ -1,102 +1,4 @@
 /* =========================== FORM GLOBAL STYLES =========================== */
-
-/* ========== NAVIGATION BAR STYLING ========== */
-.navbar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-bottom: 3px solid rgba(255, 255, 255, 0.2);
-}
-
-.navbar-brand {
-  font-weight: 700 !important;
-  color: #ffffff !important;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.navbar-nav .nav-link {
-  font-weight: 600 !important;
-  color: #ffffff !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  padding: 0.75rem 1rem !important;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-}
-
-.navbar-nav .nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.2) !important;
-  color: #ffffff !important;
-  transform: translateY(-1px);
-}
-
-.navbar-nav .nav-link.active {
-  background-color: rgba(255, 255, 255, 0.3) !important;
-  color: #ffffff !important;
-  font-weight: 700 !important;
-}
-
-/* ========== SEARCH BAR IN NAVBAR ========== */
-.navbar .form-control {
-  background-color: rgba(255, 255, 255, 0.9) !important;
-  border: 2px solid rgba(255, 255, 255, 0.3) !important;
-  border-radius: 25px !important;
-  color: #333 !important;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.navbar .form-control:focus {
-  background-color: #ffffff !important;
-  border-color: #ffffff !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-  transform: translateY(-1px);
-}
-
-.navbar .form-control::placeholder {
-  color: #666 !important;
-  font-weight: 400;
-}
-
-.navbar .btn-outline-light {
-  border: 2px solid rgba(255, 255, 255, 0.8) !important;
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  border-radius: 25px !important;
-  padding: 0.5rem 1.5rem;
-  transition: all 0.3s ease;
-}
-
-.navbar .btn-outline-light:hover {
-  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%) !important;
-  color: #ffffff !important;
-  border-color: transparent !important;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-/* ========== DROPDOWN MENU ========== */
-.navbar .dropdown-menu {
-  background-color: #ffffff !important;
-  border: none !important;
-  border-radius: 12px !important;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
-  padding: 0.5rem 0;
-}
-
-.navbar .dropdown-item {
-  font-weight: 500 !important;
-  color: #333 !important;
-  padding: 0.75rem 1.5rem;
-  transition: all 0.3s ease;
-}
-
-.navbar .dropdown-item:hover {
-  background-color: #f8f9ff !important;
-  color: #667eea !important;
-  font-weight: 600 !important;
-}
-
 /* ========== MODAL STYLING GLOBAL ========== */
 .form-modal-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
@@ -108,6 +10,35 @@
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
+}
+
+/* ✅ CỐ ĐỊNH CHIỀU CAO MODAL VÀ CHO PHÉP SCROLL */
+.modal-content {
+  max-height: 90vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border-radius: 15px !important;
+}
+
+.form-modal-body {
+  background-color: #ffffff !important;
+  padding: 2rem !important;
+  flex: 1 !important;
+  overflow-y: auto !important;
+  max-height: calc(90vh - 140px) !important; /* Trừ đi header và footer */
+}
+
+/* ✅ CỐ ĐỊNH FOOTER Ở CUỐI */
+.modal-footer {
+  background-color: #ffffff !important;
+  border-top: 1px solid #e9ecef !important;
+  border-radius: 0 0 15px 15px !important;
+  padding: 1rem 2rem !important;
+  margin-top: 0 !important;
+  flex-shrink: 0 !important; /* Không cho phép thu nhỏ */
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 10 !important;
 }
 
 .form-modal-header .modal-title {
@@ -145,7 +76,9 @@
 .form-modal-body {
   background-color: #ffffff !important;
   padding: 2rem !important;
-  border-radius: 0 0 15px 15px;
+  flex: 1 !important;
+  overflow-y: auto !important;
+  max-height: calc(90vh - 140px) !important; /* Trừ đi header và footer */
 }
 
 .form-modal-body .form-label {
@@ -240,7 +173,24 @@
   transform: translateY(-2px);
 }
 
+/* ✅ SCROLLBAR STYLING CHO MODAL BODY */
+.form-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
 
+.form-modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 6px;
+}
+
+.form-modal-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 6px;
+}
+
+.form-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
 
 /* ========== FILTER CARD STYLING ========== */
 .filter-card .card-header {
@@ -352,31 +302,31 @@
   
   .form-modal-body {
     padding: 1rem !important;
+    max-height: calc(95vh - 120px) !important;
+  }
+  
+  .modal-footer {
+    padding: 1rem !important;
   }
   
   .modal-dialog {
-    margin: 0.5rem !important;
-  }
-  
-  .form-modal-header .custom-close-btn {
-    right: 1rem !important;
+    max-width: 95vw !important;
+    margin: 0.5rem auto !important;
   }
 }
 
-/* ========== CUSTOM ANIMATIONS ========== */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* ========== ANIMATION CHO SMOOTH SCROLL ========== */
+.form-modal-body {
+  scroll-behavior: smooth;
 }
 
-.modal.show .modal-dialog {
-  animation: fadeInUp 0.3s ease-out;
+/* ✅ ĐẢM BẢO FORM KHÔNG BỊ CẮT */
+.form-modal-body .row {
+  margin-bottom: 1rem;
+}
+
+.form-modal-body .row:last-child {
+  margin-bottom: 0;
 }
 
 /* ========== TOOLTIP STYLING ========== */
@@ -416,4 +366,10 @@
   transform: translateX(-50%);
   border: 5px solid transparent;
   border-top-color: #333;
+}
+
+/* ✅ Đặt kích thước cho modal chi tiết */
+.modal-dialog {
+  max-width: 600px !important; /* Độ rộng giống modal thêm/sửa */
+  margin: 1rem auto !important; /* Căn giữa modal */
 }
