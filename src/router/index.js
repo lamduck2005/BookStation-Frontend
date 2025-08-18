@@ -81,11 +81,6 @@ const router = createRouter({
           component: HomePage,
         },
         {
-          path: "notifications",
-          name: "notifications",
-          component: NotificationsPage,
-        },
-        {
           path: "demo",
           name: "demo",
           component: DemoPage,

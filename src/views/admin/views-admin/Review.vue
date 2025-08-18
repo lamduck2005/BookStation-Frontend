@@ -295,7 +295,7 @@
               </div>
               <div class="mb-3">
                 <label class="form-label">Bình luận <span class="text-danger">*</span></label>
-                <textarea class="form-control" rows="3" v-model="formData.comment" maxlength="500" required></textarea>
+                <textarea class="form-control" rows="3" v-model="formData.comment" placeholder="Nhập bình luận" maxlength="500" required></textarea>
               </div>
               <div class="mb-3">
                 <label class="form-label">Trạng thái</label>
@@ -569,8 +569,6 @@ const handleStatusChange = async (item) => {
 const openAddForm = () => {
   isEditMode.value = false;
   resetFormData();
-  formSelected.book = null;
-  formSelected.user = null;
   const modalElement = document.getElementById('formModal');
   if (modalElement) {
     const modal = Modal.getOrCreateInstance(modalElement);
@@ -605,8 +603,12 @@ const validateForm = () => {
     showToast('error', 'Vui lòng điền đầy đủ thông tin!');
     return false;
   }
+  if (formData.value.comment.length < 3 || formData.value.comment.length > 500) {
+    showToast('error', 'Bình luận phải có ít nhất 3 ký tự và không được vượt quá 500 ký tự!');
+    return false;
+  }
   if (formData.value.rating < 1 || formData.value.rating > 5) {
-    showToast('error', 'Rating phải từ 1 đến 5!');
+    showToast('error', 'Đánh giá phải từ 1 đến 5!');
     return false;
   }
   return true;
@@ -653,9 +655,8 @@ const closeModal = () => {
     const modal = Modal.getOrCreateInstance(modalElement);
     modal.hide();
   }
-  // Clear selected khi đóng
-  formSelected.book = null;
-  formSelected.user = null;
+  // Clear toàn bộ form và selections khi đóng
+  resetFormData();
 };
 
 const handlePrev = () => {
@@ -688,6 +689,8 @@ const resetFormData = () => {
     comment: '',
     reviewStatus: 'APPROVED'
   };
+  formSelected.book = null;
+  formSelected.customer = null;
 };
 
 onMounted(() => {
