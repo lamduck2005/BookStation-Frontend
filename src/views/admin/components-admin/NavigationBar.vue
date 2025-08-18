@@ -332,7 +332,7 @@ nav {
   align-items: center;
   color: #6b7280;
   font-size: 0.875rem;
-  gap: 10px;
+  /* gap: 10px;  */
   flex-shrink: 0;
 }
 
