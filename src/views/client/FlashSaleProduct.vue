@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="flashSale && products.length > 0">
     <!-- Banner Flash Sale -->
     <div class="flash-sale-banner">
       <div class="flash-sale-title">
