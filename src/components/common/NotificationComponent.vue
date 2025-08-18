@@ -31,7 +31,7 @@
                         :class="{ 'active': activeTab === tab.key }"
                         @click="setActiveTab(tab.key)">
                         {{ tab.label }}
-                        <span v-if="tab.hasNotification" class="notification-dot"></span>
+                        <!-- <span v-if="tab.hasNotification" class="notification-dot"></span> -->
                     </button>
                 </div>
             </div>
@@ -115,7 +115,7 @@
 
             <!-- Footer (chỉ hiển thị ở mode dropdown) -->
             <div v-if="mode === 'dropdown'" class="notification-footer p-2 border-top text-center">
-                <router-link to="/notifications" class="btn btn-link text-decoration-none small">
+                <router-link to="/profile/notifications" class="btn btn-link text-decoration-none small">
                     Xem tất cả thông báo
                 </router-link>
             </div>
@@ -172,98 +172,99 @@ const tabs = [
 ]
 
 // Fake notifications data
-const notifications = ref([
-    {
-        id: 1,
-        type: 'order_cancelled',
-        title: 'Đơn hàng bị hủy do quá thời hạn thanh toán #103655302',
-        message: 'Đơn hàng của bạn đã bị hủy do quá thời hạn thanh toán',
-        time: '17:40 06/04/2025',
-        isRead: false,
-        category: 'order'
-    },
-    {
-        id: 2,
-        type: 'payment_reminder',
-        title: 'Fahasa nhắc bạn!',
-        message: 'Chỉ còn 26 phút sẽ hết hạn thanh toán đơn hàng 103655302. Thanh toán ngay!',
-        time: '17:10 06/04/2025',
-        isRead: false,
-        category: 'order'
-    },
-    {
-        id: 3,
-        type: 'order_cancelled',
-        title: 'ĐỔN HÀNG CỦA QUÝ KHÁCH ĐÃ BỊ HỦY',
-        message: 'Đơn hàng 103655304 đã bị hủy. Hẹn gặp lại Quý khách trong các đơn hàng tiếp theo.',
-        time: '16:47 06/04/2025',
-        isRead: false,
-        category: 'order'
-    },
-    {
-        id: 4,
-        type: 'order_cancelled',
-        title: 'ĐỔN HÀNG CỦA QUÝ KHÁCH ĐÃ BỊ HỦY',
-        message: 'Đơn hàng 103655306 đã bị hủy. Hẹn gặp lại Quý khách trong các đơn hàng tiếp theo.',
-        time: '16:46 06/04/2025',
-        isRead: false,
-        category: 'order'
-    },
-    {
-        id: 5,
-        type: 'order_cancelled',
-        title: 'ĐỔN HÀNG CỦA QUÝ KHÁCH ĐÃ BỊ HỦY',
-        message: 'Đơn hàng 103640515 đã bị hủy. Hẹn gặp lại Quý khách trong các đơn hàng tiếp theo.',
-        time: '22:25 12/03/2025',
-        isRead: true,
-        category: 'order'
-    },
-    {
-        id: 6,
-        type: 'order_cancelled',
-        title: 'ĐỔN HÀNG CỦA QUÝ KHÁCH ĐÃ BỊ HỦY',
-        message: 'Đơn hàng 103658057 đã bị hủy. Hẹn gặp lại Quý khách trong các đơn hàng tiếp theo.',
-        time: '17:13 11/04/2025',
-        isRead: true,
-        category: 'order'
-    },
-    {
-        id: 7,
-        type: 'promotion',
-        title: 'Flash Sale đặc biệt - Giảm đến 70%',
-        message: 'Hàng ngàn cuốn sách hot đang được giảm giá sốc. Nhanh tay đặt hàng!',
-        time: '10:00 25/06/2025',
-        isRead: false,
-        category: 'promotion'
-    },
-    {
-        id: 8,
-        type: 'voucher',
-        title: 'Mã giảm giá 100.000đ cho đơn hàng từ 500.000đ',
-        message: 'Sử dụng mã BOOK100 để được giảm 100.000đ cho đơn hàng từ 500.000đ. Có hiệu lực đến 30/06/2025.',
-        time: '08:30 25/06/2025',
-        isRead: false,
-        category: 'system'
-    },
-    {
-        id: 9,
-        type: 'order_confirmed',
-        title: 'Đơn hàng #103655400 đã được xác nhận',
-        message: 'Đơn hàng của bạn đã được xác nhận và đang trong quá trình chuẩn bị.',
-        time: '14:20 24/06/2025',
-        isRead: true,
-        category: 'order'
-    },
-    {
-        id: 10,
-        type: 'account',
-        title: 'Tài khoản của bạn đã được xác thực',
-        message: 'Chúc mừng! Tài khoản BookStation của bạn đã được xác thực thành công.',
-        time: '09:15 20/06/2025',
-        isRead: true,
-        category: 'account'
-    }
-])
+// const notifications = ref([
+//     {
+//         id: 1,
+//         type: 'order_cancelled',
+//         title: 'Đơn hàng bị hủy do quá thời hạn thanh toán #103655302',
+//         message: 'Đơn hàng của bạn đã bị hủy do quá thời hạn thanh toán',
+//         time: '17:40 06/04/2025',
+//         isRead: false,
+//         category: 'order'
+//     },
+//     {
+//         id: 2,
+//         type: 'payment_reminder',
+//         title: 'Fahasa nhắc bạn!',
+//         message: 'Chỉ còn 26 phút sẽ hết hạn thanh toán đơn hàng 103655302. Thanh toán ngay!',
+//         time: '17:10 06/04/2025',
+//         isRead: false,
+//         category: 'order'
+//     },
+//     {
+//         id: 3,
+//         type: 'order_cancelled',
+//         title: 'ĐỔN HÀNG CỦA QUÝ KHÁCH ĐÃ BỊ HỦY',
+//         message: 'Đơn hàng 103655304 đã bị hủy. Hẹn gặp lại Quý khách trong các đơn hàng tiếp theo.',
+//         time: '16:47 06/04/2025',
+//         isRead: false,
+//         category: 'order'
+//     },
+//     {
+//         id: 4,
+//         type: 'order_cancelled',
+//         title: 'ĐỔN HÀNG CỦA QUÝ KHÁCH ĐÃ BỊ HỦY',
+//         message: 'Đơn hàng 103655306 đã bị hủy. Hẹn gặp lại Quý khách trong các đơn hàng tiếp theo.',
+//         time: '16:46 06/04/2025',
+//         isRead: false,
+//         category: 'order'
+//     },
+//     {
+//         id: 5,
+//         type: 'order_cancelled',
+//         title: 'ĐỔN HÀNG CỦA QUÝ KHÁCH ĐÃ BỊ HỦY',
+//         message: 'Đơn hàng 103640515 đã bị hủy. Hẹn gặp lại Quý khách trong các đơn hàng tiếp theo.',
+//         time: '22:25 12/03/2025',
+//         isRead: true,
+//         category: 'order'
+//     },
+//     {
+//         id: 6,
+//         type: 'order_cancelled',
+//         title: 'ĐỔN HÀNG CỦA QUÝ KHÁCH ĐÃ BỊ HỦY',
+//         message: 'Đơn hàng 103658057 đã bị hủy. Hẹn gặp lại Quý khách trong các đơn hàng tiếp theo.',
+//         time: '17:13 11/04/2025',
+//         isRead: true,
+//         category: 'order'
+//     },
+//     {
+//         id: 7,
+//         type: 'promotion',
+//         title: 'Flash Sale đặc biệt - Giảm đến 70%',
+//         message: 'Hàng ngàn cuốn sách hot đang được giảm giá sốc. Nhanh tay đặt hàng!',
+//         time: '10:00 25/06/2025',
+//         isRead: false,
+//         category: 'promotion'
+//     },
+//     {
+//         id: 8,
+//         type: 'voucher',
+//         title: 'Mã giảm giá 100.000đ cho đơn hàng từ 500.000đ',
+//         message: 'Sử dụng mã BOOK100 để được giảm 100.000đ cho đơn hàng từ 500.000đ. Có hiệu lực đến 30/06/2025.',
+//         time: '08:30 25/06/2025',
+//         isRead: false,
+//         category: 'system'
+//     },
+//     {
+//         id: 9,
+//         type: 'order_confirmed',
+//         title: 'Đơn hàng #103655400 đã được xác nhận',
+//         message: 'Đơn hàng của bạn đã được xác nhận và đang trong quá trình chuẩn bị.',
+//         time: '14:20 24/06/2025',
+//         isRead: true,
+//         category: 'order'
+//     },
+//     {
+//         id: 10,
+//         type: 'account',
+//         title: 'Tài khoản của bạn đã được xác thực',
+//         message: 'Chúc mừng! Tài khoản BookStation của bạn đã được xác thực thành công.',
+//         time: '09:15 20/06/2025',
+//         isRead: true,
+//         category: 'account'
+//     }
+// ])
+const notifications = ref([])
 
 // Computed properties
 const unreadCount = computed(() => {
