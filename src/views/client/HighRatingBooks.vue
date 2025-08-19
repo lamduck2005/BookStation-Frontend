@@ -25,6 +25,12 @@
               </div>
             </div>
             <div class="subtitle-container">
+              <!-- Statistics component -->
+              <RatingStatistics 
+                v-if="!loading && totalElements > 0" 
+                :total-books="totalElements" 
+              />
+              
               <div class="rating-stats">
                 <div class="stat-item">
                   <span class="stat-number">75%+</span>
@@ -47,11 +53,25 @@
       </div>
 
       <!-- Loading state -->
-      <div v-if="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Đang tải...</span>
+      <div v-if="loading" class="loading-state py-5">
+        <div class="loading-container">
+          <div class="loading-books">
+            <div class="loading-book" v-for="n in 5" :key="n">
+              <div class="book-spine"></div>
+              <div class="book-cover"></div>
+              <div class="book-shadow"></div>
+            </div>
+          </div>
+          <div class="loading-text-container">
+            <h4 class="loading-title">Đang tìm kiếm những cuốn sách tuyệt vời...</h4>
+            <div class="loading-dots">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+            <p class="loading-subtitle">Những cuốn sách được yêu thích nhất đang được tải</p>
+          </div>
         </div>
-        <p class="text-muted mt-3">Đang tải sách được yêu thích...</p>
       </div>
 
       <!-- Error state -->
@@ -165,6 +185,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import ProductCard from "@/components/common/ProductCard.vue";
+import RatingStatistics from "@/components/common/RatingStatistics.vue";
 import { getHighPositiveRatingBooks } from "@/services/admin/book";
 
 // Reactive data
@@ -174,6 +195,7 @@ const loadingMore = ref(false);
 const error = ref(null);
 const currentPage = ref(0);
 const hasMore = ref(true);
+const totalElements = ref(0);
 const pageSize = 5;
 
 // Fetch books function
@@ -204,6 +226,7 @@ const fetchBooks = async (reset = false) => {
 
       // Check if there are more pages
       hasMore.value = currentPage.value + 1 < response.data.totalPages;
+      totalElements.value = response.data.totalElements || 0;
       
       if (reset) {
         loading.value = false;
@@ -542,6 +565,148 @@ onMounted(() => {
 }
 
 /* Loading and Error States */
+.loading-state {
+  text-align: center;
+}
+
+.loading-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.loading-books {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.loading-book {
+  position: relative;
+  width: 40px;
+  height: 60px;
+  animation: bookFloat 2s ease-in-out infinite;
+}
+
+.loading-book:nth-child(1) { animation-delay: 0s; }
+.loading-book:nth-child(2) { animation-delay: 0.2s; }
+.loading-book:nth-child(3) { animation-delay: 0.4s; }
+.loading-book:nth-child(4) { animation-delay: 0.6s; }
+.loading-book:nth-child(5) { animation-delay: 0.8s; }
+
+@keyframes bookFloat {
+  0%, 100% { transform: translateY(0) rotateY(0deg); }
+  50% { transform: translateY(-10px) rotateY(180deg); }
+}
+
+.book-spine {
+  position: absolute;
+  width: 8px;
+  height: 60px;
+  background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+  border-radius: 2px 0 0 2px;
+  left: 0;
+  top: 0;
+  box-shadow: inset 2px 0 4px rgba(0,0,0,0.2);
+}
+
+.book-cover {
+  position: absolute;
+  width: 40px;
+  height: 60px;
+  background: linear-gradient(135deg, #fff, #f8f9fa);
+  border-radius: 2px;
+  border: 1px solid #e0e0e0;
+  left: 8px;
+  top: 0;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+}
+
+.book-cover::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 2px;
+  background: #ff6b6b;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 1px;
+}
+
+.book-cover::after {
+  content: '';
+  position: absolute;
+  width: 15px;
+  height: 1px;
+  background: #ccc;
+  top: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 1px;
+  box-shadow: 0 5px 0 #ccc, 0 10px 0 #ccc;
+}
+
+.book-shadow {
+  position: absolute;
+  width: 45px;
+  height: 8px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.2), transparent);
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: shadowPulse 2s ease-in-out infinite;
+}
+
+@keyframes shadowPulse {
+  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.2; }
+  50% { transform: translateX(-50%) scale(1.2); opacity: 0.4; }
+}
+
+.loading-text-container {
+  margin-top: 20px;
+}
+
+.loading-title {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 15px;
+  background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcf7f);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff6b6b;
+  animation: dotBounce 1.4s ease-in-out infinite both;
+}
+
+.dot:nth-child(1) { animation-delay: -0.32s; }
+.dot:nth-child(2) { animation-delay: -0.16s; }
+.dot:nth-child(3) { animation-delay: 0s; }
+
+@keyframes dotBounce {
+  0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+  40% { transform: scale(1.2); opacity: 1; }
+}
+
+.loading-subtitle {
+  color: #666;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
 .spinner-border {
   width: 3rem;
   height: 3rem;
