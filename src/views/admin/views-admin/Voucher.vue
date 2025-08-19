@@ -318,7 +318,12 @@
                     required
                   >
                     <option value="">Chọn kiểu giảm giá</option>
-                    <option value="PERCENTAGE">Phần trăm</option>
+                    <option
+                      value="PERCENTAGE"
+                      v-if="formVoucher.voucherCategory === 'NORMAL'"
+                    >
+                      Phần trăm
+                    </option>
                     <option value="FIXED_AMOUNT">Số tiền</option>
                   </select>
                 </div>
