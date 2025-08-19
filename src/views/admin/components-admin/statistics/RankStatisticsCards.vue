@@ -209,11 +209,21 @@
       <div class="col-12">
         <div class="card insights-card">
           <div class="card-body">
-            <h6 class="card-title mb-3">
-              <i class="bi bi-trending-up me-2 text-info"></i>
-              Tỷ lệ tăng trưởng hàng tháng theo xếp hạng
-            </h6>
-            <div class="row g-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="card-title mb-0">
+                <i class="bi bi-trending-up me-2 text-info"></i>
+                Tỷ lệ tăng trưởng hàng tháng theo xếp hạng
+              </h6>
+              <button 
+                class="btn btn-sm btn-outline-secondary" 
+                type="button" 
+                @click="showGrowthChart = !showGrowthChart"
+                :aria-expanded="showGrowthChart"
+              >
+                <i :class="showGrowthChart ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+              </button>
+            </div>
+            <div v-show="showGrowthChart" class="row g-3">
               <div 
                 v-for="growth in data.monthlyGrowthRates" 
                 :key="growth.rankName"
@@ -255,6 +265,7 @@ import Swal from 'sweetalert2';
 
 const loading = ref(true);
 const data = ref(null);
+const showGrowthChart = ref(false);
 
 const fetchRankStatistics = async () => {
   loading.value = true;

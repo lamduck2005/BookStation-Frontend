@@ -298,6 +298,8 @@ defineExpose({
 </script>
 
 <style scoped>
+@import '@/assets/css/gradient-stats.css';
+
 .book-overview-cards {
   margin-bottom: 1.5rem;
 }
@@ -327,10 +329,7 @@ defineExpose({
   background: linear-gradient(90deg, var(--card-gradient-start), var(--card-gradient-end));
 }
 
-/* Card Types - Updated for new API */
-
-
-/* Icon Wrappers - Updated for new API */
+/* Icon Wrappers */
 .icon-wrapper {
   width: 48px;
   height: 48px;
@@ -340,46 +339,6 @@ defineExpose({
   justify-content: center;
   font-size: 20px;
   color: white;
-}
-
-
-
-/* Stats Values */
-.stat-value {
-  font-size: 1.8rem;
-  font-weight: 700;
-  line-height: 1.2;
-  /* Gradient text mặc định cho mọi số */
-  background: linear-gradient(90deg, #43C59E, #4F8A8B);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Gradient riêng cho từng loại số */
-.text-gradient-primary {
-  background: linear-gradient(90deg, #4F8A8B, #43C59E);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.text-gradient-warning {
-  background: linear-gradient(90deg, #F9B208, #F76E11);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.text-gradient-success {
-  background: linear-gradient(90deg, #43C59E, #3D56B2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.text-gradient-danger {
-  background: linear-gradient(90deg, #F76E11, #F44336);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .stat-label {
@@ -492,7 +451,7 @@ defineExpose({
 
 /* Responsive Adjustments */
 @media (max-width: 1200px) {
-  .stat-value {
+  .stat-value-gradient {
     font-size: 1.5rem;
   }
   
@@ -504,7 +463,7 @@ defineExpose({
 }
 
 @media (max-width: 768px) {
-  .stat-value {
+  .stat-value-gradient {
     font-size: 1.3rem;
   }
   

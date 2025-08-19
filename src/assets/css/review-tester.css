@@ -1,0 +1,116 @@
+/* Toast notifications styling for review tester */
+.swal2-popup .swal2-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.swal2-popup .swal2-content {
+  font-size: 14px;
+}
+
+/* Custom scrollbar for review textarea */
+.review-textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.review-textarea::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.review-textarea::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.review-textarea::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Animation improvements */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.analysis-result {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.validation-errors {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Improved hover effects */
+.star-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.star-btn:hover {
+  transform: scale(1.15);
+  filter: drop-shadow(0 2px 4px rgba(255, 193, 7, 0.3));
+}
+
+/* Better button animations */
+.analyze-btn, .submit-btn, .example-btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.analyze-btn:hover:not(:disabled),
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Loading animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.analyzing::before {
+  content: "🔄";
+  display: inline-block;
+  animation: spin 1s linear infinite;
+  margin-right: 5px;
+}
+
+/* Focus improvements */
+.review-textarea:focus,
+.star-btn:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Better responsive breakpoints */
+@media (max-width: 480px) {
+  .review-tester {
+    padding: 10px;
+  }
+  
+  .review-form {
+    padding: 20px 15px;
+  }
+  
+  .star-rating {
+    justify-content: center;
+  }
+  
+  .example-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .review-tester {
+    background: white !important;
+  }
+  
+  .analyze-btn,
+  .submit-btn,
+  .example-buttons {
+    display: none !important;
+  }
+}

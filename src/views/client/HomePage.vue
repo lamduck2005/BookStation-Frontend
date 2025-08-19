@@ -1,5 +1,6 @@
 <script setup>
 import Trend from "@/views/client/Trend.vue";
+import HighRatingBooks from "@/views/client/HighRatingBooks.vue";
 import { ref, onMounted } from "vue";
 import { getUserFullName, getUserId, getUserEmail } from "@/utils/utils";
 import {
@@ -157,6 +158,7 @@ onMounted(async () => {
     <div class="container mt-5">
       <CategoryClient id="category-client"/>
       <FlashSaleProduct id="flashsale-product"/>
+      <HighRatingBooks id="high-rating-books"/>
     </div>
     <!-- Trend section -->
   </div>

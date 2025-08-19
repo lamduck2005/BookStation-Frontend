@@ -1,0 +1,125 @@
+/* Gradient Stats CSS - Gradient đẹp cho số thống kê */
+
+/* Base gradient for all stat values */
+.stat-value-gradient {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  background: linear-gradient(90deg, #43C59E, #4F8A8B);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Specific gradient variants */
+.text-gradient-primary {
+  background: linear-gradient(90deg, #4F8A8B, #43C59E);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-warning {
+  background: linear-gradient(90deg, #F9B208, #F76E11);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-success {
+  background: linear-gradient(90deg, #43C59E, #3D56B2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-danger {
+  background: linear-gradient(90deg, #F76E11, #F44336);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-info {
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-purple {
+  background: linear-gradient(90deg, #f093fb, #f5576c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-cyan {
+  background: linear-gradient(90deg, #43e97b, #38f9d7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-blue {
+  background: linear-gradient(90deg, #4facfe, #00f2fe);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Size variants */
+.stat-value-gradient.large {
+  font-size: 2.2rem;
+}
+
+.stat-value-gradient.medium {
+  font-size: 1.5rem;
+}
+
+.stat-value-gradient.small {
+  font-size: 1.2rem;
+}
+
+/* Animation effects */
+.stat-value-gradient.animated {
+  animation: gradientShift 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .stat-value-gradient {
+    font-size: 1.5rem;
+  }
+  
+  .stat-value-gradient.large {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .stat-value-gradient {
+    font-size: 1.3rem;
+  }
+  
+  .stat-value-gradient.large {
+    font-size: 1.5rem;
+  }
+  
+  .stat-value-gradient.medium {
+    font-size: 1.2rem;
+  }
+  
+  .stat-value-gradient.small {
+    font-size: 1rem;
+  }
+}
