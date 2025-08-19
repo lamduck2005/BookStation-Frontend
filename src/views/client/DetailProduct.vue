@@ -258,6 +258,13 @@
       </button>
     </div>
 
+    <div v-if="book" class="summary-ai-section">
+      <SummaryAIComponent 
+        :book-id="book.id" 
+        :book-data="book" 
+      />
+    </div>
+
     <div class="review-section">
       <ReviewComponent />
     </div>
@@ -272,11 +279,13 @@ import { showToast } from '@/utils/swalHelper.js'
 import { getUserId } from '@/utils/utils.js'
 import { createFlashSaleCountdown, formatCountdownTime } from '@/utils/flashSaleUtils.js'
 import ReviewComponent from './product/ReviewComponent.vue'
+import SummaryAIComponent from '@/components/common/SummaryAIComponent.vue'
 
 export default {
   name: 'DetailProduct',
   components: {
-    ReviewComponent
+    ReviewComponent,
+    SummaryAIComponent
   },
   data() {
     return {
