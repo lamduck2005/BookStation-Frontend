@@ -55,6 +55,7 @@ import EventGift from "@/views/admin/views-admin/EventGift.vue";
 import EventParticipant from "@/views/admin/views-admin/EventParticipant.vue";
 import EventGiftClaim from "@/views/admin/views-admin/EventGiftClaim.vue";
 import EventHistory from "@/views/admin/views-admin/EventHistory.vue";
+import ReviewTestPage from "@/views/admin/views-admin/ReviewTestPage.vue";
 
 import ProductCatalog from "@/views/client/ProductCatalog.vue";
 
@@ -279,6 +280,11 @@ const router = createRouter({
           path: "review",
           name: "Đánh giá",
           component: Review,
+        },
+        {
+          path: "review-test",
+          name: "Test đánh giá AI",
+          component: ReviewTestPage,
         },
         {
           path: "flash-sale",

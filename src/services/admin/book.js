@@ -284,3 +284,14 @@ export const getBookByIsbn = async (isbn) => {
     throw error;
   }
 };
+
+// Lấy danh sách sách có đánh giá tích cực cao (>= 75%)
+export const getHighPositiveRatingBooks = async (params = { page: 0, size: 5 }) => {
+  try {
+    const response = await client.get('/api/books/high-positive-rating', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách sách có đánh giá tích cực cao:', error);
+    throw error;
+  }
+};
