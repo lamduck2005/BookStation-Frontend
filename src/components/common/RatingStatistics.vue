@@ -4,7 +4,7 @@
       <!-- Total books stat -->
       <div class="stat-card">
         <div class="stat-icon">
-          <i class="bi bi-books"></i>
+          <i class="bi bi-trophy-fill"></i>
         </div>
         <div class="stat-content">
           <div class="stat-number">{{ totalBooks }}</div>
@@ -21,7 +21,7 @@
           <i class="bi bi-star-fill"></i>
         </div>
         <div class="stat-content">
-          <div class="stat-number">4.8</div>
+          <div class="stat-number">{{ averageRating }}</div>
           <div class="stat-label">Điểm trung bình</div>
         </div>
         <div class="stat-trend positive">
@@ -29,14 +29,14 @@
         </div>
       </div>
 
-      <!-- Happy readers stat -->
+      <!-- Total reviews stat -->
       <div class="stat-card">
         <div class="stat-icon">
-          <i class="bi bi-emoji-smile"></i>
+          <i class="bi bi-chat-dots-fill"></i>
         </div>
         <div class="stat-content">
-          <div class="stat-number">{{ happyReaders }}+</div>
-          <div class="stat-label">Độc giả hài lòng</div>
+          <div class="stat-number">{{ totalReviews }}+</div>
+          <div class="stat-label">Đánh giá</div>
         </div>
         <div class="stat-trend positive">
           <i class="bi bi-arrow-up"></i>
@@ -53,17 +53,38 @@ const props = defineProps({
   totalBooks: {
     type: Number,
     default: 0
+  },
+  books: {
+    type: Array,
+    default: () => []
   }
 });
 
-const happyReaders = computed(() => {
-  return Math.floor(props.totalBooks * 150 + Math.random() * 50);
+// Calculate average rating from all books
+const averageRating = computed(() => {
+  if (!props.books || props.books.length === 0) return '0.0';
+  
+  const totalRating = props.books.reduce((sum, book) => {
+    return sum + (book.sentimentStats?.averageRating || 0);
+  }, 0);
+  
+  const avg = totalRating / props.books.length;
+  return avg.toFixed(1);
+});
+
+// Calculate total reviews from all books
+const totalReviews = computed(() => {
+  if (!props.books || props.books.length === 0) return 0;
+  
+  return props.books.reduce((sum, book) => {
+    return sum + (book.sentimentStats?.totalReviews || 0);
+  }, 0);
 });
 </script>
 
 <style scoped>
 .rating-statistics {
-  margin: 20px 0;
+  margin: 20px 0px;
 }
 
 .stats-grid {
@@ -129,7 +150,7 @@ const happyReaders = computed(() => {
 
 .stat-card:nth-child(3) .stat-icon {
   background: linear-gradient(135deg, #6bcf7f 0%, #4ecdc4 100%);
-  box-shadow: 0 4px 15px rgba(107, 207, 127, 0.3);
+  box-shadow: 0 4px 15px rgba(76, 205, 196, 0.3);
 }
 
 .stat-content {

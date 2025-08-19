@@ -28,7 +28,8 @@
               <!-- Statistics component -->
               <RatingStatistics 
                 v-if="!loading && totalElements > 0" 
-                :total-books="totalElements" 
+                :total-books="totalElements"
+                :books="books" 
               />
               
               <div class="rating-stats">
@@ -95,10 +96,14 @@
               <div class="book-card-wrapper" :style="{ animationDelay: (index * 0.1) + 's' }">
                 <!-- Rating overlay -->
                 <div class="rating-overlay">
-                  <div class="rating-badge-premium">
+                  <div class="rating-badge-premium" 
+                       :class="{ 'loading-badge': !book.sentimentStats }"
+                       :title="book.sentimentStats ? `${book.sentimentStats.positivePercentage}% đánh giá tích cực (${book.sentimentStats.positiveReviews}/${book.sentimentStats.totalReviews})` : 'Đang tải thống kê...'">
                     <div class="badge-content">
-                      <i class="bi bi-award-fill badge-icon"></i>
-                      <span class="badge-text">Yêu thích</span>
+                      <i class="bi bi-award-fill badge-icon" :class="{ 'loading-icon': !book.sentimentStats }"></i>
+                      <span class="badge-text">
+                        {{ book.sentimentStats?.positivePercentage ? `${book.sentimentStats.positivePercentage}%` : '...' }}
+                      </span>
                     </div>
                     <div class="badge-shine"></div>
                   </div>
@@ -112,8 +117,22 @@
                 <!-- Hover effect overlay -->
                 <div class="hover-overlay">
                   <div class="hover-content">
-                    <i class="bi bi-heart-fill heart-icon"></i>
-                    <span class="hover-text">Được {{ Math.floor(Math.random() * 25) + 75 }}% yêu thích</span>
+                    <div class="rating-info">
+                      <div class="rating-row">
+                        <i class="bi bi-heart-fill heart-icon"></i>
+                        <span class="rating-text">{{ book.sentimentStats?.positivePercentage || 0 }}% yêu thích</span>
+                      </div>
+                      <div class="rating-row">
+                        <i class="bi bi-star-fill star-icon"></i>
+                        <span class="rating-text">
+                          {{ book.sentimentStats?.averageRating ? (Math.round(book.sentimentStats.averageRating * 10) / 10) : 0 }}/5 sao
+                        </span>
+                      </div>
+                      <div class="rating-row">
+                        <i class="bi bi-chat-dots chat-icon"></i>
+                        <span class="rating-text">{{ book.sentimentStats?.totalReviews || 0 }} đánh giá</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -263,6 +282,7 @@ onMounted(() => {
   background: linear-gradient(135deg, #fff8f0 0%, #f0f8ff 50%, #fff0f8 100%);
   position: relative;
   overflow: hidden;
+  margin: 20px;
 }
 
 .high-rating-section::before {
@@ -506,6 +526,20 @@ onMounted(() => {
   animation: shine 3s ease-in-out infinite;
 }
 
+.loading-badge {
+  opacity: 0.7;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.loading-icon {
+  animation: rotate 2s linear infinite !important;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
 @keyframes shine {
   0% { left: -100%; }
   50% { left: 100%; }
@@ -528,9 +562,9 @@ onMounted(() => {
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.3));
   color: white;
-  padding: 15px;
+  padding: 15px 10px;
   transform: translateY(100%);
   transition: all 0.4s ease;
   border-radius: 0 0 15px 15px;
@@ -544,24 +578,64 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+}
+
+.rating-info {
+  width: 100%;
+}
+
+.rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+}
+
+.rating-row:last-child {
+  margin-bottom: 0;
 }
 
 .heart-icon {
   color: #ff6b6b;
-  font-size: 1.2rem;
+  font-size: 1rem;
   animation: heartBeat 1.5s ease-in-out infinite;
+}
+
+.star-icon {
+  color: #ffd93d;
+  font-size: 1rem;
+  animation: starTwinkle 2s ease-in-out infinite;
+}
+
+.chat-icon {
+  color: #4ecdc4;
+  font-size: 1rem;
+  animation: chatBounce 2s ease-in-out infinite;
 }
 
 @keyframes heartBeat {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
+  50% { transform: scale(1.15); }
 }
 
-.hover-text {
-  font-size: 0.9rem;
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.8; transform: rotate(0deg); }
+  50% { opacity: 1; transform: rotate(180deg); }
+}
+
+@keyframes chatBounce {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(2px); }
+}
+
+.rating-text {
   font-weight: 600;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Loading and Error States */
@@ -1018,6 +1092,15 @@ onMounted(() => {
   
   .badge-text {
     font-size: 0.7rem;
+  }
+  
+  .rating-row {
+    font-size: 0.75rem;
+    margin-bottom: 4px;
+  }
+  
+  .hover-overlay {
+    padding: 10px 8px;
   }
   
   .btn-view-more {
