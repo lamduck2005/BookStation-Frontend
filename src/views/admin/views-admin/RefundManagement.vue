@@ -8,9 +8,9 @@
     </div>
 
     <!-- Layout 2 cột: Bộ lọc bên trái, Bảng bên phải -->
-    <div class="row">
+    <div class="row g-0">
       <!-- Cột bộ lọc (bên trái) -->
-      <div class="col-lg-2 col-xl-2">
+      <div class="filter-sidebar" :class="{ 'filter-sidebar-collapsed': !showFilter }">
         <div class="card shadow-lg border-0 filter-card sticky-filter">
           <div class="card-header bg-light border-0 py-3">
             <div class="d-flex justify-content-between align-items-center">
@@ -24,7 +24,7 @@
                 @click="toggleFilter"
                 :aria-expanded="showFilter"
               >
-                <i :class="showFilter ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+                <i :class="showFilter ? 'bi bi-chevron-left' : 'bi bi-chevron-right'"></i>
               </button>
             </div>
           </div>
@@ -137,7 +137,7 @@
       </div>
       
       <!-- Cột bảng (bên phải) -->
-      <div class="col-lg-10 col-xl-10">
+      <div class="table-main-content" :class="{ 'table-main-content-expanded': !showFilter }">
         <!-- Danh sách Refund -->
         <div class="card shadow-lg border-0 mb-4 admin-table-card">
           <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3">
@@ -179,7 +179,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(refund, index) in filteredRefunds" :key="refund.refundRequestId || refund.id">
+                    <tr v-for="(refund, index) in filteredRefunds" :key="refund.id">
                       <td>{{ (pagination.currentPage * pagination.perPage) + index + 1 }}</td>
                       <td>
                         <div class="btn-group" role="group">
@@ -191,7 +191,7 @@
                             <i class="bi bi-eye"></i>
                           </button>
                           <button
-                            v-if="refund.refundStatus === 'PENDING'"
+                            v-if="refund.status === 'PENDING'"
                             @click="approveRefundRequest(refund)"
                             class="btn btn-sm btn-outline-success"
                             title="Phê duyệt"
@@ -199,7 +199,7 @@
                             <i class="bi bi-check-circle"></i>
                           </button>
                           <button
-                            v-if="refund.refundStatus === 'PENDING'"
+                            v-if="refund.status === 'PENDING'"
                             @click="rejectRefundRequest(refund)"
                             class="btn btn-sm btn-outline-danger"
                             title="Từ chối"
@@ -207,8 +207,8 @@
                             <i class="bi bi-x-circle"></i>
                           </button>
                           <button
-                            v-if="refund.refundStatus === 'APPROVED'"
-                            @click="processRefundRequest(refund.refundRequestId)"
+                            v-if="refund.status === 'APPROVED'"
+                            @click="processRefundRequest(refund.id)"
                             class="btn btn-sm btn-outline-warning"
                             title="Xử lý hoàn trả"
                           >
@@ -221,15 +221,15 @@
                       </td>
                       <td>
                         <div>
-                          <strong>{{ refund.customerName || refund.userName }}</strong>
-                          <div class="text-muted small">{{ refund.customerEmail || refund.userEmail }}</div>
+                          <strong>{{ refund.userFullName }}</strong>
+                          <div class="text-muted small">{{ refund.userEmail || 'N/A' }}</div>
                         </div>
                       </td>
                       <td>
                         <StatusLabel 
-                          :status="refund.refundStatus"
-                          :status-text="getStatusText(refund.refundStatus)"
-                          :status-class="getStatusType(refund.refundStatus)"
+                          :status="refund.status"
+                          :status-text="refund.statusDisplay"
+                          :status-class="getStatusType(refund.status)"
                         />
                       </td>
                       <td>
@@ -247,7 +247,7 @@
                       <td>
                         <div class="d-flex gap-1">
                           <button
-                            v-if="refund.evidenceFiles?.images?.length || refund.evidenceImages?.length"
+                            v-if="refund.evidenceImages?.length"
                             @click="viewEvidence(refund, 'images')"
                             class="btn btn-sm btn-outline-primary"
                             title="Xem hình ảnh"
@@ -255,7 +255,7 @@
                             <i class="bi bi-image"></i>
                           </button>
                           <button
-                            v-if="refund.evidenceFiles?.videos?.length || refund.evidenceVideos?.length"
+                            v-if="refund.evidenceVideos?.length"
                             @click="viewEvidence(refund, 'videos')"
                             class="btn btn-sm btn-outline-info"
                             title="Xem video"
@@ -616,7 +616,7 @@ const filteredRefunds = computed(() => {
   let result = [...refundRequests.value]
 
   if (filters.status) {
-    result = result.filter(refund => refund.refundStatus === filters.status)
+    result = result.filter(refund => refund.status === filters.status)
   }
 
   if (filters.refundType) {
@@ -635,9 +635,8 @@ const filteredRefunds = computed(() => {
     const searchLower = filters.search.toLowerCase()
     result = result.filter(refund =>
       refund.orderCode.toLowerCase().includes(searchLower) ||
-      refund.userFullName.toLowerCase().includes(searchLower) ||
-      refund.orderId.toString().includes(searchLower) ||
-      refund.trackingCode?.toLowerCase().includes(searchLower)
+      refund.userFullName?.toLowerCase().includes(searchLower) ||
+      refund.orderId?.toString().includes(searchLower)
     )
   }
 
@@ -654,9 +653,12 @@ const filteredRefunds = computed(() => {
 
 // Methods
 const fetchRefundRequests = async () => {
+  console.log('🔄 Starting fetchRefundRequests...')
   try {
     loading.value = true
     error.value = ''
+    
+    console.log('⏳ Loading set to true')
     
     // Tạo params cho API theo tài liệu mới
     const params = {
@@ -717,12 +719,27 @@ const fetchRefundRequests = async () => {
       response = await getAllRefunds(params)
     }
     
-    if (response.status === 200) {
+    console.log('🔍 API Response received:', response)
+    
+    if (response && response.status === 200 && response.data) {
       console.log('=== REFUND API RESPONSE ===')
       console.log('Response data:', response.data)
       
-      if (response.data.content) {
-        // Response có pagination
+      if (Array.isArray(response.data)) {
+        // Response.data là array trực tiếp
+        refundRequests.value = response.data
+        pagination.totalPages = 1
+        pagination.totalItems = response.data.length
+        
+        console.log('=== LOADED REFUNDS (ARRAY) ===')
+        console.log('Total items:', response.data.length)
+        console.log('Refunds:', refundRequests.value.map(r => ({
+          id: r.id,
+          orderCode: r.orderCode,
+          status: r.status
+        })))
+      } else if (response.data.content) {
+        // Response.data có pagination
         refundRequests.value = response.data.content
         pagination.totalPages = response.data.totalPages
         pagination.totalItems = response.data.totalElements
@@ -731,32 +748,31 @@ const fetchRefundRequests = async () => {
         console.log('=== LOADED REFUNDS (PAGINATED) ===')
         console.log('Total items:', response.data.totalElements)
         console.log('Refunds:', refundRequests.value.map(r => ({
-          id: r.refundRequestId || r.id,
+          id: r.id,
           orderCode: r.orderCode,
-          status: r.refundStatus || r.status
+          status: r.status
         })))
       } else {
-        // Response không có pagination (có thể là array trực tiếp)
-        refundRequests.value = response.data || []
+        // Response data có thể là object khác hoặc empty
+        console.log('🚨 Unexpected response format:', response.data)
+        refundRequests.value = []
         pagination.totalPages = 1
-        pagination.totalItems = refundRequests.value.length
-        
-        console.log('=== LOADED REFUNDS (NON-PAGINATED) ===')
-        console.log('Total items:', refundRequests.value.length)
-        console.log('Refunds:', refundRequests.value.map(r => ({
-          id: r.refundRequestId || r.id,
-          orderCode: r.orderCode,
-          status: r.refundStatus || r.status
-        })))
+        pagination.totalItems = 0
       }
+    } else {
+      console.log('❌ No valid response received')
+      refundRequests.value = []
     }
     
   } catch (err) {
+    console.error('❌ Error in fetchRefundRequests:', err)
     error.value = 'Có lỗi xảy ra khi tải danh sách hoàn hàng'
     console.error('Error fetching refund requests:', err)
     refundRequests.value = []
   } finally {
+    console.log('✅ Setting loading to false')
     loading.value = false
+    console.log('✅ Loading value after finally:', loading.value)
   }
 }
 
@@ -783,7 +799,7 @@ const debouncedSearch = debounce(() => {
 }, 300)
 
 // UI functions
-const showFilter = ref(true)
+const showFilter = ref(false)
 const toggleFilter = () => {
   showFilter.value = !showFilter.value
 }
@@ -835,6 +851,16 @@ const getStatusType = (status) => {
   return statusTypes[status] || 'secondary'
 }
 
+const getStatusText = (status) => {
+  const statusTexts = {
+    PENDING: 'Chờ phê duyệt',
+    APPROVED: 'Đã phê duyệt', 
+    REJECTED: 'Đã từ chối',
+    COMPLETED: 'Hoàn thành'
+  }
+  return statusTexts[status] || status
+}
+
 const getTimelineMarkerClass = (status) => {
   const classes = {
     PENDING: 'bg-warning',
@@ -860,7 +886,7 @@ const formatTime = (timestamp) => {
 const viewRefundDetails = async (refund) => {
   try {
     // Gọi API để lấy chi tiết đầy đủ cho admin
-    const response = await getRefundAdminDetail(refund.refundRequestId || refund.id)
+    const response = await getRefundAdminDetail(refund.id)
     if (response.status === 200) {
       selectedRefund.value = response.data
     } else {
@@ -961,8 +987,8 @@ const approveRefundRequest = async (refund) => {
         <textarea id="adminNote" class="form-control" rows="3" placeholder="Nhập ghi chú cho khách hàng...">Yêu cầu hợp lệ. Khách hàng đã cung cấp đầy đủ minh chứng.</textarea>
       </div>
       <div class="mb-3">
-        <label class="form-label">Số tiền hoàn (có thể điều chỉnh)</label>
-        <input id="approvedAmount" type="number" class="form-control" value="${refund.totalRefundAmount}" max="${refund.totalRefundAmount}">
+        <label  class="form-label">Số tiền hoàn </label>
+        <input readonly id="approvedAmount" type="number" class="form-control" value="${refund.totalRefundAmount}" max="${refund.totalRefundAmount}">
       </div>
       <div class="mb-3">
         <label class="form-label">
@@ -1418,6 +1444,66 @@ onMounted(() => {
   
   .timeline-item:not(:last-child)::before {
     left: -0.75rem;
+  }
+}
+
+/* Filter sidebar styles */
+.filter-sidebar {
+  width: 250px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.filter-sidebar-collapsed {
+  width: 60px;
+}
+
+.filter-sidebar-collapsed .filter-card .card-body {
+  display: none;
+}
+
+.filter-sidebar-collapsed .filter-card .card-header h6 {
+  display: none;
+}
+
+.filter-sidebar-collapsed .filter-card .card-header {
+  padding: 0.75rem 0.5rem;
+}
+
+.filter-sidebar-collapsed .filter-card .card-header .d-flex {
+  justify-content: center;
+}
+
+.filter-sidebar-collapsed .filter-card .card-header .btn {
+  opacity: 1;
+}
+
+.table-main-content {
+  flex: 1;
+  transition: all 0.3s ease;
+  margin-left: 20px;
+}
+
+.table-main-content-expanded {
+  margin-left: 80px;
+}
+
+@media (max-width: 991.98px) {
+  .filter-sidebar {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .filter-sidebar-collapsed {
+    width: 100%;
+  }
+  
+  .table-main-content {
+    margin-left: 0;
+  }
+  
+  .table-main-content-expanded {
+    margin-left: 0;
   }
 }
 </style>

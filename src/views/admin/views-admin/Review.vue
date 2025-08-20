@@ -184,6 +184,7 @@
                 <th style="width: 120px">Trạng thái</th>
                 <th style="width: 180px">Người đánh giá</th>
                 <th style="width: 100px">Đánh giá</th>
+                <th style="width: 120px">Đánh giá tích cực</th>
                 <th style="width: 200px">Nội dung</th>
                 <th style="width: 150px">Ngày đánh giá</th>
                 <th style="width: 150px">Ngày sửa</th>
@@ -221,6 +222,11 @@
                   <small class="text-muted">{{ item.userEmail }}</small>
                 </td>
                 <td class="py-3">{{ item.rating }} <i class="fas fa-star text-warning"></i></td>
+                <td class="py-3 text-center">
+                  <span v-if="item.isPositive === true" class="text-success"><i class="bi bi-hand-thumbs-up-fill"></i> Có</span>
+                  <span v-else-if="item.isPositive === false" class="text-danger"><i class="bi bi-hand-thumbs-down-fill"></i> Không</span>
+                  <span v-else class="text-muted">Không có dữ liệu</span>
+                </td>
                 <td class="py-3">{{ item.comment }}</td>
                 <td class="py-3">
                   <span class="fw-bold">{{ toTime(item.reviewDate) }}</span>
@@ -301,6 +307,14 @@
                 <label class="form-label">Trạng thái</label>
                 <select class="form-select" v-model="formData.reviewStatus">
                   <option v-for="(value, key) in REVIEW_STATUS" :key="key" :value="key">{{ value.label }}</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Đánh giá tích cực</label>
+                <select class="form-select" v-model="formData.isPositive">
+                  <option :value="null">Không có dữ liệu</option>
+                  <option :value="true">Tích cực</option>
+                  <option :value="false">Không tích cực</option>
                 </select>
               </div>
             </form>
@@ -401,7 +415,8 @@ const formData = ref({
   userId: '',
   rating: 5,
   comment: '',
-  reviewStatus: 'APPROVED'
+  reviewStatus: 'APPROVED',
+  isPositive: null
 });
 
 // Selected cho form (khác filter)
@@ -584,7 +599,8 @@ const openEditForm = (item) => {
     userId: item.userId,
     rating: item.rating,
     comment: item.comment,
-    reviewStatus: item.reviewStatus
+    reviewStatus: item.reviewStatus,
+    isPositive: typeof item.isPositive === 'boolean' ? item.isPositive : null
   };
   // Khóa lựa chọn và sync selected để hiển thị
   const bookOpts = (dropdowns.books && dropdowns.books.options) ? dropdowns.books.options : [];
@@ -627,12 +643,17 @@ const handleSubmitForm = async () => {
     );
     if (!confirm.isConfirmed) return;
 
+    let isPositiveValue = formData.value.isPositive;
+    if (isPositiveValue === 'true' || isPositiveValue === true) isPositiveValue = true;
+    else if (isPositiveValue === 'false' || isPositiveValue === false) isPositiveValue = false;
+    else isPositiveValue = null;
     const submitData = {
       bookId: parseInt(formData.value.bookId),
       userId: parseInt(formData.value.userId),
       rating: parseInt(formData.value.rating),
       comment: formData.value.comment,
-      reviewStatus: formData.value.reviewStatus
+      reviewStatus: formData.value.reviewStatus,
+      isPositive: isPositiveValue
     };
 
     if (!isEditMode.value) {
@@ -687,7 +708,8 @@ const resetFormData = () => {
     userId: '',
     rating: 5,
     comment: '',
-    reviewStatus: 'APPROVED'
+    reviewStatus: 'APPROVED',
+    isPositive: null
   };
   formSelected.book = null;
   formSelected.customer = null;

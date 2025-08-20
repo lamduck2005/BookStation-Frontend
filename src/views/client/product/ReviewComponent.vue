@@ -150,6 +150,7 @@ import { showToast } from '@/utils/swalHelper'
 import { getUserId } from '@/utils/utils'
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
+import { analyzeSentiment } from '@/services/ai/sentimentAnalysis'
 
 const route = useRoute()
 const bookId = ref()
@@ -168,7 +169,8 @@ const formReviewObject = ref({
   userId: 0,
   rating: 0,
   comment: '',
-  reviewStatus: ''
+  reviewStatus: '',
+  isPositive: null // AI sentiment analysis result
 })
 
 
@@ -302,7 +304,8 @@ const getRatingText = (rating) => {
 const resetForm = () => {
   formReviewObject.value = {
     rating: 0,
-    comment: ''
+    comment: '',
+    isPositive: null
   }
   hoverRating.value = 0
 }
@@ -317,18 +320,47 @@ const submitReview = async () => {
   if (!createReviewButtonStatus.value) return
   
   try {
+    // Hiển thị loading state
+    showToast('info', 'Đang phân tích đánh giá với AI...')
+    
+    // Phân tích sentiment với AI
+    console.log('🤖 Analyzing sentiment for review:', {
+      rating: formReviewObject.value.rating,
+      comment: formReviewObject.value.comment
+    })
+    
+    let sentimentResult = null
+    try {
+      sentimentResult = await analyzeSentiment(formReviewObject.value.comment, formReviewObject.value.rating)
+      formReviewObject.value.isPositive = sentimentResult.isPositive
+      
+      console.log('✅ AI Analysis completed:', {
+        isPositive: sentimentResult.isPositive,
+        sentiment: sentimentResult.sentiment,
+        confidence: sentimentResult.confidence,
+        reason: sentimentResult.reason
+      })
+    } catch (aiError) {
+      console.warn('⚠️ AI Analysis failed, using fallback:', aiError)
+      // Fallback: nếu AI lỗi, dựa vào rating đơn giản
+      formReviewObject.value.isPositive = formReviewObject.value.rating >= 4
+    }
+
     formReviewObject.value.bookId = bookId.value
     formReviewObject.value.userId = userId.value
 
     if (!isEditingReview.value) {
       formReviewObject.value.reviewStatus = 'APPROVED'
+      console.log('📤 Creating review with AI sentiment:', formReviewObject.value)
       await createReview(bookId.value, formReviewObject.value)
-      showToast('success', 'Đã tạo đánh giá sách thành công!')
+      showToast('success', `Đã tạo đánh giá thành công! AI đánh giá: ${sentimentResult?.isPositive ? 'Tích cực' : 'Tiêu cực'}`)
     } else {
       formReviewObject.value.reviewStatus = 'EDITED'
+      console.log('📝 Updating review with AI sentiment:', formReviewObject.value)
       await updateReview(bookId.value, editingReview.value.id, formReviewObject.value)
-      showToast('success', 'Đã cập nhật đánh giá thành công!')
+      showToast('success', `Đã cập nhật đánh giá thành công! AI đánh giá: ${sentimentResult?.isPositive ? 'Tích cực' : 'Tiêu cực'}`)
     }
+    
     // reload list & permission
     page.value = 0
     await handleFetchReviews(true)
@@ -337,8 +369,8 @@ const submitReview = async () => {
     showWriteForm.value = false
     isEditingReview.value = false
   } catch (error) {
-    console.error('Error submitting review:', error)
-    showToast('error', error.response.data.message || 'Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại!')
+    console.error('❌ Error submitting review:', error)
+    showToast('error', error.response?.data?.message || 'Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại!')
   }
 }
 

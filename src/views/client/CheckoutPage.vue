@@ -27,8 +27,14 @@
           <ul class="mb-0">
             <li v-for="error in validationErrors" :key="error">{{ error }}</li>
           </ul>
-          <button class="btn btn-outline-warning btn-sm mt-2" @click="validateSession">
+          <button class="btn btn-outline-warning btn-sm mt-2" @click="handleManualValidation">
             🔄 Kiểm tra lại
+          </button>
+          <button class="btn btn-outline-info btn-sm mt-2 ms-2" @click="validateWithInitialSnapshot">
+            🧪 Test với snapshot ban đầu
+          </button>
+          <button class="btn btn-outline-secondary btn-sm mt-2 ms-2" @click="debugSessionInfo">
+            📊 Debug Info
           </button>
         </div>
 
@@ -107,7 +113,7 @@
               <div class="form-check me-2">
                 <input class="form-check-input" type="radio" name="payment" id="cod"
                   :checked="session?.paymentMethod === 'COD' || !session?.paymentMethod"
-                  @change="updateSessionPaymentMethod('COD')">
+                  @change="handlePaymentMethodChange('COD')">
                 <label class="form-check-label" for="cod"></label>
               </div>
               <div class="d-flex align-items-center flex-grow-1">
@@ -134,7 +140,7 @@
               :class="{ 'border-primary bg-light': session?.paymentMethod === 'VNPAY' }">
               <div class="form-check me-2">
                 <input class="form-check-input" type="radio" name="payment" id="vnpay"
-                  :checked="session?.paymentMethod === 'VNPAY'" @change="updateSessionPaymentMethod('VNPAY')">
+                  :checked="session?.paymentMethod === 'VNPAY'" @change="handlePaymentMethodChange('VNPAY')">
                 <label class="form-check-label" for="vnpay"></label>
               </div>
               <div class="d-flex align-items-center flex-grow-1">
@@ -392,7 +398,7 @@
           </div>
           <div class="card-body py-3">
             <textarea class="form-control" rows="3" placeholder="Nhập ghi chú cho đơn hàng (tùy chọn)..."
-              :value="session?.notes || ''" @blur="updateSessionNotes($event.target.value)"></textarea>
+              :value="session?.notes || ''" @blur="handleNotesChange($event.target.value)"></textarea>
             <div class="small text-muted mt-2">
               <i class="fas fa-info-circle me-1"></i>
               Ghi chú sẽ được gửi đến người bán để hỗ trợ giao hàng tốt hơn
@@ -422,9 +428,9 @@
               <span class="small text-muted me-3">Thành tiền</span>
               <span class="fw-bold small">{{ formatPrice(session?.subtotal || 0) }}</span>
             </div>
-            <div v-if="session?.totalVoucherDiscount && session.totalVoucherDiscount > 0" class="d-flex justify-content-between align-items-center mb-1">
+            <div v-if="(session?.totalVoucherDiscount && session.totalVoucherDiscount > 0) || (session?.totalDiscount && session.totalDiscount > 0)" class="d-flex justify-content-between align-items-center mb-1">
               <span class="small text-muted me-3">Giảm giá voucher</span>
-              <span class="fw-bold small text-success">-{{ formatPrice(session.totalVoucherDiscount) }}</span>
+              <span class="fw-bold small text-success">-{{ formatPrice(session?.totalVoucherDiscount || session?.totalDiscount || 0) }}</span>
             </div>
             <div class="d-flex justify-content-between align-items-center mb-1">
               <span class="small text-muted me-3">Phí vận chuyển (Giao hàng tiêu chuẩn)</span>
@@ -453,7 +459,7 @@
           </div>
         </div>
         <div class="col-12 col-md-6 text-center text-md-end">
-          <button class="btn btn-danger px-4 py-2 fw-bold" @click="showPaymentConfirmation = true">
+          <button class="btn btn-danger px-4 py-2 fw-bold" @click="handleShowPaymentConfirmation">
             Xác nhận thanh toán
           </button>
         </div>
@@ -556,9 +562,9 @@
             <span>{{ formatPrice(session?.subtotal || 0) }}</span>
           </div>
           
-          <div v-if="session?.totalVoucherDiscount && session.totalVoucherDiscount > 0" class="summary-row">
+          <div v-if="(session?.totalVoucherDiscount && session.totalVoucherDiscount > 0) || (session?.totalDiscount && session.totalDiscount > 0)" class="summary-row">
             <span>Giảm giá voucher:</span>
-            <span class="text-success">-{{ formatPrice(session.totalVoucherDiscount) }}</span>
+            <span class="text-success">-{{ formatPrice(session?.totalVoucherDiscount || session?.totalDiscount || 0) }}</span>
           </div>
           
           <div class="summary-row">
@@ -629,6 +635,16 @@
     @close="showPolicyPreview = false" 
   />
 
+  <!-- Price Change Popup -->
+  <PriceChangePopup
+    :show="showPriceChangePopup"
+    :priceChanges="priceChanges"
+    :changedItems="changedItems"
+    :appliedVouchers="appliedVouchers"
+    @close="closePriceChangePopup"
+    @accept-changes="acceptPriceChanges"
+  />
+
 </template>
 
 
@@ -650,6 +666,7 @@ import { showToast } from '@/utils/swalHelper.js'
 import { calcShippingFee } from '@/services/client/shippingFee.js'
 import { getUserAvailableVouchers } from '@/services/admin/order.js'
 import PolicyPreviewModal from '@/components/common/PolicyPreviewModal.vue'
+import PriceChangePopup from '@/components/common/PriceChangePopup.vue'
 import Swal from 'sweetalert2'
 
 const router = useRouter()
@@ -681,6 +698,33 @@ const voucherLoading = ref(false)
 const showPaymentConfirmation = ref(false)
 const showPolicyPreview = ref(false)
 
+// Price change popup states
+const showPriceChangePopup = ref(false)
+const priceChanges = ref({
+  oldSubtotal: 0,
+  newSubtotal: 0,
+  oldVoucherDiscount: 0,
+  newVoucherDiscount: 0,
+  oldTotal: 0,
+  newTotal: 0,
+  shippingFee: 0
+})
+const changedItems = ref([])
+const appliedVouchers = ref([])
+
+// Lưu snapshot ban đầu của session khi load
+const initialSessionSnapshot = ref(null)
+
+const handleShowPaymentConfirmation = async () => {
+  // Validate trước khi hiển thị popup xác nhận
+  const noChanges = await validateWithPriceCheck()
+  // Chỉ hiển thị popup xác nhận nếu KHÔNG có thay đổi giá
+  // Nếu có thay đổi giá, PriceChangePopup sẽ hiển thị và user quyết định
+  if (noChanges) {
+    showPaymentConfirmation.value = true
+  }
+}
+
 // Shipping Fee auto-calc
 const updateShippingFee = async () => {
   if (!session.value) return
@@ -696,6 +740,285 @@ const formatPrice = (price) => {
   return new Intl.NumberFormat('vi-VN').format(price) + ' ₫'
 }
 
+// Function để validate và kiểm tra thay đổi giá
+const validateWithPriceCheck = async () => {
+  try {
+    // Lưu trữ giá trước khi validate
+    const oldSubtotal = session.value?.subtotal || 0
+    const oldVoucherDiscount = session.value?.totalVoucherDiscount || session.value?.totalDiscount || 0
+    const oldTotal = session.value?.totalAmount || 0
+    const oldItems = [...(session.value?.checkoutItems || [])]
+
+    console.log('🔍 Before validate - Current session state:', {
+      oldSubtotal,
+      oldVoucherDiscount,
+      oldTotal,
+      oldItems: oldItems.map(item => ({ 
+        bookId: item.bookId, 
+        unitPrice: item.unitPrice, 
+        originalPrice: item.originalPrice,
+        totalPrice: item.totalPrice
+      }))
+    })
+
+    // Thực hiện validate
+    await validateSession()
+
+    // So sánh giá sau validate
+    const newSubtotal = session.value?.subtotal || 0
+    const newVoucherDiscount = session.value?.totalVoucherDiscount || session.value?.totalDiscount || 0
+    const newTotal = session.value?.totalAmount || 0
+    const newItems = [...(session.value?.checkoutItems || [])]
+
+    console.log('🔍 After validate - New session state:', {
+      newSubtotal,
+      newVoucherDiscount,
+      newTotal,
+      newItems: newItems.map(item => ({ 
+        bookId: item.bookId, 
+        unitPrice: item.unitPrice, 
+        originalPrice: item.originalPrice,
+        totalPrice: item.totalPrice
+      }))
+    })
+
+    // Kiểm tra xem có thay đổi giá không - so với lần validate trước
+    const hasSubtotalChange = Math.abs(oldSubtotal - newSubtotal) > 0
+    const hasVoucherChange = Math.abs(oldVoucherDiscount - newVoucherDiscount) > 0
+    const hasTotalChange = Math.abs(oldTotal - newTotal) > 0
+
+    // Kiểm tra thay đổi giá từng sản phẩm
+    let hasItemPriceChange = false
+    const itemChanges = []
+    
+    oldItems.forEach(oldItem => {
+      const newItem = newItems.find(item => item.bookId === oldItem.bookId)
+      if (newItem) {
+        const unitPriceChanged = Math.abs(oldItem.unitPrice - newItem.unitPrice) > 0
+        const totalPriceChanged = Math.abs(oldItem.totalPrice - newItem.totalPrice) > 0
+        
+        console.log(`🔍 Item comparison for ${newItem.bookTitle}:`, {
+          oldUnitPrice: oldItem.unitPrice,
+          newUnitPrice: newItem.unitPrice,
+          unitPriceChanged,
+          oldTotalPrice: oldItem.totalPrice,
+          newTotalPrice: newItem.totalPrice,
+          totalPriceChanged,
+          isFlashSale: newItem.isFlashSale,
+          originalPrice: newItem.originalPrice
+        })
+        
+        if (unitPriceChanged || totalPriceChanged) {
+          hasItemPriceChange = true
+          itemChanges.push({
+            bookId: newItem.bookId,
+            bookTitle: newItem.bookTitle,
+            bookImage: newItem.bookImage,
+            quantity: newItem.quantity,
+            oldUnitPrice: oldItem.unitPrice,
+            newUnitPrice: newItem.unitPrice,
+            oldTotalPrice: oldItem.totalPrice,
+            newTotalPrice: newItem.totalPrice,
+            changeReason: newItem.isFlashSale ? 'Flash Sale' : 
+                         newItem.unitPrice < oldItem.unitPrice ? 'Giảm giá' : 'Tăng giá'
+          })
+        }
+      }
+    })
+
+    console.log('🔍 Price change detection:', {
+      hasSubtotalChange,
+      hasVoucherChange,
+      hasTotalChange,
+      hasItemPriceChange,
+      itemChanges: itemChanges.length
+    })
+
+    // Nếu có BẤT KỲ thay đổi nào thì hiển thị popup
+    if (hasSubtotalChange || hasVoucherChange || hasTotalChange || hasItemPriceChange) {
+      console.log('🚨 PRICE CHANGES DETECTED! Details:', {
+        oldSubtotal, newSubtotal, subtotalDiff: newSubtotal - oldSubtotal,
+        oldVoucherDiscount, newVoucherDiscount, voucherDiff: newVoucherDiscount - oldVoucherDiscount,
+        oldTotal, newTotal, totalDiff: newTotal - oldTotal,
+        itemChanges
+      })
+
+      // Cập nhật dữ liệu cho popup
+      priceChanges.value = {
+        oldSubtotal,
+        newSubtotal,
+        oldVoucherDiscount,
+        newVoucherDiscount,
+        oldTotal,
+        newTotal,
+        shippingFee: session.value?.shippingFee || 20000
+      }
+      changedItems.value = itemChanges
+      appliedVouchers.value = session.value?.selectedVouchers || selectedVouchers.value
+
+      // Hiển thị popup thông báo thay đổi
+      showPriceChangePopup.value = true
+      console.log('🚨 Showing PriceChangePopup due to price changes')
+      return false // Có thay đổi giá
+    }
+
+    console.log('✅ No price changes detected')
+    return true // Không có thay đổi giá
+  } catch (err) {
+    console.error('❌ Error in validateWithPriceCheck:', err)
+    // Vẫn hiển thị validation errors nếu có lỗi khác
+    const errorMessage = err.response?.data?.message || err.message
+    if (errorMessage && errorMessage.includes('❌')) {
+      const errors = errorMessage.replace('❌ Có lỗi khi kiểm tra đơn hàng: ', '').split('; ')
+      validationErrors.value = errors.filter(e => e.trim())
+    } else {
+      validationErrors.value = [errorMessage || 'Có lỗi khi kiểm tra đơn hàng']
+    }
+    return false
+  }
+}
+
+// Function để force validate với snapshot ban đầu (test mục đích)
+const validateWithInitialSnapshot = async () => {
+  console.log('🧪 validateWithInitialSnapshot triggered')
+  
+  if (!initialSessionSnapshot.value) {
+    console.warn('⚠️ No initial snapshot available')
+    return await validateWithPriceCheck()
+  }
+
+  try {
+    console.log('🔍 Force validate with initial snapshot')
+    
+    // Thực hiện validate
+    await validateSession()
+
+    // So sánh với snapshot ban đầu
+    const currentSubtotal = session.value?.subtotal || 0
+    const currentVoucherDiscount = session.value?.totalVoucherDiscount || 0
+    const currentTotal = session.value?.totalAmount || 0
+    const currentItems = session.value?.checkoutItems || []
+
+    const oldSubtotal = initialSessionSnapshot.value.subtotal
+    const oldVoucherDiscount = initialSessionSnapshot.value.totalVoucherDiscount
+    const oldTotal = initialSessionSnapshot.value.totalAmount
+
+    console.log('🔍 Comparing with initial snapshot:', {
+      initial: {
+        baselineSubtotal: initialSessionSnapshot.value.subtotal,
+        currentSubtotal: initialSessionSnapshot.value.originalSubtotal,
+        baselineTotal: initialSessionSnapshot.value.totalAmount,
+        currentTotal: initialSessionSnapshot.value.originalTotalAmount,
+        totalVoucherDiscount: initialSessionSnapshot.value.totalVoucherDiscount,
+        items: initialSessionSnapshot.value.checkoutItems.map(item => ({
+          bookId: item.bookId,
+          baselinePrice: item.unitPrice,
+          currentPrice: item.currentUnitPrice,
+          originalPrice: item.originalPrice,
+          isFlashSale: item.isFlashSale
+        }))
+      },
+      current: { 
+        currentSubtotal, 
+        currentVoucherDiscount, 
+        currentTotal,
+        items: currentItems.map(item => ({
+          bookId: item.bookId,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice,
+          originalPrice: item.originalPrice,
+          isFlashSale: item.isFlashSale
+        }))
+      }
+    })
+
+    // Kiểm tra thay đổi - so sánh baseline vs current  
+    const hasSubtotalChange = Math.abs(oldSubtotal - currentSubtotal) > 0
+    const hasVoucherChange = Math.abs(oldVoucherDiscount - currentVoucherDiscount) > 0
+    const hasTotalChange = Math.abs(oldTotal - currentTotal) > 0
+
+    // Kiểm tra thay đổi từng item - so sánh baseline vs current
+    const itemChanges = []
+    initialSessionSnapshot.value.checkoutItems.forEach(oldItem => {
+      const currentItem = currentItems.find(item => item.bookId === oldItem.bookId)
+      if (currentItem) {
+        // So sánh baseline price (originalPrice cho flash sale) vs current price
+        const priceChange = Math.abs(oldItem.unitPrice - currentItem.unitPrice) > 0
+        
+        if (priceChange) {
+          itemChanges.push({
+            bookId: currentItem.bookId,
+            bookTitle: currentItem.bookTitle,
+            bookImage: currentItem.bookImage,
+            quantity: currentItem.quantity,
+            oldUnitPrice: oldItem.unitPrice, // Baseline price (originalPrice nếu flash sale)
+            newUnitPrice: currentItem.unitPrice, // Current price (flash sale price)
+            changeReason: currentItem.isFlashSale ? 'Flash Sale' : 
+                         currentItem.unitPrice < oldItem.unitPrice ? 'Giảm giá' : 'Tăng giá'
+          })
+          
+          console.log(`📊 Item price change detected for ${currentItem.bookTitle}:`, {
+            baselinePrice: oldItem.unitPrice,
+            currentPrice: currentItem.unitPrice,
+            isFlashSale: currentItem.isFlashSale,
+            originalPrice: currentItem.originalPrice,
+            savings: oldItem.unitPrice - currentItem.unitPrice
+          })
+        }
+      }
+    })
+
+    if (hasSubtotalChange || hasVoucherChange || hasTotalChange || itemChanges.length > 0) {
+      console.log('🚨 Changes detected compared to initial snapshot!')
+      console.log('📊 Price changes details:', {
+        hasSubtotalChange,
+        hasVoucherChange, 
+        hasTotalChange,
+        itemChanges: itemChanges.length,
+        oldSubtotal,
+        currentSubtotal,
+        oldTotal,
+        currentTotal,
+        itemDetails: itemChanges
+      })
+      
+      priceChanges.value = {
+        oldSubtotal,
+        newSubtotal: currentSubtotal,
+        oldVoucherDiscount,
+        newVoucherDiscount: currentVoucherDiscount,
+        oldTotal,
+        newTotal: currentTotal,
+        shippingFee: session.value?.shippingFee || 20000
+      }
+      changedItems.value = itemChanges
+      appliedVouchers.value = selectedVouchers.value
+
+      showPriceChangePopup.value = true
+      return false
+    }
+
+    return true
+  } catch (err) {
+    console.error('❌ Error in validateWithInitialSnapshot:', err)
+    return false
+  }
+}
+
+// Các function xử lý popup thay đổi giá
+const closePriceChangePopup = () => {
+  showPriceChangePopup.value = false
+  // Quay lại giỏ hàng
+  router.push('/cart')
+}
+
+const acceptPriceChanges = () => {
+  showPriceChangePopup.value = false
+  // Sau khi user chấp nhận thay đổi giá, hiển thị popup xác nhận đặt hàng
+  showPaymentConfirmation.value = true
+  console.log('✅ User accepted price changes, showing payment confirmation')
+}
+
 const loadLatestSession = async (userId) => {
   try {
     loading.value = true
@@ -709,9 +1032,56 @@ const loadLatestSession = async (userId) => {
       session.value = response.data.data
       sessionId.value = response.data.data.id
 
-      console.log('✅ Latest session loaded hi:', {
+      // Lưu snapshot ban đầu của session để so sánh sau này
+      // Đối với flash sale items, tạo baseline để so sánh với giá gốc
+      const baselineItems = session.value.checkoutItems?.map(item => {
+        // Nếu là flash sale, tính baseline price từ originalPrice
+        const baselinePrice = item.isFlashSale ? item.originalPrice : item.unitPrice
+        
+        return {
+          bookId: item.bookId,
+          bookTitle: item.bookTitle,
+          bookImage: item.bookImage,
+          quantity: item.quantity,
+          unitPrice: baselinePrice, // Baseline price (originalPrice nếu flash sale)
+          totalPrice: baselinePrice * item.quantity,
+          originalPrice: item.originalPrice,
+          isFlashSale: item.isFlashSale,
+          currentUnitPrice: item.unitPrice // Lưu giá hiện tại để reference
+        }
+      }) || []
+      
+      // Tính baseline subtotal
+      const baselineSubtotal = baselineItems.reduce((sum, item) => sum + item.totalPrice, 0)
+      
+      initialSessionSnapshot.value = {
+        subtotal: baselineSubtotal, // Baseline subtotal (theo originalPrice)
+        originalSubtotal: session.value.subtotal, // Subtotal hiện tại từ API
+        totalVoucherDiscount: session.value.totalVoucherDiscount || session.value.totalDiscount || 0,
+        totalAmount: baselineSubtotal + (session.value.shippingFee || 0) - (session.value.totalVoucherDiscount || session.value.totalDiscount || 0),
+        originalTotalAmount: session.value.totalAmount, // Total hiện tại từ API
+        checkoutItems: baselineItems
+      }
+
+      console.log('📸 Initial snapshot created with baseline prices:', {
+        currentSubtotal: session.value.subtotal,
+        baselineSubtotal: baselineSubtotal,
+        currentTotal: session.value.totalAmount,
+        baselineTotal: initialSessionSnapshot.value.totalAmount,
+        items: baselineItems.map(item => ({
+          bookId: item.bookId,
+          baselinePrice: item.unitPrice,
+          currentPrice: item.currentUnitPrice,
+          originalPrice: item.originalPrice,
+          isFlashSale: item.isFlashSale,
+          savings: item.isFlashSale ? (item.unitPrice - item.currentUnitPrice) * item.quantity : 0
+        }))
+      })
+
+      console.log('✅ Latest session loaded with initial snapshot:', {
         sessionId: sessionId.value,
         session: session.value,
+        initialSnapshot: initialSessionSnapshot.value,
         checkoutItems: session.value?.checkoutItems,
         length: session.value?.checkoutItems?.length,
         isActive: session.value?.isActive
@@ -736,22 +1106,23 @@ const loadLatestSession = async (userId) => {
 
       // Load vouchers nếu session có selectedVoucherIds
       if (session.value.selectedVoucherIds && session.value.selectedVoucherIds.length > 0) {
-        await loadSelectedVouchersFromSession()
+        // Ưu tiên sử dụng selectedVouchers từ response nếu có
+        if (session.value.selectedVouchers && session.value.selectedVouchers.length > 0) {
+          selectedVouchers.value = session.value.selectedVouchers
+          console.log('✅ Loaded vouchers from response selectedVouchers:', selectedVouchers.value)
+        } else {
+          await loadSelectedVouchersFromSession()
+        }
       } else {
         // Đảm bảo selectedVouchers được reset nếu session không có voucher
         selectedVouchers.value = []
       }
-    
 
-    // Fix: Validate session nhưng không để nó block loading
-    try {
-      await validateSession()
-    } catch (validateError) {
-      console.warn('⚠️ Validation error (non-blocking):', validateError)
+      // Không cần validate ngay khi load - chỉ validate khi có interaction
+      console.log('✅ Session loaded successfully without auto-validation')
+    } else {
+      throw new Error('Không tìm thấy phiên thanh toán mới nhất.')
     }
-  } else {
-    throw new Error('Không tìm thấy phiên thanh toán mới nhất.')
-  }
 } catch (err) {
   console.error('❌ Error loading latest checkout session:', err)
   const errorMessage = err.response?.data?.message || err.message
@@ -805,16 +1176,24 @@ const validateSession = async () => {
 }
 
 const setupValidationTimer = () => {
-  validationTimer = setInterval(async () => {
-    if (session.value && session.value.isActive) {
-      await validateSession()
-    }
-  }, 30000)
+  // Đã loại bỏ timer validation định kỳ
+  // Chỉ validate khi có interaction từ user
+  console.log('🔄 Validation timer disabled - only validate on user interaction')
 }
 
 const confirmAndPay = async () => {
-  showPaymentConfirmation.value = false
-  await processPayment()
+  // Validate một lần nữa trước khi thanh toán để đảm bảo giá không thay đổi
+  const noChanges = await validateWithPriceCheck()
+  
+  if (noChanges) {
+    // Không có thay đổi giá, tiến hành thanh toán
+    showPaymentConfirmation.value = false
+    await processPayment()
+  } else {
+    // Có thay đổi giá, đóng popup xác nhận và hiển thị PriceChangePopup
+    showPaymentConfirmation.value = false
+    // PriceChangePopup đã được hiển thị bởi validateWithPriceCheck()
+  }
 }
 
 const processPayment = async () => {
@@ -999,14 +1378,18 @@ const formatFullAddress = (address) => {
   return parts.join(', ')
 }
 
-const applyCoupon = () => {
+const applyCoupon = async () => {
   if (!couponCode.value.trim()) {
     showToast('warning', 'Vui lòng nhập mã khuyến mãi')
     return
   }
   // TODO: Implement coupon application logic
   showToast('info', 'Chức năng áp dụng mã khuyến mãi sẽ được triển khai sớm')
-  updateShippingFee()
+  await updateShippingFee()
+  
+  // Validate sau khi áp dụng coupon
+  await validateWithPriceCheck()
+  // PriceChangePopup sẽ tự động hiển thị nếu có thay đổi giá
 }
 
 const selectAddress = async (address) => {
@@ -1018,6 +1401,10 @@ const selectAddress = async (address) => {
     await updateSessionAddress(address.id)
   }
   await updateShippingFee()
+  
+  // Validate sau khi thay đổi địa chỉ
+  await validateWithPriceCheck()
+  // PriceChangePopup sẽ tự động hiển thị nếu có thay đổi giá
 }
 
 // Helper function để lấy items từ session hiện tại - LUÔN LUÔN CẦN THIẾT khi update session
@@ -1086,6 +1473,14 @@ const updateSessionAddress = async (addressId) => {
     console.error('❌ Error updating session address:', error)
     showToast('error', 'Không thể cập nhật địa chỉ giao hàng')
   }
+}
+
+// Function để cập nhật phương thức thanh toán với validate
+const handlePaymentMethodChange = async (paymentMethod) => {
+  await updateSessionPaymentMethod(paymentMethod)
+  // Validate sau khi thay đổi phương thức thanh toán
+  await validateWithPriceCheck()
+  // PriceChangePopup sẽ tự động hiển thị nếu có thay đổi giá
 }
 
 // Function để cập nhật phương thức thanh toán  
@@ -1163,6 +1558,60 @@ const updateSessionVouchers = async (voucherIds) => {
     showToast('error', `Không thể cập nhật voucher: ${error.message}`)
     throw error
   }
+}
+
+// Function xử lý thay đổi notes với validate
+const handleNotesChange = async (notes) => {
+  await updateSessionNotes(notes)
+  // Validate sau khi thay đổi notes (tùy chọn, có thể bỏ vì notes không ảnh hưởng giá)
+  // await validateWithPriceCheck()
+}
+
+// Function xử lý validate thủ công
+const handleManualValidation = async () => {
+  console.log('🔧 Manual validation triggered')
+  debugSessionInfo()
+  await validateWithPriceCheck()
+}
+
+// Function để debug session info
+const debugSessionInfo = () => {
+  console.log('🔍 === FULL SESSION DEBUG INFO ===')
+  console.log('📋 Current session:', session.value)
+  console.log('📸 Initial snapshot:', initialSessionSnapshot.value)
+  
+  if (session.value?.checkoutItems) {
+    console.log('📦 Current items details:')
+    session.value.checkoutItems.forEach((item, index) => {
+      console.log(`   Item ${index + 1}:`, {
+        bookId: item.bookId,
+        title: item.bookTitle,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+        originalPrice: item.originalPrice,
+        isFlashSale: item.isFlashSale,
+        savings: item.isFlashSale ? (item.originalPrice - item.unitPrice) * item.quantity : 0
+      })
+    })
+  }
+  
+  console.log('💰 Financial breakdown:', {
+    subtotal: session.value?.subtotal,
+    totalVoucherDiscount: session.value?.totalVoucherDiscount,
+    totalDiscount: session.value?.totalDiscount,
+    shippingFee: session.value?.shippingFee,
+    totalAmount: session.value?.totalAmount
+  })
+  
+  if (initialSessionSnapshot.value) {
+    console.log('📊 Baseline vs Current comparison:')
+    console.log('   Baseline subtotal:', initialSessionSnapshot.value.subtotal)
+    console.log('   Current subtotal:', session.value?.subtotal)
+    console.log('   Difference:', (session.value?.subtotal || 0) - initialSessionSnapshot.value.subtotal)
+  }
+  
+  console.log('🔍 === END DEBUG INFO ===')
 }
 
 // Function để cập nhật ghi chú
@@ -1438,8 +1887,9 @@ const removeVoucher = async (voucher) => {
     const voucherIds = selectedVouchers.value.map(v => v.id)
     await updateSessionVouchers(voucherIds)
     
-    // Validate ngay lập tức để cập nhật state
-    await validateSession()
+    // Validate ngay lập tức để cập nhật state và kiểm tra thay đổi giá
+    await validateWithPriceCheck()
+    // PriceChangePopup sẽ tự động hiển thị nếu có thay đổi giá
   }
 }
 
@@ -1447,8 +1897,9 @@ const clearVoucherSelection = async () => {
   selectedVouchers.value = []
   await updateSessionVouchers([])
   
-  // Validate ngay lập tức để cập nhật state
-  await validateSession()
+  // Validate ngay lập tức để cập nhật state và kiểm tra thay đổi giá
+  await validateWithPriceCheck()
+  // PriceChangePopup sẽ tự động hiển thị nếu có thay đổi giá
 }
 
 const applySelectedVouchers = async () => {
@@ -1463,11 +1914,17 @@ const applySelectedVouchers = async () => {
     const voucherIds = selectedVouchers.value.map(v => v.id)
     await updateSessionVouchers(voucherIds)
     
-    // Validate ngay lập tức để cập nhật state
-    await validateSession()
+    // Validate ngay lập tức để cập nhật state và kiểm tra thay đổi giá
+    const noChanges = await validateWithPriceCheck()
     
+    // Luôn đóng modal voucher sau khi áp dụng
     showVoucherList.value = false
-    showToast('success', `Đã áp dụng ${selectedVouchers.value.length} voucher thành công`)
+    
+    if (noChanges) {
+      // Không có thay đổi giá, chỉ hiển thị toast thành công
+      showToast('success', `Đã áp dụng ${selectedVouchers.value.length} voucher thành công`)
+    }
+    // Nếu có thay đổi giá, PriceChangePopup sẽ tự động hiển thị
     
     // Log để debug
     console.log('✅ Applied vouchers successfully:', {
@@ -1551,6 +2008,13 @@ onMounted(async () => {
 
   await updateShippingFee()
   setupValidationTimer()
+})
+
+onUnmounted(() => {
+  // Dọn dẹp timer nếu có
+  if (validationTimer) {
+    clearInterval(validationTimer)
+  }
 })
 </script>
 
