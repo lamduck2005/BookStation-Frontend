@@ -59,6 +59,10 @@ import ReviewTestPage from "@/views/admin/views-admin/ReviewTestPage.vue";
 
 import ProductCatalog from "@/views/client/ProductCatalog.vue";
 
+// Import minigame components
+import Campaign from "@/views/admin/views-admin/Campaign.vue";
+import CampaignRewards from "@/views/admin/views-admin/CampaignRewards.vue";
+
 
 import AuthPage from "@/views/AuthPage.vue";
 import { showToast } from "@/utils/swalHelper";
@@ -67,6 +71,7 @@ import ResetPassword from "@/views/ResetPassword.vue";
 import UserVoucher from "@/views/admin/views-admin/UserVoucher.vue";
 import POSView from "@/views/admin/views-admin/POSView.vue";
 import OrderFail from "@/views/client/OrderFail.vue";
+import MinigameBox from "@/views/client/MinigameBox.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -129,6 +134,12 @@ const router = createRouter({
           name: "policies",
           component: PoliciesPage,
         },
+        {
+          path: "minigame",
+          name: "minigame",
+          component: MinigameBox,
+        },
+     
         {
           path: "profile",
           name: "profile",
@@ -338,6 +349,17 @@ const router = createRouter({
           path: "template",
           name: "Mẫu",
           component: Template,
+        },
+        {
+          path: "campaigns",
+          name: "Quản lý chiến dịch",
+          component: Campaign,
+        },
+        {
+          path: "campaigns/:id/rewards",
+          name: "Quản lý phần thưởng",
+          component: CampaignRewards,
+          props: true,
         },
         {
           path: "event",

@@ -164,6 +164,18 @@ const sidebarLinks = [
     ],
   },
   {
+    type: "submenu",
+    icon: "bi bi-gift-fill",
+    label: "Minigame",
+    subLinks: [
+      {
+        to: "/admin/campaigns",
+        icon: "bi bi-calendar-event",
+        label: "Quản lý chiến dịch",
+      },
+    ],
+  },
+  {
     type: "link",
     to: "/admin/notification",
     icon: "bi bi-bell",
