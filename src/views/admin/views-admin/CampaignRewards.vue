@@ -334,6 +334,22 @@ const formatDateTime = (timestamp) => {
   return new Date(timestamp).toLocaleString('vi-VN');
 };
 
+const closeModalSafely = (modalId) => {
+  const modal = Modal.getInstance(document.getElementById(modalId));
+  if (modal) {
+    modal.hide();
+  }
+  
+  // Clean up any remaining backdrop and body styles
+  setTimeout(() => {
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+  }, 300);
+};
+
 const getRewardTypeClass = (type) => {
   switch (type) {
     case 'VOUCHER': return 'badge bg-success';
@@ -433,8 +449,9 @@ const saveReward = async () => {
       showToast('Thêm phần thưởng thành công!', 'success');
     }
 
-    const modal = Modal.getInstance(document.getElementById('rewardModal'));
-    modal.hide();
+    // Properly close modal and remove backdrop
+    closeModalSafely('rewardModal');
+    
     loadRewards();
   } catch (error) {
     showToast('Lỗi khi lưu phần thưởng: ' + error.message, 'error');
@@ -481,6 +498,21 @@ onMounted(() => {
   loadCampaign();
   loadRewards();
   loadVoucherOptions();
+  
+  // Add event listener for modal close events
+  const rewardModal = document.getElementById('rewardModal');
+  if (rewardModal) {
+    rewardModal.addEventListener('hidden.bs.modal', () => {
+      // Clean up any remaining backdrop and body styles
+      setTimeout(() => {
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+      }, 100);
+    });
+  }
 });
 </script>
 

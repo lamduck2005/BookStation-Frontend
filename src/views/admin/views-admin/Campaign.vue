@@ -372,6 +372,22 @@ const formatDateTime = (timestamp) => {
   return new Date(timestamp).toLocaleString('vi-VN');
 };
 
+const closeModalSafely = (modalId) => {
+  const modal = Modal.getInstance(document.getElementById(modalId));
+  if (modal) {
+    modal.hide();
+  }
+  
+  // Clean up any remaining backdrop and body styles
+  setTimeout(() => {
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
+    document.body.classList.remove('modal-open');
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+  }, 300);
+};
+
 const loadCampaigns = async () => {
   loading.value = true;
   try {
@@ -477,8 +493,9 @@ const saveCampaign = async () => {
       showToast('Thêm chiến dịch thành công!', 'success');
     }
 
-    const modal = Modal.getInstance(document.getElementById('campaignModal'));
-    modal.hide();
+    // Properly close modal and remove backdrop
+    closeModalSafely('campaignModal');
+    
     loadCampaigns();
   } catch (error) {
     showToast('Lỗi khi lưu chiến dịch: ' + error.message, 'error');
@@ -549,6 +566,21 @@ const handleGoToPage = (page) => {
 
 onMounted(() => {
   loadCampaigns();
+  
+  // Add event listener for modal close events
+  const campaignModal = document.getElementById('campaignModal');
+  if (campaignModal) {
+    campaignModal.addEventListener('hidden.bs.modal', () => {
+      // Clean up any remaining backdrop and body styles
+      setTimeout(() => {
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => backdrop.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+      }, 100);
+    });
+  }
 });
 </script>
 
