@@ -106,6 +106,13 @@
           >
             <i class="bi bi-arrow-repeat me-1"></i> Làm mới
           </button>
+          
+          <!-- Nút Export Excel -->
+          <ExcelExportButton 
+            data-type="vouchers"
+            button-text="Xuất Excel"
+          />
+          
           <button
             class="btn btn-primary btn-sm py-2"
             style="background-color: #33304e; border-color: #33304e"
@@ -586,8 +593,6 @@
 <script>
 import EditButton from "@/components/common/EditButton.vue";
 import DeleteButton from "@/components/common/DeleteButton.vue";
-// ✅ BỎ import ToggleStatus
-// import ToggleStatus from "@/components/common/ToggleStatus.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import OverviewStatsComponent from "@/components/common/OverviewStatsComponent.vue";
 import { getUserId, getUserFullName } from "@/utils/utils";
@@ -598,21 +603,19 @@ import {
   createVouchers,
   updateVouchers,
   deleteVouchers,
-  // ✅ BỎ import upStatusVouchers
-  // upStatusVouchers,
   getVoucherStats,
 } from "@/services/admin/voucher";
 import Swal from "sweetalert2";
 import { showToast } from "@/utils/swalHelper";
+import ExcelExportButton from "@/components/common/ExcelExportButton.vue";
 
 export default {
   components: {
     Pagination,
     EditButton,
     DeleteButton,
-    // ✅ BỎ ToggleStatus khỏi components
-    // ToggleStatus,
     OverviewStatsComponent,
+    ExcelExportButton,
     showToast,
   },
   setup() {
@@ -630,8 +633,6 @@ export default {
     const listVoucher = ref([]);
 
     const searchQuery = ref("");
-    // ✅ BỎ statusFilter
-    // const statusFilter = ref("");
     const nameFilter = ref("");
     const voucherTypeFilter = ref("");
     const showDetailModal = ref(false);

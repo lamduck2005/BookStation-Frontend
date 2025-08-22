@@ -153,6 +153,13 @@
           <button class="btn btn-outline-info btn-sm py-2" @click="reloadPage" :disabled="loading">
             <i class="bi bi-arrow-repeat me-1"></i> Làm mới
           </button>
+          
+          <!-- Nút Export Excel -->
+          <ExcelExportButton 
+            data-type="reviews"
+            button-text="Xuất Excel"
+          />
+          
           <button class="btn btn-primary btn-sm py-2" style="background-color: #33304e; border-color: #33304e;"
             @click="openAddForm">
             <i class="bi bi-plus-circle me-1"></i> Thêm mới
@@ -255,15 +262,19 @@
 
     <!-- Modal Thêm/Sửa Review -->
     <div class="modal fade" id="formModal" tabindex="-1" aria-labelledby="formModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
+      <div class="modal-dialog" style="max-width: 600px">
         <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="formModalLabel">{{ isEditMode ? 'Chỉnh sửa' : 'Thêm mới' }}</h5>
+          <div class="modal-header form-modal-header">
+            <h5 class="modal-title" id="formModalLabel">
+              <i class="bi bi-plus-circle me-2" v-if="!isEditMode"></i>
+              <i class="bi bi-pencil-square me-2" v-else></i>
+              {{ isEditMode ? 'Chỉnh sửa đánh giá' : 'Thêm mới đánh giá' }}
+            </h5>
             <button type="button" class="custom-close-btn" @click="closeModal">
               <i class="bx bx-x-circle"></i>
             </button>
           </div>
-          <div class="modal-body">
+          <div class="modal-body form-modal-body">
             <form @submit.prevent="handleSubmitForm">
               <div class="mb-3">
                 <label class="form-label">Sách <span class="text-danger">*</span></label>
@@ -301,7 +312,10 @@
               </div>
               <div class="mb-3">
                 <label class="form-label">Bình luận <span class="text-danger">*</span></label>
-                <textarea class="form-control" rows="3" v-model="formData.comment" placeholder="Nhập bình luận" maxlength="500" required></textarea>
+                <textarea class="form-control" rows="3" v-model="formData.comment" placeholder="Nhập bình luận (3-500 ký tự)" maxlength="500" required></textarea>
+                <div class="form-text">
+                  {{ formData.comment ? formData.comment.length : 0 }}/500 ký tự
+                </div>
               </div>
               <div class="mb-3">
                 <label class="form-label">Trạng thái</label>
@@ -320,8 +334,10 @@
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="closeModal">Đóng</button>
-            <button type="button" class="btn btn-primary" @click="handleSubmitForm">Xác nhận</button>
+            <button type="button" class="btn form-btn-secondary" @click="closeModal">Đóng</button>
+            <button type="button" class="btn form-btn-primary" @click="handleSubmitForm">
+              {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }}
+            </button>
           </div>
         </div>
       </div>
@@ -345,6 +361,7 @@ import {
 import { getBooksDropdown, getCustomersDropdown } from '@/services/admin/select.js';
 import { datetimeLocalToTimestamp } from '@/utils/utils.js';
 import OverviewStatsComponent from '@/components/common/OverviewStatsComponent.vue';
+import ExcelExportButton from '@/components/common/ExcelExportButton.vue';
 
 // Enum Review Status
 const REVIEW_STATUS = {
@@ -398,6 +415,8 @@ const filterSelected = reactive({
   book: null,
   customer: null
 });
+
+
 
 // Đồng bộ từng dropdown tách riêng để tránh phụ thuộc lẫn nhau
 watch(() => filterSelected.book, (opt) => {
@@ -715,6 +734,8 @@ const resetFormData = () => {
   formSelected.customer = null;
 };
 
+
+
 onMounted(() => {
   getDataFromApi(currentPage.value, pageSize.value);
   handleGetDropdown(); // Tải danh sách sách cho dropdown
@@ -723,45 +744,5 @@ onMounted(() => {
 
 <style scoped>
 @import '@/assets/css/admin-global.css';
-
-/* Modal styling - không liên quan đến bảng */
-.modal-dialog {
-  max-width: 600px !important;
-}
-
-.modal-content {
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  border: none;
-}
-
-.modal-header {
-  border-bottom: 2px solid #ecae9e;
-  border-radius: 15px 15px 0 0;
-  padding: 0.8rem 1.2rem;
-  position: relative;
-}
-
-.modal-title {
-  font-weight: 600;
-  color: #2c2c54;
-  font-size: 1.1rem;
-}
-
-.custom-close-btn {
-  background: none;
-  border: none;
-  padding: 0.5rem;
-  cursor: pointer;
-  position: absolute;
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.modal-body {
-  min-height: 320px;
-  max-height: 70vh;
-  overflow-y: auto;
-}
+@import '@/assets/css/form-global.css';
 </style>

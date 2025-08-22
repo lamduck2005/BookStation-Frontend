@@ -15,54 +15,6 @@
       </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div v-else class="row g-3">
-      <!-- Total Publishers Card -->
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card publishers-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper publishers-icon">
-                <i class="bi bi-building"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value stat-value-gradient text-gradient-info">{{ getTotalPublishers() }}</div>
-                <div class="stat-label">Nhà xuất bản</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small class="text-muted">
-                Đang hoạt động
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Total Books Card -->
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card books-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper books-icon">
-                <i class="bi bi-book"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value stat-value-gradient text-gradient-purple">{{ getTotalBooks() }}</div>
-                <div class="stat-label">Tổng đầu sách</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small class="text-success">
-                Mới tháng này: <strong>{{ getNewBooksThisMonth() }}</strong>
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
     <!-- Book Statistics by Publisher Row -->
     <div v-if="!loading && data?.bookStatistics && data.bookStatistics.length > 0" class="row g-3 mt-2">
       <div class="col-12">
@@ -185,7 +137,7 @@
     </div>
 
     <!-- Quick Actions Row -->
-    <div v-if="!loading" class="row g-3 mt-2">
+    <!-- <div v-if="!loading" class="row g-3 mt-2">
       <div class="col-12">
         <div class="card actions-card">
           <div class="card-body">
@@ -211,7 +163,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 

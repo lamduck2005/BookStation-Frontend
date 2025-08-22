@@ -205,6 +205,13 @@
               <button class="btn btn-outline-info btn-sm py-2" @click="fetchBooks" :disabled="loading">
                 <i class="bi bi-arrow-repeat me-1"></i> Làm mới
               </button>
+              
+              <!-- Nút Export Excel -->
+              <ExcelExportButton 
+                data-type="books"
+                button-text="Xuất Excel"
+              />
+              
               <AddButton @click="openAddModal" />
             </div>
           </div>
@@ -1029,6 +1036,7 @@ import ImagePreviewModal from '@/components/common/ImagePreviewModal.vue';
 import ProcessingOrdersPopup from '@/components/common/ProcessingOrdersPopup.vue';
 import BookOverviewCards from '@/views/admin/components-admin/statistics/BookOverviewCards.vue';
 import BookPerformanceChart from '@/views/admin/components-admin/statistics/BookPerformanceChart.vue';
+import ExcelExportButton from '@/components/common/ExcelExportButton.vue';
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { Modal } from 'bootstrap';
 import { getBooks, createBook, updateBook, getAuthorsDropdown, getCategoriesDropdown, getSuppliersDropdown, toggleBookStatus, calculatePrice } from '@/services/admin/book';

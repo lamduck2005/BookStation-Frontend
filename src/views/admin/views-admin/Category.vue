@@ -76,6 +76,13 @@
           >
             <i class="bi bi-arrow-repeat me-1"></i> Làm mới
           </button>
+          
+          <!-- Nút Export Excel -->
+          <ExcelExportButton 
+            data-type="categories"
+            button-text="Xuất Excel"
+          />
+          
           <button
             class="btn btn-primary btn-sm py-2"
             style="background-color: #33304e; border-color: #33304e"
@@ -494,6 +501,7 @@ import Pagination from "@/components/common/Pagination.vue";
 import ToggleStatus from "@/components/common/ToggleStatus.vue";
 // ✅ Import hàm timestampToDatetimeLocal từ utils.js
 import { debounce, timestampToDatetimeLocal } from "@/utils/utils";
+import ExcelExportButton from "@/components/common/ExcelExportButton.vue";
 
 const categories = ref([]);
 const dataGetAll = ref([]);

@@ -76,6 +76,13 @@
           >
             <i class="bi bi-arrow-repeat me-1"></i> Làm mới
           </button>
+          
+          <!-- Nút Export Excel -->
+          <ExcelExportButton 
+            data-type="authors"
+            button-text="Xuất Excel"
+          />
+          
           <button
             class="btn btn-primary btn-sm py-2"
             style="background-color: #33304e; border-color: #33304e"
@@ -422,6 +429,7 @@ import DeleteButton from "@/components/common/DeleteButton.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import { debounce } from "@/utils/utils";
 import { timestampToDatetimeLocal } from "@/utils/utils"; // ✅ Import hàm
+import ExcelExportButton from "@/components/common/ExcelExportButton.vue";
 
 const authors = ref([]);
 const showModal = ref(false);

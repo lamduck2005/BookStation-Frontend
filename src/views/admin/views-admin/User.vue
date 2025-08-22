@@ -142,6 +142,13 @@
               >
                 <i class="bi bi-arrow-repeat me-1"></i> Làm mới
               </button>
+              
+              <!-- Nút Export Excel -->
+              <ExcelExportButton 
+                data-type="users"
+                button-text="Xuất Excel"
+              />
+              
               <button class="btn btn-success btn-sm" @click="openAddModal">
                 <i class="bi bi-plus-circle me-2"></i> Thêm mới
               </button>
@@ -419,6 +426,7 @@ import {
 } from "@/services/admin/user";
 import EditButton from "@/components/common/EditButton.vue";
 import { getUserId, getUserRole } from "@/utils/utils.js"; // <--- import thêm
+import ExcelExportButton from "@/components/common/ExcelExportButton.vue";
 
 const users = ref([]);
 const totalElements = ref(0);

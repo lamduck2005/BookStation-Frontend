@@ -9,6 +9,13 @@
 
     <div class="table-container">
       <table class="top-books-table">
+        <thead>
+          <tr>
+            <th class="rank-header">STT</th>
+            <th class="book-header">Sách</th>
+            <th class="revenue-header">Doanh thu</th>
+          </tr>
+        </thead>
         <tbody>
           <tr v-for="(book, index) in books" :key="book.name" class="book-row">
             <td class="rank-cell">
@@ -55,14 +62,7 @@ const getRankClass = (index) => {
 </script>
 
 <style scoped>
-.top-books-container {
-  background: #ffffff;
-  border-radius: 15px;
-  overflow: hidden;
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
-  border: 1px solid rgba(102, 126, 234, 0.2);
-  transition: all 0.3s ease;
-}
+
 
 .top-books-container:hover {
   box-shadow: 0 12px 35px rgba(102, 126, 234, 0.25);
@@ -100,13 +100,48 @@ const getRankClass = (index) => {
 }
 
 .table-container {
-  max-height: 320px;
+  max-height: 400px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .top-books-table {
   width: 100%;
   border-collapse: collapse;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.top-books-table thead {
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  z-index: 10;
+}
+
+.top-books-table th {
+  padding: 16px 24px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  color: #667eea;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #667eea;
+  background: #ffffff;
+}
+
+.rank-header {
+  width: 80px;
+  text-align: center !important;
+}
+
+.book-header {
+  width: 60%;
+}
+
+.revenue-header {
+  width: 30%;
+  text-align: right !important;
 }
 
 .book-row {
@@ -131,8 +166,8 @@ const getRankClass = (index) => {
 }
 
 .rank-cell {
-  width: 50px;
-  padding-right: 16px !important;
+  width: 80px;
+  text-align: center;
 }
 
 .rank-badge {
@@ -147,6 +182,7 @@ const getRankClass = (index) => {
   color: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
+  margin: 0 auto;
 }
 
 .book-row:hover .rank-badge {
@@ -154,23 +190,23 @@ const getRankClass = (index) => {
 }
 
 .rank-badge.rank-1 {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
 }
 
 .rank-badge.rank-2 {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+  box-shadow: 0 4px 12px rgba(192, 57, 43, 0.3);
 }
 
 .rank-badge.rank-3 {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+  box-shadow: 0 4px 12px rgba(142, 68, 173, 0.3);
 }
 
 .rank-badge.rank-other {
-  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+  box-shadow: 0 2px 8px rgba(52, 73, 94, 0.3);
 }
 
 .book-info {
@@ -181,19 +217,20 @@ const getRankClass = (index) => {
 .book-name {
   font-size: 14px;
   font-weight: 700;
-  color: #1e293b;
+  color: #2c3e50;
   margin-bottom: 4px;
   line-height: 1.3;
   transition: color 0.3s ease;
 }
 
 .book-row:hover .book-name {
-  color: #667eea;
+  color: #e67e22;
+  font-weight: 800;
 }
 
 .book-detail {
   font-size: 12px;
-  color: #667eea;
+  color: #7f8c8d;
   line-height: 1.2;
   font-weight: 600;
 }
@@ -206,20 +243,21 @@ const getRankClass = (index) => {
 .revenue-amount {
   font-size: 15px;
   font-weight: 800;
-  color: #667eea;
+  color: #27ae60;
   line-height: 1.2;
   margin-bottom: 2px;
   transition: all 0.3s ease;
+  font-variant-numeric: tabular-nums;
 }
 
 .book-row:hover .revenue-amount {
-  color: #5a6fd8;
+  color: #229954;
   transform: scale(1.05);
 }
 
 .revenue-label {
   font-size: 11px;
-  color: #64748b;
+  color: #95a5a6;
   line-height: 1;
   font-weight: 600;
 }
@@ -253,5 +291,25 @@ const getRankClass = (index) => {
   .revenue-amount {
     font-size: 14px;
   }
+}
+
+/* Custom scrollbar với màu tím */
+.table-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
 }
 </style>

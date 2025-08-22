@@ -15,118 +15,7 @@
       </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div v-else class="row g-3">
-      <!-- Average Points Per User Card -->
-      <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
-        <div class="card stats-card avg-points-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper avg-points-icon">
-                <i class="bi bi-graph-up"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value">{{ formatNumber(data?.averagePointsPerUser) }}</div>
-                <div class="stat-label">Điểm TB/người dùng</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small class="text-muted">
-                Trung bình hệ thống
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Total System Points Card -->
-      <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
-        <div class="card stats-card total-points-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper total-points-icon">
-                <i class="bi bi-database"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value">{{ formatNumber(data?.totalSystemPoints) }}</div>
-                <div class="stat-label">Tổng điểm hệ thống</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small class="text-info">
-                Tất cả điểm
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Points Earned This Month Card -->
-      <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
-        <div class="card stats-card earned-points-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper earned-points-icon">
-                <i class="bi bi-plus-circle"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value">{{ formatNumber(data?.pointsEarnedThisMonth) }}</div>
-                <div class="stat-label">Điểm kiếm tháng này</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small class="text-success">
-                <i class="bi bi-arrow-up"></i> Tích lũy
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Points Spent This Month Card -->
-      <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
-        <div class="card stats-card spent-points-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper spent-points-icon">
-                <i class="bi bi-dash-circle"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value">{{ formatNumber(data?.pointsSpentThisMonth) }}</div>
-                <div class="stat-label">Điểm tiêu tháng này</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small class="text-warning">
-                <i class="bi bi-arrow-down"></i> Sử dụng
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Points Balance Card -->
-      <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
-        <div class="card stats-card balance-points-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper balance-points-icon">
-                <i class="bi bi-wallet2"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value">{{ formatNumber(getPointsBalance()) }}</div>
-                <div class="stat-label">Cân bằng tháng này</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small :class="getBalanceClass()">
-                {{ getBalanceText() }}
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+   
 
     <!-- Top Point Earners Row -->
     <div v-if="!loading && data?.topPointEarners && data.topPointEarners.length > 0" class="row g-3 mt-2">
@@ -204,7 +93,7 @@
     </div>
 
     <!-- Quick Actions Row -->
-    <div v-if="!loading" class="row g-3 mt-2">
+    <!-- <div v-if="!loading" class="row g-3 mt-2">
       <div class="col-12">
         <div class="card actions-card">
           <div class="card-body">
@@ -230,7 +119,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 

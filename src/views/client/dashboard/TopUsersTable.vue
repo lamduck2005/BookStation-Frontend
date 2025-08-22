@@ -7,21 +7,37 @@
       </div>
     </div>
 
-    <div class="users-list">
-      <div v-for="(user, index) in users" :key="user.name" class="user-item">
-        <div class="user-rank">
-          <div class="rank-number" :class="getRankClass(index)">
-            {{ user.rank }}
-          </div>
-        </div>
-        <div class="user-info">
-          <div class="user-name">{{ user.name }}</div>
-          <div class="user-detail">{{ user.spent }} ₫</div>
-        </div>
-        <div class="trend-icon">
-          <i class="medal-icon">{{ getMedalIcon(user.rankName) }}</i>
-        </div>
-      </div>
+    <div class="table-container">
+      <table class="top-users-table">
+        <thead>
+          <tr>
+            <th class="rank-header">STT</th>
+            <th class="user-header">Người dùng</th>
+            <th class="spent-header">Chi tiêu</th>
+            <!-- <th class="medal-header">Hạng</th> -->
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(user, index) in users" :key="user.name" class="user-row">
+            <td class="rank-cell">
+              <div class="rank-number" :class="getRankClass(index)">
+                {{ user.rank }}
+              </div>
+            </td>
+            <td class="user-info">
+              <div class="user-name">{{ user.name }}</div>
+              <div class="user-detail">Khách hàng VIP</div>
+            </td>
+            <td class="spent-cell">
+              <div class="spent-amount">{{ user.spent }} ₫</div>
+              <div class="spent-label">chi tiêu</div>
+            </td>
+            <!-- <td class="medal-cell">
+              <i class="medal-icon">{{ getMedalIcon(user.rankName) }}</i>
+            </td> -->
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>
@@ -123,111 +139,185 @@ const getMedalIcon = (rankName) => {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.users-list {
-  padding: 8px 0;
-  max-height: 320px;
+.table-container {
+  max-height: 400px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.user-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 20px;
+.top-users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.top-users-table thead {
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  z-index: 10;
+}
+
+.top-users-table th {
+  padding: 16px 24px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  color: #667eea;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #667eea;
+  background: #ffffff;
+}
+
+.rank-header {
+  width: 80px;
+  text-align: center !important;
+}
+
+.user-header {
+  width: 45%;
+}
+
+.spent-header {
+  width: 35%;
+  text-align: right !important;
+}
+
+.medal-header {
+  width: 80px;
+  text-align: center !important;
+}
+
+.user-row {
   transition: all 0.3s ease;
-  border-bottom: 1px solid #f8fafc;
   border-left: 3px solid transparent;
-  position: relative;
 }
 
-.user-item:hover {
+.user-row:hover {
   background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
   border-left-color: #667eea;
   transform: translateX(2px);
 }
 
-.user-item:last-child {
+.user-row td {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.user-row:last-child td {
   border-bottom: none;
 }
 
-.user-rank {
-  width: 36px;
-  margin-right: 16px;
+.rank-cell {
+  width: 80px;
+  text-align: center;
 }
 
 .rank-number {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: white;
   transition: all 0.3s ease;
+  margin: 0 auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.user-item:hover .rank-number {
+.user-row:hover .rank-number {
   transform: scale(1.1);
 }
 
 .rank-number.rank-1 {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
 }
 
 .rank-number.rank-2 {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+  box-shadow: 0 4px 12px rgba(192, 57, 43, 0.3);
 }
 
 .rank-number.rank-3 {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+  box-shadow: 0 4px 12px rgba(142, 68, 173, 0.3);
 }
 
 .rank-number.rank-other {
-  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+  box-shadow: 0 2px 8px rgba(52, 73, 94, 0.3);
 }
 
 .user-info {
-  flex: 1;
   min-width: 0;
 }
 
 .user-name {
   font-size: 14px;
   font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 3px;
+  color: #2c3e50;
+  margin-bottom: 4px;
   line-height: 1.3;
   transition: color 0.3s ease;
 }
 
-.user-item:hover .user-name {
-  color: #667eea;
+.user-row:hover .user-name {
+  color: #e67e22;
+  font-weight: 800;
 }
 
 .user-detail {
   font-size: 12px;
-  color: #667eea;
+  color: #7f8c8d;
   line-height: 1.2;
   font-weight: 600;
 }
 
-.trend-icon {
-  margin-left: 12px;
-  opacity: 1;
+.spent-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.spent-amount {
+  font-size: 15px;
+  font-weight: 800;
+  color: #27ae60;
+  line-height: 1.2;
+  margin-bottom: 2px;
+  transition: all 0.3s ease;
+  font-variant-numeric: tabular-nums;
+}
+
+.user-row:hover .spent-amount {
+  color: #229954;
+  transform: scale(1.05);
+}
+
+.spent-label {
+  font-size: 11px;
+  color: #95a5a6;
+  line-height: 1;
+  font-weight: 600;
+}
+
+.medal-cell {
+  text-align: center;
 }
 
 .medal-icon {
-  font-size: 18px;
+  font-size: 20px;
   transition: transform 0.3s ease;
-  transform: none; /* Đảm bảo không bị nghiêng */
+  transform: none;
+  display: inline-block;
 }
 
-.user-item:hover .medal-icon {
+.user-row:hover .medal-icon {
   transform: scale(1.2) rotate(10deg);
 }
 
@@ -260,5 +350,25 @@ const getMedalIcon = (rankName) => {
   .medal-icon {
     font-size: 16px;
   }
+}
+
+/* Custom scrollbar với màu tím */
+.table-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
 }
 </style>

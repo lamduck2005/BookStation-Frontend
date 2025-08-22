@@ -34,9 +34,9 @@ export const createRank = async (rankData) => {
 };
 
 // Cập nhật rank
-export const updateRank = async (rankData) => {
+export const updateRank = async (id, rankData) => {
   try {
-    const response = await client.put('/api/ranks', rankData);
+    const response = await client.put(`/api/ranks/${id}`, rankData);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi cập nhật rank:', error);

@@ -2,14 +2,66 @@
   <div class="container-fluid py-4">
     <!-- Supplier Statistics Section -->
     <div class="mb-4">
-      <SupplierStatisticsCards />
-    </div>
+      <!-- Statistics Cards -->
+      <div v-if="statsLoading" class="row g-3">
+        <div v-for="i in 2" :key="i" class="col-6">
+          <div class="card stats-card loading-card">
+            <div class="card-body">
+              <div class="placeholder-glow">
+                <div class="placeholder col-6 mb-2"></div>
+                <div class="placeholder col-8 mb-3"></div>
+                <div class="placeholder col-4"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <!-- Breadcrumb -->
-    <div class="mb-3">
-      <h6 class="text-muted">
-        Admin / <strong>Quản lý nhà cung cấp</strong>
-      </h6>
+      <div v-else class="row g-3">
+        <!-- Total Suppliers Card -->
+        <div class="col-6">
+          <div class="card stats-card suppliers-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="icon-wrapper suppliers-icon">
+                  <i class="bi bi-truck"></i>
+                </div>
+                <div class="text-end">
+                  <div class="stat-value stat-value-gradient text-gradient-info">{{ getTotalSuppliers() }}</div>
+                  <div class="stat-label">Nhà cung cấp</div>
+                </div>
+              </div>
+              <div class="stat-footer">
+                <small class="text-muted">
+                  Đang hoạt động
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Books Card -->
+        <div class="col-6">
+          <div class="card stats-card books-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="icon-wrapper books-icon">
+                  <i class="bi bi-boxes"></i>
+                </div>
+                <div class="text-end">
+                  <div class="stat-value stat-value-gradient text-gradient-purple">{{ getTotalBooks() }}</div>
+                  <div class="stat-label">Tổng đầu sách</div>
+                </div>
+              </div>
+              <div class="stat-footer">
+                <small class="text-info">
+                  Từ tất cả NCC
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Layout 2 cột: Bộ lọc bên trái, Bảng bên phải -->
@@ -17,7 +69,7 @@
       <!-- Cột bộ lọc (bên trái) -->
       <div class="filter-sidebar" :class="{ 'filter-sidebar-collapsed': !showFilter }">
         <div class="card shadow-lg border-0 filter-card sticky-filter">
-          <div class="card-header bg-light border-0 py-3">
+          <div class="card-header bg-light border-0">
             <div class="d-flex justify-content-between align-items-center">
               <h6 class="mb-0 text-secondary">
                 <i class="bi bi-funnel me-2"></i>
@@ -43,9 +95,7 @@
                 type="text" 
                 class="form-control form-control-sm" 
                 placeholder="Nhập tên nhà cung cấp" 
-                v-model="searchQuery" 
-                @input="debouncedSearch"
-                @keyup.enter="applyFilters"
+                v-model="searchQuery"
               />
             </div>
 
@@ -58,9 +108,7 @@
                 type="text" 
                 class="form-control form-control-sm" 
                 placeholder="Nhập tên liên hệ" 
-                v-model="contactName" 
-                @input="debouncedSearch"
-                @keyup.enter="applyFilters"
+                v-model="contactName"
               />
             </div>
 
@@ -73,28 +121,13 @@
                 type="email" 
                 class="form-control form-control-sm" 
                 placeholder="Nhập email" 
-                v-model="email" 
-                @input="debouncedSearch"
-                @keyup.enter="applyFilters"
+                v-model="email"
               />
             </div>
 
-            <div class="mb-3">
-              <label class="form-label">
-                <i class="bi bi-geo-alt me-1"></i>
-                Địa chỉ
-              </label>
-              <input 
-                type="text" 
-                class="form-control form-control-sm" 
-                placeholder="Nhập địa chỉ" 
-                v-model="address" 
-                @input="debouncedSearch"
-                @keyup.enter="applyFilters"
-              />
-            </div>
+            <!-- Đã xóa bộ lọc địa chỉ -->
 
-            <div class="mb-3">
+            <!-- <div class="mb-3">
               <label class="form-label">
                 <i class="bi bi-toggle-on me-1"></i>
                 Trạng thái
@@ -104,7 +137,7 @@
                 <option value="1">Hoạt động</option>
                 <option value="0">Không hoạt động</option>
               </select>
-            </div>
+            </div> -->
             
             <div class="d-grid gap-2">
               <button class="btn btn-success btn-sm" @click="applyFilters">
@@ -133,6 +166,13 @@
               <button class="btn btn-outline-info btn-sm py-2" @click="fetchSuppliers" :disabled="loading">
                 <i class="bi bi-arrow-repeat me-1"></i> Làm mới
               </button>
+              
+              <!-- Nút Export Excel -->
+              <ExcelExportButton 
+                data-type="suppliers"
+                button-text="Xuất Excel"
+              />
+              
               <button
                 class="btn btn-success btn-sm"
                 @click="openAddModal"
@@ -162,7 +202,7 @@
                       <th style="min-width: 150px;">Email</th>
                       <th style="min-width: 120px;">Số điện thoại</th>
                       <th style="min-width: 200px;">Địa chỉ</th>
-                      <th style="min-width: 100px;">Trạng thái</th>
+                      <!-- <th style="min-width: 100px;">Trạng thái</th> -->
                       <th style="min-width: 150px;">Ngày tạo</th>
                     </tr>
                   </thead>
@@ -181,11 +221,11 @@
                       <td>{{ supplier.email }}</td>
                       <td>{{ supplier.phoneNumber }}</td>
                       <td>{{ supplier.address }}</td>
-                      <td>
+                      <!-- <td>
                         <span :class="['badge', supplier.status == 1 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger']">
                           {{ supplier.status == 1 ? 'Hoạt động' : 'Không hoạt động' }}
                         </span>
-                      </td>
+                      </td> -->
                       <td>
                         <div class="small">
                           {{ formatDate(supplier.createdAt) }}
@@ -193,7 +233,7 @@
                       </td>
                     </tr>
                     <tr v-if="suppliers.length === 0">
-                      <td colspan="9" class="text-center text-muted">
+                      <td colspan="8" class="text-center text-muted">
                         Không có dữ liệu
                       </td>
                     </tr>
@@ -230,15 +270,15 @@
     aria-labelledby="supplierModalLabel"
     aria-hidden="true"
   >
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog" style="max-width: 600px">
       <div class="modal-content">
-        <div class="modal-header" style="background-color: #ecae9e">
+        <div class="modal-header form-modal-header">
           <h5 class="modal-title" id="supplierModalLabel">
             <i
               class="bi me-2"
-              :class="isEditMode ? 'bi-pencil' : 'bi-plus-circle'"
+              :class="isEditMode ? 'bi-pencil-square' : 'bi-plus-circle'"
             ></i>
-            {{ isEditMode ? "Sửa Nhà cung cấp" : "Thêm Nhà cung cấp" }}
+            {{ isEditMode ? "Sửa nhà cung cấp" : "Thêm nhà cung cấp" }}
           </h5>
           <button
             type="button"
@@ -246,13 +286,10 @@
             data-bs-dismiss="modal"
             aria-label="Close"
           >
-            <img
-              src="https://cdn-icons-png.flaticon.com/128/694/694604.png"
-              alt="Close"
-            />
+            <i class="bx bx-x-circle"></i>
           </button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body form-modal-body">
           <form @submit.prevent="handleSubmit">
             <div class="row g-3">
               <div class="col-12">
@@ -264,53 +301,51 @@
                   class="form-control"
                   v-model="formData.supplierName"
                   required
+                  placeholder="Nhập tên nhà cung cấp (tối đa 100 ký tự)"
+                  maxlength="100"
                 />
               </div>
               <div class="col-12">
-                <label class="form-label"
-                  >Tên người liên hệ <span class="text-danger">*</span></label
-                >
+                <label class="form-label">Tên người liên hệ</label>
                 <input
                   type="text"
                   class="form-control"
                   v-model="formData.contactName"
-                  required
+                  placeholder="Nhập tên người liên hệ (tối đa 100 ký tự)"
+                  maxlength="100"
                 />
               </div>
               <div class="col-md-6">
-                <label class="form-label"
-                  >Email <span class="text-danger">*</span></label
-                >
+                <label class="form-label">Email</label>
                 <input
                   type="email"
                   class="form-control"
                   v-model="formData.email"
-                  required
+                  placeholder="Nhập email (tối đa 100 ký tự)"
+                  maxlength="100"
                 />
               </div>
               <div class="col-md-6">
-                <label class="form-label"
-                  >Số điện thoại <span class="text-danger">*</span></label
-                >
+                <label class="form-label">Số điện thoại</label>
                 <input
                   type="text"
                   class="form-control"
                   v-model="formData.phoneNumber"
-                  required
+                  placeholder="Nhập số điện thoại (10 số, bắt đầu bằng 0)"
+                  maxlength="10"
+                  pattern="^0\d{9}$"
                 />
               </div>
               <div class="col-12">
-                <label class="form-label"
-                  >Địa chỉ <span class="text-danger">*</span></label
-                >
-                <input
-                  type="text"
+                <label class="form-label">Địa chỉ</label>
+                <textarea
                   class="form-control"
                   v-model="formData.address"
-                  required
-                />
+                  placeholder="Nhập địa chỉ chi tiết"
+                  rows="3"
+                ></textarea>
               </div>
-              <div class="col-12">
+              <!-- <div class="col-12">
                 <label class="form-label"
                   >Trạng thái <span class="text-danger">*</span></label
                 >
@@ -319,33 +354,23 @@
                   <option value="1">Hoạt động</option>
                   <option value="0">Không hoạt động</option>
                 </select>
-              </div>
+              </div> -->
             </div>
           </form>
         </div>
         <div class="modal-footer">
-          <button
-            type="button"
-            class="btn btn-outline-warning btn-sm rounded-pill fake-data-btn"
-            @click="fillFakeData"
-            v-if="!isEditMode"
-            title="Điền dữ liệu mẫu để test nhanh"
-          >
-            <i class="bi bi-lightning me-1"></i> Dữ liệu mẫu
-          </button>
           <div class="ms-auto">
             <button
               type="button"
-              class="btn btn-secondary"
+              class="btn form-btn-secondary"
               data-bs-dismiss="modal"
             >
               Hủy
             </button>
             <button
               type="button"
-              class="btn btn-primary"
+              class="btn form-btn-primary"
               @click="handleSubmit"
-              style="background-color: #33304e; border-color: #33304e"
             >
               {{ isEditMode ? "Cập nhật" : "Thêm mới" }}
             </button>
@@ -359,7 +384,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { Modal } from 'bootstrap';
-import { getSuppliers, createSupplier, updateSupplier, deleteSupplier, updateSupplierStatus } from '@/services/admin/supplier.js';
+import { getSuppliers, createSupplier, updateSupplier, deleteSupplier } from '@/services/admin/supplier.js';
 import { showToast, showQuickConfirm } from '@/utils/swalHelper';
 import { debounce } from '@/utils/utils';
 
@@ -369,15 +394,19 @@ import EditButton from '@/components/common/EditButton.vue';
 import DeleteButton from '@/components/common/DeleteButton.vue';
 import ToggleStatus from '@/components/common/ToggleStatus.vue';
 import Pagination from '@/components/common/Pagination.vue';
-import SupplierStatisticsCards from '@/views/admin/components-admin/statistics/SupplierStatisticsCards.vue';
+
+// Statistics API
+import { getSupplierStatistics, formatNumber, formatCurrency } from '@/services/admin/moduleStatistics';
+import Swal from 'sweetalert2';
+import ExcelExportButton from '@/components/common/ExcelExportButton.vue';
 
 // Reactive data
 const suppliers = ref([]);
 const searchQuery = ref('');
 const contactName = ref('');
 const email = ref('');
-const address = ref('');
-const selectedStatus = ref('');
+// const address = ref('');
+// const selectedStatus = ref('');
 const currentPage = ref(0);
 const pageSize = ref(10);
 const totalPages = ref(0);
@@ -386,6 +415,10 @@ const itemsPerPageOptions = ref([5, 10, 25, 50]);
 const isLastPage = ref(false);
 const loading = ref(false);
 const showFilter = ref(true);
+
+// Statistics data
+const statsLoading = ref(true);
+const statsData = ref(null);
 
 // Modal
 const isEditMode = ref(false);
@@ -397,7 +430,6 @@ const formData = ref({
   phoneNumber: '',
   email: '',
   address: '',
-  status: '',
   createdBy: 'admin',
   updatedBy: 'admin'
 });
@@ -407,14 +439,7 @@ const toggleFilter = () => {
   showFilter.value = !showFilter.value;
 };
 
-// Debounce search function
-let searchTimeout = null;
-const debouncedSearch = () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    applyFilters();
-  }, 300);
-};
+// Đã xóa debounce logic
 
 // Methods
 const fetchSuppliers = async () => {
@@ -437,26 +462,18 @@ const fetchSuppliers = async () => {
       params.email = email.value;
     }
     
-    if (address.value) {
-      params.address = address.value;
-    }
-    
-    if (selectedStatus.value !== '') {
-      params.status = selectedStatus.value;
-    }
-    
     const response = await getSuppliers(params);
     const data = response || {};
     
     suppliers.value = data.content || [];
-    totalPages.value = data.totalPages || 0;
+    totalPages.value = data.totalPages || 1;
     totalElements.value = data.totalElements || 0;
-    isLastPage.value = data.last || false;
-    // Update current page from backend response
-    currentPage.value = data.number || 0;
+    isLastPage.value = data.last || (currentPage.value >= totalPages.value - 1);
+    // Keep current page as is, don't update from backend
+    // currentPage.value = data.number || 0;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách suppliers:', error);
-    showToast('error', 'Lỗi khi tải danh sách nhà cung cấp!', 2000);
+    showToast('error', 'Lỗi khi tải danh sách nhà cung cấp!');
   } finally {
     loading.value = false;
   }
@@ -471,8 +488,6 @@ const clearFilters = () => {
   searchQuery.value = '';
   contactName.value = '';
   email.value = '';
-  address.value = '';
-  selectedStatus.value = '';
   currentPage.value = 0;
   fetchSuppliers();
 };
@@ -507,7 +522,6 @@ const openAddModal = () => {
     phoneNumber: '',
     email: '',
     address: '',
-    status: '',
     createdBy: 'admin',
     updatedBy: 'admin'
   };
@@ -524,7 +538,6 @@ const openEditModal = (supplier, index) => {
     phoneNumber: supplier.phoneNumber,
     email: supplier.email,
     address: supplier.address,
-    status: supplier.status.toString(),
     createdBy: supplier.createdBy,
     updatedBy: 'admin'
   };
@@ -537,19 +550,69 @@ const showSupplierModal = () => {
   modal.show();
 };
 
+const validateForm = () => {
+  // Validate tên nhà cung cấp (bắt buộc)
+  if (!formData.value.supplierName || formData.value.supplierName.trim() === '') {
+    showToast('error', 'Vui lòng nhập tên nhà cung cấp');
+    return false;
+  }
+
+  // Validate độ dài tên nhà cung cấp
+  if (formData.value.supplierName.trim().length > 100) {
+    showToast('error', 'Tên nhà cung cấp không được vượt quá 100 ký tự');
+    return false;
+  }
+
+  // Validate tên liên hệ (nếu có)
+  if (formData.value.contactName && formData.value.contactName.trim().length > 100) {
+    showToast('error', 'Tên người liên hệ không được vượt quá 100 ký tự');
+    return false;
+  }
+
+  // Validate email (nếu có)
+  if (formData.value.email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.value.email)) {
+      showToast('error', 'Email không hợp lệ');
+      return false;
+    }
+    if (formData.value.email.length > 100) {
+      showToast('error', 'Email không được vượt quá 100 ký tự');
+      return false;
+    }
+  }
+
+  // Validate số điện thoại (nếu có)
+  if (formData.value.phoneNumber) {
+    // Kiểm tra format: phải là 10 số và bắt đầu bằng 0
+    const phoneRegex = /^0\d{9}$/;
+    if (!phoneRegex.test(formData.value.phoneNumber)) {
+      showToast('error', 'Số điện thoại phải có 10 số và bắt đầu bằng 0');
+      return false;
+    }
+  }
+
+  return true;
+};
+
 const handleSubmit = async () => {
+  // Validation
+  if (!validateForm()) {
+    return;
+  }
+
   try {
     const submitData = {
       ...formData.value,
-      status: Number(formData.value.status)
+      status: 1 // Mặc định là hoạt động
     };
     
     if (isEditMode.value) {
       await updateSupplier(submitData);
-      showToast('success', 'Cập nhật nhà cung cấp thành công!', 2000);
+      showToast('success', 'Cập nhật nhà cung cấp thành công!');
     } else {
       await createSupplier(submitData);
-      showToast('success', 'Thêm nhà cung cấp thành công!', 2000);
+      showToast('success', 'Thêm nhà cung cấp thành công!');
     }
     
     Modal.getOrCreateInstance(document.getElementById('supplierModal')).hide();
@@ -557,21 +620,21 @@ const handleSubmit = async () => {
   } catch (error) {
     console.error('Lỗi khi xử lý supplier:', error);
     const message = error.response?.data?.message || 'Có lỗi xảy ra!';
-    showToast('error', message, 3000);
+    showToast('error', message);
   }
 };
 
-const handleStatusChange = async (supplier, newStatus) => {
-  try {
-    await updateSupplierStatus(supplier.id, newStatus, 'admin');
-    showToast('success', 'Cập nhật trạng thái thành công!', 2000);
-    fetchSuppliers();
-  } catch (error) {
-    console.error('Lỗi khi cập nhật trạng thái:', error);
-    const message = error.response?.data?.message || 'Lỗi khi cập nhật trạng thái!';
-    showToast('error', message, 3000);
-  }
-};
+// const handleStatusChange = async (supplier, newStatus) => {
+//   try {
+//     await updateSupplierStatus(supplier.id, newStatus, 'admin');
+//     showToast('success', 'Cập nhật trạng thái thành công!', 2000);
+//     fetchSuppliers();
+//   } catch (error) {
+//     console.error('Lỗi khi cập nhật trạng thái:', error);
+//     const message = error.response?.data?.message || 'Lỗi khi cập nhật trạng thái!';
+//     showToast('error', message, 3000);
+//   }
+// };
 
 const handleDelete = async (supplier) => {
   const result = await showQuickConfirm(
@@ -585,12 +648,12 @@ const handleDelete = async (supplier) => {
   if (result.isConfirmed) {
     try {
       await deleteSupplier(supplier.id);
-      showToast('success', 'Xóa nhà cung cấp thành công!', 2000);
+      showToast('success', 'Xóa nhà cung cấp thành công!');
       fetchSuppliers();
     } catch (error) {
       console.error('Lỗi khi xóa supplier:', error);
       const message = error.response?.data?.message || 'Lỗi khi xóa nhà cung cấp!';
-      showToast('error', message, 3000);
+      showToast('error', message);
     }
   }
 };
@@ -601,95 +664,60 @@ const formatDate = (dateString) => {
   return date.toLocaleDateString('vi-VN');
 };
 
-const fillFakeData = () => {
-  console.log('=== DEBUG: fillFakeData called ===');
-  
-  // Generate unique name with timestamp
-  const timestamp = Date.now();
-  const supplierNames = [
-    'NXB Kim Đồng',
-    'NXB Trẻ',
-    'NXB Văn học',
-    'NXB Giáo dục',
-    'Fahasa',
-    'Vinabook',
-    'Thái Hà Books',
-    'Omega Plus',
-    'Alphabooks',
-    'Nhã Nam'
-  ];
-  
-  const contactNames = [
-    'Nguyễn Văn A',
-    'Trần Thị B',
-    'Lê Văn C',
-    'Phạm Thị D',
-    'Hoàng Văn E',
-    'Ngô Thị F',
-    'Vũ Văn G',
-    'Đặng Thị H',
-    'Bùi Văn I',
-    'Lý Thị K'
-  ];
-  
-  const addresses = [
-    'Số 55 Quang Trung, Hai Bà Trưng, Hà Nội',
-    '161B Lý Chính Thắng, Quận 3, TP.HCM',
-    '18 Nguyễn Trường Tộ, Ba Đình, Hà Nội',
-    '81 Trần Quốc Toản, Quận 3, TP.HCM',
-    '60-62 Lê Lợi, Quận 1, TP.HCM',
-    '32 Hàm Long, Hoàn Kiếm, Hà Nội',
-    '91 Hai Bà Trưng, Quận 1, TP.HCM',
-    '14 Trần Hưng Đạo, Hoàn Kiếm, Hà Nội',
-    '25 Nguyễn Huệ, Quận 1, TP.HCM',
-    '43 Hàng Bông, Hoàn Kiếm, Hà Nội'
-  ];
-  
-  const phoneNumbers = [
-    '0123456789',
-    '0987654321',
-    '0123456788',
-    '0987654322',
-    '0123456787',
-    '0987654323',
-    '0123456786',
-    '0987654324',
-    '0123456785',
-    '0987654325'
-  ];
-  
-  const emails = [
-    'contact@kimdong.com.vn',
-    'info@nxbtre.com.vn',
-    'contact@vanhoc.vn',
-    'info@giaoduc.vn',
-    'contact@fahasa.com',
-    'info@vinabook.com',
-    'contact@thaihabooks.com',
-    'info@omegaplus.vn',
-    'contact@alphabooks.vn',
-    'info@nhanam.vn'
-  ];
-  
-  const randomIndex = Math.floor(Math.random() * supplierNames.length);
-  
-  formData.value = {
-    ...formData.value,
-    supplierName: `${supplierNames[randomIndex]} Test ${timestamp}`,
-    contactName: contactNames[randomIndex],
-    phoneNumber: phoneNumbers[randomIndex],
-    email: emails[randomIndex],
-    address: addresses[randomIndex],
-    status: Math.random() > 0.5 ? '1' : '0'
-  };
-  
-  console.log('=== DEBUG: fillFakeData completed ===');
-  console.log('formData.value:', formData.value);
+// Removed fillFakeData function
+
+// Statistics functions
+const fetchSupplierStatistics = async () => {
+  statsLoading.value = true;
+  try {
+    const response = await getSupplierStatistics();
+    if (response.status === 200) {
+      statsData.value = response.data;
+    } else {
+      throw new Error('Failed to fetch supplier statistics');
+    }
+  } catch (error) {
+    console.error('Error fetching supplier statistics:', error);
+    
+    // Fallback data để tránh lỗi hiển thị
+    statsData.value = {
+      bookStatistics: [
+        { supplierName: "Công ty ABC", totalBooks: 800 },
+        { supplierName: "Công ty XYZ", totalBooks: 650 },
+        { supplierName: "Công ty DEF", totalBooks: 720 }
+      ]
+    };
+    
+    Swal.fire({
+      title: 'Lỗi!',
+      text: 'Không thể tải dữ liệu thống kê nhà cung cấp - Hiển thị dữ liệu mẫu',
+      icon: 'warning',
+      timer: 3000,
+      showConfirmButton: false
+    });
+  } finally {
+    statsLoading.value = false;
+  }
+};
+
+const getTotalSuppliers = () => {
+  if (statsData.value?.bookStatistics) {
+    return statsData.value.bookStatistics.length;
+  }
+  return 0;
+};
+
+const getTotalBooks = () => {
+  if (statsData.value?.bookStatistics) {
+    return statsData.value.bookStatistics.reduce((total, supplier) => total + (supplier.totalBooks || 0), 0);
+  }
+  return 0;
 };
 
 // Lifecycle
 onMounted(() => {
   fetchSuppliers();
+  fetchSupplierStatistics();
 });
 </script>
 
@@ -697,10 +725,12 @@ onMounted(() => {
 <style scoped>
 @import "@/assets/css/admin-table-responsive.css";
 @import '@/assets/css/admin-global.css';
+@import '@/assets/css/form-global.css';
 @import '@/assets/css/gradient-stats.css';
 
 /* Filter Sidebar - Thu sang trái */
 .filter-sidebar {
+  /* padding: 0; */
   width: 250px;
   transition: all 0.3s ease;
   overflow: hidden;
@@ -708,7 +738,7 @@ onMounted(() => {
 }
 
 .filter-sidebar-collapsed {
-  width: 60px;
+  width: 100px;
 }
 
 .filter-sidebar-collapsed .filter-card .card-body {
@@ -882,26 +912,7 @@ onMounted(() => {
   height: 30px;
 }
 
-/* Fake data button styling */
-.fake-data-btn {
-  background-color: #fff3cd !important;
-  border-color: #ffeaa7 !important;
-  color: #856404 !important;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.fake-data-btn:hover {
-  background-color: #ffeaa7 !important;
-  border-color: #fdcb6e !important;
-  color: #6c5ce7 !important;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.fake-data-btn:active {
-  transform: translateY(0);
-}
+/* Removed fake data button styling */
 
 .modal-footer {
   display: flex !important;
@@ -912,6 +923,74 @@ onMounted(() => {
 .modal-footer .ms-auto {
   display: flex;
   gap: 0.5rem;
+}
+
+/* Statistics Cards Styling */
+.stats-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.stats-card .card-body {
+  padding: 1.5rem;
+}
+
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.suppliers-icon { 
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+}
+
+.books-icon { 
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); 
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #2d3748;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #718096;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.stat-footer {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Loading Cards */
+.loading-card {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+
+.placeholder {
+  background-color: #dee2e6;
+  border-radius: 4px;
 }
 
 @media (max-width: 991.98px) {
@@ -930,6 +1009,20 @@ onMounted(() => {
   
   .table-main-content-expanded {
     margin-left: 0;
+  }
+
+  .stats-card .card-body {
+    padding: 1rem;
+  }
+  
+  .stat-value {
+    font-size: 1.5rem;
+  }
+  
+  .icon-wrapper {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
   }
 }
 </style>
