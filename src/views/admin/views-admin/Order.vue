@@ -310,17 +310,61 @@
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label enhanced-label">Khách hàng <span class="text-danger">*</span></label>
-                  <select 
-                    class="form-select enhanced-input" 
-                    v-model="newOrder.userId"
-                    @change="onUserChange"
-                    required
-                  >
-                    <option value="">-- Chọn khách hàng --</option>
-                    <option v-for="user in users" :key="user.id" :value="user.id">
-                      {{ user.name }}
-                    </option>
-                  </select>
+                  <div class="position-relative">
+                    <input 
+                      type="text" 
+                      class="form-control enhanced-input" 
+                      v-model="customerSearchTerm"
+                      @input="onCustomerSearch"
+                      @focus="onCustomerInputFocus"
+                      placeholder="Nhập tên hoặc email khách hàng"
+                      autocomplete="off"
+                      required
+                    />
+                    <!-- Loading spinner -->
+                    <div 
+                      v-if="isSearchingCustomers"
+                      class="position-absolute top-50 end-0 translate-middle-y me-3"
+                    >
+                      <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                    </div>
+                    
+                    <!-- Dropdown results -->
+                    <div 
+                      v-if="showCustomerDropdown"
+                      class="dropdown-menu show position-absolute w-100 mt-1"
+                      style="z-index: 1060; max-height: 200px; overflow-y: auto;"
+                    >
+                      <!-- Loading state -->
+                      <div v-if="isSearchingCustomers" class="dropdown-item-text text-center py-3">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        Đang tìm kiếm...
+                      </div>
+                      
+                      <!-- Results -->
+                      <template v-else-if="customerSearchResults.length > 0">
+                        <div 
+                          v-for="customer in customerSearchResults" 
+                          :key="customer.id"
+                          class="dropdown-item cursor-pointer d-flex align-items-center"
+                          @click="selectCustomer(customer)"
+                        >
+                          <div class="flex-grow-1">
+                            <div class="fw-medium">{{ customer.name }}</div>
+                            <div class="text-muted small">{{ customer.email }}</div>
+                          </div>
+                        </div>
+                      </template>
+                      
+                      <!-- No results -->
+                      <div v-else class="dropdown-item-text text-center py-3 text-muted">
+                        <i class="bi bi-search me-2"></i>
+                        {{ customerSearchTerm.length >= 2 ? 'Không tìm thấy khách hàng' : 'Nhập tối thiểu 2 ký tự để tìm kiếm' }}
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label enhanced-label">Địa chỉ giao hàng <span class="text-danger">*</span></label>
@@ -735,14 +779,6 @@
           <button type="button" class="btn btn-secondary btn-cancel" data-bs-dismiss="modal">
             <i class="bi bi-x-circle me-1"></i>
             Hủy
-          </button>
-          <button 
-            type="button" 
-            class="btn btn-info me-2" 
-            @click="fillSampleData"
-          >
-            <i class="bi bi-database me-1"></i>
-            Dữ liệu mẫu
           </button>
           <button 
             type="button" 
@@ -1291,7 +1327,7 @@ import {
   adminFullRefund,
   getPendingRefunds
 } from '@/services/admin/order';
-import { getUsersForOrder } from '@/services/admin/user';
+import { getUsersForOrder, searchUsersDropdown } from '@/services/admin/user';
 import { getBooksForOrder, getBooksDropdown, validateQuantity } from '@/services/admin/book';
 import { addAddressAtAdmin } from '@/services/client/address';
 import Swal from 'sweetalert2';
@@ -1359,6 +1395,13 @@ const productSearchTerm = ref('');
 const productSearchResults = ref([]);
 const showProductSearchResults = ref(false);
 let productSearchTimeout = null;
+
+// Customer search states
+const customerSearchTerm = ref('');
+const customerSearchResults = ref([]);
+const showCustomerDropdown = ref(false);
+const isSearchingCustomers = ref(false);
+let customerSearchTimeout = null;
 
 // New order form data
 const newOrder = ref({
@@ -1576,7 +1619,6 @@ const fetchOrders = async () => {
       
       // ✅ Không cần load available transitions riêng nữa - đã có trong OrderResponse
       console.log('=== DEBUG: Orders loaded with availableTransitions ===');
-      console.log('Sample order transitions:', orders.value[0]?.availableTransitions);
     }
     
   } catch (error) {
@@ -1728,6 +1770,9 @@ const resetForm = () => {
   orderCalculation.value = null;
   currentAddress.value = null; // ✅ RESET CURRENT ADDRESS
   isCalculating.value = false;
+  
+  // Reset customer search
+  clearCustomerSearch();
 };
 
 const onUserChange = async () => {
@@ -2502,8 +2547,7 @@ const formatOrderType = (type) => {
     'ONLINE': 'Đơn online',
     'COUNTER': 'Đơn tại quầy',
     'EVENT_GIFT': 'Quà sự kiện',
-    'PROMOTIONAL': 'Khuyến mãi',
-    'SAMPLE': 'Mẫu'
+    'PROMOTIONAL': 'Khuyến mãi'
   };
   return typeMap[type] || type;
 };
@@ -2636,6 +2680,7 @@ const handleClickOutside = (event) => {
   const searchContainer = event.target.closest('.position-relative');
   if (!searchContainer) {
     showProductSearchResults.value = false;
+    showCustomerDropdown.value = false;
   }
 };
 
@@ -2667,6 +2712,93 @@ const addBookToOrder = (book) => {
   
   // Clear search using the function
   clearProductSearch();
+};
+
+// Customer search functions
+const onCustomerSearch = async () => {
+  // Clear previous timeout
+  if (customerSearchTimeout) {
+    clearTimeout(customerSearchTimeout);
+  }
+  
+  // Show dropdown immediately
+  showCustomerDropdown.value = true;
+  
+  // Set new timeout for debounced search
+  customerSearchTimeout = setTimeout(async () => {
+    const searchTerm = customerSearchTerm.value.trim();
+    
+    if (searchTerm.length < 2) {
+      customerSearchResults.value = [];
+      isSearchingCustomers.value = false;
+      return;
+    }
+    
+    try {
+      isSearchingCustomers.value = true;
+      console.log('=== DEBUG: Searching customers with term:', searchTerm);
+      const response = await searchUsersDropdown(searchTerm);
+      console.log('=== DEBUG: Customer search response:', response);
+      
+      // Fix: API response format is { status, message, data: [...] }
+      if (response && response.data && response.data.data && Array.isArray(response.data.data)) {
+        customerSearchResults.value = response.data.data.map(user => ({
+          id: user.id,
+          name: user.name || 'Unknown',
+          email: user.email || ''
+        }));
+      } else if (response && response.data && Array.isArray(response.data)) {
+        // Fallback if API returns array directly
+        customerSearchResults.value = response.data.map(user => ({
+          id: user.id,
+          name: user.name || 'Unknown',
+          email: user.email || ''
+        }));
+      } else {
+        customerSearchResults.value = [];
+      }
+      
+      console.log('=== DEBUG: Processed customer results:', customerSearchResults.value);
+      
+    } catch (error) {
+      console.error('Error searching customers:', error);
+      customerSearchResults.value = [];
+      showToast('error', 'Lỗi khi tìm kiếm khách hàng');
+    } finally {
+      isSearchingCustomers.value = false;
+    }
+  }, 300);
+};
+
+const onCustomerInputFocus = () => {
+  showCustomerDropdown.value = true;
+  // If there's already a search term, trigger search
+  if (customerSearchTerm.value.trim().length >= 2) {
+    onCustomerSearch();
+  }
+};
+
+const selectCustomer = (customer) => {
+  console.log('=== DEBUG: Selecting customer:', customer);
+  
+  // Update form data
+  newOrder.value.userId = customer.id;
+  customerSearchTerm.value = `${customer.name} - ${customer.email}`;
+  
+  // Hide dropdown
+  showCustomerDropdown.value = false;
+  
+  // Trigger user change to load addresses and vouchers
+  onUserChange();
+  
+  showToast('success', `Đã chọn khách hàng: ${customer.name}`);
+};
+
+const clearCustomerSearch = () => {
+  customerSearchTerm.value = '';
+  customerSearchResults.value = [];
+  showCustomerDropdown.value = false;
+  isSearchingCustomers.value = false;
 };
 
 const getBookDisplayName = (bookId) => {
@@ -2859,115 +2991,6 @@ const handleSaveAddress = async () => {
     const errorMsg = error.response?.data?.message || 'Lưu địa chỉ thất bại';
     showToast('error', errorMsg);
     console.error('Save address error:', error);
-  } finally {
-    isSavingAddress.value = false;
-  }
-};
-
-// ✅ Sample data function
-const createSampleOrder = () => {
-  newOrder.value = {
-    userId: '',
-    addressId: '',
-    phone: '0987654321',
-    email: 'sample@email.com',
-    note: 'Đơn hàng mẫu để test hệ thống',
-    paymentMethod: 'CASH',
-    products: [
-      {
-        bookId: 1,
-        quantity: 2,
-        name: 'Sách mẫu 1',
-        price: 150000,
-        imageUrl: '/api/placeholder/100/120'
-      },
-      {
-        bookId: 2,
-        quantity: 1,
-        name: 'Sách mẫu 2',
-        price: 200000,
-        imageUrl: '/api/placeholder/100/120'
-      }
-    ],
-    vouchers: [],
-    shippingFee: 30000,
-    totalAmount: 530000
-  };
-  
-  // Auto select first user if available
-  if (users.value.length > 0) {
-    newOrder.value.userId = users.value[0].id;
-    loadUserAddresses(users.value[0].id);
-  }
-  
-  showToast('success', 'Đã tải dữ liệu mẫu thành công!');
-};
-
-// ✅ Sample data function
-const fillSampleData = async () => {
-  try {
-    // Tìm user "Lê Văn C"
-    const leVanC = users.value.find(user => user.name && user.name.toLowerCase().includes('lê văn c'));
-    if (!leVanC) {
-      showToast('warning', 'Không tìm thấy khách hàng "Lê Văn C"');
-      return;
-    }
-    
-    // Set user
-    newOrder.value.userId = leVanC.id;
-    await onUserChange();
-    
-    // Wait a bit for addresses to load
-    setTimeout(async () => {
-      // Set address thứ 2 nếu có
-      if (userAddresses.value.length >= 2) {
-        newOrder.value.addressId = userAddresses.value[1].id;
-        onAddressChange();
-      }
-      
-      // Search và add sách "Chí Phèo"
-      const chiPheoResponse = await getBooksDropdown({ search: 'Chí Phèo' });
-      const chiPheoBook = chiPheoResponse.data?.[0];
-      
-      // Search và add sách "Đắc Nhân Tâm"  
-      const dacNhanTamResponse = await getBooksDropdown({ search: 'Đắc Nhân Tâm' });
-      const dacNhanTamBook = dacNhanTamResponse.data?.[0];
-      
-      // Clear existing items
-      newOrder.value.items = [];
-      
-      // Add Chí Phèo
-      if (chiPheoBook) {
-        addProductRow();
-        const chiPheoDetail = newOrder.value.items[0];
-        chiPheoDetail.bookId = chiPheoBook.id;
-        chiPheoDetail.quantity = 3;
-        chiPheoDetail.unitPrice = chiPheoBook.isFlashSale ? chiPheoBook.flashSalePrice : chiPheoBook.normalPrice;
-        chiPheoDetail.isFlashSale = chiPheoBook.isFlashSale;
-        chiPheoDetail.frontendPrice = chiPheoBook.normalPrice;
-        chiPheoDetail.frontendFlashSalePrice = chiPheoBook.flashSalePrice;
-        await calculateDetailTotal(chiPheoDetail);
-      }
-      
-      // Add Đắc Nhân Tâm
-      if (dacNhanTamBook) {
-        addProductRow();
-        const dacNhanTamDetail = newOrder.value.items[1];
-        dacNhanTamDetail.bookId = dacNhanTamBook.id;
-        dacNhanTamDetail.quantity = 3;
-        dacNhanTamDetail.unitPrice = dacNhanTamBook.isFlashSale ? dacNhanTamBook.flashSalePrice : dacNhanTamBook.normalPrice;
-        dacNhanTamDetail.isFlashSale = dacNhanTamBook.isFlashSale;
-        dacNhanTamDetail.frontendPrice = dacNhanTamBook.normalPrice;
-        dacNhanTamDetail.frontendFlashSalePrice = dacNhanTamBook.flashSalePrice;
-        await calculateDetailTotal(dacNhanTamDetail);
-      }
-      
-      showToast('success', 'Đã điền dữ liệu mẫu thành công!');
-    }, 1000);
-    
-  } catch (error) {
-    console.error('Fill sample data error:', error);
-    showToast('error', 'Lỗi khi điền dữ liệu mẫu');
   }
 };
 
@@ -3735,5 +3758,32 @@ watch([currentPage, pageSize], () => {
 .voucher-type .badge {
   font-size: 0.7rem;
   padding: 3px 6px;
+}
+
+/* Customer Search Dropdown Styling */
+.dropdown-menu.show {
+  display: block;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border-radius: 0.375rem;
+}
+
+.dropdown-item.cursor-pointer {
+  cursor: pointer;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item-text {
+  padding: 0.75rem 1rem;
+  color: #6c757d;
 }
 </style>
