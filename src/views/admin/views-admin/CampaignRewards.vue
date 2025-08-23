@@ -115,7 +115,7 @@
               </td>
               <td>
                 <div class="small">
-                  <div><strong>Tổng:</strong> {{ reward.quantityTotal }}</div>
+                  <div><strong>Tổng:</strong> {{ reward.stock }}</div>
                   <div><strong>Còn:</strong> {{ reward.quantityRemaining }}</div>
                 </div>
               </td>
@@ -227,12 +227,12 @@
             <div class="row">
               <div class="col-md-6">
                 <div class="mb-3">
-                  <label for="quantityTotal" class="form-label">Số lượng *</label>
+                  <label for="stock" class="form-label">Số lượng *</label>
                   <input 
                     type="number" 
                     class="form-control" 
-                    id="quantityTotal"
-                    v-model="rewardForm.quantityTotal" 
+                    id="stock"
+                    v-model="rewardForm.stock" 
                     min="1"
                     required
                   />
@@ -317,7 +317,7 @@ const rewardForm = ref({
   description: '',
   voucherId: null,
   pointValue: null,
-  quantityTotal: 1,
+  stock: 1,
   probability: 1.0,
   status: 1
 });
@@ -407,7 +407,7 @@ const showAddModal = () => {
     description: '',
     voucherId: null,
     pointValue: null,
-    quantityTotal: 1,
+    stock: 1,
     probability: 1.0,
     status: 1
   };
@@ -425,7 +425,7 @@ const showEditModal = (reward) => {
     description: reward.description,
     voucherId: reward.voucherId,
     pointValue: reward.pointValue,
-    quantityTotal: reward.quantityTotal,
+    stock: reward.stock,
     probability: reward.probability,
     status: reward.status
   };
