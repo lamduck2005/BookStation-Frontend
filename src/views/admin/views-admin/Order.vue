@@ -1114,7 +1114,7 @@
               <div class="summary-row total">
                 <span class="d-flex align-items-center gap-2">
                   <i class="bi bi-currency-exchange text-warning fs-4"></i>
-                  <strong class="text-gradient" style="font-size: 1.25rem; letter-spacing: 1px;">Tổng cộng:</strong>
+                  <span class="text-dark" style="font-size: 1.5rem; letter-spacing: 1px;">Tổng cộng:</span>
                 </span>
                 <span>
                   <strong class="text-success" style="font-size: 1.5rem; text-shadow: 0 2px 8px #e3e8ee; letter-spacing: 1px;">{{ formatCurrency(selectedOrder.totalAmount) }}</strong>

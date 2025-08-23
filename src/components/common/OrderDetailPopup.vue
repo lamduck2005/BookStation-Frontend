@@ -29,7 +29,7 @@
             <p><strong>Trạng thái:</strong> 
               <StatusLabel 
                 :status="orderDetail.orderStatus" 
-                :statusText="formatOrderStatus(orderDetail.orderStatus)"
+                :statusText="orderDetail.orderStatusDisplay"
                 :statusClass="getOrderStatusClass(orderDetail.orderStatus)"
               />
             </p>
@@ -262,6 +262,7 @@ const formatOrderStatus = (status) => {
     'SHIPPED': 'Đã giao',
     'DELIVERED': 'Đã nhận',
     'CANCELLED': 'Đã hủy',
+    'REFUND_REQUESTED': 'Yêu cầu hoàn hàng',
     'REFUNDED': 'Đã hoàn tiền'
   };
   return statusMap[status] || status;
