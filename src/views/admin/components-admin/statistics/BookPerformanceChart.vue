@@ -133,7 +133,7 @@
               <option value="year">Theo năm</option>
             </select>
           </div>
-          <div class="col-md-3 d-flex align-items-end gap-2">
+          <div class="col-md-3 d-flex align-items-end gap-2 mt-4">
             <button 
               class="btn btn-primary btn-sm flex-grow-1"
               @click="applyCustomDateRange"
@@ -727,9 +727,27 @@ const getWeekNumber = (date) => {
   return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
 };
 
+// Always return today in Vietnam timezone (Asia/Ho_Chi_Minh) for input type=date
 const getTodayString = () => {
-  const today = new Date();
-  return today.toISOString().split('T')[0];
+  try {
+    // Use Intl.DateTimeFormat to get yyyy-MM-dd in Asia/Ho_Chi_Minh
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return formatter.format(new Date());
+  } catch (e) {
+    // Fallback: UTC+7 manual
+    const now = new Date();
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const vn = new Date(utc + 7 * 60 * 60000);
+    const yyyy = vn.getFullYear();
+    const mm = String(vn.getMonth() + 1).padStart(2, '0');
+    const dd = String(vn.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
 };
 
 // Popup handlers
