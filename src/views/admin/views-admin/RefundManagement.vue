@@ -185,7 +185,7 @@
                         <div class="btn-group" role="group">
                           <button 
                             @click="viewRefundDetails(refund)"
-                            class="btn btn-sm btn-outline-info"
+                            class="btn btn-sm btn-outline-info mx-2"
                             title="Xem chi tiết"
                           >
                             <i class="bi bi-eye"></i>
@@ -222,7 +222,6 @@
                       <td>
                         <div>
                           <strong>{{ refund.userFullName }}</strong>
-                          <div class="text-muted small">{{ refund.userEmail || 'N/A' }}</div>
                         </div>
                       </td>
                       <td>
@@ -233,7 +232,9 @@
                         />
                       </td>
                       <td>
-                        <span class="badge bg-info">{{ refund.refundType }}</span>
+                        <span class="badge" :class="selectedRefund && selectedRefund.refundType === 'FULL' ? 'bg-warning text-dark' : 'bg-info'">
+                          {{ selectedRefund && selectedRefund.refundType === 'PARTIAL' ? 'Hoàn một phần' : 'Hoàn toàn bộ' }}
+                        </span>
                       </td>
                       <td>
                         <span class="text-danger fw-bold">{{ formatCurrency(refund.totalRefundAmount) }}</span>
@@ -323,10 +324,6 @@
                       <td>#{{ selectedRefund.orderCode }}</td>
                     </tr>
                     <tr>
-                      <td><strong>Tracking Code:</strong></td>
-                      <td><span class="badge bg-info">{{ selectedRefund.trackingCode || 'N/A' }}</span></td>
-                    </tr>
-                    <tr>
                       <td><strong>Tổng tiền hoàn:</strong></td>
                       <td><span class="fw-bold text-success">{{ formatCurrency(selectedRefund.totalRefundAmount) }}</span></td>
                     </tr>
@@ -392,14 +389,12 @@
                     <tr>
                       <td><strong>Trạng thái:</strong></td>
                       <td>
-                        <StatusLabel :status="selectedRefund.refundStatus || selectedRefund.status" :type="getStatusType(selectedRefund.refundStatus || selectedRefund.status)" />
                         <span class="ms-2 text-muted">{{ selectedRefund.refundStatusDisplay || selectedRefund.statusDisplay }}</span>
                       </td>
                     </tr>
                     <tr>
                       <td><strong>Lý do hoàn hàng:</strong></td>
                       <td>
-                        <span class="badge bg-secondary me-2">{{ selectedRefund.reason }}</span>
                         <span class="text-muted">{{ selectedRefund.reasonDisplay }}</span>
                       </td>
                     </tr>
@@ -411,7 +406,7 @@
                 </table>
                 
                 <div v-if="selectedRefund.customerNote" class="mt-3">
-                  <p><strong>💬 Ghi chú khách hàng:</strong></p>
+                  <p><strong>💬 Lý do chi tiết:</strong></p>
                   <div class="bg-info bg-opacity-10 p-3 rounded border-start border-info border-4">
                     {{ selectedRefund.customerNote }}
                   </div>
@@ -438,8 +433,6 @@
                           <th>Sản phẩm</th>
                           <th>Số lượng hoàn</th>
                           <th>Đơn giá</th>
-                          <th>Tổng tiền</th>
-                          <th>Lý do</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -448,15 +441,14 @@
                             <div class="d-flex align-items-center">
                               <img v-if="item.bookImage" :src="item.bookImage" class="me-2" style="width: 40px; height: 40px; object-fit: cover;">
                               <div>
-                                <div class="fw-bold">{{ item.bookTitle }}</div>
-                                <small class="text-muted">ID: {{ item.bookId }}</small>
+                                <div class="fw-bold text-danger">{{ item.bookName }}</div>
+                                <small class="text-muted fw-bold">ID: {{ item.bookId }}</small>
                               </div>
+                            
                             </div>
                           </td>
                           <td>{{ item.refundQuantity }}</td>
-                          <td>{{ formatCurrency(item.unitPrice) }}</td>
-                          <td>{{ formatCurrency(item.refundAmount) }}</td>
-                          <td>{{ item.reason || 'N/A' }}</td>
+                          <td><span class="text-danger fw-bold">{{ formatCurrency(item.unitPrice) }}</span></td>
                         </tr>
                       </tbody>
                     </table>

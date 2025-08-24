@@ -90,7 +90,7 @@
             <span class="text-warning fw-bold">Refresh</span>
           </button>
         </div>
-      </div>
+    </div>
 
       <!-- Custom Date Range -->
       <div v-if="showCustomDateRange" class="card-body border-bottom">

@@ -132,10 +132,7 @@
                 <i class="bi bi-arrow-clockwise me-1"></i>
                 Làm mới dữ liệu
               </button>
-              <button class="btn btn-outline-success btn-sm" @click="exportData">
-                <i class="bi bi-download me-1"></i>
-                Xuất báo cáo
-              </button>
+              
             </div>
           </div>
         </div>

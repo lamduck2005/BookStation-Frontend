@@ -225,7 +225,7 @@
                       @click="toggleStatusDropdown(order.id)"
                       style="min-width: 150px; font-size: 0.82em; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); white-space: nowrap;"
                     >
-                      <span>{{ formatOrderStatus(order.orderStatus) }}</span>
+                      <span>{{ order.orderStatusDisplay }}</span>
                       <i class="bi bi-chevron-down ms-2" 
                          :class="{ 'rotate-180': openDropdowns.includes(order.id) }"
                          style="transition: transform 0.2s ease;"></i>
@@ -2344,7 +2344,7 @@ const updateOrderStatus = async (orderId, newStatus, originalStatusParam = null)
       title: 'Xác nhận chuyển trạng thái',
       html: `
         <div class="text-start">
-          <p>Chuyển từ <strong>"${formatOrderStatus(currentOrder.orderStatus)}"</strong> thành <strong>"${formatOrderStatus(newStatus)}"</strong>?</p>
+          <p>Chuyển từ <strong>"${formatOrderStatus(currentOrder.orderStatusDisplay)}"</strong> thành <strong>"${formatOrderStatus(newStatus)}"</strong>?</p>
           <div class="alert alert-info mt-3 small">
             <strong>Lưu ý:</strong> Hệ thống sẽ tự động cập nhật điểm, kho hàng và voucher.
           </div>
@@ -3299,7 +3299,7 @@ watch([currentPage, pageSize], () => {
   border: 1px solid rgba(0,0,0,0.125);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  padding: 8px 0;
+  padding: 0px 0;
   min-width: 180px;
 }
 
@@ -3316,10 +3316,12 @@ watch([currentPage, pageSize], () => {
 
 .status-dropdown-container .dropdown-item {
   border: none;
+  border-radius: 6px;
+  margin: 2px 2px 0px 0px;
   font-size: 0.85em;
-  padding: 10px 16px;
+  padding: 10px 2px;
   transition: all 0.2s ease;
-  background: white;
+  background: rgb(255, 255, 255);
 }
 
 .status-dropdown-container .dropdown-item:hover {

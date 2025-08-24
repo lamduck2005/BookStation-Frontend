@@ -1,5 +1,5 @@
 <template>
-  <!-- 📊 Book Statistics Details Popup -->
+  <!--  Book Statistics Details Popup -->
   <div 
     v-if="show" 
     class="book-stats-popup-overlay" 
@@ -17,18 +17,7 @@
           <span>{{ formattedSelectedDate }}</span>
         </div>
         <div class="popup-controls">
-          <!-- Limit Selector -->
-          <select 
-            v-model="selectedLimit" 
-            class="form-select form-select-sm me-2"
-            @change="onLimitChange"
-            :disabled="loading"
-          >
-            <option :value="5">Top 5 sách</option>
-            <option :value="10">Top 10 sách</option>
-            <option :value="20">Top 20 sách</option>
-            <option :value="50">Top 50 sách</option>
-          </select>
+         
           
           <button 
             type="button" 
@@ -467,40 +456,62 @@ watch(() => [props.selectedDate, props.period], () => {
   overflow-y: auto;
 }
 
+
+/* --- Summary Stat Modern Gradient Card --- */
 .summary-stat {
-  background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-primary) 100%);
-  color: white;
-  padding: 1rem;
+  background: linear-gradient(120deg, #6a93ff 0%, #a4e0ff 100%);
+  color: #fff;
+  padding: 0.7rem 0.7rem 0.7rem 0.9rem;
   border-radius: 12px;
   display: flex;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.7rem;
+  box-shadow: 0 2px 12px 0 rgba(106,147,255,0.08), 0 1px 3px 0 rgba(0,0,0,0.03);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s cubic-bezier(.4,2,.6,1), box-shadow 0.18s;
 }
-
 .summary-stat.bg-success {
-  background: linear-gradient(135deg, var(--bs-success) 0%, var(--bs-success) 100%);
+  background: linear-gradient(120deg, #43e97b 0%, #38f9d7 100%);
 }
-
 .summary-stat.bg-info {
-  background: linear-gradient(135deg, var(--bs-info) 0%, var(--bs-info) 100%);
+  background: linear-gradient(120deg, #43c6ac 0%, #191654 100%);
 }
-
+.summary-stat:hover {
+  transform: translateY(-3px) scale(1.025);
+  box-shadow: 0 8px 32px 0 rgba(106,147,255,0.18), 0 3px 12px 0 rgba(0,0,0,0.08);
+  z-index: 2;
+}
 .summary-stat i {
-  font-size: 2rem;
-  margin-right: 1rem;
-  opacity: 0.8;
+  font-size: 1.7rem;
+  margin-right: 0.7rem;
+  opacity: 1;
+  background: rgba(255,255,255,0.18);
+  border-radius: 50%;
+  padding: 0.32rem 0.45rem;
+  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.06);
+  transition: background 0.2s;
 }
-
+.summary-stat:hover i {
+  background: rgba(255,255,255,0.28);
+}
 .stat-info h6 {
   margin: 0;
-  font-size: 0.85rem;
-  opacity: 0.9;
+  font-size: 0.92rem;
+  opacity: 0.93;
+  letter-spacing: 0.5px;
+  font-weight: 500;
 }
-
 .stat-info h4 {
   margin: 0;
-  font-weight: bold;
-  font-size: 1.5rem;
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: 0.5px;
+  background: linear-gradient(90deg, #fff 60%, #e0eaff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 1px 4px rgba(106,147,255,0.10);
 }
 
 .list-title {
