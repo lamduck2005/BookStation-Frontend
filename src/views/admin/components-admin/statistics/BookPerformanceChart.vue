@@ -280,7 +280,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, computed, watch } from 'vue';
+import { ref, onMounted, nextTick, computed, watch, onUnmounted } from 'vue';
 // State for note open/close
 const noteOpen = ref(false);
 import { getBookStatsSummary } from '@/services/admin/bookStatistics';
@@ -349,7 +349,7 @@ const fetchChartData = async () => {
         
         if (response && response.status === 200 && response.data) {
           chartData.value = response.data; // Mảng [{date: "2025-08-01", totalBooksSold: 87}, ...]
-          console.log('✅ Chart data processed:', chartData.value);
+          console.log('  Chart data processed:', chartData.value);
           // Đánh dấu chartReady false để watcher xử lý lại
           chartReady.value = false;
           await nextTick();
@@ -382,13 +382,22 @@ const fetchChartData = async () => {
 const renderChart = () => {
   console.log('🎨 Starting renderChart...');
   
-  // Destroy existing chart
+  // Destroy existing chart - Cải thiện logic destroy
   if (chart) {
     console.log('🗑️ Destroying existing chart...');
-    chart.destroy();
+    try {
+      chart.destroy();
+    } catch (error) {
+      console.warn('⚠️ Error destroying chart:', error);
+    }
     chart = null;
   }
 
+  // Clear chart container content to prevent duplication
+  const chartElement = document.querySelector('#bookPerformanceChart');
+  if (chartElement) {
+    chartElement.innerHTML = '';
+  }
 
   if (!chartData.value || chartData.value.length === 0) {
     console.log('❌ No summary data available:', chartData.value);
@@ -398,14 +407,13 @@ const renderChart = () => {
 
   console.log('📊 Summary data:', chartData.value);
 
-  const chartElement = document.querySelector('#bookPerformanceChart');
   if (!chartElement) {
     console.error('❌ Chart element #bookPerformanceChart not found!');
     chartReady.value = false;
     return;
   }
 
-  console.log('✅ Chart element found:', chartElement);
+  console.log('  Chart element found:', chartElement);
 
   // Chuẩn bị dữ liệu cho biểu đồ từ Summary API
   const categories = chartData.value.map(item => {
@@ -430,7 +438,7 @@ const renderChart = () => {
       type: 'area',
       height: 400,
       fontFamily: 'Inter, sans-serif',
-      // ✅ SỬA SCROLL BEHAVIOR - Cho phép cuộn trang khi hover
+      //   SỬA SCROLL BEHAVIOR - Cho phép cuộn trang khi hover
       selection: {
         enabled: false
       },
@@ -461,7 +469,7 @@ const renderChart = () => {
         }
       },
       events: {
-        // ✅ CLICK HANDLER - Khi click vào điểm trên chart
+        //   CLICK HANDLER - Khi click vào điểm trên chart
         dataPointSelection: function(event, chartContext, config) {
           const dataPointIndex = config.dataPointIndex;
           if (dataPointIndex >= 0 && chartData.value[dataPointIndex]) {
@@ -488,18 +496,18 @@ const renderChart = () => {
       curve: 'smooth',
       width: 3
     },
-    // ✅ THÊM MARKERS - Điểm tròn để click (cải thiện UX)
+    //   THÊM MARKERS - Điểm tròn để click (cải thiện UX)
     markers: {
-      size: 8,
+      size: 6,
       colors: ['#667eea'],
       strokeColors: '#fff',
-      strokeWidth: 3,
+      strokeWidth: 2,
       hover: {
-        size: 12,
-        sizeOffset: 2
+        size: 8,
+        sizeOffset: 0
       },
       discrete: [],
-      // ✅ Cải thiện click area
+      //   Cải thiện click area
       offsetX: 0,
       offsetY: 0
     },
@@ -561,7 +569,18 @@ const renderChart = () => {
       theme: 'light',
       shared: false,
       intersect: false,
-      followCursor: false,
+      followCursor: true,
+      fixed: {
+        enabled: false
+      },
+      x: {
+        show: true
+      },
+      y: {
+        show: true
+      },
+      offsetX: 10,
+      offsetY: -10,
       style: {
         fontSize: '13px',
         fontFamily: 'Inter, sans-serif'
@@ -575,19 +594,87 @@ const renderChart = () => {
         }
         
         const dataPoint = chartData.value[dataPointIndex];
-        const formattedDate = formatDateLabel(dataPoint.date, true);
+        
+        // Format date display
+        let dateDisplay = '';
+        let periodInfo = '';
+        
+        if (dataPoint.dateRange) {
+          dateDisplay = dataPoint.dateRange;
+        } else {
+          dateDisplay = formatDateLabel(dataPoint.date, true);
+        }
+        
+        // Build period-specific information
+        if (dataPoint.period === 'daily') {
+          periodInfo = `
+            <div class="tooltip-row">
+              <span class="tooltip-label">Ngày:</span>
+              <span class="tooltip-value">${new Date(dataPoint.date).toLocaleDateString('vi-VN')}</span>
+            </div>
+          `;
+        } else if (dataPoint.period === 'weekly') {
+          periodInfo = `
+            <div class="tooltip-row">
+              <span class="tooltip-label">Tuần:</span>
+              <span class="tooltip-value">${dataPoint.weekNumber ? `Tuần ${dataPoint.weekNumber}` : ''} ${dataPoint.year || ''}</span>
+            </div>
+            <div class="tooltip-row">
+              <span class="tooltip-label">Thời gian:</span>
+              <span class="tooltip-value">${dataPoint.startDate ? new Date(dataPoint.startDate).toLocaleDateString('vi-VN') : ''} - ${dataPoint.endDate ? new Date(dataPoint.endDate).toLocaleDateString('vi-VN') : ''}</span>
+            </div>
+          `;
+        } else if (dataPoint.period === 'monthly') {
+          periodInfo = `
+            <div class="tooltip-row">
+              <span class="tooltip-label">Tháng:</span>
+              <span class="tooltip-value">${dataPoint.monthName || `Tháng ${dataPoint.monthNumber}`} ${dataPoint.year || ''}</span>
+            </div>
+            <div class="tooltip-row">
+              <span class="tooltip-label">Thời gian:</span>
+              <span class="tooltip-value">${dataPoint.startDate ? new Date(dataPoint.startDate).toLocaleDateString('vi-VN') : ''} - ${dataPoint.endDate ? new Date(dataPoint.endDate).toLocaleDateString('vi-VN') : ''}</span>
+            </div>
+          `;
+        } else if (dataPoint.period === 'quarterly') {
+          periodInfo = `
+            <div class="tooltip-row">
+              <span class="tooltip-label">Quý:</span>
+              <span class="tooltip-value">Quý ${dataPoint.quarter || ''} năm ${dataPoint.year || ''}</span>
+            </div>
+            <div class="tooltip-row">
+              <span class="tooltip-label">Thời gian:</span>
+              <span class="tooltip-value">${dataPoint.startDate ? new Date(dataPoint.startDate).toLocaleDateString('vi-VN') : ''} - ${dataPoint.endDate ? new Date(dataPoint.endDate).toLocaleDateString('vi-VN') : ''}</span>
+            </div>
+          `;
+        } else if (dataPoint.period === 'yearly') {
+          periodInfo = `
+            <div class="tooltip-row">
+              <span class="tooltip-label">Năm:</span>
+              <span class="tooltip-value">${dataPoint.year || new Date(dataPoint.date).getFullYear()}</span>
+            </div>
+            <div class="tooltip-row">
+              <span class="tooltip-label">Thời gian:</span>
+              <span class="tooltip-value">${dataPoint.startDate ? new Date(dataPoint.startDate).toLocaleDateString('vi-VN') : ''} - ${dataPoint.endDate ? new Date(dataPoint.endDate).toLocaleDateString('vi-VN') : ''}</span>
+            </div>
+          `;
+        }
         
         return `
           <div class="apexcharts-tooltip-custom">
-            <div class="tooltip-header">${formattedDate}</div>
+            <div class="tooltip-header">${dateDisplay}</div>
             <div class="tooltip-body">
-              <div class="tooltip-row">
+              ${periodInfo}
+              <div class="tooltip-row highlight">
                 <span class="tooltip-label">Số sách bán:</span>
-                <span class="tooltip-value">${dataPoint.totalBooksSold} cuốn</span>
+                <span class="tooltip-value">${dataPoint.totalBooksSold || 0} cuốn</span>
+              </div>
+              <div class="tooltip-row highlight">
+                <span class="tooltip-label">Doanh thu thuần:</span>
+                <span class="tooltip-value">${(dataPoint.netRevenue || 0).toLocaleString('vi-VN')} VNĐ</span>
               </div>
               <div class="tooltip-hint">
                 <i class="bi bi-hand-index me-1"></i>
-                <strong>Click vào điểm</strong> để xem chi tiết
+                <strong>Click vào điểm</strong> để xem chi tiết sách bán
               </div>
             </div>
           </div>
@@ -611,13 +698,18 @@ const renderChart = () => {
 
   try {
     chart = new ApexCharts(chartElement, options);
-    console.log('✅ ApexChart instance created:', chart);
+    console.log('  ApexChart instance created:', chart);
     
     chart.render().then(() => {
       console.log('🎨 Chart rendered successfully!');
+      chartReady.value = true;
+    }).catch((error) => {
+      console.error('❌ Error rendering chart:', error);
+      chartReady.value = false;
     });
   } catch (err) {
     console.error('❌ Error creating ApexChart:', err);
+    chartReady.value = false;
   }
 };
 
@@ -770,13 +862,15 @@ defineExpose({
 watch(
   [chartData, loading],
   async ([data, isLoading]) => {
-    if (!isLoading && data && data.length > 0) {
+    if (!isLoading && data && data.length > 0 && !chartReady.value) {
       await nextTick();
-      const chartElement = document.querySelector('#bookPerformanceChart');
-      if (chartElement) {
-        chartReady.value = true;
-        renderChart();
-      }
+      // Wait a bit more to ensure DOM is fully ready
+      setTimeout(() => {
+        const chartElement = document.querySelector('#bookPerformanceChart');
+        if (chartElement && !chartReady.value) {
+          renderChart();
+        }
+      }, 100);
     }
   },
   { immediate: false }
@@ -785,6 +879,18 @@ watch(
 // Initialize
 onMounted(() => {
   fetchChartData();
+});
+
+// Cleanup when component unmounts
+onUnmounted(() => {
+  if (chart) {
+    try {
+      chart.destroy();
+    } catch (error) {
+      console.warn('⚠️ Error destroying chart on unmount:', error);
+    }
+    chart = null;
+  }
 });
 </script>
 
@@ -891,7 +997,7 @@ onMounted(() => {
   overflow: visible;
 }
 
-/* ✅ FIX SCROLL BEHAVIOR - Cho phép cuộn trang khi hover vào chart */
+/*   FIX SCROLL BEHAVIOR - Cho phép cuộn trang khi hover vào chart */
 .chart-container :deep(.apexcharts-canvas) {
   pointer-events: auto;
 }
@@ -913,32 +1019,31 @@ onMounted(() => {
   cursor: pointer;
 }
 
-/* ✅ ENHANCE MARKERS - Làm nổi bật và ổn định các điểm có thể click */
+/*   ENHANCE MARKERS - Làm nổi bật và ổn định các điểm có thể click */
 .chart-container :deep(.apexcharts-marker) {
   pointer-events: auto;
   cursor: pointer;
-  filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.3));
-  transition: all 0.2s ease-in-out;
+  filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.2));
+  transition: none;
 }
 
 .chart-container :deep(.apexcharts-marker):hover {
-  transform: scale(1.2);
-  filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.6));
+  filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.4));
 }
 
-/* ✅ STABLE HOVER AREA - Tạo vùng click lớn hơn để dễ click */
+/*   STABLE HOVER AREA - Tạo vùng click lớn hơn để dễ click */
 .chart-container :deep(.apexcharts-series-markers) {
   pointer-events: auto;
 }
 
 .chart-container :deep(.apexcharts-series-markers .apexcharts-marker) {
-  stroke-width: 12;
+  stroke-width: 16;
   stroke: transparent;
 }
 
-/* ✅ PREVENT FLICKER - Ngăn marker nhảy loạn */
+/*  PREVENT FLICKER - Ngăn marker nhảy loạn */
 .chart-container :deep(.apexcharts-series) {
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .chart-container :deep(.apexcharts-series .apexcharts-marker) {
@@ -946,10 +1051,34 @@ onMounted(() => {
 }
 
 .chart-container :deep(.apexcharts-tooltip) {
-  pointer-events: none;
+  pointer-events: none !important;
+  transform: none !important;
+  transition: none !important;
 }
 
-/* ✅ CHART INFO STYLING */
+/*  PREVENT TOOLTIP JUMPING */
+.chart-container :deep(.apexcharts-tooltip.apexcharts-active) {
+  pointer-events: none !important;
+  position: fixed !important;
+  will-change: auto !important;
+  transform: translate3d(0,0,0) !important;
+}
+
+/*  TOOLTIP POSITIONING - Make it closer to cursor */
+.chart-container :deep(.apexcharts-tooltip) {
+  pointer-events: none !important;
+  transform: none !important;
+  transition: none !important;
+  margin-top: 150px !important;
+  margin-left: 300px !important;
+}
+
+.chart-container :deep(.apexcharts-tooltip.apexcharts-active) {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/*  CHART INFO STYLING */
 .chart-info {
   background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
   border: 1px solid rgba(102, 126, 234, 0.1);
@@ -978,8 +1107,10 @@ onMounted(() => {
   padding: 16px !important;
   border: 1px solid #e2e8f0 !important;
   font-family: 'Inter', sans-serif !important;
-  max-width: 280px !important;
+  max-width: 350px !important;
   z-index: 9999 !important;
+  pointer-events: none !important;
+  position: fixed !important;
 }
 
 :global(.tooltip-header) {
@@ -989,6 +1120,7 @@ onMounted(() => {
   padding-bottom: 8px;
   border-bottom: 1px solid #e2e8f0;
   font-size: 14px;
+  text-align: center;
 }
 
 :global(.tooltip-body) {
@@ -999,25 +1131,44 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   margin: 6px 0;
+  padding: 4px 0;
+}
+
+:global(.tooltip-row.highlight) {
+  background: linear-gradient(135deg, #667eea20, #764ba220);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 8px -4px;
+  border-left: 3px solid #667eea;
 }
 
 :global(.tooltip-label) {
   color: #718096;
   font-weight: 500;
+  flex: 0 0 auto;
+  margin-right: 12px;
 }
 
 :global(.tooltip-value) {
   color: #2d3748;
   font-weight: 600;
+  text-align: right;
+  flex: 1;
+}
+
+:global(.tooltip-row.highlight .tooltip-value) {
+  color: #667eea;
+  font-weight: 700;
 }
 
 :global(.tooltip-hint) {
-  margin-top: 8px;
+  margin-top: 12px;
   padding-top: 8px;
   border-top: 1px solid #e2e8f0;
   color: #9ca3af;
   font-size: 12px;
   font-style: italic;
+  text-align: center;
 }
 
 /* Responsive adjustments */
