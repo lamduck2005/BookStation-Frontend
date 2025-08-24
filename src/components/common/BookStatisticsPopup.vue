@@ -52,7 +52,7 @@
                 <i class="bi bi-graph-up-arrow"></i>
                 <div class="stat-info">
                   <h6>Tổng doanh thu</h6>
-                  <h4>{{ formatCurrency(totalRevenue) }}</h4>
+            <h4 :title="`Tổng doanh thu: ${totalRevenue.toLocaleString()} VND`">{{ formatCurrency(totalRevenue) }}</h4>
                 </div>
               </div>
             </div>
@@ -61,7 +61,7 @@
                 <i class="bi bi-bag-check"></i>
                 <div class="stat-info">
                   <h6>Tổng số bán</h6>
-                  <h4>{{ totalQuantitySold }}</h4>
+            <h4 :title="`Tổng số bán: ${totalQuantitySold.toLocaleString()} cuốn`">{{ totalQuantitySold }}</h4>
                 </div>
               </div>
             </div>
@@ -97,10 +97,10 @@
                 <!-- Book Info -->
                 <div class="book-info">
                   <div class="book-header">
-                    <h6 class="book-name" :title="book.name">
-                      {{ book.name }}
+                    <h6 class="book-name" :title="book.title">
+                      {{ book.title }}
                     </h6>
-                    <span class="book-code">{{ book.code }}</span>
+                    <span class="book-code">{{ book.bookCode }}</span>
                   </div>
                   
                   <div class="book-meta">
@@ -151,30 +151,9 @@
                   <div class="stat-item">
                     <div class="stat-label">Số lượng bán</div>
                     <div class="stat-value">
-                      {{ book.quantitySold }} cuốn
+                      {{ book.totalQuantity }} cuốn
                     </div>
-                    <div class="stat-growth" v-if="book.quantityGrowthPercent !== undefined || book.quantityGrowthLabel">
-                      <!-- Trường hợp có tăng trưởng % -->
-                      <span 
-                        v-if="book.quantityGrowthPercent !== null"
-                        class="growth-badge"
-                        :class="getGrowthClass(book.quantityGrowthPercent)"
-                      >
-                        <i :class="getGrowthIcon(book.quantityGrowthPercent)"></i>
-                        {{ Math.abs(book.quantityGrowthPercent).toFixed(1) }}%
-                      </span>
-                      <!-- Trường hợp "Tăng mới" -->
-                      <span 
-                        v-else-if="book.quantityGrowthLabel"
-                        class="growth-badge growth-new"
-                      >
-                        <i class="bi bi-plus-circle"></i>
-                        {{ book.quantityGrowthLabel }}
-                      </span>
-                      <span class="growth-value" v-if="book.quantityGrowthValue">
-                        ({{ book.quantityGrowthValue > 0 ? '+' : '' }}{{ book.quantityGrowthValue }})
-                      </span>
-                    </div>
+                     
                   </div>
                 </div>
               </div>
@@ -189,18 +168,7 @@
           <p class="text-muted">Không tìm thấy thông tin sách cho ngày này</p>
         </div>
       </div>
-
-      <!-- Footer -->
-      <div class="popup-footer">
-        <small class="text-muted">
-          <i class="bi bi-info-circle me-1"></i>
-          So sánh với {{ getPreviousPeriodText() }}
-        </small>
-        <button class="btn btn-sm btn-outline-secondary" @click="closePopup">
-          <i class="bi bi-x-lg me-1"></i>
-          Đóng
-        </button>
-      </div>
+ 
     </div>
   </div>
 </template>
@@ -258,7 +226,7 @@ const totalRevenue = computed(() => {
 });
 
 const totalQuantitySold = computed(() => {
-  return detailsData.value.reduce((sum, book) => sum + (book.quantitySold || 0), 0);
+  return detailsData.value.reduce((sum, book) => sum + (book.totalQuantity || 0), 0);
 });
 
 const popupStyle = computed(() => {
@@ -351,15 +319,6 @@ const getGrowthIcon = (percent) => {
   return 'bi bi-dash';
 };
 
-const getPreviousPeriodText = () => {
-  const periodTexts = {
-    day: 'ngày hôm qua',
-    week: 'tuần trước',
-    month: 'tháng trước',
-    year: 'năm trước'
-  };
-  return periodTexts[props.period] || 'kỳ trước';
-};
 
 // Watchers
 watch(() => props.show, (newShow) => {
@@ -461,7 +420,7 @@ watch(() => [props.selectedDate, props.period], () => {
 .summary-stat {
   background: linear-gradient(120deg, #6a93ff 0%, #a4e0ff 100%);
   color: #fff;
-  padding: 0.7rem 0.7rem 0.7rem 0.9rem;
+  padding: 0.8rem;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -497,12 +456,13 @@ watch(() => [props.selectedDate, props.period], () => {
 }
 .stat-info h6 {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: 0.85rem;
   opacity: 0.93;
   letter-spacing: 0.5px;
   font-weight: 500;
 }
 .stat-info h4 {
+  
   margin: 0;
   font-weight: 800;
   font-size: 1.25rem;
@@ -604,6 +564,7 @@ watch(() => [props.selectedDate, props.period], () => {
 .book-name {
   font-weight: 600;
   margin: 0;
+  padding: 0.125rem 0.375rem;
   color: #2d3748;
   font-size: 0.95rem;
   line-height: 1.3;
@@ -618,7 +579,7 @@ watch(() => [props.selectedDate, props.period], () => {
   background: #edf2f7;
   padding: 0.125rem 0.375rem;
   border-radius: 4px;
-  margin-left: 0.5rem;
+  
 }
 
 .book-meta {
@@ -744,5 +705,16 @@ watch(() => [props.selectedDate, props.period], () => {
   .popup-controls .form-select {
     min-width: 100px;
   }
+}
+</style>
+<style scoped>
+.hover-tooltip {
+  position: relative;
+  cursor: pointer;
+  color: #2eab00;
+  transition: color 0.2s;
+}
+.hover-tooltip:hover, .hover-tooltip:focus {
+  color: #2563eb;
 }
 </style>

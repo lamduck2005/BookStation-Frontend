@@ -162,14 +162,14 @@
             <transition name="fade">
               <div v-show="noteOpen" class="note-content text-dark" style="font-size: 0.97rem;">
                 <i class="bi bi-info-circle text-primary me-1"></i>
-                Nếu <span class="fw-semibold text-primary">khoảng thời gian</span> bạn chọn <span class="fw-semibold">ngắn hơn 1 đơn vị thống kê</span> (ngày / tuần / tháng / quý / năm), hệ thống sẽ tự động trả về <span class="fw-semibold text-success">toàn bộ dữ liệu của đơn vị thống kê đó</span> chứa khoảng thời gian này.<br>
+                Nếu <span class="fw-semibold text-primary">khoảng thời gian</span> bạn chọn <span class="fw-semibold">ngắn hơn 1 đơn vị thống kê</span> (ngày / tuần / tháng / quý / năm), hệ thống <span class="fw-semibold text-danger">chỉ trả về dữ liệu đúng trong phạm vi bạn chọn</span>, <span class="fw-semibold text-success">không tự động lấy thêm dữ liệu của đơn vị thống kê lớn hơn</span>.<br>
                 <ul class="mt-2 mb-1 ps-4">
-                  <li><i class="bi bi-calendar-week text-info me-1"></i> <span class="fw-semibold">Ví dụ 1:</span> Chọn kiểu <span class="text-primary">“Tuần”</span> nhưng chỉ chọn 3 ngày (02/05 → 04/05) → <span class="text-success">trả về toàn bộ tuần</span> chứa ngày 02/05.</li>
-                  <li><i class="bi bi-calendar-month text-info me-1"></i> <span class="fw-semibold">Ví dụ 2:</span> Chọn kiểu <span class="text-primary">“Tháng”</span> nhưng chỉ chọn 10 ngày (05/03 → 14/03) → <span class="text-success">trả về toàn bộ tháng 3</span>.</li>
+                  <li><i class="bi bi-calendar-week text-info me-1"></i> <span class="fw-semibold">Ví dụ 1:</span> Chọn kiểu <span class="text-primary">“Tuần”</span> nhưng chỉ chọn 3 ngày (02/05 → 04/05) → <span class="text-success">chỉ trả về dữ liệu của 3 ngày này</span>, <span class="text-danger">không lấy cả tuần</span>.</li>
+                  <li><i class="bi bi-calendar-month text-info me-1"></i> <span class="fw-semibold">Ví dụ 2:</span> Chọn kiểu <span class="text-primary">“Tháng”</span> nhưng chỉ chọn 10 ngày (05/03 → 14/03) → <span class="text-success">chỉ trả về dữ liệu của 10 ngày này</span>, <span class="text-danger">không lấy cả tháng</span>.</li>
                 </ul>
                 <div class="d-flex align-items-center mt-2">
                   <i class="bi bi-star-fill text-warning me-1"></i>
-                  <span class="text-muted" style="font-size: 0.93rem;">Điều này giúp đảm bảo số liệu thống kê luôn đầy đủ và chính xác.</span>
+                  <span class="text-muted" style="font-size: 0.93rem;">Điều này giúp số liệu thống kê phản ánh đúng phạm vi bạn chọn.</span>
                 </div>
               </div>
             </transition>
@@ -195,45 +195,7 @@
 
         <!-- Chart Content -->
         <div v-else>
-          <!-- Summary Stats Cards -->
-          <div v-if="summaryStats" class="row mb-4">
-            <div class="col-md-3">
-              <div class="summary-card bg-primary text-white">
-                <div class="card-body text-center">
-                  <i class="bi bi-calendar-range fs-1 mb-2"></i>
-                  <h6 class="card-subtitle mb-1">Số điểm thời gian</h6>
-                  <h4 class="card-title mb-0">{{ summaryStats.totalDataPoints || 0 }}</h4>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="summary-card bg-success text-white">
-                <div class="card-body text-center">
-                  <i class="bi bi-currency-dollar fs-1 mb-2"></i>
-                  <h6 class="card-subtitle mb-1">Tổng sách bán</h6>
-                  <h4 class="card-title mb-0">{{ summaryStats.totalBooksSold || 0 }}</h4>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="summary-card bg-info text-white">
-                <div class="card-body text-center">
-                  <i class="bi bi-graph-up fs-1 mb-2"></i>
-                  <h6 class="card-subtitle mb-1">Trung bình/ngày</h6>
-                  <h4 class="card-title mb-0">{{ Math.round(summaryStats.averagePerDay || 0) }}</h4>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-3">
-              <div class="summary-card bg-warning text-dark">
-                <div class="card-body text-center">
-                  <i class="bi bi-calendar-check fs-1 mb-2"></i>
-                  <h6 class="card-subtitle mb-1">Cao nhất</h6>
-                  <h4 class="card-title mb-0">{{ summaryStats.peakValue || 0 }}</h4>
-                </div>
-              </div>
-            </div>
-          </div>
+           
 
           <!-- No data message -->
           <div v-if="!chartData || chartData.length === 0" class="text-center py-5">
