@@ -2,15 +2,134 @@
   <div class="container-fluid py-4">
     <!-- Point Statistics Section -->
     <div class="mb-4">
-      <PointStatisticsCards />
+      <!-- Statistics Cards -->
+      <div v-if="statsLoading" class="row g-3">
+        <div v-for="i in 5" :key="i" class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+          <div class="card stats-card loading-card">
+            <div class="card-body">
+              <div class="placeholder-glow">
+                <div class="placeholder col-6 mb-2"></div>
+                <div class="placeholder col-8 mb-3"></div>
+                <div class="placeholder col-4"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="row g-3">
+        <!-- Average Points Per User Card -->
+        <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+          <div class="card stats-card avg-points-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="icon-wrapper avg-points-icon">
+                  <i class="bi bi-graph-up"></i>
+                </div>
+                <div class="text-end">
+                  <div class="stat-value">{{ formatNumber(statsData?.averagePointsPerUser) }}</div>
+                  <div class="stat-label">Điểm TB/người dùng</div>
+                </div>
+              </div>
+              <div class="stat-footer">
+                <small class="text-muted">
+                  Trung bình hệ thống
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total System Points Card -->
+        <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+          <div class="card stats-card total-points-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="icon-wrapper total-points-icon">
+                  <i class="bi bi-database"></i>
+                </div>
+                <div class="text-end">
+                  <div class="stat-value">{{ formatNumber(statsData?.totalSystemPoints) }}</div>
+                  <div class="stat-label">Tổng điểm hệ thống</div>
+                </div>
+              </div>
+              <div class="stat-footer">
+                <small class="text-info">
+                  Tất cả điểm
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Points Earned This Month Card -->
+        <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+          <div class="card stats-card earned-points-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="icon-wrapper earned-points-icon">
+                  <i class="bi bi-plus-circle"></i>
+                </div>
+                <div class="text-end">
+                  <div class="stat-value">{{ formatNumber(statsData?.pointsEarnedThisMonth) }}</div>
+                  <div class="stat-label">Điểm kiếm tháng này</div>
+                </div>
+              </div>
+              <div class="stat-footer">
+                <small class="text-success">
+                  <i class="bi bi-arrow-up"></i> Tích lũy
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Points Spent This Month Card -->
+        <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+          <div class="card stats-card spent-points-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="icon-wrapper spent-points-icon">
+                  <i class="bi bi-dash-circle"></i>
+                </div>
+                <div class="text-end">
+                  <div class="stat-value">{{ formatNumber(statsData?.pointsSpentThisMonth) }}</div>
+                  <div class="stat-label">Điểm tiêu tháng này</div>
+                </div>
+              </div>
+              <div class="stat-footer">
+                <small class="text-warning">
+                  <i class="bi bi-arrow-down"></i> Sử dụng
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Points Balance Card -->
+        <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+          <div class="card stats-card balance-points-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="icon-wrapper balance-points-icon">
+                  <i class="bi bi-wallet2"></i>
+                </div>
+                <div class="text-end">
+                  <div class="stat-value">{{ formatNumber(getPointsBalance()) }}</div>
+                  <div class="stat-label">Cân bằng tháng này</div>
+                </div>
+              </div>
+              <div class="stat-footer">
+                <small :class="getBalanceClass()">
+                  {{ getBalanceText() }}
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Breadcrumb -->
-    <div class="mb-3">
-      <h6 class="text-muted">
-        Admin / <strong>Quản lý điểm</strong>
-      </h6>
-    </div>
 
     <!-- Layout 2 cột: Bộ lọc bên trái, Bảng bên phải -->
     <div class="row">
@@ -49,7 +168,7 @@
               />
             </div>
             
-            <div class="mb-3">
+            <!-- <div class="mb-3">
               <label class="form-label">
                 <i class="bi bi-toggle-on me-1"></i>
                 Trạng thái
@@ -59,7 +178,7 @@
                 <option value="1">Hoạt động</option>
                 <option value="0">Không hoạt động</option>
               </select>
-            </div>
+            </div> -->
             
             <div class="mb-3">
               <label class="form-label">
@@ -103,12 +222,20 @@
               <button class="btn btn-outline-info btn-sm py-2" @click="reloadPage" :disabled="loading">
                 <i class="bi bi-arrow-repeat me-1"></i> Làm mới
               </button>
-              <button
+              
+              <!-- Nút Export Excel -->
+              <ExcelExportButton 
+                data-type="points"
+                button-text="Xuất Excel"
+              />
+              
+              <!-- Ẩn nút thêm mới Point -->
+              <!-- <button
                 class="btn btn-success btn-sm"
                 @click="openAddModal"
               >
                 <i class="bi bi-plus-circle me-2"></i> Thêm mới
-              </button>
+              </button> -->
             </div>
           </div>
           <div class="card-body p-0" :class="{ loading: loading }">
@@ -139,10 +266,12 @@
                     <tr v-for="(point, index) in points" :key="point.id">
                       <td>{{ (currentPage * pageSize) + index + 1 }}</td>
                       <td>
-                        <div class="d-flex gap-2">
+                        <!-- Ẩn chức năng sửa/xóa Point -->
+                        <!-- <div class="d-flex gap-2">
                           <EditButton @click="openEditModal(point, index)" />
                           <DeleteButton @click="handleDeletePoint(index)" />
-                        </div>
+                        </div> -->
+                        <span class="text-muted">-</span>
                       </td>
                       <td>
                         <div>{{ point.email }}</div>
@@ -193,17 +322,21 @@
     </div>
   </div>
           
-    <!-- Modal Thêm/Sửa Point -->
+    <!-- Ẩn Modal Thêm/Sửa Point -->
+  <!-- 
     <div class="modal fade" id="addRankModal" tabindex="-1" aria-labelledby="addRankModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
+      <div class="modal-dialog" style="max-width: 600px">
         <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="addRankModalLabel">{{ isEditMode ? 'Chỉnh sửa Point' : 'Thêm mới Point' }}</h5>
+          <div class="modal-header form-modal-header">
+            <h5 class="modal-title" id="addRankModalLabel">
+              <i class="bi me-2" :class="isEditMode ? 'bi-pencil-square' : 'bi-plus-circle'"></i>
+              {{ isEditMode ? 'Chỉnh sửa Point' : 'Thêm mới Point' }}
+            </h5>
             <button type="button" class="custom-close-btn" @click="closeModal">
-              <img src="/src/assets/img/user-plus.png" alt="Đóng" />
+              <i class="bx bx-x-circle"></i>
             </button>
           </div>
-          <div class="modal-body">
+          <div class="modal-body form-modal-body">
             <form @submit.prevent="handleSubmitPoint">
               <div class="mb-3">
                 <label class="form-label">Email</label>
@@ -232,22 +365,28 @@
             </form>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="closeModal">Đóng</button>
-            <button type="button" class="btn btn-primary" @click="handleSubmitPoint">Lưu</button>
+            <button type="button" class="btn form-btn-secondary" @click="closeModal">Đóng</button>
+            <button type="button" class="btn form-btn-primary" @click="handleSubmitPoint">
+              {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }}
+            </button>
           </div>
         </div>
       </div>
     </div>
+  -->
 </template>
 <script setup>
 import EditButton from '@/components/common/EditButton.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import DeleteButton from '@/components/common/DeleteButton.vue';
-import PointStatisticsCards from '@/views/admin/components-admin/statistics/PointStatisticsCards.vue';
+// Statistics API
+import { getPointStatistics, formatNumber, formatPercentage } from '@/services/admin/moduleStatistics';
+import Swal from 'sweetalert2';
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Modal } from 'bootstrap';
 import { getPointHistory, createPoint, getOrderIdByOrderCode, updatePoint } from '@/services/admin/point.js';
 import { showToast } from '@/utils/swalHelper.js';
+import ExcelExportButton from '@/components/common/ExcelExportButton.vue';
 
 const searchQuery = ref('');
 const selectedStatus = ref('');
@@ -314,6 +453,10 @@ const isLastPage = ref(false);
 const points = ref([]);
 const loading = ref(false);
 const error = ref(null);
+
+// Statistics data
+const statsLoading = ref(true);
+const statsData = ref(null);
 
 // Hàm load dữ liệu từ API với filter
 const loadPointHistory = async (page = 0, size = pageSize.value) => {
@@ -522,9 +665,84 @@ const resetRankModal = () => {
 
 let modalElement = null;
 
+// Statistics functions
+const fetchPointStatistics = async () => {
+  statsLoading.value = true;
+  try {
+    const response = await getPointStatistics();
+    if (response.status === 200) {
+      statsData.value = response.data;
+    } else {
+      throw new Error('Failed to fetch point statistics');
+    }
+  } catch (error) {
+    console.error('Error fetching point statistics:', error);
+    
+    // Fallback data để tránh lỗi hiển thị
+    statsData.value = {
+      averagePointsPerUser: 3250.75,
+      totalSystemPoints: 4063750,
+      pointsEarnedThisMonth: 156000,
+      pointsSpentThisMonth: 89000,
+      topPointEarners: [
+        { 
+          fullName: "Trần Thị B", 
+          email: "tranthib@example.com", 
+          totalPointsEarned: 25000, 
+          rankName: "Gold" 
+        },
+        { 
+          fullName: "Nguyễn Văn C", 
+          email: "nguyenvanc@example.com", 
+          totalPointsEarned: 22000, 
+          rankName: "Silver" 
+        },
+        { 
+          fullName: "Lê Thị D", 
+          email: "lethid@example.com", 
+          totalPointsEarned: 18000, 
+          rankName: "Silver" 
+        }
+      ]
+    };
+    
+    Swal.fire({
+      title: 'Lỗi!',
+      text: 'Không thể tải dữ liệu thống kê điểm - Hiển thị dữ liệu mẫu',
+      icon: 'warning',
+      timer: 3000,
+      showConfirmButton: false
+    });
+  } finally {
+    statsLoading.value = false;
+  }
+};
+
+const getPointsBalance = () => {
+  if (statsData.value) {
+    return (statsData.value.pointsEarnedThisMonth || 0) - (statsData.value.pointsSpentThisMonth || 0);
+  }
+  return 0;
+};
+
+const getBalanceClass = () => {
+  const balance = getPointsBalance();
+  if (balance > 0) return 'text-success';
+  if (balance < 0) return 'text-danger';
+  return 'text-muted';
+};
+
+const getBalanceText = () => {
+  const balance = getPointsBalance();
+  if (balance > 0) return '+ Tích cực';
+  if (balance < 0) return '- Tiêu nhiều';
+  return 'Cân bằng';
+};
+
 onMounted(() => {
   // Load dữ liệu khi component được mount
   loadPointHistory();
+  fetchPointStatistics();
   
   modalElement = document.getElementById('addRankModal');
   if (modalElement) {
@@ -584,6 +802,7 @@ const reloadPage = () => {
 <style scoped>
 @import "@/assets/css/admin-table-responsive.css";
 @import '@/assets/css/admin-global.css';
+@import '@/assets/css/form-global.css';
 
 /* Filter Sidebar - Thu sang trái */
 .filter-sidebar {
@@ -594,7 +813,7 @@ const reloadPage = () => {
 }
 
 .filter-sidebar-collapsed {
-  width: 60px;
+  width: 100px;
 }
 
 .filter-sidebar-collapsed .filter-card .card-body {
@@ -778,5 +997,87 @@ const reloadPage = () => {
   max-width: 200px;
 }
 
+/* Point Statistics Cards Styling */
+.avg-points-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.total-points-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.earned-points-icon { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+.spent-points-icon { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+.balance-points-icon { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+
+.stats-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.stats-card .card-body {
+  padding: 1.5rem;
+}
+
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #2d3748;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #718096;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.stat-footer {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Loading Cards */
+.loading-card {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+
+.placeholder {
+  background-color: #dee2e6;
+  border-radius: 4px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .stats-card .card-body {
+    padding: 1rem;
+  }
+  
+  .stat-value {
+    font-size: 1.5rem;
+  }
+  
+  .icon-wrapper {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+}
 
 </style>

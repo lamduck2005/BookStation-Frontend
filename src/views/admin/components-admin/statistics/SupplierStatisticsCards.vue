@@ -1,67 +1,6 @@
 <template>
   <div class="supplier-statistics-cards">
-    <!-- Loading State -->
-    <div v-if="loading" class="row g-3">
-      <div v-for="i in 4" :key="i" class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card loading-card">
-          <div class="card-body">
-            <div class="placeholder-glow">
-              <div class="placeholder col-6 mb-2"></div>
-              <div class="placeholder col-8 mb-3"></div>
-              <div class="placeholder col-4"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Statistics Cards -->
-    <div v-else class="row g-3">
-      <!-- Total Suppliers Card -->
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card suppliers-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper suppliers-icon">
-                <i class="bi bi-truck"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value stat-value-gradient text-gradient-info">{{ getTotalSuppliers() }}</div>
-                <div class="stat-label">Nhà cung cấp</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small class="text-muted">
-                Đang hoạt động
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Total Books Card -->
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card books-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper books-icon">
-                <i class="bi bi-boxes"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value stat-value-gradient text-gradient-purple">{{ getTotalBooks() }}</div>
-                <div class="stat-label">Tổng đầu sách</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small class="text-info">
-                Từ tất cả NCC
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
+    
 
     <!-- Book Statistics by Supplier Row -->
     <div v-if="!loading && data?.bookStatistics && data.bookStatistics.length > 0" class="row g-3 mt-2">
@@ -228,7 +167,7 @@
     </div>
 
     <!-- Quick Actions Row -->
-    <div v-if="!loading" class="row g-3 mt-2">
+    <!-- <div v-if="!loading" class="row g-3 mt-2">
       <div class="col-12">
         <div class="card actions-card">
           <div class="card-body">
@@ -254,7 +193,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 

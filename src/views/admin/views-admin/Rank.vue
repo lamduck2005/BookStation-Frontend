@@ -2,14 +2,110 @@
   <div class="container-fluid py-4">
     <!-- Rank Statistics Section -->
     <div class="mb-4">
-      <RankStatisticsCards />
-    </div>
+      <!-- Statistics Cards -->
+      <div v-if="statsLoading" class="row g-3">
+        <div v-for="i in 4" :key="i" class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+          <div class="card stats-card loading-card">
+            <div class="card-body">
+              <div class="placeholder-glow">
+                <div class="placeholder col-6 mb-2"></div>
+                <div class="placeholder col-8 mb-3"></div>
+                <div class="placeholder col-4"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <!-- Breadcrumb -->
-    <div class="mb-3">
-      <h6 class="text-muted">
-        Admin / <strong>Quản lý xếp hạng</strong>
-      </h6>
+      <div v-else class="row g-3">
+        <!-- Total Ranks Card -->
+        <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+          <div class="card stats-card ranks-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="icon-wrapper ranks-icon">
+                  <i class="bi bi-award"></i>
+                </div>
+                <div class="text-end">
+                  <div class="stat-value">{{ getTotalRanks() }}</div>
+                  <div class="stat-label">Tổng số xếp hạng</div>
+                </div>
+              </div>
+              <div class="stat-footer">
+                <small class="text-muted">
+                  Đang hoạt động
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Most Popular Rank Card -->
+        <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+          <div class="card stats-card popular-rank-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="icon-wrapper popular-rank-icon">
+                  <i class="bi bi-trophy"></i>
+                </div>
+                <div class="text-end">
+                  <div class="stat-value small-text">{{ getMostPopularRank().rankName || 'N/A' }}</div>
+                  <div class="stat-label">Xếp hạng phổ biến</div>
+                </div>
+              </div>
+              <div class="stat-footer">
+                <small class="text-success">
+                  <strong>{{ formatNumber(getMostPopularRank().userCount) }} người dùng</strong>
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Highest Average Points Card -->
+        <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+          <div class="card stats-card highest-points-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="icon-wrapper highest-points-icon">
+                  <i class="bi bi-gem"></i>
+                </div>
+                <div class="text-end">
+                  <div class="stat-value small-text">{{ getHighestPointsRank().rankName || 'N/A' }}</div>
+                  <div class="stat-label">Điểm trung bình cao nhất</div>
+                </div>
+              </div>
+              <div class="stat-footer">
+                <small class="text-warning">
+                  <strong>{{ formatNumber(getHighestPointsRank().averagePoints) }} điểm</strong>
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fastest Growing Rank Card -->
+        <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+          <div class="card stats-card growing-rank-card">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="icon-wrapper growing-rank-icon">
+                  <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div class="text-end">
+                  <div class="stat-value small-text">{{ getFastestGrowingRank().rankName || 'N/A' }}</div>
+                  <div class="stat-label">Tăng trưởng nhanh nhất</div>
+                </div>
+              </div>
+              <div class="stat-footer">
+                <small class="text-success">
+                  <strong>+{{ formatPercentage(getFastestGrowingRank().growthRate) }}</strong>
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Layout 2 cột: Bộ lọc bên trái, Bảng bên phải -->
@@ -37,28 +133,14 @@
             <div class="mb-3">
               <label class="form-label">
                 <i class="bi bi-search me-1"></i>
-                Tìm kiếm
+                Tên hạng
               </label>
               <input 
                 type="text" 
                 class="form-control form-control-sm" 
-                placeholder="Nhập tên rank" 
-                v-model="searchQuery" 
-                @input="debouncedSearch"
-                @keyup.enter="applyFilters"
+                placeholder="Nhập tên hạng" 
+                v-model="searchQuery"
               />
-            </div>
-            
-            <div class="mb-3">
-              <label class="form-label">
-                <i class="bi bi-toggle-on me-1"></i>
-                Trạng thái
-              </label>
-              <select class="form-select form-select-sm" v-model="selectedStatus" @change="applyFilters">
-                <option value="">Tất cả trạng thái</option>
-                <option value="1">Hoạt động</option>
-                <option value="0">Không hoạt động</option>
-              </select>
             </div>
             
             <div class="d-grid gap-2">
@@ -81,19 +163,31 @@
             <div>
               <h5 class="mb-0 text-secondary">
                 <i class="bi bi-star-fill me-2"></i>
-                Danh sách xếp hạng
+                Danh sách hạng
               </h5>
             </div>
             <div class="d-flex gap-2">
               <button class="btn btn-outline-info btn-sm py-2" @click="fetchRanks" :disabled="loading">
                 <i class="bi bi-arrow-repeat me-1"></i> Làm mới
               </button>
+              
+              <!-- Nút Export Excel -->
+              <ExcelExportButton 
+                data-type="ranks"
+                button-text="Xuất Excel"
+              />
+              
               <button
+                v-if="ranks.length < 3"
                 class="btn btn-success btn-sm"
                 @click="openAddModal"
               >
                 <i class="bi bi-plus-circle me-2"></i> Thêm mới
               </button>
+              <span v-else class="text-muted small text-center d-flex align-items-center justify-content-center">
+                <i class="bi bi-info-circle me-1"></i>
+                Đã đủ 3 hạng (Vàng, Bạc, Kim cương) không thể thêm mới  
+              </span>
             </div>
           </div>
           <div class="card-body p-0" :class="{ loading: loading }">
@@ -112,12 +206,9 @@
                     <tr>
                       <th style="min-width: 50px;">STT</th>
                       <th style="min-width: 120px;">Thao tác</th>
-                      <th style="min-width: 200px;">Tên Rank</th>
+                      <th style="min-width: 200px;">Tên hạng</th>
                       <th style="min-width: 150px;">Mức chi tiêu tối thiểu</th>
                       <th style="min-width: 100px;">Hệ số điểm</th>
-                      <th style="min-width: 100px;">Trạng thái</th>
-                      <th style="min-width: 150px;">Ngày tạo</th>
-                      <th style="min-width: 150px;">Ngày cập nhật</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -142,27 +233,11 @@
                       <td>
                         <span class="badge bg-info">{{ rank.pointMultiplier }}x</span>
                       </td>
-                      <td>
-                        <StatusLabel 
-                          :status="rank.status"
-                          :status-text="rank.status == 1 ? 'Hoạt động' : 'Không hoạt động'"
-                          :status-class="rank.status == 1 ? 'status-active' : 'status-inactive'"
-                        />
-                      </td>
-                      <td>
-                        <div class="small">
-                          {{ formatDate(rank.createdAt) }}
-                        </div>
-                      </td>
-                      <td>
-                        <div class="small">
-                          {{ formatDate(rank.updatedAt) }}
-                        </div>
-                      </td>
                     </tr>
                     <tr v-if="ranks.length === 0">
-                      <td colspan="8" class="text-center text-muted">
-                        Không có dữ liệu
+                      <td colspan="5" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox display-1 text-muted d-block mb-3"></i>
+                        Không có dữ liệu hạng
                       </td>
                     </tr>
                   </tbody>
@@ -189,113 +264,80 @@
       </div>
     </div>
   </div>
-       
-        <!-- Pagination -->
-        <Pagination 
-          :page-number="currentPage" 
-          :total-pages="totalPages" 
-          :is-last-page="isLastPage"
-          :page-size="pageSize" 
-          :items-per-page-options="itemsPerPageOptions" 
-          :total-elements="totalElements"
-          @prev="handlePrev" 
-          @next="handleNext" 
-          @update:pageSize="handlePageSizeChange" 
-        />
    
   <!-- Add/Edit Rank Modal -->
   <div class="modal fade" :class="{ show: showModal }" tabindex="-1" style="display: block;" v-if="showModal">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
-      <div class="modal-content enhanced-modal">
-        <div class="modal-header gradient-header">
+    <div class="modal-dialog" style="max-width: 600px">
+      <div class="modal-content">
+        <div class="modal-header form-modal-header">
           <h5 class="modal-title">
             <i class="bi me-2" :class="isEditMode ? 'bi-pencil-square' : 'bi-plus-circle'"></i>
-            {{ isEditMode ? 'Sửa Rank' : 'Thêm Rank' }}
+            {{ isEditMode ? 'Chỉnh sửa hạng' : 'Thêm hạng mới' }}
           </h5>
           <button type="button" class="custom-close-btn" @click="closeModal">
-            <i class="bi bi-x-lg"></i>
+            <i class="bx bx-x-circle"></i>
           </button>
         </div>
-        <div class="modal-body enhanced-body">
+        <div class="modal-body form-modal-body">
           <form @submit.prevent="handleSubmit">
-            <!-- Section 1: Thông tin cơ bản -->
-            <div class="form-section">
-              <div class="section-header">
-                <i class="bi bi-award section-icon"></i>
-                <h6 class="section-title">Thông tin Rank</h6>
-              </div>
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label class="form-label enhanced-label">Tên Rank <span class="text-danger">*</span></label>
-                  <select 
-                    class="form-select enhanced-input" 
-                    v-model="formData.rankName"
-                    required
-                    :disabled="isEditMode"
-                  >
-                    <option value="">Chọn loại rank</option>
-                    <option value="Vàng">Vàng</option>
-                    <option value="Bạc">Bạc</option>
-                    <option value="Kim cương">Kim cương</option>
-                  </select>
-                  <div class="form-text">Chỉ được phép tạo 3 loại rank: Vàng, Bạc, Kim cương</div>
-                </div>
-                <!-- Trường trạng thái chỉ hiển thị khi thêm mới, không cho sửa trạng thái -->
-                <div v-if="!isEditMode" class="col-md-6">
-                  <label class="form-label enhanced-label">Trạng thái <span class="text-danger">*</span></label>
-                  <select class="form-select enhanced-input" v-model="formData.status" required>
-                    <option value="">Chọn trạng thái</option>
-                    <option value="1">Hoạt động</option>
-                    <option value="0">Không hoạt động</option>
-                  </select>
-                </div>
-              </div>
+            <div class="mb-3">
+              <label class="form-label">Tên hạng <span class="text-danger">*</span></label>
+              <input
+                v-if="isEditMode"
+                type="text"
+                class="form-control disabled-input"
+                :value="formData.rankName"
+                disabled
+                readonly
+              />
+              <select 
+                v-else
+                class="form-select" 
+                v-model="formData.rankName"
+                required
+              >
+                <option value="">Chọn loại hạng</option>
+                <option value="Vàng">Vàng</option>
+                <option value="Bạc">Bạc</option>
+                <option value="Kim cương">Kim cương</option>
+              </select>
+              <div class="form-text">Chỉ được phép tạo 3 loại hạng: Vàng, Bạc, Kim cương</div>
             </div>
-
-            <!-- Section 2: Điều kiện và hệ số -->
-            <div class="form-section">
-              <div class="section-header">
-                <i class="bi bi-calculator section-icon"></i>
-                <h6 class="section-title">Điều kiện và Hệ số</h6>
-              </div>
-              <div class="row g-3">
-                <div class="col-md-6">
-                  <label class="form-label enhanced-label">Mức chi tiêu tối thiểu <span class="text-danger">*</span></label>
-                  <input 
-                    type="number" 
-                    class="form-control enhanced-input" 
-                    v-model="formData.minSpent"
-                    placeholder="Nhập mức chi tiêu tối thiểu"
-                    required
-                    min="0"
-                    step="1000"
-                  />
-                  <div class="form-text">Số tiền khách hàng cần chi tiêu để đạt rank này</div>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label enhanced-label">Hệ số điểm <span class="text-danger">*</span></label>
-                  <input 
-                    type="number" 
-                    class="form-control enhanced-input" 
-                    v-model="formData.pointMultiplier"
-                    placeholder="Nhập hệ số điểm"
-                    required
-                    min="1"
-                    max="5"
-                    step="0.1"
-                  />
-                  <div class="form-text">Hệ số nhân điểm khi khách hàng mua hàng (1.0 - 5.0)</div>
-                </div>
-              </div>
+            <div class="mb-3">
+              <label class="form-label">Mức chi tiêu tối thiểu <span class="text-danger">*</span></label>
+              <input 
+                type="number" 
+                class="form-control" 
+                v-model="formData.minSpent"
+                placeholder="Nhập mức chi tiêu tối thiểu"
+                required
+                min="0"
+                step="1000"
+              />
+              <div class="form-text">Số tiền khách hàng cần chi tiêu để đạt hạng này</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Hệ số điểm <span class="text-danger">*</span></label>
+              <input 
+                type="number" 
+                class="form-control" 
+                v-model="formData.pointMultiplier"
+                placeholder="Nhập hệ số điểm"
+                required
+                min="1"
+                max="5"
+                step="0.1"
+              />
+              <div class="form-text">Hệ số nhân điểm khi khách hàng mua hàng (1.0 - 5.0)</div>
             </div>
           </form>
         </div>
-        <div class="modal-footer enhanced-footer">
-          <button type="button" class="btn btn-secondary btn-cancel" @click="closeModal">
+        <div class="modal-footer">
+          <button type="button" class="btn form-btn-secondary" @click="closeModal">
             <i class="bi bi-x-circle me-1"></i>
             Hủy
           </button>
-          <button type="button" class="btn btn-primary btn-submit" @click="handleSubmit">
+          <button type="button" class="btn form-btn-primary" @click="handleSubmit">
             <i class="bi bi-check-circle me-1"></i>
             {{ isEditMode ? 'Cập nhật' : 'Thêm mới' }}
           </button>
@@ -318,12 +360,14 @@ import EditButton from '@/components/common/EditButton.vue';
 import DeleteButton from '@/components/common/DeleteButton.vue';
 import StatusLabel from '@/components/common/StatusLabel.vue';
 import Pagination from '@/components/common/Pagination.vue';
-import RankStatisticsCards from '@/views/admin/components-admin/statistics/RankStatisticsCards.vue';
+// Statistics API
+import { getRankStatistics, formatNumber, formatPercentage } from '@/services/admin/moduleStatistics';
+import Swal from 'sweetalert2';
+import ExcelExportButton from '@/components/common/ExcelExportButton.vue';
 
 // Reactive data
 const ranks = ref([]);
 const searchQuery = ref('');
-const selectedStatus = ref('');
 const currentPage = ref(0);
 const pageSize = ref(10);
 const totalPages = ref(0);
@@ -332,6 +376,10 @@ const itemsPerPageOptions = ref([5, 10, 25, 50]);
 const isLastPage = ref(false);
 const loading = ref(false);
 const showFilter = ref(true);
+
+// Statistics data
+const statsLoading = ref(true);
+const statsData = ref(null);
 
 // Modal
 const showModal = ref(false);
@@ -345,30 +393,19 @@ const formData = ref({
   status: ''
 });
 
-// Debounce search function
-let searchTimeout = null;
-const debouncedSearch = () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    applyFilters();
-  }, 300);
-};
-
-const applyFilters = () => {
+const applyFilters = async () => {
   currentPage.value = 0;
-  fetchRanks();
+  await fetchRanks();
 };
 
-const clearFilters = () => {
+const clearFilters = async () => {
   searchQuery.value = "";
-  selectedStatus.value = "";
   currentPage.value = 0;
-  fetchRanks();
+  await fetchRanks();
 };
 
 const toggleFilter = () => {
   showFilter.value = !showFilter.value;
-  fetchRanks();
 };
   
 
@@ -386,10 +423,6 @@ const fetchRanks = async () => {
       params.name = searchQuery.value;
     }
     
-    if (selectedStatus.value !== '') {
-      params.status = selectedStatus.value;
-    }
-    
     const response = await getRanks(params);
     const data = response.data || {};
     
@@ -398,31 +431,31 @@ const fetchRanks = async () => {
     totalElements.value = data.totalElements || 0;
     isLastPage.value = data.last || false;
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách ranks:', error);
-    showToast('error', 'Lỗi khi tải danh sách rank!', 2000);
+    console.error('Lỗi khi lấy danh sách hạng:', error);
+    showToast('error', 'Lỗi khi tải danh sách hạng!');
   } finally {
     loading.value = false;
   }
 };
 
-const handlePrev = () => {
+const handlePrev = async () => {
   if (currentPage.value > 0) {
     currentPage.value--;
-    fetchRanks();
+    await fetchRanks();
   }
 };
 
-const handleNext = () => {
+const handleNext = async () => {
   if (!isLastPage.value) {
     currentPage.value++;
-    fetchRanks();
+    await fetchRanks();
   }
 };
 
-const handlePageSizeChange = (newSize) => {
+const handlePageSizeChange = async (newSize) => {
   pageSize.value = newSize;
   currentPage.value = 0;
-  fetchRanks();
+  await fetchRanks();
 };
 
 const formatDate = (dateString) => {
@@ -481,30 +514,30 @@ const handleSubmit = async () => {
       ...formData.value,
       minSpent: Number(formData.value.minSpent),
       pointMultiplier: Number(formData.value.pointMultiplier),
-      status: Number(formData.value.status)
+      status: 1 // Luôn set status = 1 (hoạt động)
     };
     
     if (isEditMode.value) {
-      await updateRank(submitData);
-      showToast('success', 'Cập nhật rank thành công!', 2000);
+      await updateRank(formData.value.id, submitData);
+      showToast('success', 'Cập nhật hạng thành công!');
     } else {
       await createRank(submitData);
-      showToast('success', 'Thêm rank thành công!', 2000);
+      showToast('success', 'Thêm hạng thành công!');
     }
     
     closeModal();
-    fetchRanks();
+    await fetchRanks();
   } catch (error) {
-    console.error('Lỗi khi xử lý rank:', error);
+    console.error('Lỗi khi xử lý hạng:', error);
     const message = error.response?.data?.message || 'Có lỗi xảy ra!';
-    showToast('error', message, 3000);
+    showToast('error', message);
   }
 };
 
 const handleDelete = async (rank) => {
   const result = await showQuickConfirm(
     'Xác nhận xóa',
-    `Bạn có chắc chắn muốn xóa rank "${rank.name}"?`,
+    `Bạn có chắc chắn muốn xóa hạng "${rank.name}"?`,
     'warning',
     'Xóa',
     'Hủy'
@@ -513,25 +546,114 @@ const handleDelete = async (rank) => {
   if (result.isConfirmed) {
     try {
       await deleteRank(rank.id);
-      showToast('success', 'Xóa rank thành công!', 2000);
-      fetchRanks();
+      showToast('success', 'Xóa hạng thành công!');
+      await fetchRanks();
     } catch (error) {
-      console.error('Lỗi khi xóa rank:', error);
-      const message = error.response?.data?.message || 'Lỗi khi xóa rank!';
-      showToast('error', message, 3000);
+      console.error('Lỗi khi xóa hạng:', error);
+      const message = error.response?.data?.message || 'Lỗi khi xóa hạng!';
+      showToast('error', message);
     }
   }
+};
+
+// Statistics functions
+const fetchRankStatistics = async () => {
+  statsLoading.value = true;
+  try {
+    const response = await getRankStatistics();
+    if (response.status === 200) {
+      statsData.value = response.data;
+    } else {
+      throw new Error('Failed to fetch rank statistics');
+    }
+  } catch (error) {
+    console.error('Error fetching rank statistics:', error);
+    
+    // Fallback data để tránh lỗi hiển thị
+    statsData.value = {
+      rankUserCounts: [
+        { rankName: "Bronze", userCount: 800, minSpent: 0.00 },
+        { rankName: "Silver", userCount: 300, minSpent: 1000000.00 },
+        { rankName: "Gold", userCount: 150, minSpent: 5000000.00 }
+      ],
+      averagePointsByRank: [
+        { rankName: "Bronze", averagePoints: 2500.50, minSpent: 0.00 },
+        { rankName: "Silver", averagePoints: 8500.75, minSpent: 1000000.00 },
+        { rankName: "Gold", averagePoints: 15000.25, minSpent: 5000000.00 }
+      ],
+      monthlyGrowthRates: [
+        { 
+          rankName: "Silver", 
+          currentMonthUsers: 320, 
+          previousMonthUsers: 300, 
+          growthRate: 6.67 
+        },
+        { 
+          rankName: "Gold", 
+          currentMonthUsers: 155, 
+          previousMonthUsers: 150, 
+          growthRate: 3.33 
+        }
+      ]
+    };
+    
+    Swal.fire({
+      title: 'Lỗi!',
+      text: 'Không thể tải dữ liệu thống kê xếp hạng - Hiển thị dữ liệu mẫu',
+      icon: 'warning',
+      timer: 3000,
+      showConfirmButton: false
+    });
+  } finally {
+    statsLoading.value = false;
+  }
+};
+
+const getTotalRanks = () => {
+  if (statsData.value?.rankUserCounts) {
+    return statsData.value.rankUserCounts.length;
+  }
+  return 0;
+};
+
+const getMostPopularRank = () => {
+  if (statsData.value?.rankUserCounts && statsData.value.rankUserCounts.length > 0) {
+    return statsData.value.rankUserCounts.reduce((prev, current) => 
+      (prev.userCount > current.userCount) ? prev : current
+    );
+  }
+  return { rankName: '', userCount: 0 };
+};
+
+const getHighestPointsRank = () => {
+  if (statsData.value?.averagePointsByRank && statsData.value.averagePointsByRank.length > 0) {
+    return statsData.value.averagePointsByRank.reduce((prev, current) => 
+      (prev.averagePoints > current.averagePoints) ? prev : current
+    );
+  }
+  return { rankName: '', averagePoints: 0 };
+};
+
+const getFastestGrowingRank = () => {
+  if (statsData.value?.monthlyGrowthRates && statsData.value.monthlyGrowthRates.length > 0) {
+    return statsData.value.monthlyGrowthRates.reduce((prev, current) => 
+      (prev.growthRate > current.growthRate) ? prev : current
+    );
+  }
+  return { rankName: '', growthRate: 0 };
 };
 
 // Lifecycle
 onMounted(() => {
   fetchRanks();
+  fetchRankStatistics();
 });
 </script>
 
 <style scoped>
 @import "@/assets/css/admin-table-responsive.css";
 @import '@/assets/css/admin-global.css';
+@import '@/assets/css/form-global.css';
 
 /* Filter Sidebar - Thu sang trái */
 .filter-sidebar {
@@ -1053,6 +1175,20 @@ onMounted(() => {
   }
 }
 
+/* Disabled input styling */
+.disabled-input {
+  background-color: #f8f9fa !important;
+  color: #6c757d !important;
+  border-color: #dee2e6 !important;
+  cursor: not-allowed !important;
+}
+
+.disabled-input:focus {
+  background-color: #f8f9fa !important;
+  border-color: #dee2e6 !important;
+  box-shadow: none !important;
+}
+
 @media (max-width: 991.98px) {
   .filter-sidebar {
     width: 100%;
@@ -1094,5 +1230,75 @@ onMounted(() => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Rank Statistics Cards Styling */
+.ranks-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.popular-rank-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.highest-points-icon { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.growing-rank-icon { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+.stats-card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.stats-card .card-body {
+  padding: 1.5rem;
+}
+
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #2d3748;
+}
+
+.stat-value.small-text {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #718096;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.stat-footer {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Loading Cards */
+.loading-card {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+}
+
+.placeholder {
+  background-color: #dee2e6;
+  border-radius: 4px;
 }
 </style>

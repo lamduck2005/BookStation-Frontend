@@ -15,96 +15,7 @@
       </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div v-else class="row g-3">
-      <!-- Total Ranks Card -->
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card ranks-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper ranks-icon">
-                <i class="bi bi-award"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value">{{ getTotalRanks() }}</div>
-                <div class="stat-label">Tổng số xếp hạng</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small class="text-muted">
-                Đang hoạt động
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Most Popular Rank Card -->
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card popular-rank-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper popular-rank-icon">
-                <i class="bi bi-trophy"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value small-text">{{ getMostPopularRank().rankName || 'N/A' }}</div>
-                <div class="stat-label">Xếp hạng phổ biến</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small class="text-success">
-                <strong>{{ formatNumber(getMostPopularRank().userCount) }} người dùng</strong>
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Highest Average Points Card -->
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card highest-points-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper highest-points-icon">
-                <i class="bi bi-gem"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value small-text">{{ getHighestPointsRank().rankName || 'N/A' }}</div>
-                <div class="stat-label">Điểm trung bình cao nhất</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small class="text-warning">
-                <strong>{{ formatNumber(getHighestPointsRank().averagePoints) }} điểm</strong>
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Fastest Growing Rank Card -->
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card growing-rank-card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper growing-rank-icon">
-                <i class="bi bi-graph-up-arrow"></i>
-              </div>
-              <div class="text-end">
-                <div class="stat-value small-text">{{ getFastestGrowingRank().rankName || 'N/A' }}</div>
-                <div class="stat-label">Tăng trưởng nhanh nhất</div>
-              </div>
-            </div>
-            <div class="stat-footer">
-              <small class="text-success">
-                <strong>+{{ formatPercentage(getFastestGrowingRank().growthRate) }}</strong>
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+   
 
     <!-- Rank User Counts Row -->
     <div v-if="!loading && data?.rankUserCounts && data.rankUserCounts.length > 0" class="row g-3 mt-2">
@@ -150,7 +61,7 @@
 
     <!-- Average Points by Rank Row -->
     <div v-if="!loading && data?.averagePointsByRank && data.averagePointsByRank.length > 0" class="row g-3 mt-2">
-      <div class="col-lg-8">
+      <div class="col-lg-12">
         <div class="card insights-card">
           <div class="card-body">
             <h6 class="card-title mb-3">
@@ -182,7 +93,7 @@
         </div>
       </div>
 
-      <div class="col-lg-4">
+      <!-- <div class="col-lg-4">
         <div class="card actions-card">
           <div class="card-body">
             <h6 class="card-title mb-3">
@@ -201,7 +112,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
 
     <!-- Monthly Growth Rates Row -->

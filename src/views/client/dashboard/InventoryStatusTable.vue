@@ -86,9 +86,9 @@ onMounted(async () => {
 }
 
 .table-wrapper {
-  overflow-x: auto;
   max-height: 400px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .inventory-table {
@@ -100,7 +100,7 @@ onMounted(async () => {
 .inventory-table thead {
   position: sticky;
   top: 0;
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  background: #ffffff;
   z-index: 10;
 }
 
@@ -113,7 +113,7 @@ onMounted(async () => {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 2px solid #667eea;
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  background: #ffffff;
 }
 
 .book-header {
@@ -148,28 +148,28 @@ onMounted(async () => {
 
 .book-name {
   font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
+  font-weight: 700;
+  color: #2c3e50;
   line-height: 1.4;
   transition: color 0.3s ease;
 }
 
 .book-row:hover .book-name {
-  color: #667eea;
-  font-weight: 700;
+  color: #e67e22;
+  font-weight: 800;
 }
 
 .stock-number {
   font-size: 14px;
-  font-weight: 700;
-  color: #667eea;
+  font-weight: 800;
+  color: #27ae60;
   text-align: right;
   font-variant-numeric: tabular-nums;
   transition: all 0.3s ease;
 }
 
 .book-row:hover .stock-number {
-  color: #5a6fd8;
+  color: #229954;
   transform: scale(1.05);
 }
 

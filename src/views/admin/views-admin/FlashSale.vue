@@ -113,6 +113,13 @@
           >
             <i class="bi bi-arrow-repeat me-1"></i> Làm mới
           </button>
+          
+          <!-- Nút Export Excel -->
+          <ExcelExportButton 
+            data-type="flashSales"
+            button-text="Xuất Excel"
+          />
+          
           <!-- Nút thêm mới -->
           <button
             class="btn btn-primary btn-sm py-2"
@@ -319,6 +326,7 @@ import { ref, onMounted } from "vue";
 import { Modal } from "bootstrap";
 import { showToast } from "@/utils/swalHelper.js";
 import ToggleStatus from "@/components/common/ToggleStatus.vue";
+import ExcelExportButton from "@/components/common/ExcelExportButton.vue";
 import {
   addFlashSale,
   getAllFlashSale,

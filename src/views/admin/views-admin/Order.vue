@@ -158,6 +158,13 @@
               <button class="btn btn-outline-info btn-sm py-2" @click="fetchOrders" :disabled="loading">
                 <i class="bi bi-arrow-repeat me-1"></i> Làm mới
               </button>
+              
+              <!-- Nút Export Excel -->
+              <ExcelExportButton 
+                data-type="orders"
+                button-text="Xuất Excel"
+              />
+              
               <AddButton @click="openAddModal" />
             </div>
           </div>
@@ -1297,6 +1304,7 @@ import { addAddressAtAdmin } from '@/services/client/address';
 import Swal from 'sweetalert2';
 import { ghn } from '@/utils/giaohangnhanh';
 import { getUserId } from '@/utils/utils.js';
+import ExcelExportButton from '@/components/common/ExcelExportButton.vue';
 
 // Search and filter states
 const searchCode = ref('');
