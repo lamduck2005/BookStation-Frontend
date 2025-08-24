@@ -86,8 +86,8 @@
             :disabled="loading"
           >
             <span v-if="loading" class="spinner-border spinner-border-sm me-1"></span>
-            <i v-else class="bi bi-arrow-clockwise me-1"></i>
-            Refresh
+            <i v-else class="text-white bi bi-arrow-clockwise me-1 "></i>
+            <span class="text-warning fw-bold">Refresh</span>
           </button>
         </div>
       </div>
