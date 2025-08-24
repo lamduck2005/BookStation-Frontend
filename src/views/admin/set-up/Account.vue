@@ -9,7 +9,6 @@
             src="/src/assets/img/avatar.png"
             alt="Avatar người dùng"
             class="user-avatar"
-           
           />
         </div>
         <div class="header-info">
@@ -86,11 +85,11 @@
               <select
                 class="form-input"
                 v-model="editData.status"
-                :disabled="!isEditMode"
-              >
+                disabled
+                
+                >
                 <option value="ACTIVE">Hoạt động</option>
                 <option value="INACTIVE">Không hoạt động</option>
-                <option value="BANNED">Bị khóa</option>
               </select>
             </div>
 

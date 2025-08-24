@@ -559,9 +559,10 @@ watch(
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  height: fit-content;
   position: sticky;
   top: 20px;
+  margin-bottom: 20px; /* Thêm margin bottom để tránh dính */
+  width: 100%;
 }
 
 .filter-container {

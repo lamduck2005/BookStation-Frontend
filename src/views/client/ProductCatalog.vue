@@ -4,7 +4,6 @@
       <div class="row">
         <!-- Sidebar Filter -->
         <div class="col-lg-3 col-md-4">
-          <!-- Truyền filterParams xuống làm giá trị khởi tạo -->
           <FiterProduct
             @filter-change="onFilterChange"
             :initial-filters="filterParams"
@@ -270,33 +269,47 @@ watch(
 .catalog-wrapper {
   background: #f5f7fa;
   min-height: 100vh;
+  /* Bỏ display: flex và gap vì đã dùng Bootstrap Grid */
 }
+
+/* Đảm bảo sidebar có height phù hợp */
+.col-lg-3,
+.col-md-4 {
+  height: fit-content;
+}
+
 .filter-title-main {
   border-bottom: 2px solid #dc3545;
   padding-bottom: 0.5rem;
   margin-bottom: 1rem;
   letter-spacing: 1px;
 }
+
 .catalog-header {
   background: #f5f7fa;
   border-bottom: 1px solid #e9ecef;
   padding-bottom: 1rem;
   margin-bottom: 1.5rem;
 }
+
 .catalog-header select {
   min-width: 120px;
 }
+
 .pagination .page-item.active .page-link {
   background-color: #dc3545;
   border-color: #dc3545;
   color: white;
 }
+
 .pagination .page-link {
   color: #dc3545;
 }
+
 .pagination .page-item.disabled .page-link {
   color: #6c757d;
 }
+
 @media (max-width: 991.98px) {
   .filter-title-main {
     margin-top: 1rem;
