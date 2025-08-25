@@ -16,25 +16,7 @@
           <i class="bi bi-calendar-event me-2"></i>
           <span>{{ formattedSelectedDate }}</span>
         </div>
-        <div class="popup-controls">
-          <select 
-            class="form-select form-select-sm me-2" 
-            v-model="selectedLimit" 
-            @change="onLimitChange"
-            style="width: auto;"
-          >
-            <option value="10">10 đơn hàng</option>
-            <option value="20">20 đơn hàng</option>
-            <option value="50">50 đơn hàng</option>
-            <option value="100">100 đơn hàng</option>
-          </select>
-          
-          <button 
-            type="button" 
-            class="btn-close btn-close-white" 
-            @click="closePopup"
-          ></button>
-        </div>
+        
       </div>
 
       <!-- Body -->

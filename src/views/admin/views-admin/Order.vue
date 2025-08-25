@@ -1340,7 +1340,6 @@ import StatusLabel from '@/components/common/StatusLabel.vue';
 // ✅ KHÔI PHỤC LẠI STATISTICS COMPONENTS - ĐÃ FIX INFINITE LOOP
 // Import Statistics Components
 import OverviewCards from '@/views/admin/components-admin/statistics/OverviewCards.vue';
-import RevenueChart from '@/views/admin/components-admin/statistics/RevenueChart.vue';
 import OrderPerformanceChart from '@/views/admin/components-admin/statistics/OrderPerformanceChart.vue';
 
 // Toggle for RevenueChart

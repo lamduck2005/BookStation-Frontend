@@ -87,7 +87,7 @@
           >
             <span v-if="loading" class="spinner-border spinner-border-sm me-1"></span>
             <i v-else class="text-white bi bi-arrow-clockwise me-1 "></i>
-            <span class="text-warning fw-bold">Refresh</span>
+            <span class="text-warning fw-bold">Làm mới</span>
           </button>
         </div>
     </div>

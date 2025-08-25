@@ -77,6 +77,17 @@
             <i class="bi bi-calendar-range me-1"></i>
             Tùy chọn
           </button>
+          
+          <button 
+            type="button" 
+            class="btn btn-outline-light btn-sm ms-2"
+            @click="refreshData"
+            :disabled="loading"
+            title="Làm mới dữ liệu"
+          >
+            <i class="bi bi-arrow-clockwise me-1" :class="{ 'spin': loading }"></i>
+            Làm mới
+          </button>
         </div>
       </div>
 
@@ -155,34 +166,49 @@
           <!-- Summary Stats Cards -->
           <div class="row mb-4" v-if="summaryStats">
             <div class="col-md-3">
-              <div class="summary-card bg-primary text-white">
-                <div class="card-body">
-                  <h5 class="card-title">{{ summaryStats.totalOrders }}</h5>
-                  <p class="card-subtitle">Tổng đơn hàng</p>
+              <div class="summary-card-modern bg-gradient-primary">
+                <div class="card-body text-center">
+                  <div class="icon-wrapper mb-3">
+                    <i class="bi bi-cart-check"></i>
+                  </div>
+                  <h3 class="card-title mb-1">{{ summaryStats.totalOrders }}</h3>
+                  <p class="card-subtitle mb-0">Tổng đơn hàng</p>
                 </div>
               </div>
             </div>
             <div class="col-md-3">
-              <div class="summary-card bg-success text-white">
-                <div class="card-body">
-                  <h5 class="card-title">{{ formatCurrency(summaryStats.totalRevenue) }}</h5>
-                  <p class="card-subtitle">Tổng doanh thu thuần</p>
+              <div class="summary-card-modern bg-gradient-success">
+                <div class="card-body text-center">
+                  <div class="icon-wrapper mb-3">
+                    <i class="bi bi-currency-dollar"></i>
+                  </div>
+                  <h3 class="card-title mb-1">{{ Math.round(summaryStats.totalRevenue).toLocaleString('vi-VN') }}</h3>
+                  <p class="card-subtitle mb-0">Tổng doanh thu</p>
                 </div>
               </div>
             </div>
             <div class="col-md-3">
-              <div class="summary-card bg-info text-white">
-                <div class="card-body">
-                  <h5 class="card-title">{{ formatCurrency(summaryStats.averageOrderValue) }}</h5>
-                  <p class="card-subtitle">Giá trị TB/Đơn</p>
+              <div class="summary-card-modern bg-gradient-info">
+                <div class="card-body text-center">
+                  <div class="icon-wrapper mb-3">
+                    <i class="bi bi-calculator"></i>
+                  </div>
+                  <h3 class="card-title mb-1">{{ Math.round(summaryStats.averageOrderValue).toLocaleString('vi-VN') }}</h3>
+                  <p class="card-subtitle mb-0">Giá trị TB/Đơn</p>
                 </div>
               </div>
             </div>
             <div class="col-md-3">
-              <div class="summary-card bg-warning text-white">
-                <div class="card-body">
-                  <h5 class="card-title">{{ summaryStats.completionRate }}%</h5>
-                  <p class="card-subtitle">Tỷ lệ hoàn thành</p>
+              <div class="summary-card-modern" :class="getCompletionRateClass(summaryStats.completionRate)">
+                <div class="card-body text-center">
+                  <div class="icon-wrapper mb-3">
+                    <i class="bi bi-check-circle"></i>
+                  </div>
+                  <h3 class="card-title mb-1">{{ Math.round(summaryStats.completionRate) }}%</h3>
+                  <p class="card-subtitle mb-0">Tỷ lệ hoàn thành</p>
+                  <div class="progress-ring">
+                    <div class="progress-value" :style="`width: ${Math.round(summaryStats.completionRate)}%`"></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -225,6 +251,7 @@ import Swal from 'sweetalert2';
 
 // Reactive data
 const chartData = ref([]);
+const summaryData = ref(null); // Store the full summary response
 const loading = ref(false);
 const error = ref('');
 const selectedPeriod = ref('day');
@@ -244,6 +271,20 @@ const mousePosition = ref({ x: 0, y: 0 });
 
 // Computed
 const summaryStats = computed(() => {
+  // Use backend summary data if available, fallback to calculated data
+  if (summaryData.value) {
+    return {
+      totalOrders: summaryData.value.totalOrdersSum || 0,
+      totalRevenue: summaryData.value.totalRevenueSum || 0,
+      averageOrderValue: summaryData.value.averageAOV || 0,
+      completionRate: summaryData.value.completionRate ? Math.round(summaryData.value.completionRate) : 0,
+      completedOrders: summaryData.value.completedOrdersSum || 0,
+      canceledOrders: summaryData.value.canceledOrdersSum || 0,
+      refundedOrders: summaryData.value.refundedOrdersSum || 0
+    };
+  }
+  
+  // Fallback: calculate from chartData array (legacy support)
   if (!chartData.value || chartData.value.length === 0) return null;
   
   const totalOrders = chartData.value.reduce((sum, item) => sum + (item.totalOrders || 0), 0);
@@ -284,8 +325,14 @@ const fetchChartData = async () => {
         
         console.log('📊 Summary API Response:', response);
         
-        if (response && response.status === 200 && response.data) {
-          chartData.value = response.data;
+        if (response && response.status === 200 && response.data && response.data.data) {
+          console.log('📊 Full response data:', response.data);
+          console.log('📊 Summary data:', response.data.data);
+          console.log('📊 Chart data array:', response.data.data);
+          
+          // Backend returns: response.data.data is the chart array
+          chartData.value = response.data.data; // This is the array of 31 days
+          summaryData.value = response.data; // Store full summary data (with totals)
           chartReady.value = false; // Will be set to true by watcher if conditions are met
         } else {
           throw new Error(response.message || 'Không nhận được dữ liệu hợp lệ');
@@ -294,6 +341,7 @@ const fetchChartData = async () => {
         console.error('❌ Error fetching summary data:', err);
         error.value = err.response?.data?.message || err.message || 'Không thể tải dữ liệu biểu đồ';
         chartData.value = [];
+        summaryData.value = null;
         chartReady.value = false;
       } finally {
         loading.value = false;
@@ -326,9 +374,14 @@ const renderChart = () => {
 
   if (!chartData.value || chartData.value.length === 0) {
     console.log('❌ No summary data available:', chartData.value);
+    console.log('❌ chartData.value:', chartData.value);
+    console.log('❌ chartData.value.length:', chartData.value?.length);
     chartReady.value = false;
     return;
   }
+
+  console.log('📊 Chart data for rendering:', chartData.value);
+  console.log('📊 Chart data length:', chartData.value.length);
 
   console.log('📊 Summary data:', chartData.value);
 
@@ -345,8 +398,8 @@ const renderChart = () => {
     return formatDateLabel(item.date);
   });
   
-  const totalOrdersData = chartData.value.map(item => item.totalOrders || 0);
-  const revenueData = chartData.value.map(item => item.netRevenue || 0);
+  const totalOrdersData = chartData.value.map(item => item.totalOrdersSum || item.totalOrders || 0);
+  const revenueData = chartData.value.map(item => item.totalRevenueSum || item.netRevenue || 0);
 
   console.log('🏷️ Categories:', categories);
   console.log('📦 Total orders data:', totalOrdersData);
@@ -376,18 +429,31 @@ const renderChart = () => {
         enabled: false
       },
       zoom: {
-        autoScaleYaxis: false
+        enabled: true,
+        type: 'x',
+        autoScaleYaxis: true,
+        zoomedArea: {
+          fill: {
+            color: '#90CAF9',
+            opacity: 0.4
+          },
+          stroke: {
+            color: '#0D47A1',
+            opacity: 0.4,
+            width: 1
+          }
+        }
       },
       toolbar: {
         show: true,
         tools: {
           download: true,
-          selection: false,
-          zoom: false,
-          zoomin: false,
-          zoomout: false,
-          pan: false,
-          reset: false
+          selection: true,
+          zoom: true,
+          zoomin: true,
+          zoomout: true,
+          pan: true,
+          reset: true
         }
       },
       animations: {
@@ -526,13 +592,19 @@ const renderChart = () => {
       custom: function({series, seriesIndex, dataPointIndex, w}) {
         const data = chartData.value[dataPointIndex];
         if (!data) return '';
-        
-        const formattedDate = formatDateLabel(data.date, true);
-        
+
+        // Nếu có dateRange (tuần, tháng, quý, năm) thì chỉ hiện dateRange, nếu không thì hiện ngày chi tiết
+        let headerText = '';
+        if (data.dateRange) {
+          headerText = `<div class=\"tooltip-daterange\">Từ ngày <b>${data.startDate || ''}</b> đến <b>${data.endDate || ''}</b></div>`;
+        } else {
+          headerText = formatDateLabel(data.date, true);
+        }
+
         return `
           <div class="chart-tooltip">
             <div class="tooltip-header">
-              ${formattedDate}
+              ${headerText}
             </div>
             <div class="tooltip-body">
               <div class="tooltip-row highlight">
@@ -548,7 +620,7 @@ const renderChart = () => {
                 <span class="tooltip-value">${data.canceledOrders || 0}</span>
               </div>
               <div class="tooltip-row highlight">
-                <span class="tooltip-label">Doanh thu tuần:</span>
+                <span class="tooltip-label">Doanh thu thuần:</span>
                 <span class="tooltip-value">${formatCurrency(data.netRevenue || 0)}</span>
               </div>
               <div class="tooltip-row">
@@ -578,6 +650,8 @@ const renderChart = () => {
   };
 
   console.log('⚙️ Chart options:', options);
+  console.log('⚙️ Chart series data:', options.series);
+  console.log('⚙️ Chart categories:', options.xaxis.categories);
 
   try {
     chart = new ApexCharts(chartElement, options);
@@ -728,6 +802,34 @@ const onPopupLimitChange = (newLimit) => {
   console.log('📊 Popup limit changed to:', newLimit);
 };
 
+const refreshData = () => {
+  console.log('🔄 Refreshing order statistics data...');
+  fetchChartData();
+};
+
+// Helper function to format currency in short form
+const formatCurrencyShort = (amount) => {
+  if (!amount && amount !== 0) return '0₫';
+  
+  if (amount >= 1000000000) {
+    return (amount / 1000000000).toFixed(1) + 'B₫';
+  } else if (amount >= 1000000) {
+    return (amount / 1000000).toFixed(1) + 'M₫';
+  } else if (amount >= 1000) {
+    return (amount / 1000).toFixed(0) + 'K₫';
+  } else {
+    return amount.toLocaleString() + '₫';
+  }
+};
+
+// Helper function to get completion rate class based on percentage
+const getCompletionRateClass = (rate) => {
+  if (rate >= 90) return 'bg-gradient-success-bright';
+  if (rate >= 75) return 'bg-gradient-warning-bright'; 
+  if (rate >= 50) return 'bg-gradient-orange';
+  return 'bg-gradient-danger';
+};
+
 // Expose methods
 defineExpose({
   fetchChartData
@@ -859,6 +961,123 @@ onUnmounted(() => {
   font-size: 0.9rem;
   opacity: 0.9;
   margin: 0;
+}
+
+/* Modern Summary Cards */
+.summary-card-modern {
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  position: relative;
+  color: rgb(255, 255, 255);
+}
+
+.summary-card-modern:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.summary-card-modern .card-body {
+  padding: 2rem 1.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.summary-card-modern .icon-wrapper {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.summary-card-modern .icon-wrapper i {
+  font-size: 1.8rem;
+  color: white;
+}
+
+.summary-card-modern .card-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.summary-card-modern .card-subtitle {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Gradient Backgrounds */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-success {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.bg-gradient-success-bright {
+  background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+}
+
+.bg-gradient-info {
+  background: linear-gradient(135deg, #3ca55c 0%, #b5ac49 100%);
+}
+
+.bg-gradient-warning-bright {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.bg-gradient-orange {
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+}
+
+.bg-gradient-danger {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+}
+
+/* Progress Ring for Completion Rate */
+.progress-ring {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(148, 106, 106, 0.2);
+  overflow: hidden;
+}
+
+.progress-value {
+  height: 100%;
+  background: rgba(255, 255, 255, 0.6);
+  transition: width 1s ease-in-out;
+}
+
+/* Refresh Button Animation */
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .chart-container {
