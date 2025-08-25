@@ -166,30 +166,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Promotion Stats Card -->
-      <div class="col-lg-4">
-        <div class="card quick-stats-card">
-          <div class="card-body">
-            <h6 class="card-title mb-3">
-              <i class="bi bi-lightning me-2 text-warning"></i>
-              Khuyến mãi
-            </h6>
-            <div class="quick-stat-item">
-              <span class="label">Giảm giá:</span>
-              <span class="value text-success">{{ data?.totalBooksWithDiscount || 0 }}</span>
-            </div>
-            <div class="quick-stat-item">
-              <span class="label">Flash Sale:</span>
-              <span class="value text-danger">{{ data?.totalBooksInFlashSale || 0 }}</span>
-            </div>
-            <div class="quick-stat-item">
-              <span class="label">% Khuyến mãi:</span>
-              <span class="value text-info">{{ promotionPercentage }}%</span>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>

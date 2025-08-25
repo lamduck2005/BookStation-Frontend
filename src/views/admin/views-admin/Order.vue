@@ -20,10 +20,10 @@
           @click="showRevenueChart = !showRevenueChart"
         >
           <i :class="showRevenueChart ? 'bi bi-bar-chart-line-fill' : 'bi bi-bar-chart-line'" style="font-size: 1.2em;"></i>
-          <span class="ms-2">{{ showRevenueChart ? 'Ẩn biểu đồ doanh thu' : 'Hiện biểu đồ doanh thu' }}</span>
+          <span class="ms-2">{{ showRevenueChart ? 'Ẩn thống kê đơn hàng' : 'Hiện thống kê đơn hàng' }}</span>
         </button>
         <div v-show="showRevenueChart">
-          <RevenueChart />
+          <OrderPerformanceChart />
         </div>
       </div>
 
@@ -222,22 +222,51 @@
                   </div>
                 </td>
                 <td>
-                  <select
-                    class="form-select form-select-sm"
-                    :class="getOrderStatusClass(order.orderStatus)"
-                    :value="order.orderStatus"
-                    @change="handleStatusChange(order, $event)"
-                    style="min-width: 130px; font-size: 0.82em; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); white-space: nowrap;"
-                  >
-                    <!-- Hiện trạng thái hiện tại -->
-                    <option :value="order.orderStatus" selected>
-                      {{ order.orderStatusDisplay || formatOrderStatus(order.orderStatus) }}
-                    </option>
-                    <!-- Hiện các trạng thái có thể chuyển đến -->
-                    <option v-for="status in getAvailableStatusTransitionsForOrder(order)" :key="status.targetStatus || status.value" :value="status.targetStatus || status.value">
-                      {{ status.displayName }}
-                    </option>
-                  </select>
+                  <!-- Custom Status Dropdown -->
+                  <div class="position-relative status-dropdown-container" :id="'status-dropdown-' + order.id">
+                    <!-- Current Status Display Button -->
+                    <button
+                      type="button"
+                      class="btn btn-sm d-flex align-items-center justify-content-between"
+                      :class="getOrderStatusClass(order.orderStatus)"
+                      @click="toggleStatusDropdown(order.id)"
+                      style="min-width: 150px; font-size: 0.82em; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); white-space: nowrap;"
+                    >
+                      <span>{{ order.orderStatusDisplay }}</span>
+                      <i class="bi bi-chevron-down ms-2" 
+                         :class="{ 'rotate-180': openDropdowns.includes(order.id) }"
+                         style="transition: transform 0.2s ease;"></i>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div 
+                      v-if="openDropdowns.includes(order.id)"
+                      class="dropdown-menu show position-absolute w-100 mt-1"
+                      style="z-index: 1050; max-height: 200px; overflow-y: auto;"
+                      @click.stop
+                    >
+                      <!-- Available Status Transitions -->
+                      <template v-if="getAvailableStatusTransitionsForOrder(order).length > 0">
+                        
+                        <button
+                          v-for="status in getAvailableStatusTransitionsForOrder(order)" 
+                          :key="status.targetStatus || status.value"
+                          type="button"
+                          class="dropdown-item d-flex align-items-center py-2"
+                          :class="getOrderStatusClass(status.targetStatus || status.value)"
+                          @click="handleStatusChange(order, status.targetStatus || status.value)"
+                          style="border-left: 3px solid; border-left-color: inherit; font-weight: 500;"
+                        >
+                          <i class="bi bi-arrow-right me-2"></i>
+                          {{ status.displayName }}
+                        </button>
+                      </template>
+                      <div v-else class="dropdown-item-text text-muted text-center py-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                       <span> Không có trạng thái phù hợp để chuyển</span>
+                      </div>
+                    </div>
+                  </div>
                 </td>
                 <td>
                   <div class="small">
@@ -317,17 +346,62 @@
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label enhanced-label">Khách hàng <span class="text-danger">*</span></label>
-                  <select 
-                    class="form-select enhanced-input" 
-                    v-model="newOrder.userId"
-                    @change="onUserChange"
-                    required
-                  >
-                    <option value="">-- Chọn khách hàng --</option>
-                    <option v-for="user in users" :key="user.id" :value="user.id">
-                      {{ user.name }}
-                    </option>
-                  </select>
+                  <div class="position-relative">
+                    <input 
+                      type="text" 
+                      class="form-control enhanced-input" 
+                      v-model="customerSearchTerm"
+                      @input="onCustomerSearch"
+                      @focus="onCustomerInputFocus"
+                      @blur="onCustomerInputBlur"
+                      placeholder="Nhập tên hoặc email khách hàng"
+                      autocomplete="off"
+                      required
+                    />
+                    <!-- Loading spinner -->
+                    <div 
+                      v-if="isSearchingCustomers"
+                      class="position-absolute top-50 end-0 translate-middle-y me-3"
+                    >
+                      <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                    </div>
+                    
+                    <!-- Dropdown results -->
+                    <div 
+                      v-if="showCustomerDropdown"
+                      class="dropdown-menu show position-absolute w-100 mt-1"
+                      style="z-index: 1060; max-height: 200px; overflow-y: auto;"
+                    >
+                      <!-- Loading state -->
+                      <div v-if="isSearchingCustomers" class="dropdown-item-text text-center py-3">
+                        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                        Đang tìm kiếm...
+                      </div>
+                      
+                      <!-- Results -->
+                      <template v-else-if="customerSearchResults.length > 0">
+                        <div 
+                          v-for="customer in customerSearchResults" 
+                          :key="customer.id"
+                          class="dropdown-item cursor-pointer d-flex align-items-center"
+                          @click="selectCustomer(customer)"
+                        >
+                          <div class="flex-grow-1">
+                            <div class="fw-medium">{{ customer.name }}</div>
+                            <div class="text-muted small">{{ customer.email }}</div>
+                          </div>
+                        </div>
+                      </template>
+                      
+                      <!-- No results -->
+                      <div v-else class="dropdown-item-text text-center py-3 text-muted">
+                        <i class="bi bi-search me-2"></i>
+                        {{ customerSearchTerm.length >= 2 ? 'Không tìm thấy khách hàng' : 'Nhập tối thiểu 2 ký tự để tìm kiếm' }}
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label enhanced-label">Địa chỉ giao hàng <span class="text-danger">*</span></label>
@@ -428,7 +502,16 @@
                         :key="voucher.id"
                         class="col-12"
                       >
-                        <div class="voucher-item card" :class="{ 'selected border-primary': newOrder.voucherIds.includes(voucher.id) }">
+                        <div 
+                          class="voucher-item card" 
+                          :class="{
+                            'selected border-primary': newOrder.voucherIds.includes(voucher.id),
+                            'disabled-voucher': !canSelectVoucher(voucher) && !newOrder.voucherIds.includes(voucher.id),
+                            'border-warning': !canSelectVoucher(voucher) && !newOrder.voucherIds.includes(voucher.id)
+                          }"
+                          @click="toggleVoucher(voucher)"
+                          style="cursor: pointer;"
+                        >
                           <div class="card-body p-3">
                             <div class="form-check">
                               <input 
@@ -446,6 +529,20 @@
                                     <div class="col-md-8">
                                       <div class="voucher-name fw-bold text-primary">{{ voucher.code }} - {{ voucher.name }}</div>
                                       <div class="voucher-description text-muted small mb-2">{{ voucher.description }}</div>
+                                      
+                                      <!-- Hiển thị lý do không thể chọn voucher -->
+                                      <div v-if="!canSelectVoucher(voucher) && !newOrder.voucherIds.includes(voucher.id)" class="voucher-warning mb-2">
+                                        <div class="alert alert-warning py-2 px-3 mb-0 small">
+                                          <i class="bi bi-exclamation-triangle me-1"></i>
+                                          <span v-if="getCurrentSubtotal() < voucher.minOrderValue">
+                                            Cần đơn hàng tối thiểu {{ formatCurrency(voucher.minOrderValue) }} (hiện tại: {{ formatCurrency(getCurrentSubtotal()) }})
+                                          </span>
+                                          <span v-else-if="getVoucherTypeConflict(voucher)">
+                                            Đã chọn {{ getVoucherTypeConflict(voucher) }}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      
                                       <div class="voucher-info">
                                         <span class="badge bg-info me-2">{{ voucher.categoryVi }}</span>
                                         <span class="badge bg-secondary me-2">{{ voucher.discountTypeVi }}</span>
@@ -494,7 +591,8 @@
                       class="form-control" 
                       v-model="productSearchTerm"
                       @input="onProductSearch"
-                      @focus="showProductSearchResults = true"
+                      @focus="onProductInputFocus"
+                      @blur="onProductInputBlur"
                       placeholder="Nhập tên sách hoặc mã sách để tìm kiếm..."
                     />
                     <button 
@@ -742,14 +840,6 @@
           <button type="button" class="btn btn-secondary btn-cancel" data-bs-dismiss="modal">
             <i class="bi bi-x-circle me-1"></i>
             Hủy
-          </button>
-          <button 
-            type="button" 
-            class="btn btn-info me-2" 
-            @click="fillSampleData"
-          >
-            <i class="bi bi-database me-1"></i>
-            Dữ liệu mẫu
           </button>
           <button 
             type="button" 
@@ -1085,7 +1175,7 @@
               <div class="summary-row total">
                 <span class="d-flex align-items-center gap-2">
                   <i class="bi bi-currency-exchange text-warning fs-4"></i>
-                  <strong class="text-gradient" style="font-size: 1.25rem; letter-spacing: 1px;">Tổng cộng:</strong>
+                  <span class="text-dark" style="font-size: 1.5rem; letter-spacing: 1px;">Tổng cộng:</span>
                 </span>
                 <span>
                   <strong class="text-success" style="font-size: 1.5rem; text-shadow: 0 2px 8px #e3e8ee; letter-spacing: 1px;">{{ formatCurrency(selectedOrder.totalAmount) }}</strong>
@@ -1257,7 +1347,7 @@ import StatusLabel from '@/components/common/StatusLabel.vue';
 // ✅ KHÔI PHỤC LẠI STATISTICS COMPONENTS - ĐÃ FIX INFINITE LOOP
 // Import Statistics Components
 import OverviewCards from '@/views/admin/components-admin/statistics/OverviewCards.vue';
-import RevenueChart from '@/views/admin/components-admin/statistics/RevenueChart.vue';
+import OrderPerformanceChart from '@/views/admin/components-admin/statistics/OrderPerformanceChart.vue';
 
 // Toggle for RevenueChart
 const showRevenueChart = ref(false);
@@ -1269,7 +1359,7 @@ const showFilter = ref(true);
 const loading = ref(false);
 import LocationStats from '@/views/admin/components-admin/statistics/LocationStats.vue';
 
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import { Modal } from 'bootstrap';
 import {
   getOrders, 
@@ -1298,7 +1388,7 @@ import {
   adminFullRefund,
   getPendingRefunds
 } from '@/services/admin/order';
-import { getUsersForOrder } from '@/services/admin/user';
+import { getUsersForOrder, searchUsersDropdown } from '@/services/admin/user';
 import { getBooksForOrder, getBooksDropdown, validateQuantity } from '@/services/admin/book';
 import { addAddressAtAdmin } from '@/services/client/address';
 import Swal from 'sweetalert2';
@@ -1337,6 +1427,9 @@ const selectedOrder = ref(null);
 const orderCalculation = ref(null);
 const isCalculating = ref(false);
 
+// Status dropdown states
+const openDropdowns = ref([]);  // Track which dropdowns are open
+
 // Modal states
 let addOrderModal = null;
 let orderDetailModal = null;
@@ -1367,6 +1460,13 @@ const productSearchTerm = ref('');
 const productSearchResults = ref([]);
 const showProductSearchResults = ref(false);
 let productSearchTimeout = null;
+
+// Customer search states
+const customerSearchTerm = ref('');
+const customerSearchResults = ref([]);
+const showCustomerDropdown = ref(false);
+const isSearchingCustomers = ref(false);
+let customerSearchTimeout = null;
 
 // New order form data
 const newOrder = ref({
@@ -1432,13 +1532,15 @@ onMounted(async () => {
   addOrderModal = new Modal(document.getElementById('addOrderModal'));
   orderDetailModal = new Modal(document.getElementById('orderDetailModal'));
   
-  // Add click outside handler for product search
+  // Add click outside handlers
   document.addEventListener('click', handleClickOutside);
+  document.addEventListener('click', closeDropdowns);
 });
 
 onUnmounted(() => {
-  // Remove click outside handler
+  // Remove click outside handlers
   document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('click', closeDropdowns);
 });
 
 // Methods
@@ -1453,8 +1555,9 @@ const initializeData = async () => {
     ]);
     
     // Lọc bỏ trạng thái 'REFUND_REQUESTED' khỏi danh sách trạng thái
-    orderStatuses.value = (statusesResponse.data || []).filter(status => status.value !== 'REFUND_REQUESTED');
-    orderTypes.value = typesResponse.data || [];
+  orderStatuses.value = (statusesResponse.data || []).filter(status => status.value !== 'REFUND_REQUESTED');
+  // Bỏ loại 'COUNTER' khỏi danh sách loại đơn hàng khi tạo đơn mới
+  orderTypes.value = (typesResponse.data || []).filter(type => type.value !== 'COUNTER');
     
     // Process users từ API /api/users/dropdown (trả về array trực tiếp)
     if (usersResponse.data && Array.isArray(usersResponse.data.data)) {
@@ -1584,7 +1687,6 @@ const fetchOrders = async () => {
       
       // ✅ Không cần load available transitions riêng nữa - đã có trong OrderResponse
       console.log('=== DEBUG: Orders loaded with availableTransitions ===');
-      console.log('Sample order transitions:', orders.value[0]?.availableTransitions);
     }
     
   } catch (error) {
@@ -1736,6 +1838,9 @@ const resetForm = () => {
   orderCalculation.value = null;
   currentAddress.value = null; // ✅ RESET CURRENT ADDRESS
   isCalculating.value = false;
+  
+  // Reset customer search
+  clearCustomerSearch();
 };
 
 const onUserChange = async () => {
@@ -1879,11 +1984,53 @@ const onBookChange = async (detail, index) => {
 };
 
 // Watch for voucher changes to recalculate
-const onVoucherChange = () => {
+const onVoucherChange = (event) => {
+  console.log('=== DEBUG: onVoucherChange triggered ===');
+  console.log('Event:', event);
+  console.log('Current voucherIds:', newOrder.value.voucherIds);
+  
+  // Ensure voucherIds is always an array
+  if (!Array.isArray(newOrder.value.voucherIds)) {
+    newOrder.value.voucherIds = [];
+  }
+  
   // ✅ MANUAL TRIGGER thay vì watch
   if (newOrder.value.userId && newOrder.value.items.length > 0) {
-    calculateOrderPreview();
+    // Add a small delay to ensure Vue has updated the model
+    nextTick(() => {
+      calculateOrderPreview();
+    });
   }
+};
+
+// Toggle voucher selection
+const toggleVoucher = (voucher) => {
+  if (!canSelectVoucher(voucher) && !newOrder.value.voucherIds.includes(voucher.id)) {
+    // Show toast why voucher can't be selected
+    if (getCurrentSubtotal() < voucher.minOrderValue) {
+      showToast('warning', `Cần đơn hàng tối thiểu ${formatCurrency(voucher.minOrderValue)}`);
+    } else {
+      showToast('warning', 'Không thể chọn thêm voucher cùng loại');
+    }
+    return;
+  }
+
+  if (newOrder.value.voucherIds.length >= 2 && !newOrder.value.voucherIds.includes(voucher.id)) {
+    showToast('warning', 'Chỉ được chọn tối đa 2 voucher');
+    return;
+  }
+
+  const index = newOrder.value.voucherIds.indexOf(voucher.id);
+  if (index > -1) {
+    // Remove voucher
+    newOrder.value.voucherIds.splice(index, 1);
+  } else {
+    // Add voucher
+    newOrder.value.voucherIds.push(voucher.id);
+  }
+
+  // Trigger recalculation
+  onVoucherChange();
 };
 
 // Watch for shipping fee changes
@@ -2126,10 +2273,34 @@ const viewOrderDetail = async (order) => {
   }
 };
 
+// Status Dropdown Methods
+const toggleStatusDropdown = (orderId) => {
+  const index = openDropdowns.value.indexOf(orderId);
+  if (index > -1) {
+    // Close dropdown if it's already open
+    openDropdowns.value.splice(index, 1);
+  } else {
+    // Close all other dropdowns and open this one
+    openDropdowns.value = [orderId];
+  }
+};
+
+// Close dropdowns when clicking outside
+const closeDropdowns = (event) => {
+  // If clicking inside a status dropdown container, don't close
+  if (event && event.target.closest('.status-dropdown-container')) {
+    return;
+  }
+  openDropdowns.value = [];
+};
+
 // ✅ Hàm xử lý khi thay đổi trạng thái trong dropdown 
-const handleStatusChange = async (order, event) => {
-  const newStatus = event.target.value;
+const handleStatusChange = async (order, newStatusValue) => {
+  const newStatus = typeof newStatusValue === 'string' ? newStatusValue : newStatusValue.target?.value;
   const originalStatus = order.orderStatus;
+  
+  // Close dropdown first
+  closeDropdowns();
   
   // Nếu không thay đổi thì return
   if (newStatus === originalStatus) {
@@ -2139,11 +2310,8 @@ const handleStatusChange = async (order, event) => {
   // Gọi API update status
   const success = await updateOrderStatus(order.id, newStatus, originalStatus);
   
-  // Nếu thất bại, reset lại dropdown về trạng thái cũ
-  if (!success) {
-    // Force update DOM để reset dropdown
-    event.target.value = originalStatus;
-  }
+  // Nếu thất bại, không cần reset vì đã đóng dropdown
+  return success;
 };
 
 // ✅ Hàm xử lý khi click từ action dropdown
@@ -2184,19 +2352,9 @@ const updateOrderStatus = async (orderId, newStatus, originalStatusParam = null)
       title: 'Xác nhận chuyển trạng thái',
       html: `
         <div class="text-start">
-          <p>Bạn có chắc chắn muốn chuyển đơn hàng từ <strong>"${formatOrderStatus(currentOrder.orderStatus)}"</strong> thành <strong>"${formatOrderStatus(newStatus)}"</strong>?</p>
-          <div class="alert alert-info mt-3">
-            <small>
-              <strong>Lưu ý:</strong> Hệ thống sẽ tự động:
-              <ul class="mb-0 mt-2">
-                <li>Tích điểm khi chuyển sang DELIVERED</li>
-                <li>Hoàn stock khi CANCELED (KHÔNG hoàn voucher)</li>
-                <li>Hoàn stock + voucher khi hoàn trả REFUNDED</li>
-                <li>Trừ điểm khi hoàn trả REFUNDED</li>
-                <li>Cập nhật rank khách hàng tự động</li>
-                ${newStatus === 'GOODS_RETURNED_TO_WAREHOUSE' ? '<li>Kiểm tra chất lượng và cập nhật kho hàng khi về kho</li>' : ''}
-              </ul>
-            </small>
+          <p>Chuyển từ <strong>"${formatOrderStatus(currentOrder.orderStatusDisplay)}"</strong> thành <strong>"${formatOrderStatus(newStatus)}"</strong>?</p>
+          <div class="alert alert-info mt-3 small">
+            <strong>Lưu ý:</strong> Hệ thống sẽ tự động cập nhật điểm, kho hàng và voucher.
           </div>
         </div>
       `,
@@ -2244,7 +2402,7 @@ const updateOrderStatus = async (orderId, newStatus, originalStatusParam = null)
     console.log('Response:', response);
 
     // Hiển thị thông báo thành công với business impact
-    let successMessage = `Chuyển trạng thái đơn hàng thành công!`;
+    let successMessage = `Đã chuyển trạng thái thành công!`;
     if (response.data?.businessImpact) {
       const impact = response.data.businessImpact;
       if (impact.pointImpact?.pointsAwarded > 0) {
@@ -2254,10 +2412,10 @@ const updateOrderStatus = async (orderId, newStatus, originalStatusParam = null)
         successMessage += ` | -${impact.pointImpact.pointsDeducted} điểm`;
       }
       if (impact.stockImpact?.itemsRestored?.length > 0) {
-        successMessage += ` | Hoàn kho: ${impact.stockImpact.itemsRestored.length}`;
+        successMessage += ` | Đã hoàn kho: ${impact.stockImpact.itemsRestored.length} SP`;
       }
       if (impact.voucherImpact?.vouchersRestored?.length > 0) {
-        successMessage += ` | Hoàn voucher: ${impact.voucherImpact.vouchersRestored.length}`;
+        successMessage += ` | Đã hoàn voucher: ${impact.voucherImpact.vouchersRestored.length}`;
       }
     }
     // Hiển thị toast nhỏ góc phải, tự động tắt sau 2 giây
@@ -2284,7 +2442,9 @@ const updateOrderStatus = async (orderId, newStatus, originalStatusParam = null)
       title: 'Lỗi!',
       text: errorMessage,
       icon: 'error',
-      confirmButtonText: 'OK'
+      confirmButtonText: 'Đóng',
+      timer: 3000,
+      timerProgressBar: true
     });
     
     return false; // ✅ Return failure
@@ -2333,22 +2493,21 @@ const cancelOrder = async (order) => {
       await cancelOrderAPI(order.id, reason, order.userId);
       
       await Swal.fire({
-        title: 'Hủy đơn hàng thành công!',
+        title: 'Đã hủy đơn hàng!',
         html: `
           <div class="text-start">
-            <p><strong>Đơn hàng ${order.code} đã được hủy thành công</strong></p>
-            <div class="alert alert-success mt-3">
-              <strong><i class="bi bi-check-circle"></i> Hệ thống đã tự động:</strong>
+            <p>Đơn hàng <strong>${order.code}</strong> đã được hủy thành công</p>
+            <div class="alert alert-success mt-3 small">
+              <strong>Đã thực hiện:</strong>
               <ul class="mb-0 mt-2">
                 <li>✅ Hoàn lại số lượng sách vào kho</li>
-                <li>❌ <strong>KHÔNG hoàn voucher</strong> (theo chính sách)</li>
-                <li>📝 Lưu lý do hủy: "${reason}"</li>
+                <li>❌ Không hoàn voucher (theo chính sách)</li>
               </ul>
             </div>
           </div>
         `,
         icon: 'success',
-        confirmButtonText: 'Đã hiểu'
+        confirmButtonText: 'Đóng'
       });
       
       await fetchOrders();
@@ -2365,18 +2524,21 @@ const cancelOrder = async (order) => {
   }
 };
 
-// ✅ HÀM LẤY AVAILABLE TRANSITIONS TỪ ORDERRESPONSE 
+//  HÀM LẤY AVAILABLE TRANSITIONS TỪ ORDERRESPONSE 
 const getAvailableStatusTransitionsForOrder = (order) => {
   // Lấy trực tiếp từ OrderResponse (theo tài liệu mới)
+  let transitions = [];
   if (order.availableTransitions && Array.isArray(order.availableTransitions)) {
-    return order.availableTransitions;
+    transitions = order.availableTransitions;
+  } else {
+    // Fallback về logic cũ nếu backend chưa cập nhật
+    transitions = getAvailableStatusTransitionsFallback(order.orderStatus);
   }
-  
-  // Fallback về logic cũ nếu backend chưa cập nhật
-  return getAvailableStatusTransitionsFallback(order.orderStatus);
+  return transitions;
 };
 
-// ✅ LOGIC CŨ GIỮ LẠI LÀM FALLBACK
+
+//  LOGIC CŨ GIỮ LẠI LÀM FALLBACK
 const getAvailableStatusTransitionsFallback = (currentStatus) => {
   // Business rules theo backend mới - Luồng chuyển trạng thái chuẩn
   const transitions = {
@@ -2398,7 +2560,7 @@ const getAvailableStatusTransitionsFallback = (currentStatus) => {
   
   const availableStatuses = transitions[currentStatus] || [];
   
-  // ✅ Format giống API response theo tài liệu
+  //  Format giống API response theo tài liệu
   return availableStatuses.map(status => {
     const statusObj = orderStatuses.value.find(s => s.value === status);
     return {
@@ -2411,7 +2573,7 @@ const getAvailableStatusTransitionsFallback = (currentStatus) => {
   });
 };
 
-// ✅ COMPATIBILITY: Giữ tên hàm cũ để không break template
+//  COMPATIBILITY: Giữ tên hàm cũ để không break template
 const getAvailableStatusTransitions = (currentStatus, order = null) => {
   if (order) {
     return getAvailableStatusTransitionsForOrder(order);
@@ -2419,7 +2581,7 @@ const getAvailableStatusTransitions = (currentStatus, order = null) => {
   return getAvailableStatusTransitionsFallback(currentStatus);
 };
 
-// ✅ HÀM REFRESH ORDER SAU KHI CHUYỂN TRẠNG THÁI
+//  HÀM REFRESH ORDER SAU KHI CHUYỂN TRẠNG THÁI
 const refreshOrderAfterStatusChange = async (orderId) => {
   try {
     // Lấy order mới từ backend (bao gồm availableTransitions mới)
@@ -2456,6 +2618,11 @@ const handleNext = () => {
 const handlePageSizeChange = (newPageSize) => {
   pageSize.value = newPageSize;
   currentPage.value = 0;
+  fetchOrders();
+};
+
+const handleGoToPage = (pageNumber) => {
+  currentPage.value = pageNumber;
   fetchOrders();
 };
 
@@ -2506,12 +2673,9 @@ const showToast = (icon, title) => {
 
 const formatOrderType = (type) => {
   const typeMap = {
-    'NORMAL': 'Thường',
-    'ONLINE': 'Đơn online',
-    'COUNTER': 'Đơn tại quầy',
-    'EVENT_GIFT': 'Quà sự kiện',
-    'PROMOTIONAL': 'Khuyến mãi',
-    'SAMPLE': 'Mẫu'
+    
+    'ONLINE': 'Đơn online'
+   
   };
   return typeMap[type] || type;
 };
@@ -2582,6 +2746,13 @@ const validateAllPrices = async () => {
 
 // ✅ Function kiểm tra voucher có thể chọn không (tối đa 1 shipping + 1 product)
 const canSelectVoucher = (voucher) => {
+  // Kiểm tra điều kiện đơn hàng tối thiểu
+  const currentSubtotal = getCurrentSubtotal();
+  if (currentSubtotal < voucher.minOrderValue) {
+    return false;
+  }
+
+  // Kiểm tra giới hạn loại voucher
   const selectedVouchers = userVouchers.value.filter(v => newOrder.value.voucherIds.includes(v.id));
   const selectedShippingVouchers = selectedVouchers.filter(v => v.categoryVi && v.categoryVi.includes('vận chuyển'));
   const selectedProductVouchers = selectedVouchers.filter(v => v.categoryVi && v.categoryVi.includes('sản phẩm'));
@@ -2593,6 +2764,36 @@ const canSelectVoucher = (voucher) => {
   }
 };
 
+// Helper method to get current subtotal
+const getCurrentSubtotal = () => {
+  if (orderCalculation.value && orderCalculation.value.subtotal) {
+    return orderCalculation.value.subtotal;
+  }
+  
+  // Fallback calculation if orderCalculation not available
+  return newOrder.value.items.reduce((total, item) => {
+    return total + ((item.quantity || 0) * (item.unitPrice || 0));
+  }, 0);
+};
+
+// Helper method to get voucher type conflict message
+const getVoucherTypeConflict = (voucher) => {
+  const selectedVouchers = userVouchers.value.filter(v => newOrder.value.voucherIds.includes(v.id));
+  const selectedShippingVouchers = selectedVouchers.filter(v => v.categoryVi && v.categoryVi.includes('vận chuyển'));
+  const selectedProductVouchers = selectedVouchers.filter(v => v.categoryVi && v.categoryVi.includes('sản phẩm'));
+  
+  if (voucher.categoryVi && voucher.categoryVi.includes('vận chuyển')) {
+    if (selectedShippingVouchers.length > 0) {
+      return 'voucher vận chuyển khác';
+    }
+  } else {
+    if (selectedProductVouchers.length > 0) {
+      return 'voucher sản phẩm khác';
+    }
+  }
+  return null;
+};
+
 // ✅ Clear product search
 const clearProductSearch = () => {
   productSearchTerm.value = '';
@@ -2601,6 +2802,39 @@ const clearProductSearch = () => {
 };
 
 // ✅ Book search functions
+const onProductInputFocus = async () => {
+  showProductSearchResults.value = true;
+  
+  // Gọi API ngay khi focus để load danh sách sản phẩm mặc định
+  if (productSearchResults.value.length === 0) {
+    try {
+      console.log('=== DEBUG: Loading initial product list on focus ===');
+      
+      // Gọi API với search rỗng để lấy danh sách mặc định
+      const response = await getBooksDropdown({ search: '' });
+      console.log('=== DEBUG: Initial product load response:', response);
+      
+      productSearchResults.value = response.data || [];
+      showProductSearchResults.value = productSearchResults.value.length > 0;
+      
+      console.log('=== DEBUG: Initial product list loaded:', productSearchResults.value.length, 'products');
+      
+    } catch (error) {
+      console.error('Error loading initial product list:', error);
+      productSearchResults.value = [];
+      showProductSearchResults.value = false;
+      showToast('error', 'Lỗi khi tải danh sách sản phẩm');
+    }
+  }
+};
+
+const onProductInputBlur = () => {
+  // Delay hide để có thể click vào item trong dropdown
+  setTimeout(() => {
+    showProductSearchResults.value = false;
+  }, 150);
+};
+
 const onProductSearch = async () => {
   // Clear previous timeout
   if (productSearchTimeout) {
@@ -2644,6 +2878,7 @@ const handleClickOutside = (event) => {
   const searchContainer = event.target.closest('.position-relative');
   if (!searchContainer) {
     showProductSearchResults.value = false;
+    showCustomerDropdown.value = false;
   }
 };
 
@@ -2675,6 +2910,140 @@ const addBookToOrder = (book) => {
   
   // Clear search using the function
   clearProductSearch();
+};
+
+// Customer search functions
+const onCustomerSearch = async () => {
+  // Clear previous timeout
+  if (customerSearchTimeout) {
+    clearTimeout(customerSearchTimeout);
+  }
+  
+  // Show dropdown immediately
+  showCustomerDropdown.value = true;
+  
+  // Set new timeout for debounced search
+  customerSearchTimeout = setTimeout(async () => {
+    const searchTerm = customerSearchTerm.value.trim();
+    
+    if (searchTerm.length < 2) {
+      customerSearchResults.value = [];
+      isSearchingCustomers.value = false;
+      return;
+    }
+    
+    try {
+      isSearchingCustomers.value = true;
+      console.log('=== DEBUG: Searching customers with term:', searchTerm);
+      const response = await searchUsersDropdown(searchTerm);
+      console.log('=== DEBUG: Customer search response:', response);
+      
+      // Fix: API response format is { status, message, data: [...] }
+      if (response && response.data && response.data.data && Array.isArray(response.data.data)) {
+        customerSearchResults.value = response.data.data.map(user => ({
+          id: user.id,
+          name: user.name || 'Unknown',
+          email: user.email || ''
+        }));
+      } else if (response && response.data && Array.isArray(response.data)) {
+        // Fallback if API returns array directly
+        customerSearchResults.value = response.data.map(user => ({
+          id: user.id,
+          name: user.name || 'Unknown',
+          email: user.email || ''
+        }));
+      } else {
+        customerSearchResults.value = [];
+      }
+      
+      console.log('=== DEBUG: Processed customer results:', customerSearchResults.value);
+      
+    } catch (error) {
+      console.error('Error searching customers:', error);
+      customerSearchResults.value = [];
+      showToast('error', 'Lỗi khi tìm kiếm khách hàng');
+    } finally {
+      isSearchingCustomers.value = false;
+    }
+  }, 300);
+};
+
+const onCustomerInputFocus = async () => {
+  showCustomerDropdown.value = true;
+  
+  // Gọi API ngay khi focus để load danh sách khách hàng
+  if (customerSearchResults.value.length === 0) {
+    try {
+      isSearchingCustomers.value = true;
+      console.log('=== DEBUG: Loading initial customer list on focus ===');
+      
+      // Gọi API với search rỗng để lấy danh sách mặc định
+      const response = await searchUsersDropdown('');
+      console.log('=== DEBUG: Initial customer load response:', response);
+      
+      // Fix: API response format is { status, message, data: [...] }
+      if (response && response.data && response.data.data && Array.isArray(response.data.data)) {
+        customerSearchResults.value = response.data.data.map(user => ({
+          id: user.id,
+          name: user.name || 'Unknown',
+          email: user.email || ''
+        }));
+      } else if (response && response.data && Array.isArray(response.data)) {
+        // Fallback if API returns array directly
+        customerSearchResults.value = response.data.map(user => ({
+          id: user.id,
+          name: user.name || 'Unknown',
+          email: user.email || ''
+        }));
+      } else {
+        customerSearchResults.value = [];
+      }
+      
+      console.log('=== DEBUG: Initial customer list loaded:', customerSearchResults.value);
+      
+    } catch (error) {
+      console.error('Error loading initial customer list:', error);
+      customerSearchResults.value = [];
+      showToast('error', 'Lỗi khi tải danh sách khách hàng');
+    } finally {
+      isSearchingCustomers.value = false;
+    }
+  }
+  
+  // If there's already a search term, trigger search
+  if (customerSearchTerm.value.trim().length >= 2) {
+    onCustomerSearch();
+  }
+};
+
+const selectCustomer = (customer) => {
+  console.log('=== DEBUG: Selecting customer:', customer);
+  
+  // Update form data
+  newOrder.value.userId = customer.id;
+  customerSearchTerm.value = `${customer.name} - ${customer.email}`;
+  
+  // Hide dropdown
+  showCustomerDropdown.value = false;
+  
+  // Trigger user change to load addresses and vouchers
+  onUserChange();
+  
+  showToast('success', `Đã chọn khách hàng: ${customer.name}`);
+};
+
+const onCustomerInputBlur = () => {
+  // Delay hide để có thể click vào item trong dropdown
+  setTimeout(() => {
+    showCustomerDropdown.value = false;
+  }, 150);
+};
+
+const clearCustomerSearch = () => {
+  customerSearchTerm.value = '';
+  customerSearchResults.value = [];
+  showCustomerDropdown.value = false;
+  isSearchingCustomers.value = false;
 };
 
 const getBookDisplayName = (bookId) => {
@@ -2867,115 +3236,6 @@ const handleSaveAddress = async () => {
     const errorMsg = error.response?.data?.message || 'Lưu địa chỉ thất bại';
     showToast('error', errorMsg);
     console.error('Save address error:', error);
-  } finally {
-    isSavingAddress.value = false;
-  }
-};
-
-// ✅ Sample data function
-const createSampleOrder = () => {
-  newOrder.value = {
-    userId: '',
-    addressId: '',
-    phone: '0987654321',
-    email: 'sample@email.com',
-    note: 'Đơn hàng mẫu để test hệ thống',
-    paymentMethod: 'CASH',
-    products: [
-      {
-        bookId: 1,
-        quantity: 2,
-        name: 'Sách mẫu 1',
-        price: 150000,
-        imageUrl: '/api/placeholder/100/120'
-      },
-      {
-        bookId: 2,
-        quantity: 1,
-        name: 'Sách mẫu 2',
-        price: 200000,
-        imageUrl: '/api/placeholder/100/120'
-      }
-    ],
-    vouchers: [],
-    shippingFee: 30000,
-    totalAmount: 530000
-  };
-  
-  // Auto select first user if available
-  if (users.value.length > 0) {
-    newOrder.value.userId = users.value[0].id;
-    loadUserAddresses(users.value[0].id);
-  }
-  
-  showToast('success', 'Đã tải dữ liệu mẫu thành công!');
-};
-
-// ✅ Sample data function
-const fillSampleData = async () => {
-  try {
-    // Tìm user "Lê Văn C"
-    const leVanC = users.value.find(user => user.name && user.name.toLowerCase().includes('lê văn c'));
-    if (!leVanC) {
-      showToast('warning', 'Không tìm thấy khách hàng "Lê Văn C"');
-      return;
-    }
-    
-    // Set user
-    newOrder.value.userId = leVanC.id;
-    await onUserChange();
-    
-    // Wait a bit for addresses to load
-    setTimeout(async () => {
-      // Set address thứ 2 nếu có
-      if (userAddresses.value.length >= 2) {
-        newOrder.value.addressId = userAddresses.value[1].id;
-        onAddressChange();
-      }
-      
-      // Search và add sách "Chí Phèo"
-      const chiPheoResponse = await getBooksDropdown({ search: 'Chí Phèo' });
-      const chiPheoBook = chiPheoResponse.data?.[0];
-      
-      // Search và add sách "Đắc Nhân Tâm"  
-      const dacNhanTamResponse = await getBooksDropdown({ search: 'Đắc Nhân Tâm' });
-      const dacNhanTamBook = dacNhanTamResponse.data?.[0];
-      
-      // Clear existing items
-      newOrder.value.items = [];
-      
-      // Add Chí Phèo
-      if (chiPheoBook) {
-        addProductRow();
-        const chiPheoDetail = newOrder.value.items[0];
-        chiPheoDetail.bookId = chiPheoBook.id;
-        chiPheoDetail.quantity = 3;
-        chiPheoDetail.unitPrice = chiPheoBook.isFlashSale ? chiPheoBook.flashSalePrice : chiPheoBook.normalPrice;
-        chiPheoDetail.isFlashSale = chiPheoBook.isFlashSale;
-        chiPheoDetail.frontendPrice = chiPheoBook.normalPrice;
-        chiPheoDetail.frontendFlashSalePrice = chiPheoBook.flashSalePrice;
-        await calculateDetailTotal(chiPheoDetail);
-      }
-      
-      // Add Đắc Nhân Tâm
-      if (dacNhanTamBook) {
-        addProductRow();
-        const dacNhanTamDetail = newOrder.value.items[1];
-        dacNhanTamDetail.bookId = dacNhanTamBook.id;
-        dacNhanTamDetail.quantity = 3;
-        dacNhanTamDetail.unitPrice = dacNhanTamBook.isFlashSale ? dacNhanTamBook.flashSalePrice : dacNhanTamBook.normalPrice;
-        dacNhanTamDetail.isFlashSale = dacNhanTamBook.isFlashSale;
-        dacNhanTamDetail.frontendPrice = dacNhanTamBook.normalPrice;
-        dacNhanTamDetail.frontendFlashSalePrice = dacNhanTamBook.flashSalePrice;
-        await calculateDetailTotal(dacNhanTamDetail);
-      }
-      
-      showToast('success', 'Đã điền dữ liệu mẫu thành công!');
-    }, 1000);
-    
-  } catch (error) {
-    console.error('Fill sample data error:', error);
-    showToast('error', 'Lỗi khi điền dữ liệu mẫu');
   }
 };
 
@@ -3017,6 +3277,75 @@ watch([currentPage, pageSize], () => {
 <style scoped>
 @import "@/assets/css/admin-table-responsive.css";
 @import '@/assets/css/admin-global.css';
+
+/* Status Dropdown Styles */
+.status-dropdown-container {
+  position: relative;
+}
+
+.status-dropdown-container .btn {
+  border: 1px solid rgba(0,0,0,0.125);
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.status-dropdown-container .btn:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transform: translateY(-1px);
+}
+
+.status-dropdown-container .bi-chevron-down {
+  font-size: 0.8em;
+  transition: transform 0.2s ease;
+}
+
+.status-dropdown-container .bi-chevron-down.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.status-dropdown-container .dropdown-menu {
+  border: 1px solid rgba(0,0,0,0.125);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  padding: 0px 0;
+  min-width: 180px;
+}
+
+.status-dropdown-container .dropdown-header {
+  padding: 8px 16px;
+  margin: 0;
+  font-size: 0.75em;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.status-dropdown-container .dropdown-item {
+  border: none;
+  border-radius: 6px;
+  margin: 2px 2px 0px 0px;
+  font-size: 0.85em;
+  padding: 10px 2px;
+  transition: all 0.2s ease;
+  background: rgb(255, 255, 255);
+}
+
+.status-dropdown-container .dropdown-item:hover {
+  background: rgba(0,123,255,0.1);
+  transform: translateX(2px);
+}
+
+.status-dropdown-container .dropdown-item i {
+  font-size: 0.9em;
+  opacity: 0.7;
+}
+
+.status-dropdown-container .dropdown-item-text {
+  font-size: 0.8em;
+  color: #6c757d;
+}
 
 /* Enhanced Modal Styles */
 .enhanced-modal {
@@ -3159,6 +3488,33 @@ watch([currentPage, pageSize], () => {
 .voucher-item.selected {
   border-color: #28a745;
   background-color: #f8fff8;
+}
+
+.voucher-item.disabled-voucher {
+  background-color: #f8f9fa;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.voucher-item.disabled-voucher:hover {
+  transform: none;
+  border-color: #ffc107;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+}
+
+.voucher-item.disabled-voucher .form-check-input {
+  cursor: not-allowed;
+}
+
+.voucher-item.disabled-voucher .form-check-label {
+  cursor: not-allowed;
+}
+
+.voucher-warning .alert-warning {
+  font-size: 0.875rem;
+  border: none;
+  background-color: #fff3cd;
+  color: #856404;
 }
 
 .voucher-content {
@@ -3425,6 +3781,47 @@ watch([currentPage, pageSize], () => {
   min-width: 140px !important;
   font-size: 0.8rem;
   white-space: nowrap;
+}
+
+/* Table status column fix */
+.table td select.form-select {
+  border: none;
+}
+
+.table td select.form-select option {
+  padding: 8px 12px;
+  font-weight: 600;
+}
+
+/* Status option colors */
+.table td select.form-select option[value="PENDING"] {
+  background-color: #fff3cd !important;
+  color: #856404 !important;
+}
+
+.table td select.form-select option[value="CONFIRMED"] {
+  background-color: #cce5ff !important;
+  color: #0066cc !important;
+}
+
+.table td select.form-select option[value="SHIPPED"] {
+  background-color: #e7f3ff !important;
+  color: #0056b3 !important;
+}
+
+.table td select.form-select option[value="DELIVERED"] {
+  background-color: #d4edda !important;
+  color: #155724 !important;
+}
+
+.table td select.form-select option[value="CANCELED"] {
+  background-color: #f8d7da !important;
+  color: #721c24 !important;
+}
+
+.table td select.form-select option[value="REFUNDED"] {
+  background-color: #f5c2c7 !important;
+  color: #842029 !important;
 }
 
 /* Force layout to stay in same row */
@@ -3743,5 +4140,32 @@ watch([currentPage, pageSize], () => {
 .voucher-type .badge {
   font-size: 0.7rem;
   padding: 3px 6px;
+}
+
+/* Customer Search Dropdown Styling */
+.dropdown-menu.show {
+  display: block;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border-radius: 0.375rem;
+}
+
+.dropdown-item.cursor-pointer {
+  cursor: pointer;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item-text {
+  padding: 0.75rem 1rem;
+  color: #6c757d;
 }
 </style>

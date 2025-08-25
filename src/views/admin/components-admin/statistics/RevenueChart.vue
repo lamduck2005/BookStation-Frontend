@@ -76,13 +76,6 @@
               <i class="bi bi-exclamation-triangle me-2"></i>
               Không có dữ liệu biểu đồ cho khoảng thời gian này
             </div>
-            <button 
-              class="btn btn-outline-primary btn-sm"
-              @click="loadSampleData"
-            >
-              <i class="bi bi-database me-1"></i>
-              Tải dữ liệu mẫu
-            </button>
           </div>
           
           <div id="revenueChart" class="chart-container"></div>
@@ -397,53 +390,6 @@ const onPeriodChange = async () => {
   } finally {
     isUpdating = false;
   }
-};
-
-const loadSampleData = () => {
-  console.log('🧪 Loading sample data...');
-  
-  const sampleData = {
-    dataPoints: [
-      {
-        date: "2025-01-01",
-        period: "Thứ 2",
-        revenue: 5000000.00,
-        orderCount: 25
-      },
-      {
-        date: "2025-01-02",
-        period: "Thứ 3", 
-        revenue: 7200000.00,
-        orderCount: 32
-      },
-      {
-        date: "2025-01-03",
-        period: "Thứ 4",
-        revenue: 6500000.00,
-        orderCount: 28
-      },
-      {
-        date: "2025-01-04",
-        period: "Thứ 5",
-        revenue: 8100000.00,
-        orderCount: 35
-      },
-      {
-        date: "2025-01-05",
-        period: "Thứ 6",
-        revenue: 9200000.00,
-        orderCount: 42
-      }
-    ],
-    periodType: "daily",
-    totalRevenue: 36000000.00,
-    totalOrders: 162
-  };
-  
-  chartData.value = sampleData;
-  nextTick(() => {
-    renderChart();
-  });
 };
 
 onMounted(() => {

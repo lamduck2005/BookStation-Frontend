@@ -6,7 +6,7 @@
         Thông tin khách hàng
       </h6>
     </div>
-    
+
     <!-- Chọn loại khách -->
     <div class="customer-type-selector" v-if="!selectedCustomer">
       <button
@@ -28,7 +28,10 @@
     </div>
 
     <!-- Form nhập thông tin khách vãng lai -->
-    <div v-if="customerType === 'guest' && !selectedCustomer" class="guest-form">
+    <div
+      v-if="customerType === 'guest' && !selectedCustomer"
+      class="guest-form"
+    >
       <div class="form-group">
         <label class="form-label">Tên khách hàng *</label>
         <input
@@ -48,8 +51,8 @@
           required
         />
       </div>
-      <button 
-        class="save-btn" 
+      <button
+        class="save-btn"
         @click="saveGuestInfo"
         :disabled="!guestInfo.customerName || !guestInfo.customerPhone"
       >
@@ -59,7 +62,10 @@
     </div>
 
     <!-- Tìm kiếm khách hàng có tài khoản -->
-    <div v-if="customerType === 'registered' && !selectedCustomer" class="customer-search">
+    <div
+      v-if="customerType === 'registered' && !selectedCustomer"
+      class="customer-search"
+    >
       <div class="form-group">
         <label class="form-label">Tìm kiếm khách hàng</label>
         <div class="search-input-wrap">
@@ -73,11 +79,14 @@
           <i class="bi bi-search search-icon"></i>
         </div>
       </div>
-      
+
       <!-- Dropdown kết quả tìm kiếm -->
-      <div v-if="showDropdown && searchResults.length > 0" class="search-dropdown">
-        <div 
-          v-for="customer in searchResults" 
+      <div
+        v-if="showDropdown && searchResults.length > 0"
+        class="search-dropdown"
+      >
+        <div
+          v-for="customer in searchResults"
           :key="customer.id"
           class="customer-option"
           @click="selectRegisteredCustomer(customer)"
@@ -88,13 +97,18 @@
           <div class="customer-details">
             <div class="customer-name">{{ customer.fullName }}</div>
             <div class="customer-phone">{{ customer.phoneNumber }}</div>
-            <div class="customer-email" v-if="customer.email">{{ customer.email }}</div>
+            <div class="customer-email" v-if="customer.email">
+              {{ customer.email }}
+            </div>
           </div>
         </div>
       </div>
-      
+
       <!-- Thông báo không tìm thấy -->
-      <div v-if="showDropdown && searchTerm && searchResults.length === 0" class="no-results">
+      <div
+        v-if="showDropdown && searchTerm && searchResults.length === 0"
+        class="no-results"
+      >
         <i class="bi bi-search"></i>
         <span>Không tìm thấy khách hàng nào</span>
       </div>
@@ -106,16 +120,24 @@
         <div class="customer-info">
           <div class="customer-avatar">
             <i v-if="selectedCustomer.isGuest" class="bi bi-person"></i>
-            <span v-else>{{ getInitials(selectedCustomer.customerName || selectedCustomer.fullName) }}</span>
+            <span v-else>{{
+              getInitials(
+                selectedCustomer.customerName || selectedCustomer.fullName
+              )
+            }}</span>
           </div>
           <div class="customer-details">
             <div class="customer-name">
               {{ selectedCustomer.customerName || selectedCustomer.fullName }}
-              <span v-if="selectedCustomer.isGuest" class="guest-badge">Vãng lai</span>
+              <span v-if="selectedCustomer.isGuest" class="guest-badge"
+                >Vãng lai</span
+              >
             </div>
             <div class="customer-phone">
               <i class="bi bi-telephone"></i>
-              {{ selectedCustomer.customerPhone || selectedCustomer.phoneNumber }}
+              {{
+                selectedCustomer.customerPhone || selectedCustomer.phoneNumber
+              }}
             </div>
             <div v-if="selectedCustomer.email" class="customer-email">
               <i class="bi bi-envelope"></i>
@@ -133,33 +155,33 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { getUsersForOrder } from '@/services/admin/user';
+import { ref, onMounted, onUnmounted, watch } from "vue";
+import { userpos } from "@/services/admin/user";
 
 // Props
 const props = defineProps({
   selectedCustomerData: {
     type: Object,
-    default: null
-  }
+    default: null,
+  },
 });
 
 // Emit để gửi thông tin khách hàng lên component cha
-const emit = defineEmits(['customer-selected', 'customer-changed']);
+const emit = defineEmits(["customer-selected", "customer-changed"]);
 
 // Data
-const customerType = ref('guest'); // 'guest' | 'registered'
+const customerType = ref("guest"); // 'guest' | 'registered'
 const selectedCustomer = ref(null);
 const showDropdown = ref(false);
 
 // Guest info
 const guestInfo = ref({
-  customerName: '',
-  customerPhone: ''
+  customerName: "",
+  customerPhone: "",
 });
 
 // Registered customer search
-const searchTerm = ref('');
+const searchTerm = ref("");
 const searchResults = ref([]);
 let searchTimeout = null;
 
@@ -167,13 +189,13 @@ let searchTimeout = null;
 const setCustomerType = (type) => {
   customerType.value = type;
   selectedCustomer.value = null;
-  emit('customer-changed', null);
-  
+  emit("customer-changed", null);
+
   // Reset forms
-  if (type === 'guest') {
-    guestInfo.value = { customerName: '', customerPhone: '' };
+  if (type === "guest") {
+    guestInfo.value = { customerName: "", customerPhone: "" };
   } else {
-    searchTerm.value = '';
+    searchTerm.value = "";
     searchResults.value = [];
   }
   showDropdown.value = false;
@@ -183,40 +205,39 @@ const saveGuestInfo = () => {
   if (!guestInfo.value.customerName || !guestInfo.value.customerPhone) {
     return;
   }
-  
+
   // Validate phone number (basic validation)
   const phoneRegex = /^0\d{9}$/;
   if (!phoneRegex.test(guestInfo.value.customerPhone)) {
-    alert('Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại 10 chữ số bắt đầu bằng 0.');
+    alert(
+      "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại 10 chữ số bắt đầu bằng 0."
+    );
     return;
   }
-  
+
   const guestCustomer = {
     userId: null,
     customerName: guestInfo.value.customerName.trim(),
     customerPhone: guestInfo.value.customerPhone.trim(),
-    isGuest: true
+    isGuest: true,
   };
-  
+
   selectedCustomer.value = guestCustomer;
-  emit('customer-selected', guestCustomer);
+  emit("customer-selected", guestCustomer);
 };
 
 const searchCustomers = async () => {
   if (searchTimeout) {
     clearTimeout(searchTimeout);
   }
-  
+
   searchTimeout = setTimeout(async () => {
     if (searchTerm.value.trim().length >= 2) {
       try {
-        const response = await getUsersForOrder({
-          search: searchTerm.value.trim(),
-          limit: 10
-        });
+        const response = await userpos(searchTerm.value.trim());
         searchResults.value = response.data?.data || [];
       } catch (error) {
-        console.error('Error searching customers:', error);
+        console.error("Error searching customers:", error);
         searchResults.value = [];
       }
     } else {
@@ -233,69 +254,73 @@ const selectRegisteredCustomer = (customer) => {
     email: customer.email,
     fullName: customer.fullName,
     phoneNumber: customer.phoneNumber,
-    isGuest: false
+    isGuest: false,
   };
-  
+
   selectedCustomer.value = registeredCustomer;
   showDropdown.value = false;
-  emit('customer-selected', registeredCustomer);
+  emit("customer-selected", registeredCustomer);
 };
 
 const changeCustomer = () => {
   selectedCustomer.value = null;
-  emit('customer-changed', null);
-  
+  emit("customer-changed", null);
+
   // Reset forms
-  if (customerType.value === 'guest') {
-    guestInfo.value = { customerName: '', customerPhone: '' };
+  if (customerType.value === "guest") {
+    guestInfo.value = { customerName: "", customerPhone: "" };
   } else {
-    searchTerm.value = '';
+    searchTerm.value = "";
     searchResults.value = [];
   }
   showDropdown.value = false;
 };
 
 const getInitials = (name) => {
-  if (!name) return '?';
+  if (!name) return "?";
   return name
-    .split(' ')
-    .map(word => word[0])
-    .join('')
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 };
 
 // Click outside to close dropdown
 const handleClickOutside = (event) => {
-  const container = event.target.closest('.customer-search');
+  const container = event.target.closest(".customer-search");
   if (!container) {
     showDropdown.value = false;
   }
 };
 
 // Watch for changes from parent component
-watch(() => props.selectedCustomerData, (newCustomer) => {
-  selectedCustomer.value = newCustomer;
-  if (newCustomer) {
-    if (newCustomer.isGuest) {
-      customerType.value = 'guest';
-      guestInfo.value = {
-        customerName: newCustomer.customerName,
-        customerPhone: newCustomer.customerPhone
-      };
-    } else {
-      customerType.value = 'registered';
+watch(
+  () => props.selectedCustomerData,
+  (newCustomer) => {
+    selectedCustomer.value = newCustomer;
+    if (newCustomer) {
+      if (newCustomer.isGuest) {
+        customerType.value = "guest";
+        guestInfo.value = {
+          customerName: newCustomer.customerName,
+          customerPhone: newCustomer.customerPhone,
+        };
+      } else {
+        customerType.value = "registered";
+      }
     }
-  }
-}, { immediate: true });
+  },
+  { immediate: true }
+);
 
 // Lifecycle
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
+  document.addEventListener("click", handleClickOutside);
 });
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener("click", handleClickOutside);
   if (searchTimeout) {
     clearTimeout(searchTimeout);
   }
@@ -374,6 +399,8 @@ watch(searchTerm, () => {
   background: #f8f9fa;
   border-radius: 8px;
   padding: 16px;
+  /* Thêm dòng này để dropdown bám sát input */
+  position: relative;
 }
 
 .form-group {
@@ -576,13 +603,13 @@ watch(searchTerm, () => {
   .customer-type-selector {
     grid-template-columns: 1fr;
   }
-  
+
   .customer-card {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .change-btn {
     align-self: stretch;
     justify-content: center;

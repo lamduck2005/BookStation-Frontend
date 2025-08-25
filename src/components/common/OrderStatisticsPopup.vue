@@ -1,12 +1,12 @@
 <template>
-  <!--  Book Statistics Details Popup -->
+  <!--  Order Statistics Details Popup -->
   <div 
     v-if="show" 
-    class="book-stats-popup-overlay" 
+    class="order-stats-popup-overlay" 
     @click="closePopup"
   >
     <div 
-      class="book-stats-popup" 
+      class="order-stats-popup" 
       :style="popupStyle"
       @click.stop
     >
@@ -16,15 +16,7 @@
           <i class="bi bi-calendar-event me-2"></i>
           <span>{{ formattedSelectedDate }}</span>
         </div>
-        <div class="popup-controls">
-         
-          
-          <button 
-            type="button" 
-            class="btn-close btn-close-white" 
-            @click="closePopup"
-          ></button>
-        </div>
+        
       </div>
 
       <!-- Body -->
@@ -34,7 +26,7 @@
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Loading...</span>
           </div>
-          <p class="mt-2 text-muted">Đang tải chi tiết...</p>
+          <p class="mt-2 text-muted">Đang tải chi tiết đơn hàng...</p>
         </div>
 
         <!-- Error State -->
@@ -49,111 +41,92 @@
           <div class="row mb-4">
             <div class="col-md-4">
               <div class="summary-stat bg-primary">
-                <i class="bi bi-graph-up-arrow"></i>
+                <i class="bi bi-cart-check"></i>
                 <div class="stat-info">
-                  <h6>Tổng doanh thu</h6>
-            <h4 :title="`Tổng doanh thu: ${totalRevenue.toLocaleString()} VND`">{{ formatCurrency(totalRevenue) }}</h4>
+                  <h6>Tổng đơn hàng</h6>
+                  <h4 :title="`Tổng số đơn hàng: ${totalOrders.toLocaleString()}`">{{ totalOrders }}</h4>
                 </div>
               </div>
             </div>
             <div class="col-md-4">
               <div class="summary-stat bg-success">
-                <i class="bi bi-bag-check"></i>
+                <i class="bi bi-currency-dollar"></i>
                 <div class="stat-info">
-                  <h6>Tổng số bán</h6>
-            <h4 :title="`Tổng số bán: ${totalQuantitySold.toLocaleString()} cuốn`">{{ totalQuantitySold }}</h4>
+                  <h6>Tổng doanh thu</h6>
+                  <h4 :title="`Tổng doanh thu: ${totalRevenue.toLocaleString()} VND`">{{ formatCurrency(totalRevenue) }}</h4>
                 </div>
               </div>
             </div>
             <div class="col-md-4">
               <div class="summary-stat bg-info">
-                <i class="bi bi-collection"></i>
+                <i class="bi bi-calculator"></i>
                 <div class="stat-info">
-                  <h6>Số loại sách</h6>
-                  <h4>{{ detailsData.length }}</h4>
+                  <h6>Giá trị TB/Đơn</h6>
+                  <h4>{{ formatCurrency(averageOrderValue) }}</h4>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Books List -->
-          <div class="books-list">
+          <!-- Orders List -->
+          <div class="orders-list">
             <h6 class="list-title">
               <i class="bi bi-list-ul me-2"></i>
-              Chi tiết từng sách
+              Chi tiết từng đơn hàng
             </h6>
             
-            <div class="books-container">
+            <div class="orders-container">
               <div 
-                v-for="(book, index) in detailsData" 
-                :key="book.code"
-                class="book-item"
+                v-for="(order, index) in detailsData" 
+                :key="order.orderCode"
+                class="order-item"
               >
                 <!-- Rank Badge -->
                 <div class="rank-badge" :class="getRankBadgeClass(index + 1)">
                   #{{ index + 1 }}
                 </div>
 
-                <!-- Book Info -->
-                <div class="book-info">
-                  <div class="book-header">
-                    <h6 class="book-name" :title="book.title">
-                      {{ book.title }}
+                <!-- Order Info -->
+                <div class="order-info">
+                  <div class="order-header">
+                    <h6 class="order-code" :title="order.orderCode">
+                      {{ order.orderCode }}
                     </h6>
-                    <span class="book-code">{{ book.bookCode }}</span>
+                    
                   </div>
                   
-                  <div class="book-meta">
-                    <span class="isbn" v-if="book.isbn">
-                      <i class="bi bi-upc-scan me-1"></i>
-                      ISBN: {{ book.isbn }}
-                    </span>
-                    <span class="price">
-                      <i class="bi bi-tag me-1"></i>
-                      {{ formatCurrency(book.currentPrice) }}
-                    </span>
+                  <div class="order-meta">
+                    <div class="customer-info">
+                      <i class="bi bi-person me-1"></i>
+                      <strong>{{ order.customerName }}</strong>
+                    </div>
+                    <div class="customer-email" v-if="order.customerEmail">
+                      <i class="bi bi-envelope me-1"></i>
+                      <span>{{ order.customerEmail }}</span>
+                    </div>
+                    <div class="order-date">
+                      <i class="bi bi-clock me-1"></i>
+                      <span>{{ formatTimestamp(order.createdAt) }}</span>
+                    </div>
                   </div>
                 </div>
 
-                <!-- Stats -->
-                <div class="book-stats">
-                  <!-- Revenue -->
+                <!-- Order Stats -->
+                <div class="order-stats">
+                  <!-- Total Amount -->
                   <div class="stat-item">
-                    <div class="stat-label">Doanh thu</div>
+                    <div class="stat-label">Tổng tiền</div>
                     <div class="stat-value">
-                      {{ formatCurrency(book.revenue) }}
-                    </div>
-                    <div class="stat-growth" v-if="book.revenueGrowthPercent !== undefined || book.revenueGrowthLabel">
-                      <!-- Trường hợp có tăng trưởng % -->
-                      <span 
-                        v-if="book.revenueGrowthPercent !== null"
-                        class="growth-badge"
-                        :class="getGrowthClass(book.revenueGrowthPercent)"
-                      >
-                        <i :class="getGrowthIcon(book.revenueGrowthPercent)"></i>
-                        {{ Math.abs(book.revenueGrowthPercent).toFixed(1) }}%
-                      </span>
-                      <!-- Trường hợp "Tăng mới" -->
-                      <span 
-                        v-else-if="book.revenueGrowthLabel"
-                        class="growth-badge growth-new"
-                      >
-                        <i class="bi bi-plus-circle"></i>
-                        {{ book.revenueGrowthLabel }}
-                      </span>
-                      <span class="growth-value" v-if="book.revenueGrowthValue">
-                        ({{ formatCurrency(book.revenueGrowthValue) }})
-                      </span>
+                      {{ formatCurrency(order.totalAmount) }}
                     </div>
                   </div>
+                </div>
 
-                  <!-- Quantity -->
-                  <div class="stat-item">
-                    <div class="stat-label">Số lượng bán</div>
-                    <div class="stat-value">
-                      {{ book.totalQuantity }} cuốn
-                    </div>
-                     
+                <!-- Product Info -->
+                <div class="product-info" v-if="order.productInfo">
+                  <div class="stat-label">Sản phẩm</div>
+                  <div class="product-text" :title="order.productInfo">
+                    {{ order.productInfo }}
                   </div>
                 </div>
               </div>
@@ -165,17 +138,16 @@
         <div v-else class="text-center py-4">
           <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
           <h6 class="text-muted mt-2">Không có dữ liệu</h6>
-          <p class="text-muted">Không tìm thấy thông tin sách cho ngày này</p>
+          <p class="text-muted">Không tìm thấy đơn hàng nào cho ngày này</p>
         </div>
       </div>
- 
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import { getBookStatsDetails, formatCurrency } from '@/services/admin/bookStatistics';
+import { getOrderStatsDetails, formatCurrency, formatOrderStatus, getOrderStatusClass } from '@/services/admin/orderStatistics';
 
 // Props
 const props = defineProps({
@@ -221,12 +193,17 @@ const formattedSelectedDate = computed(() => {
   return date.toLocaleDateString('vi-VN', options);
 });
 
-const totalRevenue = computed(() => {
-  return detailsData.value.reduce((sum, book) => sum + (book.revenue || 0), 0);
+const totalOrders = computed(() => {
+  return detailsData.value.length;
 });
 
-const totalQuantitySold = computed(() => {
-  return detailsData.value.reduce((sum, book) => sum + (book.totalQuantity || 0), 0);
+const totalRevenue = computed(() => {
+  return detailsData.value.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+});
+
+const averageOrderValue = computed(() => {
+  if (totalOrders.value === 0) return 0;
+  return totalRevenue.value / totalOrders.value;
 });
 
 const popupStyle = computed(() => {
@@ -268,13 +245,13 @@ const fetchDetails = async () => {
     loading.value = true;
     error.value = '';
     
-    console.log('📊 Fetching book statistics details:', {
+    console.log('📊 Fetching order statistics details:', {
       period: props.period,
       date: props.selectedDate,
       limit: selectedLimit.value
     });
     
-    const response = await getBookStatsDetails(props.period, props.selectedDate, selectedLimit.value);
+    const response = await getOrderStatsDetails(props.period, props.selectedDate, selectedLimit.value);
     
     if (response && response.status === 200 && response.data) {
       detailsData.value = response.data;
@@ -284,7 +261,7 @@ const fetchDetails = async () => {
     }
   } catch (err) {
     console.error('❌ Error fetching details:', err);
-    error.value = err.response?.data?.message || err.message || 'Không thể tải chi tiết thống kê';
+    error.value = err.response?.data?.message || err.message || 'Không thể tải chi tiết thống kê đơn hàng';
     detailsData.value = [];
   } finally {
     loading.value = false;
@@ -307,18 +284,21 @@ const getRankBadgeClass = (rank) => {
   return 'rank-default';
 };
 
-const getGrowthClass = (percent) => {
-  if (percent > 0) return 'growth-positive';
-  if (percent < 0) return 'growth-negative';
-  return 'growth-neutral';
+const getStatusClass = (status) => {
+  return getOrderStatusClass(status);
 };
 
-const getGrowthIcon = (percent) => {
-  if (percent > 0) return 'bi bi-arrow-up';
-  if (percent < 0) return 'bi bi-arrow-down';
-  return 'bi bi-dash';
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return '';
+  
+  return new Date(timestamp).toLocaleDateString('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 };
-
 
 // Watchers
 watch(() => props.show, (newShow) => {
@@ -339,7 +319,7 @@ watch(() => [props.selectedDate, props.period], () => {
 </script>
 
 <style scoped>
-.book-stats-popup-overlay {
+.order-stats-popup-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -350,9 +330,9 @@ watch(() => [props.selectedDate, props.period], () => {
   backdrop-filter: blur(2px);
 }
 
-.book-stats-popup {
+.order-stats-popup {
   position: absolute;
-  width: 600px;
+  width: 700px;
   max-width: calc(100vw - 50px);
   max-height: calc(100vh - 50px);
   background: white;
@@ -415,7 +395,6 @@ watch(() => [props.selectedDate, props.period], () => {
   overflow-y: auto;
 }
 
-
 /* --- Summary Stat Modern Gradient Card --- */
 .summary-stat {
   background: linear-gradient(120deg, #6a93ff 0%, #a4e0ff 100%);
@@ -462,7 +441,6 @@ watch(() => [props.selectedDate, props.period], () => {
   font-weight: 500;
 }
 .stat-info h4 {
-  
   margin: 0;
   font-weight: 800;
   font-size: 1.25rem;
@@ -482,33 +460,33 @@ watch(() => [props.selectedDate, props.period], () => {
   border-bottom: 2px solid #e2e8f0;
 }
 
-.books-container {
+.orders-container {
   max-height: 300px;
   overflow-y: auto;
   padding-right: 8px;
 }
 
-.books-container::-webkit-scrollbar {
+.orders-container::-webkit-scrollbar {
   width: 6px;
 }
 
-.books-container::-webkit-scrollbar-track {
+.orders-container::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 3px;
 }
 
-.books-container::-webkit-scrollbar-thumb {
+.orders-container::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 3px;
 }
 
-.books-container::-webkit-scrollbar-thumb:hover {
+.orders-container::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
 
-.book-item {
+.order-item {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
   padding: 1rem;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
@@ -517,7 +495,7 @@ watch(() => [props.selectedDate, props.period], () => {
   transition: all 0.2s ease;
 }
 
-.book-item:hover {
+.order-item:hover {
   background: white;
   border-color: #cbd5e0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
@@ -528,8 +506,8 @@ watch(() => [props.selectedDate, props.period], () => {
   font-weight: bold;
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
-  margin-right: 1rem;
-  flex-shrink: 0;
+  margin-bottom: 0.75rem;
+  width: fit-content;
 }
 
 .rank-gold {
@@ -552,55 +530,58 @@ watch(() => [props.selectedDate, props.period], () => {
   color: white;
 }
 
-.book-info {
+.order-info {
   flex: 1;
-  margin-right: 1rem;
+  margin-bottom: 1rem;
 }
 
-.book-header {
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 0.5rem;
 }
 
-.book-name {
+.order-code {
   font-weight: 600;
   margin: 0;
-  padding: 0.125rem 0.375rem;
   color: #2d3748;
   font-size: 0.95rem;
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.book-code {
+.order-status {
   font-size: 0.75rem;
-  color: #718096;
-  background: #edf2f7;
-  padding: 0.125rem 0.375rem;
-  border-radius: 4px;
-  
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 500;
 }
 
-.book-meta {
+.order-meta {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-.book-meta span {
+.order-meta > div {
   font-size: 0.8rem;
   color: #718096;
+  display: flex;
+  align-items: center;
 }
 
-.book-stats {
-  flex-shrink: 0;
-  text-align: right;
-  min-width: 140px;
+.customer-info {
+  font-weight: 500;
+}
+
+.order-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
 }
 
 .stat-item {
-  margin-bottom: 0.75rem;
+  text-align: center;
 }
 
 .stat-label {
@@ -613,88 +594,85 @@ watch(() => [props.selectedDate, props.period], () => {
   font-weight: 600;
   color: #2d3748;
   font-size: 0.9rem;
-  margin-bottom: 0.25rem;
 }
 
-.stat-growth {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.125rem;
-}
-
-.growth-badge {
-  font-size: 0.7rem;
-  padding: 0.125rem 0.375rem;
-  border-radius: 12px;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.growth-positive {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.growth-negative {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.growth-neutral {
-  background: #e5e7eb;
-  color: #374151;
-}
-
-.growth-new {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
-  animation: pulseGlow 2s infinite;
-}
-
-@keyframes pulseGlow {
-  0%, 100% { 
-    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
-  }
-  50% { 
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
-  }
-}
-
-.growth-value {
-  font-size: 0.7rem;
-  color: #9ca3af;
-  font-weight: normal;
-}
-
-.popup-footer {
-  background: #f8fafc;
-  padding: 0.75rem 1.25rem;
+.product-info {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
   border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+}
+
+.product-text {
+  font-size: 0.8rem;
+  color: #4a5568;
+  line-height: 1.4;
+  max-height: 3.6em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Order Status Classes */
+.status-pending {
+  background: #fed7d7;
+  color: #9b2c2c;
+}
+
+.status-confirmed {
+  background: #bee3f8;
+  color: #2a69ac;
+}
+
+.status-processing {
+  background: #fef5e7;
+  color: #975a16;
+}
+
+.status-shipped {
+  background: #e6fffa;
+  color: #234e52;
+}
+
+.status-delivered {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.status-canceled {
+  background: #fed7d7;
+  color: #9b2c2c;
+}
+
+.status-refunded {
+  background: #e9d8fd;
+  color: #553c9a;
+}
+
+.status-default {
+  background: #e2e8f0;
+  color: #4a5568;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .book-stats-popup {
+  .order-stats-popup {
     width: calc(100vw - 20px);
     left: 10px !important;
     top: 10px !important;
   }
   
-  .book-item {
+  .order-header {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
   
-  .book-stats {
-    margin-top: 0.75rem;
-    text-align: left;
-    min-width: auto;
+  .order-stats {
+    flex-direction: column;
+    gap: 0.5rem;
   }
   
   .popup-controls {
@@ -705,16 +683,5 @@ watch(() => [props.selectedDate, props.period], () => {
   .popup-controls .form-select {
     min-width: 100px;
   }
-}
-</style>
-<style scoped>
-.hover-tooltip {
-  position: relative;
-  cursor: pointer;
-  color: #2eab00;
-  transition: color 0.2s;
-}
-.hover-tooltip:hover, .hover-tooltip:focus {
-  color: #2563eb;
 }
 </style>
