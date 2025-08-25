@@ -185,7 +185,7 @@
                         <div class="btn-group" role="group">
                           <button 
                             @click="viewRefundDetails(refund)"
-                            class="btn btn-sm btn-outline-info"
+                            class="btn btn-sm btn-outline-info mx-2"
                             title="Xem chi tiết"
                           >
                             <i class="bi bi-eye"></i>
@@ -222,7 +222,6 @@
                       <td>
                         <div>
                           <strong>{{ refund.userFullName }}</strong>
-                          <div class="text-muted small">{{ refund.userEmail || 'N/A' }}</div>
                         </div>
                       </td>
                       <td>
@@ -233,7 +232,9 @@
                         />
                       </td>
                       <td>
-                        <span class="badge bg-info">{{ refund.refundType }}</span>
+                        <span class="badge" :class="selectedRefund && selectedRefund.refundType === 'FULL' ? 'bg-warning text-dark' : 'bg-info'">
+                          {{refund.refundType === 'PARTIAL' ? 'Hoàn một phần' : 'Hoàn toàn bộ' }}
+                        </span>
                       </td>
                       <td>
                         <span class="text-danger fw-bold">{{ formatCurrency(refund.totalRefundAmount) }}</span>
@@ -323,10 +324,6 @@
                       <td>#{{ selectedRefund.orderCode }}</td>
                     </tr>
                     <tr>
-                      <td><strong>Tracking Code:</strong></td>
-                      <td><span class="badge bg-info">{{ selectedRefund.trackingCode || 'N/A' }}</span></td>
-                    </tr>
-                    <tr>
                       <td><strong>Tổng tiền hoàn:</strong></td>
                       <td><span class="fw-bold text-success">{{ formatCurrency(selectedRefund.totalRefundAmount) }}</span></td>
                     </tr>
@@ -392,14 +389,12 @@
                     <tr>
                       <td><strong>Trạng thái:</strong></td>
                       <td>
-                        <StatusLabel :status="selectedRefund.refundStatus || selectedRefund.status" :type="getStatusType(selectedRefund.refundStatus || selectedRefund.status)" />
                         <span class="ms-2 text-muted">{{ selectedRefund.refundStatusDisplay || selectedRefund.statusDisplay }}</span>
                       </td>
                     </tr>
                     <tr>
                       <td><strong>Lý do hoàn hàng:</strong></td>
                       <td>
-                        <span class="badge bg-secondary me-2">{{ selectedRefund.reason }}</span>
                         <span class="text-muted">{{ selectedRefund.reasonDisplay }}</span>
                       </td>
                     </tr>
@@ -411,7 +406,7 @@
                 </table>
                 
                 <div v-if="selectedRefund.customerNote" class="mt-3">
-                  <p><strong>💬 Ghi chú khách hàng:</strong></p>
+                  <p><strong>💬 Lý do chi tiết:</strong></p>
                   <div class="bg-info bg-opacity-10 p-3 rounded border-start border-info border-4">
                     {{ selectedRefund.customerNote }}
                   </div>
@@ -438,8 +433,6 @@
                           <th>Sản phẩm</th>
                           <th>Số lượng hoàn</th>
                           <th>Đơn giá</th>
-                          <th>Tổng tiền</th>
-                          <th>Lý do</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -448,15 +441,14 @@
                             <div class="d-flex align-items-center">
                               <img v-if="item.bookImage" :src="item.bookImage" class="me-2" style="width: 40px; height: 40px; object-fit: cover;">
                               <div>
-                                <div class="fw-bold">{{ item.bookTitle }}</div>
-                                <small class="text-muted">ID: {{ item.bookId }}</small>
+                                <div class="fw-bold text-danger">{{ item.bookName }}</div>
+                                <small class="text-muted fw-bold">ID: {{ item.bookId }}</small>
                               </div>
+                            
                             </div>
                           </td>
                           <td>{{ item.refundQuantity }}</td>
-                          <td>{{ formatCurrency(item.unitPrice) }}</td>
-                          <td>{{ formatCurrency(item.refundAmount) }}</td>
-                          <td>{{ item.reason || 'N/A' }}</td>
+                          <td><span class="text-danger fw-bold">{{ formatCurrency(item.unitPrice) }}</span></td>
                         </tr>
                       </tbody>
                     </table>
@@ -958,99 +950,31 @@ const handleProcessRefund = async (refund) => {
 }
 
 const approveRefundRequest = async (refund) => {
-  // Form thu thập thông tin phê duyệt theo tài liệu mới
-  // Tạo HTML cho input số lượng hoàn từng sản phẩm nếu có refundItems
-  let refundItemsHtml = ''
-  if (refund.refundItems && refund.refundItems.length > 0) {
-    refundItemsHtml = `
-      <div class="mb-3">
-        <label class="form-label">Số lượng hoàn từng sản phẩm</label>
-        <div>
-          ${refund.refundItems.map((item, idx) => `
-            <div class="mb-2">
-              <span><strong>${item.bookTitle}</strong> (ID: ${item.bookId})</span><br>
-              <input id="refundQuantity_${idx}" type="number" class="form-control mt-1" value="${item.refundQuantity || item.quantity || 1}" min="1" max="${item.quantity || 10}" style="width:120px;display:inline-block;">
-              <small class="text-muted">Lý do: ${item.reason || ''}</small>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `
-  }
-
-  const { value: formValues } = await Swal.fire({
-    title: 'Phê duyệt hoàn hàng',
-    text: `Phê duyệt hoàn hàng ${formatCurrency(refund.totalRefundAmount)} cho đơn hàng #${refund.orderCode}`,
-    html: `
-      <div class="mb-3">
-        <label class="form-label">Ghi chú admin *</label>
-        <textarea id="adminNote" class="form-control" rows="3" placeholder="Nhập ghi chú cho khách hàng...">Yêu cầu hợp lệ. Khách hàng đã cung cấp đầy đủ minh chứng.</textarea>
-      </div>
-      <div class="mb-3">
-        <label  class="form-label">Số tiền hoàn </label>
-        <input readonly id="approvedAmount" type="number" class="form-control" value="${refund.totalRefundAmount}" max="${refund.totalRefundAmount}">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">
-          <input id="needsReturn" type="checkbox" checked> Cần trả hàng về kho
-        </label>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Địa chỉ trả hàng</label>
-        <input id="returnAddress" type="text" class="form-control" value="Kho BookStation - 123 Đường ABC, Quận 1, TP.HCM">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Số ngày trả hàng</label>
-        <input id="returnDays" type="number" class="form-control" value="7" min="1" max="30">
-      </div>
-      ${refundItemsHtml}
-    `,
+  // Popup xác nhận đơn giản chỉ có nút phê duyệt/hủy
+  const result = await Swal.fire({
+    title: 'Xác nhận phê duyệt',
+    text: `Bạn có chắc chắn muốn phê duyệt yêu cầu hoàn hàng ${formatCurrency(refund.totalRefundAmount)} cho đơn hàng #${refund.orderCode}?`,
+    icon: 'question',
     showCancelButton: true,
     confirmButtonText: 'Phê duyệt',
     cancelButtonText: 'Hủy',
     confirmButtonColor: '#28a745',
-    preConfirm: () => {
-      const adminNote = document.getElementById('adminNote').value
-      const approvedAmount = parseInt(document.getElementById('approvedAmount').value)
-      const needsReturn = document.getElementById('needsReturn').checked
-      const returnAddress = document.getElementById('returnAddress').value
-      const returnDays = parseInt(document.getElementById('returnDays').value)
-
-      if (!adminNote || adminNote.length < 10) {
-        Swal.showValidationMessage('Ghi chú admin phải có ít nhất 10 ký tự')
-        return false
-      }
-
-      if (approvedAmount > refund.totalRefundAmount) {
-        Swal.showValidationMessage('Số tiền hoàn không được vượt quá số tiền yêu cầu')
-        return false
-      }
-
-      // Thu thập số lượng hoàn cho từng sản phẩm
-      let refundItems = []
-      if (refund.refundItems && refund.refundItems.length > 0) {
-        refundItems = refund.refundItems.map((item, idx) => {
-          const refundQuantity = parseInt(document.getElementById(`refundQuantity_${idx}`).value) || 1
-          return {
-            ...item,
-            refundQuantity
-          }
-        })
-      }
-
-      return {
-        adminNote,
-        approvedRefundAmount: approvedAmount,
-        needsPhysicalReturn: needsReturn,
-        returnAddress: needsReturn ? returnAddress : '',
-        expectedReturnDays: needsReturn ? returnDays : 0,
-        refundItems,
-        status: 'APPROVED'
-      }
-    }
+    cancelButtonColor: '#dc3545'
   })
 
-  if (formValues) {
+  // Nếu người dùng xác nhận phê duyệt
+  if (result.isConfirmed) {
+    // Tạo dữ liệu mặc định để gửi API
+    const formValues = {
+      adminNote: 'Yêu cầu hoàn hàng đã được phê duyệt.',
+      approvedRefundAmount: refund.totalRefundAmount,
+      needsPhysicalReturn: false, // Mặc định không cần trả hàng
+      returnAddress: '',
+      expectedReturnDays: 0,
+      refundItems: refund.refundItems || [],
+      status: 'APPROVED'
+    }
+
     try {
       loading.value = true
       
@@ -1095,63 +1019,29 @@ const approveRefundRequest = async (refund) => {
 }
 
 const rejectRefundRequest = async (refund) => {
-  // Form thu thập thông tin từ chối theo tài liệu mới
-  const { value: formValues } = await Swal.fire({
-    title: 'Từ chối hoàn hàng',
-    text: `Từ chối yêu cầu hoàn hàng cho đơn hàng #${refund.orderCode}`,
-    html: `
-      <div class="mb-3">
-        <label class="form-label">Lý do từ chối *</label>
-        <select id="rejectReason" class="form-control">
-          <option value="INSUFFICIENT_EVIDENCE">Minh chứng không đủ</option>
-          <option value="POLICY_VIOLATION">Vi phạm chính sách</option>
-          <option value="DAMAGED_BY_USER">Hư hỏng do người dùng</option>
-          <option value="EXPIRED_RETURN_PERIOD">Hết hạn hoàn trả</option>
-          <option value="OTHER">Khác</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Ghi chú chi tiết *</label>
-        <textarea id="adminNote" class="form-control" rows="4" placeholder="Nhập lý do từ chối chi tiết..."></textarea>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Hướng dẫn cho khách hàng</label>
-        <textarea id="suggestedAction" class="form-control" rows="2" placeholder="Khách hàng có thể...">Khách hàng có thể gửi lại yêu cầu với minh chứng rõ ràng hơn.</textarea>
-      </div>
-    `,
+  // Popup xác nhận đơn giản chỉ có nút từ chối/hủy
+  const result = await Swal.fire({
+    title: 'Xác nhận từ chối',
+    text: `Bạn có chắc chắn muốn từ chối yêu cầu hoàn hàng cho đơn hàng #${refund.orderCode}?`,
+    icon: 'warning',
     showCancelButton: true,
     confirmButtonText: 'Từ chối',
     cancelButtonText: 'Hủy',
     confirmButtonColor: '#dc3545',
-    preConfirm: () => {
-      const rejectReason = document.getElementById('rejectReason').value
-      const adminNote = document.getElementById('adminNote').value
-      const suggestedAction = document.getElementById('suggestedAction').value
-
-      if (!adminNote || adminNote.length < 10) {
-        Swal.showValidationMessage('Ghi chú từ chối phải có ít nhất 10 ký tự')
-        return false
-      }
-
-      const reasonDisplayMap = {
-        'INSUFFICIENT_EVIDENCE': 'Minh chứng không đủ',
-        'POLICY_VIOLATION': 'Vi phạm chính sách',
-        'DAMAGED_BY_USER': 'Hư hỏng do người dùng',
-        'EXPIRED_RETURN_PERIOD': 'Hết hạn hoàn trả',
-        'OTHER': 'Khác'
-      }
-
-      return {
-        rejectReason,
-        rejectReasonDisplay: reasonDisplayMap[rejectReason],
-        adminNote,
-        suggestedAction: suggestedAction || 'Vui lòng liên hệ hỗ trợ để biết thêm chi tiết.'
-       ,status: 'REJECTED'
-      }
-    }
+    cancelButtonColor: '#6c757d'
   })
 
-  if (formValues) {
+  // Nếu người dùng xác nhận từ chối
+  if (result.isConfirmed) {
+    // Tạo dữ liệu mặc định để gửi API
+    const formValues = {
+      rejectReason: 'OTHER',
+      rejectReasonDisplay: 'Yêu cầu không được phê duyệt',
+      adminNote: 'Yêu cầu hoàn hàng đã được xem xét và từ chối.',
+      suggestedAction: 'Vui lòng liên hệ hỗ trợ để biết thêm chi tiết.',
+      status: 'REJECTED'
+    }
+
     try {
       loading.value = true
       
@@ -1194,65 +1084,32 @@ const rejectRefundRequest = async (refund) => {
 
 // Xử lý hoàn trả sau khi đã phê duyệt
 const processRefundRequest = async (refundId) => {
-  // Form thu thập thông tin xử lý hoàn trả theo tài liệu mới
-  const { value: formValues } = await Swal.fire({
-    title: 'Xử lý hoàn trả',
-    text: 'Thông tin xử lý hoàn tiền cho khách hàng',
-    html: `
-      <div class="mb-3">
-        <label class="form-label">Loại xử lý</label>
-        <select id="processType" class="form-control">
-          <option value="AUTOMATIC">Tự động</option>
-          <option value="MANUAL">Thủ công</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Phương thức hoàn tiền</label>
-        <select id="paymentMethod" class="form-control">
-          <option value="BANK_TRANSFER">Chuyển khoản ngân hàng</option>
-          <option value="E_WALLET">Ví điện tử</option>
-          <option value="CASH">Tiền mặt</option>
-          <option value="STORE_CREDIT">Tín dụng cửa hàng</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Tên ngân hàng (nếu chuyển khoản)</label>
-        <input id="bankName" type="text" class="form-control" value="Vietcombank">
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Ghi chú xử lý</label>
-        <textarea id="processingNote" class="form-control" rows="3" placeholder="Ghi chú về quá trình hoàn tiền...">Đã xử lý hoàn tiền qua chuyển khoản. Khách hàng sẽ nhận tiền trong 1-2 ngày làm việc.</textarea>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Phí xử lý (nếu có)</label>
-        <input id="refundFee" type="number" class="form-control" value="0" min="0">
-      </div>
-    `,
+  // Popup xác nhận đơn giản chỉ có nút xác nhận/hủy
+  const result = await Swal.fire({
+    title: 'Xác nhận hoàn trả',
+    text: 'Bạn có chắc chắn rằng tiền đã được hoàn cho khách hàng và muốn xác nhận hoàn tất quá trình hoàn trả?',
+    icon: 'question',
     showCancelButton: true,
-    confirmButtonText: 'Xử lý hoàn trả',
+    confirmButtonText: 'Xác nhận hoàn trả',
     cancelButtonText: 'Hủy',
     confirmButtonColor: '#28a745',
-    preConfirm: () => {
-      const processType = document.getElementById('processType').value
-      const paymentMethod = document.getElementById('paymentMethod').value
-      const bankName = document.getElementById('bankName').value
-      const processingNote = document.getElementById('processingNote').value
-      const refundFee = parseInt(document.getElementById('refundFee').value) || 0
-
-      return {
-        processType,
-        paymentMethod,
-        bankInfo: paymentMethod === 'BANK_TRANSFER' ? {
-          bankName,
-          transferNote: `Hoàn tiền đơn hàng`
-        } : null,
-        processingNote,
-        refundFeeDeduction: refundFee
-      }
-    }
+    cancelButtonColor: '#dc3545'
   })
 
-  if (formValues) {
+  // Nếu người dùng xác nhận hoàn trả
+  if (result.isConfirmed) {
+    // Tạo dữ liệu mặc định để gửi API
+    const formValues = {
+      processType: 'MANUAL',
+      paymentMethod: 'BANK_TRANSFER',
+      bankInfo: {
+        bankName: 'Vietcombank',
+        transferNote: 'Hoàn tiền đơn hàng'
+      },
+      processingNote: 'Đã xử lý hoàn tiền qua chuyển khoản. Khách hàng đã nhận được tiền.',
+      refundFeeDeduction: 0
+    }
+
     try {
       loading.value = true
       

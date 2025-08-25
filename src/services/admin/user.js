@@ -56,6 +56,13 @@ export function getUsersForOrder() {
   return client.get('/api/users/dropdown');
 }
 
+// Search users for dropdown with search term
+export function searchUsersDropdown(searchTerm) {
+  return client.get('/api/users/dropdown', { 
+    params: { search: searchTerm } 
+  });
+}
+
 export function getProfile(id) {
   console.log("Fetching profile for user ID:", id);
   return client.get(`/api/users/profile/${id}`);

@@ -221,6 +221,12 @@
               <a class="nav-link text-dark" href="#flashsale-product">Flash Sale</a>
             </li>
             <li class="nav-item">
+              <RouterLink class="nav-link text-dark fw-semibold" to="/minigame">
+                <i class="bi bi-gift-fill me-1 text-warning"></i>
+                Minigame
+              </RouterLink>
+            </li>
+            <li class="nav-item">
               <a class="nav-link text-dark" href="#">Khuyến mãi</a>
             </li>
             <li class="nav-item">

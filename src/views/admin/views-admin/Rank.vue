@@ -962,7 +962,7 @@ onMounted(() => {
   background: white;
   border-radius: 12px;
   padding: 1.25rem;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 3px 10px rgba(3, 3, 3, 0.08);
   border-left: 4px solid #ecae9e;
   position: relative;
   transition: all 0.3s ease;

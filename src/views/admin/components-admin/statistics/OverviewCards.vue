@@ -26,13 +26,13 @@
                 <i class="bi bi-cart-check"></i>
               </div>
               <div class="text-end">
-                <div class="stat-value">{{ data?.totalOrdersToday || 0 }}</div>
+                <div class="stat-value gradient-text-orders">{{ data?.totalOrdersToday || 0 }}</div>
                 <div class="stat-label">Đơn hàng hôm nay</div>
               </div>
             </div>
             <div class="stat-footer">
               <small class="text-muted">
-                Tổng tháng: <strong>{{ data?.totalOrdersThisMonth || 0 }}</strong>
+                Tổng tháng này: <strong>{{ data?.totalOrdersThisMonth || 0 }}</strong>
               </small>
             </div>
           </div>
@@ -48,12 +48,13 @@
                 <i class="bi bi-currency-dollar"></i>
               </div>
               <div class="text-end">
-                <div class="stat-value">{{ formatCurrency(data?.revenueToday) }}</div>
+                <div class="stat-value gradient-text-revenue">{{ formatCurrency(data?.revenueToday) }}</div>
                 <div class="stat-label">Doanh thu hôm nay</div>
               </div>
             </div>
             <div class="stat-footer">
               <small class="text-success">
+                Tổng tháng này: <strong>{{ data?.revenueThisMonth ? formatCurrency(data.revenueThisMonth) : 0 }}</strong>
               </small>
             </div>
           </div>
@@ -71,13 +72,13 @@
                 <i class="bi bi-arrow-counterclockwise"></i>
               </div>
               <div class="text-end">
-                <div class="stat-value">{{ (data?.refundedOrdersToday || 0) + (data?.canceledOrdersToday || 0) }}</div>
+                <div class="stat-value gradient-text-returns">{{ (data?.refundedOrdersToday || 0) + (data?.canceledOrdersToday || 0) }}</div>
                 <div class="stat-label">Hoàn trả/Hủy</div>
               </div>
             </div>
             <div class="stat-footer">
               <small class="text-danger">
-                COD thất bại: <strong>{{ formatPercentage(data?.failedCodRateToday) }}</strong>
+                COD thất bại hôm nay: <strong>{{ formatPercentage(data?.failedCodRateToday) }}</strong>
               </small>
             </div>
           </div>
@@ -85,62 +86,7 @@
       </div>
     </div>
 
-    <!-- Additional Insights Row -->
-    <div v-if="!loading && data" class="row g-3 mt-2">
-      <!-- Monthly Performance Card -->
-      <div class="col-lg-8">
-        <div class="card insights-card">
-          <div class="card-body">
-            <h6 class="card-title mb-3">
-              <i class="bi bi-graph-up me-2 text-primary"></i>
-              Hiệu suất tháng này
-            </h6>
-            <div class="row g-3">
-              <div class="col-md-3">
-                <div class="insight-item">
-                  <div class="insight-value text-success">{{ data.totalOrdersThisMonth }}</div>
-                  <div class="insight-label">Tổng đơn hàng</div>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="insight-item">
-                  <div class="insight-value text-primary">{{ formatCurrency(data.revenueThisMonth) }}</div>
-                  <div class="insight-label">Doanh thu</div>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="insight-item">
-                 
-                </div>
-              </div>
-              <!-- Bỏ insight tỷ lệ COD tháng này -->
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Actions Card -->
-      <div class="col-lg-4">
-        <div class="card actions-card">
-          <div class="card-body">
-            <h6 class="card-title mb-3">
-              <i class="bi bi-lightning-charge me-2 text-warning"></i>
-              Hành động nhanh
-            </h6>
-            <div class="d-grid gap-2">
-              <button class="btn btn-outline-primary btn-sm" @click="refreshData">
-                <i class="bi bi-arrow-clockwise me-1"></i>
-                Làm mới dữ liệu
-              </button>
-              <button class="btn btn-outline-success btn-sm" @click="exportData">
-                <i class="bi bi-download me-1"></i>
-                Xuất báo cáo
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+   
   </div>
 </template>
 
@@ -359,4 +305,28 @@ onMounted(() => {
     transform: translateY(0);
   }
 }
+
+/* Gradient text for stat values */
+.gradient-text-orders {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+.gradient-text-revenue {
+  background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+.gradient-text-returns {
+  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+
 </style>

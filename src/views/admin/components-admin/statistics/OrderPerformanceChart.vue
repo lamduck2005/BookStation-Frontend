@@ -3,186 +3,154 @@
     <div class="card chart-card">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">
-          <i class="bi bi-graph-up-arrow me-2 text-primary"></i>
-          Biểu đồ thống kê sách bán
+          <i class="bi bi-graph-up me-2 text-primary"></i>
+          Thống kê đơn hàng theo {{ getPeriodText() }}
         </h5>
         <div class="chart-controls">
-          <!-- Period Selector -->
           <div class="btn-group btn-group-sm me-2" role="group">
             <input 
               type="radio" 
               class="btn-check" 
-              name="chartPeriod" 
-              id="day" 
+              name="orderPeriod" 
+              id="orderDay" 
               autocomplete="off" 
               value="day"
               v-model="selectedPeriod"
               @change="onPeriodChange"
             >
-            <label class="btn btn-outline-primary" for="day">Ngày</label>
+            <label class="btn btn-outline-primary" for="orderDay">Ngày</label>
 
             <input 
               type="radio" 
               class="btn-check" 
-              name="chartPeriod" 
-              id="week" 
+              name="orderPeriod" 
+              id="orderWeek" 
               autocomplete="off" 
               value="week"
               v-model="selectedPeriod"
               @change="onPeriodChange"
             >
-            <label class="btn btn-outline-primary" for="week">Tuần</label>
+            <label class="btn btn-outline-primary" for="orderWeek">Tuần</label>
 
             <input 
               type="radio" 
               class="btn-check" 
-              name="chartPeriod" 
-              id="month" 
+              name="orderPeriod" 
+              id="orderMonth" 
               autocomplete="off" 
               value="month"
               v-model="selectedPeriod"
               @change="onPeriodChange"
             >
-            <label class="btn btn-outline-primary" for="month">Tháng</label>
+            <label class="btn btn-outline-primary" for="orderMonth">Tháng</label>
 
             <input 
               type="radio" 
               class="btn-check" 
-              name="chartPeriod" 
-              id="quarter" 
+              name="orderPeriod" 
+              id="orderQuarter" 
               autocomplete="off" 
               value="quarter"
               v-model="selectedPeriod"
               @change="onPeriodChange"
             >
-            <label class="btn btn-outline-primary" for="quarter">Quý</label>
+            <label class="btn btn-outline-primary" for="orderQuarter">Quý</label>
 
             <input 
               type="radio" 
               class="btn-check" 
-              name="chartPeriod" 
-              id="year" 
+              name="orderPeriod" 
+              id="orderYear" 
               autocomplete="off" 
               value="year"
               v-model="selectedPeriod"
               @change="onPeriodChange"
             >
-            <label class="btn btn-outline-primary" for="year">Năm</label>
+            <label class="btn btn-outline-primary" for="orderYear">Năm</label>
           </div>
           
-          <!-- Custom Date Range Toggle -->
           <button 
-            class="btn btn-outline-info btn-sm me-2"
+            type="button" 
+            class="btn btn-outline-info btn-sm"
             @click="toggleCustomDateRange"
-            :class="{ 'active': showCustomDateRange }"
           >
             <i class="bi bi-calendar-range me-1"></i>
-            Tùy chỉnh khoảng thời gian
+            Tùy chọn
           </button>
           
           <button 
-            class="btn btn-outline-secondary btn-sm"
-            @click="fetchChartData"
+            type="button" 
+            class="btn btn-outline-light btn-sm ms-2"
+            @click="refreshData"
             :disabled="loading"
+            title="Làm mới dữ liệu"
           >
-            <span v-if="loading" class="spinner-border spinner-border-sm me-1"></span>
-            <i v-else class="text-white bi bi-arrow-clockwise me-1 "></i>
-            <span class="text-warning fw-bold">Làm mới</span>
+            <i class="bi bi-arrow-clockwise me-1" :class="{ 'spin': loading }"></i>
+            Làm mới
           </button>
         </div>
-    </div>
+      </div>
 
       <!-- Custom Date Range -->
       <div v-if="showCustomDateRange" class="card-body border-bottom">
         <div class="row align-items-center">
-          <div class="col-md-3">
-            <label class="form-label">
-              <i class="bi bi-calendar3 me-1"></i>
-              Từ ngày
-            </label>
+          <div class="col-md-4">
+            <label class="form-label">Từ ngày:</label>
             <input 
               type="date" 
-              class="form-control form-control-sm"
+              class="form-control form-control-sm" 
               v-model="fromDate"
-              :max="toDate || getTodayString()"
-            >
+              :max="getTodayString()"
+            />
           </div>
-          <div class="col-md-3">
-            <label class="form-label">
-              <i class="bi bi-calendar3 me-1"></i>
-              Đến ngày
-            </label>
+          <div class="col-md-4">
+            <label class="form-label">Đến ngày:</label>
             <input 
               type="date" 
-              class="form-control form-control-sm"
+              class="form-control form-control-sm" 
               v-model="toDate"
-              :min="fromDate"
               :max="getTodayString()"
-            >
+            />
           </div>
-          <div class="col-md-3">
-            <label class="form-label">
-              <i class="bi bi-graph-up me-1"></i>
-              Loại biểu đồ
-            </label>
-            <select class="form-select form-select-sm" v-model="selectedPeriod">
-              <option value="day">Theo ngày</option>
-              <option value="week">Theo tuần</option>
-              <option value="month">Theo tháng</option>
-              <option value="quarter">Theo quý</option>
-              <option value="year">Theo năm</option>
-            </select>
-          </div>
-          <div class="col-md-3 d-flex align-items-end gap-2 mt-4">
-            <button 
-              class="btn btn-primary btn-sm flex-grow-1"
-              @click="applyCustomDateRange"
-              :disabled="!fromDate || !toDate || loading"
-            >
-              <i class="bi bi-search me-1"></i>
-              Áp dụng
-            </button>
-            <button 
-              class="btn btn-outline-secondary btn-sm"
-              @click="clearCustomDateRange"
-            >
-              <i class="bi bi-x-lg"></i>
-            </button>
+          <div class="col-md-4">
+            <div class="d-flex gap-2 mt-4">
+              <button 
+                type="button" 
+                class="btn btn-primary btn-sm "
+                @click="applyCustomDateRange"
+                :disabled="!fromDate || !toDate"
+              >
+                <i class="bi bi-check me-1"></i>
+                Áp dụng
+              </button>
+              <button 
+                type="button" 
+                class="btn btn-outline-secondary btn-sm"
+                @click="clearCustomDateRange"
+              >
+                <i class="bi bi-x me-1"></i>
+                Xóa
+              </button>
+            </div>
           </div>
         </div>
         <div class="mt-2">
-          <div class="note-box mt-2 p-3">
-            <div class="d-flex align-items-center mb-2">
-              <i class="bi bi-lightbulb-fill text-warning fs-5 me-2"></i>
-              <span class="fw-bold text-dark me-1" style="font-size: 1rem; letter-spacing: 0.5px;">Lưu ý quan trọng</span>
-              <button class="btn btn-link p-0 m-0 border-0 note-toggle-btn align-self-center ms-1" @click="noteOpen = !noteOpen" :aria-label="noteOpen ? 'Đóng lưu ý' : 'Mở lưu ý'">
-                <i :class="noteOpen ? 'bi bi-chevron-up fs-4 text-primary' : 'bi bi-chevron-down fs-4 text-primary'"></i>
-              </button>
-            </div>
-            <transition name="fade">
-              <div v-show="noteOpen" class="note-content text-dark" style="font-size: 0.97rem;">
-                <i class="bi bi-info-circle text-primary me-1"></i>
-                Nếu <span class="fw-semibold text-primary">khoảng thời gian</span> bạn chọn <span class="fw-semibold">ngắn hơn 1 đơn vị thống kê</span> (ngày / tuần / tháng / quý / năm), hệ thống <span class="fw-semibold text-danger">chỉ trả về dữ liệu đúng trong phạm vi bạn chọn</span>, <span class="fw-semibold text-success">không tự động lấy thêm dữ liệu của đơn vị thống kê lớn hơn</span>.<br>
-                <ul class="mt-2 mb-1 ps-4">
-                  <li><i class="bi bi-calendar-week text-info me-1"></i> <span class="fw-semibold">Ví dụ 1:</span> Chọn kiểu <span class="text-primary">“Tuần”</span> nhưng chỉ chọn 3 ngày (02/05 → 04/05) → <span class="text-success">chỉ trả về dữ liệu của 3 ngày này</span>, <span class="text-danger">không lấy cả tuần</span>.</li>
-                  <li><i class="bi bi-calendar-month text-info me-1"></i> <span class="fw-semibold">Ví dụ 2:</span> Chọn kiểu <span class="text-primary">“Tháng”</span> nhưng chỉ chọn 10 ngày (05/03 → 14/03) → <span class="text-success">chỉ trả về dữ liệu của 10 ngày này</span>, <span class="text-danger">không lấy cả tháng</span>.</li>
-                </ul>
-                <div class="d-flex align-items-center mt-2">
-                  <i class="bi bi-star-fill text-warning me-1"></i>
-                  <span class="text-muted" style="font-size: 0.93rem;">Điều này giúp số liệu thống kê phản ánh đúng phạm vi bạn chọn.</span>
-                </div>
-              </div>
-            </transition>
-          </div>
+          <small class="text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            Chọn khoảng thời gian để xem chi tiết thống kê đơn hàng
+          </small>
         </div>
       </div>
       
       <div class="card-body">
         <!-- Loading State -->
         <div v-if="loading" class="chart-loading">
-          <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading...</span>
+          <div class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
+            <div class="text-center">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="mt-2 text-muted">Đang tải dữ liệu thống kê...</p>
             </div>
           </div>
         </div>
@@ -195,42 +163,75 @@
 
         <!-- Chart Content -->
         <div v-else>
-           
-
-          <!-- No data message -->
-          <div v-if="!chartData || chartData.length === 0" class="text-center py-5">
-            <i class="bi bi-graph-up text-muted" style="font-size: 4rem;"></i>
-            <h5 class="text-muted mt-3">Không có dữ liệu</h5>
-            <p class="text-muted">Chưa có dữ liệu thống kê sách cho khoảng thời gian này</p>
-          </div>
-          
-          <!-- ApexCharts Chart Container -->
-          <div v-else>
-            <div id="bookPerformanceChart" class="chart-container"></div>
-            <div class="chart-info mt-3">
-              <div class="row">
-                <div class="col-md-8">
-                  <small class="text-muted">
-                    <i class="bi bi-info-circle me-1 text-primary"></i>
-                    <strong>Hướng dẫn sử dụng:</strong> 
-                    <span class="text-primary fw-bold">Click vào các điểm tròn</span> trên biểu đồ để xem chi tiết sách bán
-                  </small>
-                </div>
-                <div class="col-md-4 text-end">
-                  <small class="text-muted">
-                    <i class="bi bi-mouse me-1"></i>
-                    Di chuyển chuột để xem thông tin chi tiết
-                  </small>
+          <!-- Summary Stats Cards -->
+          <div class="row mb-4" v-if="summaryStats">
+            <div class="col-md-3">
+              <div class="summary-card-modern bg-gradient-primary">
+                <div class="card-body text-center">
+                  <div class="icon-wrapper mb-3">
+                    <i class="bi bi-cart-check"></i>
+                  </div>
+                  <h3 class="card-title mb-1">{{ summaryStats.totalOrders }}</h3>
+                  <p class="card-subtitle mb-0">Tổng đơn hàng</p>
                 </div>
               </div>
             </div>
+            <div class="col-md-3">
+              <div class="summary-card-modern bg-gradient-success">
+                <div class="card-body text-center">
+                  <div class="icon-wrapper mb-3">
+                    <i class="bi bi-currency-dollar"></i>
+                  </div>
+                  <h3 class="card-title mb-1">{{ Math.round(summaryStats.totalRevenue).toLocaleString('vi-VN') }}</h3>
+                  <p class="card-subtitle mb-0">Tổng doanh thu</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="summary-card-modern bg-gradient-info">
+                <div class="card-body text-center">
+                  <div class="icon-wrapper mb-3">
+                    <i class="bi bi-calculator"></i>
+                  </div>
+                  <h3 class="card-title mb-1">{{ Math.round(summaryStats.averageOrderValue).toLocaleString('vi-VN') }}</h3>
+                  <p class="card-subtitle mb-0">Giá trị TB/Đơn</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="summary-card-modern" :class="getCompletionRateClass(summaryStats.completionRate)">
+                <div class="card-body text-center">
+                  <div class="icon-wrapper mb-3">
+                    <i class="bi bi-check-circle"></i>
+                  </div>
+                  <h3 class="card-title mb-1">{{ Math.round(summaryStats.completionRate) }}%</h3>
+                  <p class="card-subtitle mb-0">Tỷ lệ hoàn thành</p>
+                  <div class="progress-ring">
+                    <div class="progress-value" :style="`width: ${Math.round(summaryStats.completionRate)}%`"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chart Container -->
+          <div class="chart-container">
+            <div id="orderPerformanceChart"></div>
+          </div>
+
+          <!-- Chart Info -->
+          <div class="chart-info" v-if="chartData && chartData.length > 0">
+            <small class="text-muted">
+              <i class="bi bi-info-circle me-1"></i>
+              Hiển thị {{ chartData.length }} điểm dữ liệu. Click vào các điểm trên biểu đồ để xem chi tiết đơn hàng.
+            </small>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Book Statistics Details Popup -->
-    <BookStatisticsPopup
+    <!-- Order Statistics Details Popup -->
+    <OrderStatisticsPopup
       :show="showPopup"
       :selected-date="selectedChartDate"
       :period="selectedPeriod"
@@ -243,15 +244,14 @@
 
 <script setup>
 import { ref, onMounted, nextTick, computed, watch, onUnmounted } from 'vue';
-// State for note open/close
-const noteOpen = ref(false);
-import { getBookStatsSummary } from '@/services/admin/bookStatistics';
-import BookStatisticsPopup from '@/components/common/BookStatisticsPopup.vue';
+import { getOrderStatsSummary, formatCurrency } from '@/services/admin/orderStatistics';
+import OrderStatisticsPopup from '@/components/common/OrderStatisticsPopup.vue';
 import ApexCharts from 'apexcharts';
 import Swal from 'sweetalert2';
 
 // Reactive data
 const chartData = ref([]);
+const summaryData = ref(null); // Store the full summary response
 const loading = ref(false);
 const error = ref('');
 const selectedPeriod = ref('day');
@@ -271,22 +271,38 @@ const mousePosition = ref({ x: 0, y: 0 });
 
 // Computed
 const summaryStats = computed(() => {
+  // Use backend summary data if available, fallback to calculated data
+  if (summaryData.value) {
+    return {
+      totalOrders: summaryData.value.totalOrdersSum || 0,
+      totalRevenue: summaryData.value.totalRevenueSum || 0,
+      averageOrderValue: summaryData.value.averageAOV || 0,
+      completionRate: summaryData.value.completionRate ? Math.round(summaryData.value.completionRate) : 0,
+      completedOrders: summaryData.value.completedOrdersSum || 0,
+      canceledOrders: summaryData.value.canceledOrdersSum || 0,
+      refundedOrders: summaryData.value.refundedOrdersSum || 0
+    };
+  }
+  
+  // Fallback: calculate from chartData array (legacy support)
   if (!chartData.value || chartData.value.length === 0) return null;
   
-  const totalBooksSold = chartData.value.reduce((sum, item) => sum + (item.totalBooksSold || 0), 0);
-  const totalDataPoints = chartData.value.length;
-  const averagePerDay = totalDataPoints > 0 ? totalBooksSold / totalDataPoints : 0;
-  const peakValue = Math.max(...chartData.value.map(item => item.totalBooksSold || 0));
+  const totalOrders = chartData.value.reduce((sum, item) => sum + (item.totalOrders || 0), 0);
+  const totalRevenue = chartData.value.reduce((sum, item) => sum + (item.netRevenue || 0), 0);
+  const completedOrders = chartData.value.reduce((sum, item) => sum + (item.completedOrders || 0), 0);
+  
+  const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+  const completionRate = totalOrders > 0 ? Math.round((completedOrders / totalOrders) * 100) : 0;
   
   return {
-    totalDataPoints,
-    totalBooksSold,
-    averagePerDay,
-    peakValue
+    totalOrders,
+    totalRevenue,
+    averageOrderValue,
+    completionRate
   };
 });
 
-// API call to fetch summary data theo tài liệu v4.0 mới
+// API call to fetch summary data
 const fetchChartData = async () => {
   return new Promise(async (resolve) => {
     setTimeout(async () => {
@@ -294,44 +310,39 @@ const fetchChartData = async () => {
         loading.value = true;
         error.value = '';
         
-        console.log('📡 Fetching book statistics summary:', {
+        console.log('📡 Fetching order statistics summary:', {
           period: selectedPeriod.value,
           fromDate: fromDate.value,
           toDate: toDate.value
         });
         
-        // Gọi Summary API (Tier 1) - lightweight data cho chart
-        const response = await getBookStatsSummary(
-          selectedPeriod.value, 
-          fromDate.value, 
-          toDate.value
+        // Call Summary API (Tier 1) - lightweight data for chart
+        const response = await getOrderStatsSummary(
+          selectedPeriod.value,
+          fromDate.value || null,
+          toDate.value || null
         );
         
         console.log('📊 Summary API Response:', response);
         
-        if (response && response.status === 200 && response.data) {
-          chartData.value = response.data; // Mảng [{date: "2025-08-01", totalBooksSold: 87}, ...]
-          console.log('  Chart data processed:', chartData.value);
-          // Đánh dấu chartReady false để watcher xử lý lại
-          chartReady.value = false;
-          await nextTick();
-          await new Promise(resolve => setTimeout(resolve, 100));
-          // chartReady sẽ được watcher set true nếu đủ điều kiện
+        if (response && response.status === 200 && response.data && response.data.data) {
+          console.log('📊 Full response data:', response.data);
+          console.log('📊 Summary data:', response.data.data);
+          console.log('📊 Chart data array:', response.data.data);
+          
+          // Backend returns: response.data.data is the chart array
+          chartData.value = response.data.data; // This is the array of 31 days
+          summaryData.value = response.data; // Store full summary data (with totals)
+          chartReady.value = false; // Will be set to true by watcher if conditions are met
         } else {
-          throw new Error(response.message || 'Failed to fetch summary data');
+          throw new Error(response.message || 'Không nhận được dữ liệu hợp lệ');
         }
       } catch (err) {
         console.error('❌ Error fetching summary data:', err);
         error.value = err.response?.data?.message || err.message || 'Không thể tải dữ liệu biểu đồ';
         chartData.value = [];
+        summaryData.value = null;
         chartReady.value = false;
-        Swal.fire({
-          title: 'Lỗi!',
-          text: 'Không thể tải dữ liệu thống kê',
-          icon: 'error',
-          timer: 3000,
-          showConfirmButton: false
-        });
       } finally {
         loading.value = false;
         resolve();
@@ -340,11 +351,11 @@ const fetchChartData = async () => {
   });
 };
 
-// Render ApexCharts chart cho Summary data mới
+// Render ApexCharts chart
 const renderChart = () => {
   console.log('🎨 Starting renderChart...');
   
-  // Destroy existing chart - Cải thiện logic destroy
+  // Destroy existing chart
   if (chart) {
     console.log('🗑️ Destroying existing chart...');
     try {
@@ -356,58 +367,82 @@ const renderChart = () => {
   }
 
   // Clear chart container content to prevent duplication
-  const chartElement = document.querySelector('#bookPerformanceChart');
+  const chartElement = document.querySelector('#orderPerformanceChart');
   if (chartElement) {
     chartElement.innerHTML = '';
   }
 
   if (!chartData.value || chartData.value.length === 0) {
     console.log('❌ No summary data available:', chartData.value);
+    console.log('❌ chartData.value:', chartData.value);
+    console.log('❌ chartData.value.length:', chartData.value?.length);
     chartReady.value = false;
     return;
   }
+
+  console.log('📊 Chart data for rendering:', chartData.value);
+  console.log('📊 Chart data length:', chartData.value.length);
 
   console.log('📊 Summary data:', chartData.value);
 
   if (!chartElement) {
-    console.error('❌ Chart element #bookPerformanceChart not found!');
+    console.error('❌ Chart element #orderPerformanceChart not found!');
     chartReady.value = false;
     return;
   }
 
-  console.log('  Chart element found:', chartElement);
+  console.log('✅ Chart element found:', chartElement);
 
-  // Chuẩn bị dữ liệu cho biểu đồ từ Summary API
+  // Prepare data for chart
   const categories = chartData.value.map(item => {
     return formatDateLabel(item.date);
   });
   
-  const totalBooksSoldData = chartData.value.map(item => item.totalBooksSold || 0);
+  const totalOrdersData = chartData.value.map(item => item.totalOrdersSum || item.totalOrders || 0);
+  const revenueData = chartData.value.map(item => item.totalRevenueSum || item.netRevenue || 0);
 
   console.log('🏷️ Categories:', categories);
-  console.log('📦 Total books sold data:', totalBooksSoldData);
+  console.log('📦 Total orders data:', totalOrdersData);
+  console.log('💰 Revenue data:', revenueData);
 
-  // ApexCharts configuration cho Summary data
+  // ApexCharts configuration
   const options = {
     series: [
       {
-        name: 'Số sách bán',
-        data: totalBooksSoldData,
-        color: '#667eea'
+        name: 'Số đơn hàng',
+        type: 'column',
+        yAxisIndex: 0,
+        data: totalOrdersData
+      },
+      {
+        name: 'Doanh thu (VND)',
+        type: 'line',
+        yAxisIndex: 1,
+        data: revenueData
       }
     ],
     chart: {
-      type: 'area',
+      type: 'line',
       height: 400,
       fontFamily: 'Inter, sans-serif',
-      //   SỬA SCROLL BEHAVIOR - Cho phép cuộn trang khi hover
       selection: {
         enabled: false
       },
       zoom: {
         enabled: true,
         type: 'x',
-        autoScaleYaxis: false
+        autoScaleYaxis: true,
+        zoomedArea: {
+          fill: {
+            color: '#90CAF9',
+            opacity: 0.4
+          },
+          stroke: {
+            color: '#0D47A1',
+            opacity: 0.4,
+            width: 1
+          }
+        }
       },
       toolbar: {
         show: true,
@@ -424,27 +459,18 @@ const renderChart = () => {
       animations: {
         enabled: true,
         easing: 'easeinout',
-        speed: 800,
-        animateGradually: {
-          enabled: true,
-          delay: 150
-        }
+        speed: 800
       },
       events: {
-        //   CLICK HANDLER - Khi click vào điểm trên chart
         dataPointSelection: function(event, chartContext, config) {
-          const dataPointIndex = config.dataPointIndex;
-          if (dataPointIndex >= 0 && chartData.value[dataPointIndex]) {
-            const selectedData = chartData.value[dataPointIndex];
-            console.log('📍 Chart point clicked:', selectedData);
+          console.log('📊 Data point clicked:', config);
+          
+          if (config.dataPointIndex !== undefined && chartData.value[config.dataPointIndex]) {
+            const selectedData = chartData.value[config.dataPointIndex];
+            console.log('📊 Selected data:', selectedData);
             
-            // Store mouse position cho popup positioning
-            mousePosition.value = {
-              x: event.clientX,
-              y: event.clientY
-            };
-            
-            // Set selected date và show popup
+            // Store mouse position for popup
+            mousePosition.value = { x: event.clientX, y: event.clientY };
             selectedChartDate.value = selectedData.date;
             showPopup.value = true;
           }
@@ -455,37 +481,33 @@ const renderChart = () => {
       enabled: false
     },
     stroke: {
-      curve: 'smooth',
-      width: 3
+      width: [0, 3],
+      curve: 'smooth'
     },
-    //   THÊM MARKERS - Điểm tròn để click (cải thiện UX)
     markers: {
-      size: 6,
+      size: [0, 6],
       colors: ['#667eea'],
       strokeColors: '#fff',
       strokeWidth: 2,
       hover: {
-        size: 8,
-        sizeOffset: 0
-      },
-      discrete: [],
-      //   Cải thiện click area
-      offsetX: 0,
-      offsetY: 0
+        sizeOffset: 2
+      }
     },
     fill: {
-      type: 'gradient',
+      opacity: [0.85, 1],
       gradient: {
-        shadeIntensity: 1,
-        opacityFrom: 0.7,
-        opacityTo: 0.3,
-        stops: [0, 90, 100]
+        inverseColors: false,
+        shade: 'light',
+        type: "vertical",
+        opacityFrom: 0.85,
+        opacityTo: 0.55,
+        stops: [0, 100, 100, 100]
       }
     },
     xaxis: {
       categories: categories,
       title: {
-        text: `Thống kê sách bán theo ${getPeriodText()}`,
+        text: `Thời gian (${getPeriodText()})`,
         style: {
           fontSize: '14px',
           fontWeight: 600,
@@ -499,36 +521,62 @@ const renderChart = () => {
         }
       }
     },
-    yaxis: {
-      title: {
-        text: 'Số sách bán',
-        style: {
-          fontSize: '14px',
-          fontWeight: 600,
-          color: '#667eea'
+    yaxis: [
+      {
+        title: {
+          text: 'Số đơn hàng',
+          style: {
+            fontSize: '14px',
+            fontWeight: 600,
+            color: '#667eea'
+          }
+        },
+        labels: {
+          style: {
+            colors: '#667eea',
+            fontSize: '12px'
+          },
+          formatter: function (val) {
+            return Math.round(val).toLocaleString();
+          }
         }
       },
-      labels: {
-        formatter: function (val) {
-          return Math.round(val);
+      {
+        opposite: true,
+        title: {
+          text: 'Doanh thu (VND)',
+          style: {
+            fontSize: '14px',
+            fontWeight: 600,
+            color: '#38a169'
+          }
         },
-        style: {
-          colors: '#667eea',
-          fontSize: '11px'
+        labels: {
+          style: {
+            colors: '#38a169',
+            fontSize: '12px'
+          },
+          formatter: function (val) {
+            return formatCurrency(val);
+          }
         }
       }
-    },
+    ],
     grid: {
       borderColor: '#e2e8f0',
       strokeDashArray: 4,
       xaxis: {
         lines: {
-          show: false
+          show: true
+        }
+      },
+      yaxis: {
+        lines: {
+          show: true
         }
       }
     },
     tooltip: {
-      theme: 'light',
       shared: false,
       intersect: false,
       followCursor: true,
@@ -541,102 +589,46 @@ const renderChart = () => {
       y: {
         show: true
       },
-      offsetX: 10,
-      offsetY: -10,
-      style: {
-        fontSize: '13px',
-        fontFamily: 'Inter, sans-serif'
-      },
-      onDatasetHover: {
-        highlightDataSeries: false
-      },
       custom: function({series, seriesIndex, dataPointIndex, w}) {
-        if (dataPointIndex < 0 || !chartData.value || !chartData.value[dataPointIndex]) {
-          return '';
-        }
-        
-        const dataPoint = chartData.value[dataPointIndex];
-        
-        // Format date display
-        let dateDisplay = '';
-        let periodInfo = '';
-        
-        if (dataPoint.dateRange) {
-          dateDisplay = dataPoint.dateRange;
+        const data = chartData.value[dataPointIndex];
+        if (!data) return '';
+
+        // Nếu có dateRange (tuần, tháng, quý, năm) thì chỉ hiện dateRange, nếu không thì hiện ngày chi tiết
+        let headerText = '';
+        if (data.dateRange) {
+          headerText = `<div class=\"tooltip-daterange\">Từ ngày <b>${data.startDate || ''}</b> đến <b>${data.endDate || ''}</b></div>`;
         } else {
-          dateDisplay = formatDateLabel(dataPoint.date, true);
+          headerText = formatDateLabel(data.date, true);
         }
-        
-        // Build period-specific information
-        if (dataPoint.period === 'daily') {
-          periodInfo = `
-            <div class="tooltip-row">
-              <span class="tooltip-label">Ngày:</span>
-              <span class="tooltip-value">${new Date(dataPoint.date).toLocaleDateString('vi-VN')}</span>
-            </div>
-          `;
-        } else if (dataPoint.period === 'weekly') {
-          periodInfo = `
-            <div class="tooltip-row">
-              <span class="tooltip-label">Tuần:</span>
-              <span class="tooltip-value">${dataPoint.weekNumber ? `Tuần ${dataPoint.weekNumber}` : ''} ${dataPoint.year || ''}</span>
-            </div>
-            <div class="tooltip-row">
-              <span class="tooltip-label">Thời gian:</span>
-              <span class="tooltip-value">${dataPoint.startDate ? new Date(dataPoint.startDate).toLocaleDateString('vi-VN') : ''} - ${dataPoint.endDate ? new Date(dataPoint.endDate).toLocaleDateString('vi-VN') : ''}</span>
-            </div>
-          `;
-        } else if (dataPoint.period === 'monthly') {
-          periodInfo = `
-            <div class="tooltip-row">
-              <span class="tooltip-label">Tháng:</span>
-              <span class="tooltip-value">${dataPoint.monthName || `Tháng ${dataPoint.monthNumber}`} ${dataPoint.year || ''}</span>
-            </div>
-            <div class="tooltip-row">
-              <span class="tooltip-label">Thời gian:</span>
-              <span class="tooltip-value">${dataPoint.startDate ? new Date(dataPoint.startDate).toLocaleDateString('vi-VN') : ''} - ${dataPoint.endDate ? new Date(dataPoint.endDate).toLocaleDateString('vi-VN') : ''}</span>
-            </div>
-          `;
-        } else if (dataPoint.period === 'quarterly') {
-          periodInfo = `
-            <div class="tooltip-row">
-              <span class="tooltip-label">Quý:</span>
-              <span class="tooltip-value">Quý ${dataPoint.quarter || ''} năm ${dataPoint.year || ''}</span>
-            </div>
-            <div class="tooltip-row">
-              <span class="tooltip-label">Thời gian:</span>
-              <span class="tooltip-value">${dataPoint.startDate ? new Date(dataPoint.startDate).toLocaleDateString('vi-VN') : ''} - ${dataPoint.endDate ? new Date(dataPoint.endDate).toLocaleDateString('vi-VN') : ''}</span>
-            </div>
-          `;
-        } else if (dataPoint.period === 'yearly') {
-          periodInfo = `
-            <div class="tooltip-row">
-              <span class="tooltip-label">Năm:</span>
-              <span class="tooltip-value">${dataPoint.year || new Date(dataPoint.date).getFullYear()}</span>
-            </div>
-            <div class="tooltip-row">
-              <span class="tooltip-label">Thời gian:</span>
-              <span class="tooltip-value">${dataPoint.startDate ? new Date(dataPoint.startDate).toLocaleDateString('vi-VN') : ''} - ${dataPoint.endDate ? new Date(dataPoint.endDate).toLocaleDateString('vi-VN') : ''}</span>
-            </div>
-          `;
-        }
-        
+
         return `
-          <div class="apexcharts-tooltip-custom">
-            <div class="tooltip-header">${dateDisplay}</div>
+          <div class="chart-tooltip">
+            <div class="tooltip-header">
+              ${headerText}
+            </div>
             <div class="tooltip-body">
-              ${periodInfo}
               <div class="tooltip-row highlight">
-                <span class="tooltip-label">Số sách bán:</span>
-                <span class="tooltip-value">${dataPoint.totalBooksSold || 0} cuốn</span>
+                <span class="tooltip-label">Tổng đơn hàng:</span>
+                <span class="tooltip-value">${data.totalOrders || 0}</span>
+              </div>
+              <div class="tooltip-row">
+                <span class="tooltip-label">Hoàn thành:</span>
+                <span class="tooltip-value">${data.completedOrders || 0}</span>
+              </div>
+              <div class="tooltip-row">
+                <span class="tooltip-label">Đã hủy:</span>
+                <span class="tooltip-value">${data.canceledOrders || 0}</span>
               </div>
               <div class="tooltip-row highlight">
                 <span class="tooltip-label">Doanh thu thuần:</span>
-                <span class="tooltip-value">${(dataPoint.netRevenue || 0).toLocaleString('vi-VN')} VNĐ</span>
+                <span class="tooltip-value">${formatCurrency(data.netRevenue || 0)}</span>
+              </div>
+              <div class="tooltip-row">
+                <span class="tooltip-label">AOV:</span>
+                <span class="tooltip-value">${formatCurrency(data.aov || 0)}</span>
               </div>
               <div class="tooltip-hint">
-                <i class="bi bi-hand-index me-1"></i>
-                <strong>Click vào điểm</strong> để xem chi tiết sách bán
+                💡 Click để xem chi tiết đơn hàng
               </div>
             </div>
           </div>
@@ -651,16 +643,19 @@ const renderChart = () => {
       markers: {
         width: 12,
         height: 12,
-        radius: 4
+        radius: 12
       }
-    }
+    },
+    colors: ['#667eea', '#38a169']
   };
 
   console.log('⚙️ Chart options:', options);
+  console.log('⚙️ Chart series data:', options.series);
+  console.log('⚙️ Chart categories:', options.xaxis.categories);
 
   try {
     chart = new ApexCharts(chartElement, options);
-    console.log('  ApexChart instance created:', chart);
+    console.log('✅ ApexChart instance created:', chart);
     
     chart.render().then(() => {
       console.log('🎨 Chart rendered successfully!');
@@ -679,7 +674,7 @@ const renderChart = () => {
 const onPeriodChange = () => {
   console.log('📊 Period changed to:', selectedPeriod.value);
   
-  // Nếu không có custom date range thì fetch luôn
+  // If no custom date range then fetch immediately
   if (!showCustomDateRange.value) {
     fetchChartData();
   }
@@ -689,7 +684,7 @@ const toggleCustomDateRange = () => {
   showCustomDateRange.value = !showCustomDateRange.value;
   
   if (!showCustomDateRange.value) {
-    // Clear custom dates và fetch với period mặc định
+    // Clear custom dates and fetch with default period
     fromDate.value = '';
     toDate.value = '';
     fetchChartData();
@@ -731,14 +726,12 @@ const formatDateLabel = (dateString, detailed = false) => {
   const date = new Date(dateString);
   
   if (detailed) {
-    // For detailed tooltip - check if we have quarter and dateRange from API response
+    // For detailed tooltip
     if (selectedPeriod.value === 'quarter') {
-      // Try to find the data point that matches this date
       const dataPoint = chartData.value.find(item => item.date === dateString);
       if (dataPoint && dataPoint.dateRange) {
-        return dataPoint.dateRange; // "Q2 2025" from API
+        return dataPoint.dateRange;
       }
-      // Fallback to manual quarter calculation
       const quarter = Math.ceil((date.getMonth() + 1) / 3);
       return `Quý ${quarter} năm ${date.getFullYear()}`;
     }
@@ -760,12 +753,10 @@ const formatDateLabel = (dateString, detailed = false) => {
     case 'month':
       return date.toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' });
     case 'quarter':
-      // Try to use dateRange from API response first
       const dataPoint = chartData.value.find(item => item.date === dateString);
       if (dataPoint && dataPoint.dateRange) {
-        return dataPoint.dateRange; // "Q2 2025" from API
+        return dataPoint.dateRange.replace('Quý', 'Q');
       }
-      // Fallback to manual calculation
       const quarter = Math.ceil((date.getMonth() + 1) / 3);
       return `Q${quarter} ${date.getFullYear()}`;
     case 'year':
@@ -781,10 +772,8 @@ const getWeekNumber = (date) => {
   return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
 };
 
-// Always return today in Vietnam timezone (Asia/Ho_Chi_Minh) for input type=date
 const getTodayString = () => {
   try {
-    // Use Intl.DateTimeFormat to get yyyy-MM-dd in Asia/Ho_Chi_Minh
     const formatter = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Ho_Chi_Minh',
       year: 'numeric',
@@ -793,7 +782,6 @@ const getTodayString = () => {
     });
     return formatter.format(new Date());
   } catch (e) {
-    // Fallback: UTC+7 manual
     const now = new Date();
     const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
     const vn = new Date(utc + 7 * 60 * 60000);
@@ -812,7 +800,34 @@ const closePopup = () => {
 
 const onPopupLimitChange = (newLimit) => {
   console.log('📊 Popup limit changed to:', newLimit);
-  // Popup tự động reload với limit mới
+};
+
+const refreshData = () => {
+  console.log('🔄 Refreshing order statistics data...');
+  fetchChartData();
+};
+
+// Helper function to format currency in short form
+const formatCurrencyShort = (amount) => {
+  if (!amount && amount !== 0) return '0₫';
+  
+  if (amount >= 1000000000) {
+    return (amount / 1000000000).toFixed(1) + 'B₫';
+  } else if (amount >= 1000000) {
+    return (amount / 1000000).toFixed(1) + 'M₫';
+  } else if (amount >= 1000) {
+    return (amount / 1000).toFixed(0) + 'K₫';
+  } else {
+    return amount.toLocaleString() + '₫';
+  }
+};
+
+// Helper function to get completion rate class based on percentage
+const getCompletionRateClass = (rate) => {
+  if (rate >= 90) return 'bg-gradient-success-bright';
+  if (rate >= 75) return 'bg-gradient-warning-bright'; 
+  if (rate >= 50) return 'bg-gradient-orange';
+  return 'bg-gradient-danger';
 };
 
 // Expose methods
@@ -820,18 +835,14 @@ defineExpose({
   fetchChartData
 });
 
-// Watcher: Khi chartData có dữ liệu và không loading, chart container đã xuất hiện, thì render chart
+// Watcher: When chartData has data and not loading, then render chart
 watch(
   [chartData, loading],
   async ([data, isLoading]) => {
     if (!isLoading && data && data.length > 0 && !chartReady.value) {
       await nextTick();
-      // Wait a bit more to ensure DOM is fully ready
       setTimeout(() => {
-        const chartElement = document.querySelector('#bookPerformanceChart');
-        if (chartElement && !chartReady.value) {
-          renderChart();
-        }
+        renderChart();
       }, 100);
     }
   },
@@ -952,6 +963,123 @@ onUnmounted(() => {
   margin: 0;
 }
 
+/* Modern Summary Cards */
+.summary-card-modern {
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  position: relative;
+  color: rgb(255, 255, 255);
+}
+
+.summary-card-modern:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.summary-card-modern .card-body {
+  padding: 2rem 1.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.summary-card-modern .icon-wrapper {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.summary-card-modern .icon-wrapper i {
+  font-size: 1.8rem;
+  color: white;
+}
+
+.summary-card-modern .card-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.summary-card-modern .card-subtitle {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Gradient Backgrounds */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-success {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.bg-gradient-success-bright {
+  background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+}
+
+.bg-gradient-info {
+  background: linear-gradient(135deg, #3ca55c 0%, #b5ac49 100%);
+}
+
+.bg-gradient-warning-bright {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.bg-gradient-orange {
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+}
+
+.bg-gradient-danger {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+}
+
+/* Progress Ring for Completion Rate */
+.progress-ring {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(148, 106, 106, 0.2);
+  overflow: hidden;
+}
+
+.progress-value {
+  height: 100%;
+  background: rgba(255, 255, 255, 0.6);
+  transition: width 1s ease-in-out;
+}
+
+/* Refresh Button Animation */
+.btn-outline-light:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .chart-container {
   min-height: 400px;
   width: 100%;
@@ -959,7 +1087,6 @@ onUnmounted(() => {
   overflow: visible;
 }
 
-/*   FIX SCROLL BEHAVIOR - Cho phép cuộn trang khi hover vào chart */
 .chart-container :deep(.apexcharts-canvas) {
   pointer-events: auto;
 }
@@ -981,7 +1108,6 @@ onUnmounted(() => {
   cursor: pointer;
 }
 
-/*   ENHANCE MARKERS - Làm nổi bật và ổn định các điểm có thể click */
 .chart-container :deep(.apexcharts-marker) {
   pointer-events: auto;
   cursor: pointer;
@@ -993,7 +1119,6 @@ onUnmounted(() => {
   filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.4));
 }
 
-/*   STABLE HOVER AREA - Tạo vùng click lớn hơn để dễ click */
 .chart-container :deep(.apexcharts-series-markers) {
   pointer-events: auto;
 }
@@ -1003,7 +1128,6 @@ onUnmounted(() => {
   stroke: transparent;
 }
 
-/*  PREVENT FLICKER - Ngăn marker nhảy loạn */
 .chart-container :deep(.apexcharts-series) {
   pointer-events: auto;
 }
@@ -1018,7 +1142,6 @@ onUnmounted(() => {
   transition: none !important;
 }
 
-/*  PREVENT TOOLTIP JUMPING */
 .chart-container :deep(.apexcharts-tooltip.apexcharts-active) {
   pointer-events: none !important;
   position: fixed !important;
@@ -1026,7 +1149,6 @@ onUnmounted(() => {
   transform: translate3d(0,0,0) !important;
 }
 
-/*  TOOLTIP POSITIONING - Make it closer to cursor */
 .chart-container :deep(.apexcharts-tooltip) {
   pointer-events: none !important;
   transform: none !important;
@@ -1040,7 +1162,6 @@ onUnmounted(() => {
   visibility: visible !important;
 }
 
-/*  CHART INFO STYLING */
 .chart-info {
   background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
   border: 1px solid rgba(102, 126, 234, 0.1);
@@ -1174,24 +1295,5 @@ onUnmounted(() => {
   .summary-card .card-title {
     font-size: 1.5rem;
   }
-}
-/* Fade transition for note box */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.25s;
-}
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
-.note-toggle-btn {
-  outline: none;
-  box-shadow: none;
-  background: none;
-  font-size: 1.2rem;
-  color: #2563eb;
-  transition: color 0.2s;
-  margin-left: 2px;
-}
-.note-toggle-btn:hover {
-  color: #1d4ed8;
 }
 </style>

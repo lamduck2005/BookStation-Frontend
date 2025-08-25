@@ -126,40 +126,16 @@ const sidebarLinks = [
       { to: "/admin/point", icon: "bi bi-coin", label: "Điểm" },
     ],
   },
+  
   {
     type: "submenu",
-    icon: "bi bi-calendar-event",
-    label: "Sự kiện",
+    icon: "bi bi-gift-fill",
+    label: "Minigame",
     subLinks: [
       {
-        to: "/admin/event",
-        icon: "bi bi-calendar-check",
-        label: "Quản lý sự kiện",
-      },
-      {
-        to: "/admin/event-category",
-        icon: "bi bi-calendar3",
-        label: "Danh mục sự kiện",
-      },
-      {
-        to: "/admin/event-gift",
-        icon: "bi bi-gift",
-        label: "Quà tặng sự kiện",
-      },
-      {
-        to: "/admin/event-gift-claim",
-        icon: "bi bi-gift-fill",
-        label: "Nhận quà sự kiện",
-      },
-      {
-        to: "/admin/event-history",
-        icon: "bi bi-clock-history",
-        label: "Lịch sử sự kiện",
-      },
-      {
-        to: "/admin/event-participant",
-        icon: "bi bi-people-fill",
-        label: "Người tham gia sự kiện",
+        to: "/admin/campaigns",
+        icon: "bi bi-calendar-event",
+        label: "Quản lý chiến dịch",
       },
     ],
   },

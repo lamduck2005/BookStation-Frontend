@@ -353,10 +353,13 @@
                   </label>
                 </div>
                 <div class="form-check">
-                  <input class="form-check-input" type="radio" v-model="refundForm.refundType" value="PARTIAL" id="partialRefund">
+                  <input class="form-check-input" type="radio" v-model="refundForm.refundType" value="PARTIAL" id="partialRefund" :disabled="disablePartialRefund">
                   <label class="form-check-label" for="partialRefund">
                     Hoàn một phần đơn hàng
                   </label>
+                </div>
+                <div v-if="disablePartialRefund" class="text-danger small mt-1">
+                  Đơn hàng chỉ có 1 sản phẩm với số lượng 1, không thể hoàn một phần.
                 </div>
               </div>
 
@@ -553,7 +556,16 @@ export default {
     const canSubmitRefund = computed(() => {
       if (!refundForm.reason) return false
       if (refundForm.refundType === 'PARTIAL' && refundForm.selectedBookIds.length === 0) return false
+      // Bắt buộc phải có ít nhất 1 ảnh và 1 video
+      if (refundForm.evidenceImageFiles.length === 0 || refundForm.evidenceVideoFiles.length === 0) return false
       return true
+    })
+
+    // Disable hoàn một phần nếu chỉ có 1 sản phẩm và số lượng là 1
+    const disablePartialRefund = computed(() => {
+      if (!selectedOrderForRefund.value || !selectedOrderForRefund.value.orderDetails) return false
+      const details = selectedOrderForRefund.value.orderDetails
+      return details.length === 1 && details[0].quantity === 1
     })
 
     // Methods
@@ -1142,10 +1154,11 @@ export default {
       expandedFinancial,
       refundForm,
       
-      // Computed
-      orderTabs,
-      filteredOrders,
-      canSubmitRefund,
+  // Computed
+  orderTabs,
+  filteredOrders,
+  canSubmitRefund,
+  disablePartialRefund,
       
       // Methods
       changeTab,
