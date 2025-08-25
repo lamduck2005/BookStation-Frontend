@@ -20,10 +20,10 @@
           @click="showRevenueChart = !showRevenueChart"
         >
           <i :class="showRevenueChart ? 'bi bi-bar-chart-line-fill' : 'bi bi-bar-chart-line'" style="font-size: 1.2em;"></i>
-          <span class="ms-2">{{ showRevenueChart ? 'Ẩn biểu đồ doanh thu' : 'Hiện biểu đồ doanh thu' }}</span>
+          <span class="ms-2">{{ showRevenueChart ? 'Ẩn thống kê đơn hàng' : 'Hiện thống kê đơn hàng' }}</span>
         </button>
         <div v-show="showRevenueChart">
-          <RevenueChart />
+          <OrderPerformanceChart />
         </div>
       </div>
 
@@ -1341,6 +1341,7 @@ import StatusLabel from '@/components/common/StatusLabel.vue';
 // Import Statistics Components
 import OverviewCards from '@/views/admin/components-admin/statistics/OverviewCards.vue';
 import RevenueChart from '@/views/admin/components-admin/statistics/RevenueChart.vue';
+import OrderPerformanceChart from '@/views/admin/components-admin/statistics/OrderPerformanceChart.vue';
 
 // Toggle for RevenueChart
 const showRevenueChart = ref(false);
