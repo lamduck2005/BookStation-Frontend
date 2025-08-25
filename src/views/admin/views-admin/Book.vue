@@ -168,28 +168,6 @@
           
           <!-- Overview Cards -->
           <BookOverviewCards ref="overviewCardsRef" />
-          
-          <!-- Charts Section -->
-          <div class="row mt-4">
-            <div class="col-12">
-              <div class="d-flex gap-2 mb-3 flex-wrap">
-                <!-- Performance Chart Toggle -->
-                <button 
-                  class="btn btn-sm"
-                  :class="showPerformanceChart ? 'btn-primary' : 'btn-outline-primary'"
-                  @click="togglePerformanceChart"
-                >
-                  <i class="bi bi-graph-up-arrow me-1"></i>
-                  {{ showPerformanceChart ? 'Ẩn biểu đồ' : 'Hiệu suất sách' }}
-                </button>
-              </div>
-              
-              <!-- Performance Chart -->
-              <div v-show="showPerformanceChart" class="mb-4">
-                <BookPerformanceChart ref="performanceChartRef" />
-              </div>
-            </div>
-          </div>
         </div>
         
         <!-- Danh sách Book -->
@@ -1035,7 +1013,6 @@ import MultiImageUpload from '@/components/common/MultiImageUpload.vue';
 import ImagePreviewModal from '@/components/common/ImagePreviewModal.vue';
 import ProcessingOrdersPopup from '@/components/common/ProcessingOrdersPopup.vue';
 import BookOverviewCards from '@/views/admin/components-admin/statistics/BookOverviewCards.vue';
-import BookPerformanceChart from '@/views/admin/components-admin/statistics/BookPerformanceChart.vue';
 import ExcelExportButton from '@/components/common/ExcelExportButton.vue';
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { Modal } from 'bootstrap';
@@ -1044,13 +1021,11 @@ import { getPublishersDropdown } from '@/services/admin/publisher';
 import Swal from 'sweetalert2';
 import { getAllCategoriesParentExcepNotNull, getAllCategoriesParentNotNull } from '@/services/admin/category';
 
-// Statistics chart toggle
-const showPerformanceChart = ref(false);
-const overviewCardsRef = ref(null);
-const performanceChartRef = ref(null);
-
 // Filter collapse toggle
 const showFilter = ref(true);
+
+// Refs for components
+const overviewCardsRef = ref(null);
 
 // Search and filter states
 const searchQuery = ref('');
@@ -2021,26 +1996,10 @@ const goToFlashSaleManagement = (bookId) => {
   });
 };
 
-// Toggle function for performance chart
-const togglePerformanceChart = () => {
-  showPerformanceChart.value = !showPerformanceChart.value;
-  if (showPerformanceChart.value && performanceChartRef.value) {
-    // Refresh performance chart data when opened
-    setTimeout(() => {
-      performanceChartRef.value.fetchChartData();
-    }, 100);
-  }
-};
-
 const refreshStatistics = () => {
   // Refresh overview cards
   if (overviewCardsRef.value) {
     overviewCardsRef.value.fetchOverviewStats();
-  }
-  
-  // Refresh performance chart if it's open
-  if (showPerformanceChart.value && performanceChartRef.value) {
-    performanceChartRef.value.fetchChartData();
   }
   
   Swal.fire({

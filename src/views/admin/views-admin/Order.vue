@@ -11,22 +11,6 @@
     <div class="statistics-section mb-4">
       <!-- Overview Cards -->
       <OverviewCards />
-      
-      <!-- Toggle Revenue Chart -->
-      <div class="mb-4">
-        <button
-          class="btn mb-2 rounded-pill px-4 fw-bold"
-          style="background: linear-gradient(90deg, #4f8cff 0%, #6ed0fa 100%); color: #fff; border: none; box-shadow: 0 2px 8px #e3e8ee;"
-          @click="showRevenueChart = !showRevenueChart"
-        >
-          <i :class="showRevenueChart ? 'bi bi-bar-chart-line-fill' : 'bi bi-bar-chart-line'" style="font-size: 1.2em;"></i>
-          <span class="ms-2">{{ showRevenueChart ? 'Ẩn thống kê đơn hàng' : 'Hiện thống kê đơn hàng' }}</span>
-        </button>
-        <div v-show="showRevenueChart">
-          <OrderPerformanceChart />
-        </div>
-      </div>
-
     </div>
     
     <!-- Layout 2 cột: Bộ lọc bên trái, Bảng bên phải -->
@@ -801,35 +785,6 @@
                         </div>
                       </div>
                     </div>
-                    
-                    <!-- Fallback calculation (khi chưa có backend data) -->
-                    <div v-else class="fallback-calculation">
-                      <div class="row">
-                        <div class="col-md-6">
-                          <div class="summary-item">
-                            <span>Tạm tính:</span>
-                            <strong>{{ formatCurrency(orderSubtotal) }}</strong>
-                          </div>
-                          <div class="summary-item">
-                            <span>Phí vận chuyển:</span>
-                            <strong>{{ formatCurrency(newOrder.shippingFee || 0) }}</strong>
-                          </div>
-                          <div class="summary-item" v-if="voucherDiscount > 0">
-                            <span>Giảm giá voucher:</span>
-                            <strong class="text-success">-{{ formatCurrency(voucherDiscount) }}</strong>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="summary-total">
-                            <span>Tổng cộng:</span>
-                            <strong class="text-primary fs-5">{{ formatCurrency(orderTotal) }}</strong>
-                          </div>
-                          <div class="small text-muted">
-                            * Giá chưa tính flash sale và voucher chính xác
-                          </div>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -1037,7 +992,6 @@
                 </div>
               </template>
 
-              <!-- Fallback: Display discount info if vouchers array is empty but discount exists -->
               <template v-else>
                 <!-- Product voucher discount -->
                 <div v-if="selectedOrder.voucherDiscountAmount > 0" class="voucher-item-detail">
@@ -1089,7 +1043,6 @@
                   <div class="voucher-description small text-muted">Giảm giá phí vận chuyển</div>
                 </div>
 
-                <!-- Total voucher discount fallback -->
                 <div v-if="selectedOrder.totalVoucherDiscount > 0 && 
                           !selectedOrder.voucherDiscountAmount && 
                           !selectedOrder.discountAmount &&
@@ -1146,7 +1099,6 @@
                 <span>-{{ formatCurrency(selectedOrder.discountShipping) }}</span>
               </div>
 
-              <!-- Fallback for alternative field names -->
               <div class="summary-row discount" v-if="selectedOrder.regularVoucherDiscount > 0 && !selectedOrder.voucherDiscountAmount">
                 <span>
                   <i class="bi bi-ticket-perforated me-1"></i>
@@ -1349,8 +1301,6 @@ import StatusLabel from '@/components/common/StatusLabel.vue';
 import OverviewCards from '@/views/admin/components-admin/statistics/OverviewCards.vue';
 import OrderPerformanceChart from '@/views/admin/components-admin/statistics/OrderPerformanceChart.vue';
 
-// Toggle for RevenueChart
-const showRevenueChart = ref(false);
 
 // Filter visibility
 const showFilter = ref(true);
@@ -1474,8 +1424,8 @@ const newOrder = ref({
   userId: '',
   staffId: '',
   addressId: '',
-  shippingFee: 30000,
-  orderType: window.location.pathname.includes('pos') ? 'COUNTER' : 'ONLINE', // Set mặc định theo context
+  shippingFee: 0, // Không set mặc định, tính theo API
+  orderType: window.location.pathname.includes('pos') ? 'COUNTER' : 'ONLINE',
   orderStatus: 'PENDING',
   notes: '',
   voucherIds: [],
@@ -1563,7 +1513,7 @@ const initializeData = async () => {
     if (usersResponse.data && Array.isArray(usersResponse.data.data)) {
       users.value = usersResponse.data.data.map(user => ({
         id: user.id,
-        name: user.name || 'Unknown'
+        name: user.name
       }));
     } else {
       console.warn('Unexpected users API response:', usersResponse);
@@ -1574,16 +1524,15 @@ const initializeData = async () => {
     if (booksResponse.data && booksResponse.data.content) {
       books.value = booksResponse.data.content.map(book => ({
         id: book.id,
-        title: book.title || book.name || book.bookName || 'Unknown',
+        title: book.title || book.name || book.bookName,
         normalPrice: book.normalPrice || book.price || 0,
         flashSalePrice: book.flashSalePrice || null,
         isFlashSale: book.isFlashSale || false
       }));
     } else if (booksResponse.data && Array.isArray(booksResponse.data)) {
-      // Fallback nếu API trả về array trực tiếp
       books.value = booksResponse.data.map(book => ({
         id: book.id,
-        title: book.title || book.name || book.bookName || 'Unknown',
+        title: book.title || book.name || book.bookName,
         normalPrice: book.normalPrice || book.price || 0,
         flashSalePrice: book.flashSalePrice || null,
         isFlashSale: book.isFlashSale || false
@@ -1593,12 +1542,6 @@ const initializeData = async () => {
       books.value = [];
     }
     
-    console.log('=== DEBUG: Loaded dropdown data ===');
-    console.log('Order statuses:', orderStatuses.value);
-    console.log('Order types:', orderTypes.value);
-    console.log('Users:', users.value);
-    console.log('Books:', books.value);
-    
   } catch (error) {
     console.error('Lỗi khi tải dữ liệu dropdown:', error);
     showToast('error', 'Lỗi khi tải dữ liệu dropdown!');
@@ -1607,8 +1550,6 @@ const initializeData = async () => {
 
 const loadUsersAndBooks = async () => {
   try {
-    console.log('=== DEBUG: Loading users and books for modal ===');
-    
     // Load users và books song song
     const [usersResponse, booksResponse] = await Promise.all([
       getUsersForOrder(),
@@ -1619,7 +1560,7 @@ const loadUsersAndBooks = async () => {
     if (usersResponse.data && Array.isArray(usersResponse.data.data)) {
       users.value = usersResponse.data.data.map(user => ({
         id: user.id,
-        name: user.name || 'Unknown'
+        name: user.name
       }));
     } else {
       console.warn('Unexpected users API response:', usersResponse);
@@ -1630,7 +1571,7 @@ const loadUsersAndBooks = async () => {
     if (booksResponse.data && Array.isArray(booksResponse.data)) {
       books.value = booksResponse.data.map(book => ({
         id: book.id,
-        title: book.name || book.title || 'Unknown',
+        title: book.name || book.title,
         normalPrice: book.normalPrice || 0,
         flashSalePrice: book.flashSalePrice || null,
         isFlashSale: book.isFlashSale || false
@@ -1639,12 +1580,6 @@ const loadUsersAndBooks = async () => {
       console.warn('Unexpected books API response:', booksResponse);
       books.value = [];
     }
-    
-    console.log('=== DEBUG: Loaded modal data ===');
-    console.log('Users count:', users.value.length);
-    console.log('Books count:', books.value.length);
-    console.log('Users:', users.value);
-    console.log('Books:', books.value.slice(0, 3)); // Log first 3 books only
     
   } catch (error) {
     console.error('Lỗi khi tải dữ liệu cho modal:', error);
@@ -1671,12 +1606,8 @@ const fetchOrders = async () => {
       params.endDate = new Date(endDateFilter.value + 'T23:59:59').getTime();
     }
     
-    console.log('=== DEBUG: Fetching orders with params ===');
-    console.log('Params:', params);
     
     const response = await getOrders(params);
-    console.log('=== DEBUG: Orders response ===');
-    console.log('Response:', response);
     
     if (response && response.data) {
       orders.value = response.data.content || [];
@@ -1686,90 +1617,18 @@ const fetchOrders = async () => {
       isLastPage.value = response.data.last || false;
       
       // ✅ Không cần load available transitions riêng nữa - đã có trong OrderResponse
-      console.log('=== DEBUG: Orders loaded with availableTransitions ===');
     }
     
   } catch (error) {
     console.error('Lỗi khi lấy danh sách đơn hàng:', error);
     
-    // Fallback data cho orders
-    const fallbackOrders = [
-      {
-        id: 1,
-        code: 'ORD123456ABC',
-        userId: 1,
-        userName: 'Nguyễn Văn A',
-        userEmail: 'nguyenvana@example.com',
-        orderStatus: 'PENDING',
-        orderStatusDisplay: 'Chờ xử lý',
-        totalAmount: 350000,
-        createdAt: Date.now() - 86400000, // 1 day ago
-        paymentMethod: 'COD'
-      },
-      {
-        id: 2,
-        code: 'ORD234567DEF',
-        userId: 2,
-        userName: 'Trần Thị B',
-        userEmail: 'tranthib@example.com',
-        orderStatus: 'CONFIRMED',
-        orderStatusDisplay: 'Đã xác nhận',
-        totalAmount: 520000,
-        createdAt: Date.now() - 172800000, // 2 days ago
-        paymentMethod: 'BANK_TRANSFER'
-      },
-      {
-        id: 3,
-        code: 'ORD345678GHI',
-        userId: 3,
-        userName: 'Lê Văn C',
-        userEmail: 'levanc@example.com',
-        orderStatus: 'DELIVERED',
-        orderStatusDisplay: 'Đã giao hàng',
-        totalAmount: 480000,
-        createdAt: Date.now() - 259200000, // 3 days ago
-        paymentMethod: 'COD'
-      },
-      {
-        id: 4,
-        code: 'ORD456789JKL',
-        userId: 4,
-        userName: 'Phạm Thị D',
-        userEmail: 'phamthid@example.com',
-        orderStatus: 'SHIPPED',
-        orderStatusDisplay: 'Đang giao hàng',
-        totalAmount: 290000,
-        createdAt: Date.now() - 345600000, // 4 days ago
-        paymentMethod: 'CREDIT_CARD'
-      },
-      {
-        id: 5,
-        code: 'ORD567890MNO',
-        userId: 5,
-        userName: 'Hoàng Văn E',
-        userEmail: 'hoangvane@example.com',
-        orderStatus: 'CANCELED',
-        orderStatusDisplay: 'Đã hủy',
-        totalAmount: 320000,
-        createdAt: Date.now() - 432000000, // 5 days ago
-        paymentMethod: 'COD'
-      }
-    ];
-    
-    orders.value = fallbackOrders;
+    orders.value = [];
     currentPage.value = 0;
-    totalPages.value = 1;
-    totalElements.value = fallbackOrders.length;
+    totalPages.value = 0;
+    totalElements.value = 0;
     isLastPage.value = true;
     
-    // ✅ Thêm availableTransitions vào fallback data để test UI
-    orders.value.forEach(order => {
-      if (!order.availableTransitions) {
-        order.availableTransitions = getAvailableStatusTransitionsFallback(order.orderStatus);
-      }
-    });
-    
-    showToast('warning', 'Đang sử dụng dữ liệu đơn hàng mẫu. Vui lòng kiểm tra kết nối backend!');
+    showToast('error', 'Không thể tải danh sách đơn hàng. Vui lòng thử lại!');
   }
 };
 
@@ -1807,10 +1666,6 @@ const openAddModal = async () => {
   
   newOrder.value.orderType = isInPOSMode ? 'COUNTER' : 'ONLINE'
   
-  console.log('=== Order Type Set ===')
-  console.log('Current URL:', window.location.pathname)
-  console.log('Is POS Mode:', isInPOSMode)
-  console.log('Order Type:', newOrder.value.orderType)
   
   addOrderModal.show();
 };
@@ -1826,8 +1681,8 @@ const resetForm = () => {
     userId: '',
     staffId: '',
     addressId: '',
-    shippingFee: 30000,
-    orderType: defaultOrderType, // Sử dụng loại đơn động
+    shippingFee: 0,
+    orderType: defaultOrderType,
     orderStatus: 'PENDING',
     notes: '',
     voucherIds: [],
@@ -1836,7 +1691,7 @@ const resetForm = () => {
   userAddresses.value = [];
   userVouchers.value = [];
   orderCalculation.value = null;
-  currentAddress.value = null; // ✅ RESET CURRENT ADDRESS
+  currentAddress.value = null;
   isCalculating.value = false;
   
   // Reset customer search
@@ -1860,8 +1715,6 @@ const onUserChange = async () => {
 };
 
 const onOrderTypeChange = () => {
-  console.log('=== Order Type Changed ===')
-  console.log('New order type:', newOrder.value.orderType)
   
   // Hiển thị thông báo cho user
   const typeText = newOrder.value.orderType === 'COUNTER' ? 'tại quầy' : 'online'
@@ -1875,13 +1728,10 @@ const onOrderTypeChange = () => {
 
 const loadUserAddresses = async (userId) => {
   try {
-    console.log('=== DEBUG: Loading addresses for userId:', userId);
     const response = await getUserAddressesDropdown(userId);
-    console.log('=== DEBUG: Address response:', response);
     
     // Directly use the addresses from API without transformation
     userAddresses.value = response || [];
-    console.log('=== DEBUG: Loaded addresses:', userAddresses.value);
     
     // Auto-select default address
     const defaultAddress = userAddresses.value.find(addr => addr.isDefault);
@@ -1897,9 +1747,7 @@ const loadUserAddresses = async (userId) => {
 };
 
 const onAddressChange = () => {
-  console.log('=== DEBUG: Address changed to ID:', newOrder.value.addressId);
   currentAddress.value = userAddresses.value.find(addr => addr.id == newOrder.value.addressId) || null;
-  console.log('=== DEBUG: Selected address:', currentAddress.value);
   calculateShippingFee();
   // ✅ MANUAL TRIGGER thay vì watch
   if (newOrder.value.userId && newOrder.value.items.length > 0) {
@@ -1913,30 +1761,8 @@ const loadUserVouchers = async (userId) => {
     userVouchers.value = response.data || [];
   } catch (error) {
     console.error('Lỗi khi lấy vouchers user:', error);
-    
-    // Fallback data cho vouchers
-    userVouchers.value = [
-      {
-        id: 1,
-        name: 'Giảm giá 50k',
-        discountAmount: 50000,
-        minimumOrderValue: 200000
-      },
-      {
-        id: 2,
-        name: 'Freeship toàn quốc',
-        discountAmount: 30000,
-        minimumOrderValue: 100000
-      },
-      {
-        id: 3,
-        name: 'Giảm 15% tối đa 100k',
-        discountAmount: 100000,
-        minimumOrderValue: 300000
-      }
-    ];
-    
-    showToast('warning', 'Đang sử dụng vouchers mẫu. Vui lòng kiểm tra kết nối backend!');
+    userVouchers.value = [];
+    showToast('error', 'Không thể tải danh sách voucher!');
   }
 };
 
@@ -1974,10 +1800,6 @@ const onBookChange = async (detail, index) => {
   detail.frontendPrice = selectedBook.normalPrice;
   detail.frontendFlashSalePrice = selectedBook.flashSalePrice;
   
-  console.log('=== DEBUG: onBookChange với API mới ===');
-  console.log('Selected book:', selectedBook);
-  console.log('Current price:', currentPrice);
-  console.log('Is flash sale:', detail.isFlashSale);
   
   calculateShippingFee();
   await calculateDetailTotal(detail);
@@ -1985,9 +1807,6 @@ const onBookChange = async (detail, index) => {
 
 // Watch for voucher changes to recalculate
 const onVoucherChange = (event) => {
-  console.log('=== DEBUG: onVoucherChange triggered ===');
-  console.log('Event:', event);
-  console.log('Current voucherIds:', newOrder.value.voucherIds);
   
   // Ensure voucherIds is always an array
   if (!Array.isArray(newOrder.value.voucherIds)) {
@@ -2109,15 +1928,11 @@ const calculateOrderPreview = async () => {
       voucherIds: newOrder.value.voucherIds || []
     };
 
-    console.log('=== DEBUG: Calculating order preview ===');
-    console.log('Calculation data:', calculationData);
 
     const response = await calculateOrder(calculationData);
     
     if (response && response.data) {
       orderCalculation.value = response.data;
-      console.log('=== DEBUG: Order calculation result ===');
-      console.log('Calculation:', orderCalculation.value);
       
       // ❌ KHÔNG CẬP NHẬT LẠI ITEMS ĐỂ TRÁNH VÒNG LẶP VÔ HẠN
       // if (orderCalculation.value.itemDetails) {
@@ -2139,12 +1954,12 @@ const calculateOrderPreview = async () => {
   } finally {
     isCalculating.value = false;
   }
-  }, 500); // ✅ Debounce 500ms
+  }, 500); //  Debounce 500ms
 };
 
 const calculateShippingFee = async () => {
   if (!currentAddress.value) {
-    newOrder.value.shippingFee = 30000; // Default shipping fee
+    newOrder.value.shippingFee = 0;
     return;
   }
   
@@ -2155,7 +1970,7 @@ const calculateShippingFee = async () => {
   const totalWeight = totalBooks * 200;
 
   if (!selectedAddress || totalWeight <= 0) {
-    newOrder.value.shippingFee = 30000;
+    newOrder.value.shippingFee = 0;
     return;
   }
 
@@ -2166,11 +1981,10 @@ const calculateShippingFee = async () => {
       to_district_id: selectedAddress.districtId,
       weight: totalWeight
     });
-    console.log("🚀 ~ calculateShippingFee ~ res:", res);
-    newOrder.value.shippingFee = res.total || 30000;
+    newOrder.value.shippingFee = res.total || 0;
   } catch (error) {
     console.error('Lỗi khi tính phí ship:', error);
-    newOrder.value.shippingFee = 30000; // Fallback
+    newOrder.value.shippingFee = 0;
   }
 };
 
@@ -2208,15 +2022,11 @@ const handleSubmitOrder = async () => {
       }))
     };
 
-    console.log('=== DEBUG: Submitting order data ===');
-    console.log('Order data:', orderData);
 
     let response;
     response = await createOrder(orderData);
     showToast('success', `Tạo đơn hàng thành công! Mã đơn: ${response.data?.orderCode || ''}`);
 
-    console.log('=== DEBUG: Order submit response ===');
-    console.log('Response:', response);
 
     addOrderModal.hide();
     resetForm();
@@ -2391,15 +2201,10 @@ const updateOrderStatus = async (orderId, newStatus, originalStatusParam = null)
     // Thêm tracking number nếu chuyển sang SHIPPED
     // Không cần nhập mã vận đơn khi chuyển trạng thái SHIPPED
 
-    console.log('=== DEBUG: Updating order status ===');
-    console.log('Order ID:', orderId);
-    console.log('Transition data:', transitionData);
 
     // Gọi API chuyển trạng thái mới theo tài liệu
     const response = await updateOrderStatusTransition(orderId, transitionData);
     
-    console.log('=== DEBUG: Status transition response ===');
-    console.log('Response:', response);
 
     // Hiển thị thông báo thành công với business impact
     let successMessage = `Đã chuyển trạng thái thành công!`;
@@ -2421,10 +2226,10 @@ const updateOrderStatus = async (orderId, newStatus, originalStatusParam = null)
     // Hiển thị toast nhỏ góc phải, tự động tắt sau 2 giây
     showToast('success', successMessage);
 
-    // ✅ Chỉ update UI khi API thành công
+    //  Chỉ update UI khi API thành công
     if (orderIndex !== -1) {
       orders.value[orderIndex].orderStatus = newStatus;
-      // ✅ Refresh lại đơn hàng để lấy availableTransitions mới từ backend
+      //  Refresh lại đơn hàng để lấy availableTransitions mới từ backend
       await refreshOrderAfterStatusChange(orderId);
     }
 
@@ -2530,47 +2335,8 @@ const getAvailableStatusTransitionsForOrder = (order) => {
   let transitions = [];
   if (order.availableTransitions && Array.isArray(order.availableTransitions)) {
     transitions = order.availableTransitions;
-  } else {
-    // Fallback về logic cũ nếu backend chưa cập nhật
-    transitions = getAvailableStatusTransitionsFallback(order.orderStatus);
   }
   return transitions;
-};
-
-
-//  LOGIC CŨ GIỮ LẠI LÀM FALLBACK
-const getAvailableStatusTransitionsFallback = (currentStatus) => {
-  // Business rules theo backend mới - Luồng chuyển trạng thái chuẩn
-  const transitions = {
-    'PENDING': ['CONFIRMED', 'CANCELED'],
-    'CONFIRMED': ['SHIPPED', 'CANCELED'], 
-    'SHIPPED': ['DELIVERED', 'DELIVERY_FAILED'],
-    'DELIVERED': ['REFUND_REQUESTED'],
-    'DELIVERY_FAILED': ['REDELIVERING', 'RETURNING_TO_WAREHOUSE'],
-    'REDELIVERING': ['DELIVERED', 'RETURNING_TO_WAREHOUSE'],
-    'RETURNING_TO_WAREHOUSE': ['GOODS_RETURNED_TO_WAREHOUSE'],
-    'CANCELED': ['REFUNDING'],
-    'REFUND_REQUESTED': ['REFUNDING'],
-    'REFUNDING': ['GOODS_RECEIVED_FROM_CUSTOMER'],
-    'GOODS_RECEIVED_FROM_CUSTOMER': ['GOODS_RETURNED_TO_WAREHOUSE'],
-    'GOODS_RETURNED_TO_WAREHOUSE': ['REFUNDED'],
-    'PARTIALLY_REFUNDED': ['REFUNDING'],
-    'REFUNDED': []
-  };
-  
-  const availableStatuses = transitions[currentStatus] || [];
-  
-  //  Format giống API response theo tài liệu
-  return availableStatuses.map(status => {
-    const statusObj = orderStatuses.value.find(s => s.value === status);
-    return {
-      targetStatus: status,
-      displayName: statusObj?.displayName || formatOrderStatus(status),
-      actionDescription: `Chuyển sang ${statusObj?.displayName || formatOrderStatus(status)}`,
-      requiresConfirmation: ['DELIVERY_FAILED', 'CANCELED', 'REFUNDING'].includes(status),
-      businessImpactNote: null
-    };
-  });
 };
 
 //  COMPATIBILITY: Giữ tên hàm cũ để không break template
@@ -2578,7 +2344,7 @@ const getAvailableStatusTransitions = (currentStatus, order = null) => {
   if (order) {
     return getAvailableStatusTransitionsForOrder(order);
   }
-  return getAvailableStatusTransitionsFallback(currentStatus);
+  return [];
 };
 
 //  HÀM REFRESH ORDER SAU KHI CHUYỂN TRẠNG THÁI
@@ -2591,8 +2357,6 @@ const refreshOrderAfterStatusChange = async (orderId) => {
       if (orderIndex !== -1) {
         // Cập nhật order với data mới (bao gồm availableTransitions)
         orders.value[orderIndex] = response.data;
-        console.log('=== DEBUG: Order refreshed with new transitions ===');
-        console.log('New transitions:', response.data.availableTransitions);
       }
     }
   } catch (error) {
@@ -2770,7 +2534,6 @@ const getCurrentSubtotal = () => {
     return orderCalculation.value.subtotal;
   }
   
-  // Fallback calculation if orderCalculation not available
   return newOrder.value.items.reduce((total, item) => {
     return total + ((item.quantity || 0) * (item.unitPrice || 0));
   }, 0);
@@ -2808,16 +2571,13 @@ const onProductInputFocus = async () => {
   // Gọi API ngay khi focus để load danh sách sản phẩm mặc định
   if (productSearchResults.value.length === 0) {
     try {
-      console.log('=== DEBUG: Loading initial product list on focus ===');
       
       // Gọi API với search rỗng để lấy danh sách mặc định
       const response = await getBooksDropdown({ search: '' });
-      console.log('=== DEBUG: Initial product load response:', response);
       
       productSearchResults.value = response.data || [];
       showProductSearchResults.value = productSearchResults.value.length > 0;
       
-      console.log('=== DEBUG: Initial product list loaded:', productSearchResults.value.length, 'products');
       
     } catch (error) {
       console.error('Error loading initial product list:', error);
@@ -2934,29 +2694,25 @@ const onCustomerSearch = async () => {
     
     try {
       isSearchingCustomers.value = true;
-      console.log('=== DEBUG: Searching customers with term:', searchTerm);
       const response = await searchUsersDropdown(searchTerm);
-      console.log('=== DEBUG: Customer search response:', response);
       
       // Fix: API response format is { status, message, data: [...] }
       if (response && response.data && response.data.data && Array.isArray(response.data.data)) {
         customerSearchResults.value = response.data.data.map(user => ({
           id: user.id,
-          name: user.name || 'Unknown',
+          name: user.name,
           email: user.email || ''
         }));
       } else if (response && response.data && Array.isArray(response.data)) {
-        // Fallback if API returns array directly
         customerSearchResults.value = response.data.map(user => ({
           id: user.id,
-          name: user.name || 'Unknown',
+          name: user.name,
           email: user.email || ''
         }));
       } else {
         customerSearchResults.value = [];
       }
       
-      console.log('=== DEBUG: Processed customer results:', customerSearchResults.value);
       
     } catch (error) {
       console.error('Error searching customers:', error);
@@ -2975,31 +2731,27 @@ const onCustomerInputFocus = async () => {
   if (customerSearchResults.value.length === 0) {
     try {
       isSearchingCustomers.value = true;
-      console.log('=== DEBUG: Loading initial customer list on focus ===');
       
       // Gọi API với search rỗng để lấy danh sách mặc định
       const response = await searchUsersDropdown('');
-      console.log('=== DEBUG: Initial customer load response:', response);
       
       // Fix: API response format is { status, message, data: [...] }
       if (response && response.data && response.data.data && Array.isArray(response.data.data)) {
         customerSearchResults.value = response.data.data.map(user => ({
           id: user.id,
-          name: user.name || 'Unknown',
+          name: user.name,
           email: user.email || ''
         }));
       } else if (response && response.data && Array.isArray(response.data)) {
-        // Fallback if API returns array directly
         customerSearchResults.value = response.data.map(user => ({
           id: user.id,
-          name: user.name || 'Unknown',
+          name: user.name,
           email: user.email || ''
         }));
       } else {
         customerSearchResults.value = [];
       }
       
-      console.log('=== DEBUG: Initial customer list loaded:', customerSearchResults.value);
       
     } catch (error) {
       console.error('Error loading initial customer list:', error);
@@ -3017,7 +2769,6 @@ const onCustomerInputFocus = async () => {
 };
 
 const selectCustomer = (customer) => {
-  console.log('=== DEBUG: Selecting customer:', customer);
   
   // Update form data
   newOrder.value.userId = customer.id;
@@ -3055,7 +2806,6 @@ const getBookDisplayName = (bookId) => {
     return `#${item.bookData.id} - ${item.bookData.name} (${item.bookData.bookCode})`;
   }
   
-  // Fallback to books array
   const book = books.value.find(b => b.id === bookId);
   return book ? `#${book.id} - ${book.title || book.name} (${book.bookCode || ''})` : '';
 };
@@ -3222,8 +2972,6 @@ const handleSaveAddress = async () => {
   
   isSavingAddress.value = true;
   try {
-    console.log('=== DEBUG: Saving address for userId:', newOrder.value.userId);
-    console.log('=== DEBUG: Address data:', addressForm.value);
     
     await addAddressAtAdmin(addressForm.value, newOrder.value.userId);
     showToast('success', 'Thêm địa chỉ thành công!');
@@ -3560,13 +3308,6 @@ watch([currentPage, pageSize], () => {
 .calculation-results .alert {
   margin-bottom: 15px;
   border-radius: 6px;
-}
-
-.fallback-calculation {
-  border: 2px dashed #ffc107;
-  border-radius: 8px;
-  padding: 15px;
-  background: #fffbf0;
 }
 
 /* Order Summary */
