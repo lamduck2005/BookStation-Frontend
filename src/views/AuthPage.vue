@@ -3,6 +3,7 @@ import router from '@/router'
 import { showAlert, showToast } from '@/utils/swalHelper'
 import { ref } from 'vue'
 import { register, login, forgotPassword } from '@/services/auth'
+import { validate } from '@/utils/validation.js'
 import QuickAdminLogin from './admin/components-admin/QuickAdminLogin.vue'
 
 // Reactive data cho form đăng nhập
@@ -102,14 +103,10 @@ const handleLogin = async (e) => {
 
         showToast('success', res.data.message || 'Đăng nhập thành công!');
 
-        // Điều hướng: tạm thời kiểm tra email bắt đầu bằng 'a' để vào admin
-        if (user?.roleName == "ADMIN") {
-            router.push('/admin');
-        } else if (user?.roleName == "CUSTOMER") {
+        if (user?.roleName == "CUSTOMER") {
             router.push('/');
         } else {
-            showToast('error', 'Bạn không có quyền truy cập!');
-            // router.push('/');
+            router.push('/admin/dashboard');
         }
     } catch (error) {
         showToast('error', error?.response?.data?.message || 'Sai email hoặc mật khẩu!');
@@ -117,56 +114,20 @@ const handleLogin = async (e) => {
 };
 
 const validateRegisterForm = () => {
-  // Kiểm tra tên
-  const name = registerForm.value.fullName.trim();
-  // Regex cho tên: chỉ cho phép chữ cái (cả tiếng Việt), khoảng trắng, không ký tự đặc biệt, độ dài 2-50
-  const nameRegex = /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểếỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸỳỵỷỹ\s]{2,50}$/u;
-  if (!name) {
-    showToast('error', 'Vui lòng nhập họ tên!');
-    return false;
-  }
-  if (name.length < 2 || name.length > 50) {
-    showToast('error', 'Tên phải từ 2 đến 50 ký tự!');
-    return false;
-  }
-  if (!nameRegex.test(name)) {
-    showToast('error', 'Tên không được chứa ký tự đặc biệt!');
-    return false;
-  }
+  const validations = [
+    validate.fullName(registerForm.value.fullName.trim()),
+    validate.email(registerForm.value.email.trim()),
+    validate.password(registerForm.value.password)
+  ];
 
-  // Kiểm tra email
-  const email = registerForm.value.email.trim();
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!email) {
-    showToast('error', 'Vui lòng nhập email!');
-    return false;
+  // Check if any validation failed
+  for (const validation of validations) {
+    if (validation !== null) {
+      showToast('error', validation);
+      return false;
+    }
   }
-  if (email.length > 50) {
-    showToast('error', 'Email tối đa 50 ký tự!');
-    return false;
-  }
-  if (!emailRegex.test(email)) {
-    showToast('error', 'Email không hợp lệ!');
-    return false;
-  }
-
-  // Kiểm tra mật khẩu
-  const password = registerForm.value.password;
-  // Regex: chỉ cho phép a-zA-Z0-9, không dấu cách, không ký tự đặc biệt, 6-20 ký tự
-  const passwordRegex = /^[a-zA-Z0-9]{6,20}$/;
-  if (!password) {
-    showToast('error', 'Vui lòng nhập mật khẩu!');
-    return false;
-  }
-  if (password.length < 6 || password.length > 20) {
-    showToast('error', 'Mật khẩu phải từ 6 đến 20 ký tự!');
-    return false;
-  }
-  if (!passwordRegex.test(password)) {
-    showToast('error', 'Mật khẩu chỉ được chứa chữ hoa, chữ thường và số, không dấu cách, không ký tự đặc biệt!');
-    return false;
-  }
-
+  
   return true;
 }
 
@@ -203,16 +164,10 @@ const handleForgotPassword = async (e) => {
     const email = forgotPasswordForm.value.email.trim()
 
     // Validation
-    if (!email) {
-        showToast('error', 'Vui lòng nhập email!')
-        return
-    }
-
-    // Kiểm tra email format (chỉ cho phép chữ, số, dấu chấm, gạch dưới)
-    const emailRegex = /^[a-zA-Z0-9._]+@[a-zA-Z0-9.-]+\.[A-Za-z]{1,}$/
-    if (!emailRegex.test(email)) {
-        showToast('error', 'Email không hợp lệ!')
-        return
+    const emailError = validate.email(email);
+    if (emailError !== null) {
+        showToast('error', emailError);
+        return;
     }
 
     try {
@@ -308,7 +263,7 @@ const handleForgotPassword = async (e) => {
                         <div class="login-form">
                             <div class="title">Đăng nhập</div>
                             <!-- Nút vào nhanh admin -->
-                            <QuickAdminLogin @quick-login="quickAdminLogin" />
+                            <!-- <QuickAdminLogin @quick-login="quickAdminLogin" /> -->
                             <form @submit="handleLogin">
                                 <div class="input-boxes">
                                     <div class="input-box">

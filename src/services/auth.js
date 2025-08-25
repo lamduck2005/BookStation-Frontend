@@ -11,3 +11,7 @@ export const login = async (req) => {
 export const forgotPassword = async (email) => {
     return await client.post(`/api/auth/forgot-password`, { email });
 };
+
+export const verifyEmail = async (token) => {
+  return await client.get(`/api/auth/verify-email?token=${token}`);
+};

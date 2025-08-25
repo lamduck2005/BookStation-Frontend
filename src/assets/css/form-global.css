@@ -201,6 +201,32 @@
   font-weight: 500;
 }
 
+/* ========== DISABLED FIELDS STYLING ========== */
+.form-control:disabled,
+.form-select:disabled {
+  background-color: #e9ecef !important;
+  color: #495057 !important;
+  border-color: #adb5bd !important;
+  cursor: not-allowed !important;
+  opacity: 0.8 !important;
+  font-style: italic !important;
+  border-style: dashed !important;
+  border-width: 2px !important;
+}
+
+.form-control:disabled::placeholder,
+.form-select:disabled::placeholder {
+  color: #6c757d !important;
+  font-style: italic !important;
+}
+
+.form-control:disabled:hover,
+.form-select:disabled:hover {
+  background-color: #dee2e6 !important;
+  border-color: #6c757d !important;
+}
+
+
 /* ========== RESPONSIVE ADJUSTMENTS ========== */
 @media (max-width: 768px) {
   .navbar .form-control {

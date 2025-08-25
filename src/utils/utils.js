@@ -65,6 +65,7 @@ export const getUserFullName = () => getUserFromToken()?.fullName;
 export const getUserRole = () => getUserFromToken()?.role;
 export const getUserPhone = () => getUserFromToken()?.phone;
 
+
 // Format currency function
 export const formatCurrency = (amount) => {
   if (!amount) return '0 ₫';
@@ -72,4 +73,37 @@ export const formatCurrency = (amount) => {
     style: 'currency',
     currency: 'VND'
   }).format(amount);
+};
+
+// Format date functions
+export const toDate = (timestamp) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('vi-VN', { 
+    year: 'numeric', 
+    month: '2-digit', 
+    day: '2-digit' 
+  });
+};
+
+export const toTime = (timestamp) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleTimeString('vi-VN', { hour12: false });
+};
+
+export const formatDateTime = (timestamp) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleString('vi-VN', { hour12: false });
+};
+
+export const formatDate = (timestamp) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('vi-VN');
 };

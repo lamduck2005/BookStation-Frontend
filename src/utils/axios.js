@@ -20,16 +20,4 @@ client.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// client.interceptors.response.use(
-//   (response) => response,
-//   (error) => {
-//     if(error.response && error.response.status === 401) {
-//       showToast('error', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
-//       clearAuth();
-//       window.location.href = '/auth';
-//     }
-//     return Promise.reject(error);
-//   }
-// );
-
 export default client;

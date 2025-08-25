@@ -67,6 +67,12 @@
                         >
                             <i class="bi bi-funnel"></i> Lọc
                         </button>
+                        <button
+                            class="btn btn-outline-success w-100 me-2"
+                            @click="redirectToErrorPage(404, 'Lỗi test')"
+                        >
+                            <i class="bi bi-funnel"></i> Lỗi test
+                        </button>
                     </div>
                     <div class="col-md-2">
                         <button

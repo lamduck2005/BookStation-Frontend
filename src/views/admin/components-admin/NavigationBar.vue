@@ -60,6 +60,11 @@
               <span>Cài đặt</span>
             </a> -->
 
+            <RouterLink to="/" class="user-dropdown">
+              <i class="bi bi-person-circle"></i>
+              <span>Giao diện người dùng</span>
+            </RouterLink>
+
             <div class="divider"></div>
             <a href="#" class="user-dropdown" @click="handleLogout">
               <i class='bxr  bx-arrow-out-right-square-half'></i>

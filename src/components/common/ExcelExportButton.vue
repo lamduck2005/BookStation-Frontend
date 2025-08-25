@@ -14,7 +14,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { showToast } from '@/utils/swalHelper.js';
+import { showQuickConfirm, showToast } from '@/utils/swalHelper.js';
 import { 
   exportRanks, exportBooks, exportUsers, exportOrders, exportReviews, 
   exportCategories, exportAuthors, exportPublishers, exportVouchers, 
@@ -98,6 +98,9 @@ const worksheetName = computed(() => {
 
 // Methods
 const fetchDataForExcel = async () => {
+  const result = await showQuickConfirm("Xác nhận tải xuống file Excel", "Bạn có chắc chắn muốn tải xuống file Excel với bảng này?", "info", "Tải xuống", "Hủy");
+  if (!result.isConfirmed) throw new Error("Từ chối tải xuống file Excel");
+
   try {
     const exportFunctions = {
       ranks: exportRanks,

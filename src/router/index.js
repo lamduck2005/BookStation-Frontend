@@ -59,14 +59,17 @@ import ReviewTestPage from "@/views/admin/views-admin/ReviewTestPage.vue";
 
 import ProductCatalog from "@/views/client/ProductCatalog.vue";
 
-
 import AuthPage from "@/views/AuthPage.vue";
 import { showToast } from "@/utils/swalHelper";
 import ResetPassword from "@/views/ResetPassword.vue";
+import ErrorPage from "@/views/ErrorPage.vue";
 
 import UserVoucher from "@/views/admin/views-admin/UserVoucher.vue";
 import POSView from "@/views/admin/views-admin/POSView.vue";
 import OrderFail from "@/views/client/OrderFail.vue";
+import { navigateToError } from "@/services/navigation";
+import { getUserFromToken, getUserRole } from "@/utils/utils";
+import VerifyEmailPage from "@/views/VerifyEmailPage.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -89,7 +92,7 @@ const router = createRouter({
         {
           path: "checkout",
           name: "checkout",
-          component: CheckoutPage
+          component: CheckoutPage,
         },
         {
           path: "checkout/:sessionId",
@@ -207,19 +210,7 @@ const router = createRouter({
           name: "product-catalog",
           component: ProductCatalog,
         },
-
       ],
-    },
-    // Trang auth, không thuộc parent nào
-    {
-      path: "/auth",
-      name: "auth",
-      component: AuthPage,
-    },
-    {
-      path: "/reset-password",
-      name: "reset-password",
-      component: ResetPassword,
     },
     // Admin routes
     {
@@ -240,7 +231,7 @@ const router = createRouter({
           name: "Đơn hàng",
           component: Order,
         },
-       
+
         {
           path: "refund-management",
           name: "Quản lý hoàn tiền",
@@ -377,18 +368,90 @@ const router = createRouter({
       ],
       // End - Admin routes
     },
+    // không thuộc parent nào
+    {
+      path: "/auth",
+      name: "auth",
+      component: AuthPage,
+    },
+    {
+      path: "/verify-email",
+      name: "verify-email",
+      component: VerifyEmailPage,
+    },
+    {
+      path: "/reset-password",
+      name: "reset-password",
+      component: ResetPassword,
+    },
+    {
+      path: "/error",
+      name: "error",
+      component: ErrorPage,
+    },
+    {
+      path: "/:pathMatch(.*)*",
+      name: "NotFound",
+      component: () => import("@/views/ErrorPage.vue"),
+      props: (route) => ({
+        status: 404,
+        message: `Trang "${route.params.pathMatch}" không tồn tại`,
+      }),
+    },
   ],
 });
 
-// tự động chuyển hướng về trang đăng nhập nếu token hết hạn
-const allowRoutes = ['/auth', '/reset-password']
+// Routes công khai - không cần đăng nhập
+const publicRoutes = [
+  "/", "/auth", "/verify-email", "/reset-password", "/error", "/product",
+  "/products", "/trend", "/policies", "/demo"
+];
 
+// Routes cần đăng nhập
+const protectedRoutes = [
+  "/cart", "/checkout", "/profile", "/admin", "/order"
+];
+
+const adminOnlyRoutes = "/admin";
 
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('authToken');
-  if (!token && !allowRoutes.includes(to.path)) {
-    showToast('error', 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
-    next('/auth');
+  const token = getUserFromToken();
+  const userRole = getUserRole();
+  console.log("🚀 ~ userRole:", userRole)
+  
+  // Kiểm tra xem route có phải là public không
+  const isPublicRoute = publicRoutes.includes(to.path);
+  if (isPublicRoute) {
+    next();
+    return;
+  }
+  
+  // Kiểm tra xem route có phải là protected không
+  const isProtectedRoute = protectedRoutes.some(route => 
+    to.path.startsWith(route)
+  );
+  
+  if (isProtectedRoute && !token) {
+    showToast("error", "Bạn cần đăng nhập để truy cập trang này!");
+    next({
+      path: '/error',
+      query: {
+        status: 401,
+        message: 'Bạn cần đăng nhập để truy cập trang này!'
+      }
+    });
+  } 
+  
+  // Kiểm tra xem route có phải là admin không
+  if (to.path.startsWith(adminOnlyRoutes) && userRole === "CUSTOMER") {
+    showToast("error", "Bạn không có quyền truy cập trang này!");
+    next({
+      path: '/error',
+      query: {
+        status: 403,
+        message: 'Bạn không có quyền truy cập trang này!'
+      }
+    });
   } else {
     next();
   }

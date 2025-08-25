@@ -173,11 +173,22 @@
                   <span>Đơn hàng</span>
                 </RouterLink>
 
+                <div v-if="userInfo?.role !== 'CUSTOMER'">
+                  <RouterLink to="/admin" class="user-dropdown">
+                    <i class="bi bi-gear"></i>
+                    <span>Giao diện quản lý</span>
+                  </RouterLink>
+                </div>
+
                 <div class="divider"></div>
-                <a href="#" class="user-dropdown" @click.prevent="handleLogout">
+                <a href="#" class="user-dropdown" @click.prevent="handleLogout" v-if="userInfo">
                   <i class="bi bi-box-arrow-right"></i>
                   <span>Đăng xuất</span>
                 </a>
+                <RouterLink to="/auth" class="user-dropdown" v-else>
+                  <i class="bi bi-box-arrow-in-right"></i>
+                  <span>Đăng nhập</span>
+                </RouterLink>
               </div>
             </div>
 

@@ -359,7 +359,8 @@ import {
   getReviewStats
 } from '@/services/admin/review.js';
 import { getBooksDropdown, getCustomersDropdown } from '@/services/admin/select.js';
-import { datetimeLocalToTimestamp } from '@/utils/utils.js';
+import { datetimeLocalToTimestamp, toDate, toTime, formatDateTime } from '@/utils/utils.js';
+import { validate } from '@/utils/validation.js';
 import OverviewStatsComponent from '@/components/common/OverviewStatsComponent.vue';
 import ExcelExportButton from '@/components/common/ExcelExportButton.vue';
 
@@ -445,24 +446,7 @@ const formSelected = reactive({ book: null, customer: null });
 watch(() => formSelected.book, (opt) => { formData.value.bookId = opt?.id || ''; });
 watch(() => formSelected.customer, (opt) => { formData.value.userId = opt?.id || ''; });
 
-// Helper to format datetime
-function formatDateTime(timestamp) {
-  if (!timestamp) return '';
-  const date = new Date(timestamp);
-  return date.toLocaleString('vi-VN', { hour12: false });
-}
 
-function toDate(timestamp) {
-  if (!timestamp) return '';
-  const date = new Date(timestamp);
-  return date.toLocaleDateString('vi-VN', { year: 'numeric', month: '2-digit', day: '2-digit' });
-}
-
-function toTime(timestamp) {
-  if (!timestamp) return '';
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString('vi-VN', { hour12: false });
-}
 
 function reviewStatusLabel(status) {
   return REVIEW_STATUS[status]?.label || status;
@@ -634,18 +618,21 @@ const openEditForm = (item) => {
 };
 
 const validateForm = () => {
-  if (!formData.value.bookId || !formData.value.userId || !formData.value.comment) {
-    showToast('error', 'Vui lòng điền đầy đủ thông tin!');
-    return false;
+  const validations = [
+    validate.required(formData.value.bookId, 'Sách'),
+    validate.required(formData.value.userId, 'Người đánh giá'),
+    validate.comment(formData.value.comment),
+    validate.rating(formData.value.rating)
+  ];
+
+  // Check if any validation failed
+  for (const validation of validations) {
+    if (validation !== null) {
+      showToast('error', validation);
+      return false;
+    }
   }
-  if (formData.value.comment.length < 3 || formData.value.comment.length > 500) {
-    showToast('error', 'Bình luận phải có ít nhất 3 ký tự và không được vượt quá 500 ký tự!');
-    return false;
-  }
-  if (formData.value.rating < 1 || formData.value.rating > 5) {
-    showToast('error', 'Đánh giá phải từ 1 đến 5!');
-    return false;
-  }
+  
   return true;
 };
 
