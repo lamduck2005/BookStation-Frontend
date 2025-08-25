@@ -49,9 +49,9 @@
               <input
                 type="email"
                 class="form-input"
-                placeholder="Nhập địa chỉ email"
-                v-model="editData.email"
-                :disabled="!isEditMode"
+                :value="editData.email"
+                disabled
+                readonly
               />
             </div>
 
@@ -84,12 +84,11 @@
               <label class="form-label">Trạng thái</label>
               <select
                 class="form-input"
-                v-model="editData.status"
-                disabled
-                
-                >
-                <option value="ACTIVE">Hoạt động</option>
-                <option value="INACTIVE">Không hoạt động</option>
+                v-model.number="editData.status"
+                :disabled="!isEditMode"
+              >
+                <option :value="1">Hoạt động</option>
+                <option :value="0">Không hoạt động</option>
               </select>
             </div>
 

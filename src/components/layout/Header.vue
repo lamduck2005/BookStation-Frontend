@@ -8,7 +8,11 @@
           <div class="col-auto">
             <div class="logo me-4">
               <RouterLink to="/">
-                <img src="/src/assets/img/sidebar-logo.png" alt="BookStation Logo" style="height: 50px; width: auto" />
+                <img
+                  src="/src/assets/img/sidebar-logo.png"
+                  alt="BookStation Logo"
+                  style="height: 50px; width: auto"
+                />
               </RouterLink>
             </div>
           </div>
@@ -16,7 +20,10 @@
           <!-- Categories dropdown (màu đỏ) -->
           <div
             class="col-auto bg-danger text-white d-flex align-items-center px-3 position-relative categories-dropdown"
-            style="height: 60px" @mouseenter="showCategoryMenu = true" @mouseleave="showCategoryMenu = false">
+            style="height: 60px"
+            @mouseenter="showCategoryMenu = true"
+            @mouseleave="showCategoryMenu = false"
+          >
             <div class="d-flex align-items-center gap-2">
               <i class="bi bi-grid-3x3-gap"></i>
               <span class="fw-bold d-none d-md-inline">Danh mục sản phẩm</span>
@@ -24,30 +31,55 @@
             </div>
 
             <!-- Mega menu dropdown -->
-            <div v-show="showCategoryMenu" class="category-mega-menu position-absolute bg-white shadow-lg border-0"
-              @mouseenter="showCategoryMenu = true" @mouseleave="showCategoryMenu = false">
+            <div
+              v-show="showCategoryMenu"
+              class="category-mega-menu position-absolute bg-white shadow-lg border-0"
+              @mouseenter="showCategoryMenu = true"
+              @mouseleave="showCategoryMenu = false"
+            >
               <div class="container-fluid p-4">
                 <div class="row g-4">
                   <!-- Lặp qua các danh mục chính -->
-                  <div v-for="(category, index) in categories" :key="category.id" :class="getColumnClass(index)">
+                  <div
+                    v-for="(category, index) in categories"
+                    :key="category.id"
+                    :class="getColumnClass(index)"
+                  >
                     <div class="category-section">
-                      <a href="#" @click.prevent="goToCategory(category.id, 'parent')" class="category-title-link">
+                      <a
+                        href="#"
+                        @click.prevent="goToCategory(category.id, 'parent')"
+                        class="category-title-link"
+                      >
                         <h6 class="category-title text-danger fw-bold mb-3">
-                          <i :class="getCategoryIcon(category.categoryName)" class="me-2"></i>
+                          <i
+                            :class="getCategoryIcon(category.categoryName)"
+                            class="me-2"
+                          ></i>
                           {{ category.categoryName.toUpperCase() }}
                         </h6>
                       </a>
                       <ul class="category-list list-unstyled">
                         <!-- Hiển thị danh mục con -->
-                        <li v-for="child in category.parentCategory" :key="child.id">
-                          <a href="#" class="category-link" @click.prevent="goToCategory(child.id, 'child')">
+                        <li
+                          v-for="child in category.parentCategory"
+                          :key="child.id"
+                        >
+                          <a
+                            href="#"
+                            class="category-link"
+                            @click.prevent="goToCategory(child.id, 'child')"
+                          >
                             {{ child.categoryName }}
                           </a>
                         </li>
                         <!-- Link xem tất cả -->
                         <li v-if="category.parentCategory.length > 0">
-                          <a href="#" class="category-link text-primary"
-                            @click.prevent="goToCategory(category.id, 'parent')">
+                          <a
+                            href="#"
+                            class="category-link text-primary"
+                            @click.prevent="goToCategory(category.id, 'parent')"
+                          >
                             Xem tất cả
                           </a>
                         </li>
@@ -61,7 +93,10 @@
                 </div>
 
                 <!-- Special categories section -->
-                <div class="row g-4 pt-3 border-top" v-if="categories.length > 0">
+                <div
+                  class="row g-4 pt-3 border-top"
+                  v-if="categories.length > 0"
+                >
                   <div class="col-md-6">
                     <div class="special-section">
                       <h6 class="fw-bold text-danger mb-2">
@@ -69,9 +104,15 @@
                         SÁCH MỚI ♥
                       </h6>
                       <div class="special-links">
-                        <a href="#" class="badge bg-danger text-white me-2 mb-1">SÁCH HOT</a>
-                        <a href="#" class="badge bg-danger text-white me-2 mb-1">MỚI NHẤT</a>
-                        <a href="#" class="badge bg-danger text-white me-2 mb-1">TRENDING</a>
+                        <a href="#" class="badge bg-danger text-white me-2 mb-1"
+                          >SÁCH HOT</a
+                        >
+                        <a href="#" class="badge bg-danger text-white me-2 mb-1"
+                          >MỚI NHẤT</a
+                        >
+                        <a href="#" class="badge bg-danger text-white me-2 mb-1"
+                          >TRENDING</a
+                        >
                       </div>
                     </div>
                   </div>
@@ -82,8 +123,12 @@
                         KHUYẾN MÃI ♥
                       </h6>
                       <div class="special-links">
-                        <a href="#" class="badge bg-warning text-dark me-2 mb-1">GIẢM GIÁ</a>
-                        <a href="#" class="badge bg-warning text-dark me-2 mb-1">FLASH SALE</a>
+                        <a href="#" class="badge bg-warning text-dark me-2 mb-1"
+                          >GIẢM GIÁ</a
+                        >
+                        <a href="#" class="badge bg-warning text-dark me-2 mb-1"
+                          >FLASH SALE</a
+                        >
                       </div>
                     </div>
                   </div>
@@ -93,31 +138,55 @@
           </div>
 
           <!-- Search bar (nền xám) -->
-          <div class="col bg-light d-flex align-items-center px-3 position-relative" style="height: 60px">
+          <div
+            class="col bg-light d-flex align-items-center px-3 position-relative"
+            style="height: 60px"
+          >
             <div class="input-group w-100">
-              <input v-model="searchText" type="text" class="form-control border-0 bg-transparent"
-                placeholder="Tìm kiếm sách, tác giả..." style="box-shadow: none" @keyup.enter="handleSearch"
-                @focus="showSearchResults = true" @blur="hideSearchResults" />
-              <button class="btn btn-danger px-4" type="button" @click="handleSearch">
+              <input
+                v-model="searchText"
+                type="text"
+                class="form-control border-0 bg-transparent"
+                placeholder="Tìm kiếm sách, tác giả..."
+                style="box-shadow: none"
+                @keyup.enter="handleSearch"
+                @focus="showSearchResults = true"
+                @blur="hideSearchResults"
+              />
+              <button
+                class="btn btn-danger px-4"
+                type="button"
+                @click="handleSearch"
+              >
                 <i class="bi bi-search"></i>
               </button>
             </div>
 
             <!-- Search Results Dropdown -->
-            <div v-if="showSearchResults && bookSearch.length > 0"
-              class="search-results-dropdown position-absolute bg-white shadow-lg border">
+            <div
+              v-if="showSearchResults && bookSearch.length > 0"
+              class="search-results-dropdown position-absolute bg-white shadow-lg border"
+            >
               <!-- Sản phẩm -->
               <div class="search-products p-3">
                 <h6 class="text-muted mb-3">
                   <i class="bi bi-book me-2"></i>Sản phẩm
                 </h6>
                 <div class="product-results">
-                  <div v-for="book in bookSearch.slice(0, 6)" :key="book.id"
-                    class="product-item d-flex align-items-center p-2 rounded mb-2" @click="goToProduct(book.bookId)">
-                    <img :src="book.images?.[0] ||
-                      book.imageUrl ||
-                      '/placeholder-book.jpg'
-                      " :alt="book.bookName" class="product-thumb me-3" />
+                  <div
+                    v-for="book in bookSearch"
+                    :key="book.id"
+                    class="product-item d-flex align-items-center p-2 rounded mb-2"
+                    @click="goToProduct(book.id)"
+                  >
+                    <img
+                      :src="
+                        book.images?.[0] ||
+                        book.imageUrl ||
+                        '/placeholder-book.jpg'
+                      "
+                      class="product-thumb me-3"
+                    />
                     <div class="product-info flex-grow-1">
                       <div class="product-name fw-medium">
                         {{ book.bookName }}
@@ -130,8 +199,14 @@
                 </div>
 
                 <!-- Xem thêm -->
-                <div class="text-center pt-2 border-top" v-if="bookSearch.length > 6">
-                  <button class="btn btn-outline-danger btn-sm" @click="viewAllResults">
+                <div
+                  class="text-center pt-2 border-top"
+                  v-if="bookSearch.length > 6"
+                >
+                  <button
+                    class="btn btn-outline-danger btn-sm"
+                    @click="viewAllResults"
+                  >
                     Xem thêm {{ bookSearch.length - 6 }} kết quả
                   </button>
                 </div>
@@ -140,21 +215,31 @@
           </div>
 
           <!-- Right side icons -->
-          <div class="col-auto d-flex align-items-center gap-3 px-3" style="height: 60px">
+          <div
+            class="col-auto d-flex align-items-center gap-3 px-3"
+            style="height: 60px"
+          >
             <!-- Notifications -->
             <NotificationComponent mode="dropdown" />
 
-            <RouterLink to="/cart"
-              class="d-flex flex-column align-items-center text-decoration-none text-dark position-relative">
+            <RouterLink
+              to="/cart"
+              class="d-flex flex-column align-items-center text-decoration-none text-dark position-relative"
+            >
               <i class="bi bi-cart3 fs-5"></i>
               <small class="text-muted" style="font-size: 11px">Giỏ hàng</small>
-              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger mt-2"
-                style="font-size: 9px">{{ cartItemsCount }}</span>
+              <span
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger mt-2"
+                style="font-size: 9px"
+                >{{ cartItemsCount }}</span
+              >
             </RouterLink>
 
             <div class="user-link position-relative">
-              <div class="d-flex flex-column align-items-center text-decoration-none text-dark">
-                <div class=" d-flex align-items-center justify-content-center">
+              <div
+                class="d-flex flex-column align-items-center text-decoration-none text-dark"
+              >
+                <div class="d-flex align-items-center justify-content-center">
                   <i class="bi bi-person-circle fs-5"></i>
                 </div>
                 <small class="text-muted" style="font-size: 11px">
@@ -181,7 +266,12 @@
                 </div>
 
                 <div class="divider"></div>
-                <a href="#" class="user-dropdown" @click.prevent="handleLogout" v-if="userInfo">
+                <a
+                  href="#"
+                  class="user-dropdown"
+                  @click.prevent="handleLogout"
+                  v-if="userInfo"
+                >
                   <i class="bi bi-box-arrow-right"></i>
                   <span>Đăng xuất</span>
                 </a>
@@ -193,7 +283,6 @@
             </div>
 
             <!-- Language -->
-
           </div>
         </div>
       </div>
@@ -202,29 +291,42 @@
     <!-- Navigation menu dưới -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white border-top">
       <div class="container-fluid px-3">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
           <span class="navbar-toggler-icon"></span>
         </button>
 
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav me-auto">
             <li class="nav-item">
-              <RouterLink class="nav-link fw-semibold text-dark" to="/">Trang chủ</RouterLink>
+              <RouterLink class="nav-link fw-semibold text-dark" to="/"
+                >Trang chủ</RouterLink
+              >
             </li>
             <li class="nav-item">
-              <a class="nav-link text-dark" href="#Trend">Xu hướng mua sẵm -Sách hot</a>
+              <a class="nav-link text-dark" href="#Trend"
+                >Xu hướng mua sẵm -Sách hot</a
+              >
             </li>
             <li class="nav-item">
               <a class="nav-link text-dark" href="#category-client">Danh mục</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link text-dark" href="#flashsale-product">Flash Sale</a>
+              <a class="nav-link text-dark" href="#flashsale-product"
+                >Flash Sale</a
+              >
             </li>
             <li class="nav-item">
               <a class="nav-link text-dark" href="#">Khuyến mãi</a>
             </li>
             <li class="nav-item">
-              <RouterLink class="nav-link text-dark" to="/policies">Chính sách</RouterLink>
+              <RouterLink class="nav-link text-dark" to="/policies"
+                >Chính sách</RouterLink
+              >
             </li>
           </ul>
 
@@ -434,20 +536,19 @@ const handleGetCartItemsCount = async () => {
   cartItemsCount.value = response.data.data;
 };
 
-
 // Lifecycle hook
 onMounted(() => {
   fetchCategory();
   userInfo.value = getUserFromToken();
   handleGetCartItemsCount();
-  
+
   // Lắng nghe event cập nhật cart count
-  window.addEventListener('updateCartCount', handleGetCartItemsCount);
+  window.addEventListener("updateCartCount", handleGetCartItemsCount);
 });
 
 onUnmounted(() => {
   // Dọn dẹp event listener
-  window.removeEventListener('updateCartCount', handleGetCartItemsCount);
+  window.removeEventListener("updateCartCount", handleGetCartItemsCount);
 });
 </script>
 
@@ -787,5 +888,46 @@ onUnmounted(() => {
 .product-price {
   font-size: 0.85rem;
   white-space: nowrap;
+}
+
+/* ========== PRODUCT RESULTS SCROLL STYLING ========== */
+.product-results {
+  max-height: 200px !important;
+  overflow-y: scroll !important; /* Force hiển thị scrollbar */
+  padding-right: 8px;
+}
+
+/* Custom scrollbar styling */
+.product-results::-webkit-scrollbar {
+  width: 6px;
+}
+
+.product-results::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.product-results::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.product-results::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Firefox scrollbar */
+.product-results {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+.search-products {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.search-products .product-results {
+  /* Styles cho danh sách bên trong */
 }
 </style>
