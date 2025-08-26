@@ -662,23 +662,32 @@
                     <option value="WORKBOOK">Sách bài tập</option>
                   </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4" style="position:relative;">
                   <label for="price" class="form-label enhanced-label">
                     Giá bán <span class="text-danger">*</span>
                   </label>
-                  <div class="input-group">
+                  <div class="input-group align-items-center">
                     <input
-                      type="number"
+                      type="text"
                       class="form-control enhanced-input"
                       id="price"
-                      v-model="newBook.price"
+                      :value="formatPriceInput(newBook.price)"
                       placeholder="0"
                       min="0"
                       step="1000"
                       required
+                      @focus="showPriceTooltip = true"
+                      @blur="showPriceTooltip = false"
+                      @input="onPriceInput($event)"
+                      inputmode="numeric"
                     />
                     <span class="input-group-text">VNĐ</span>
                   </div>
+                  <MoneyToWordsTooltip
+                    :value="newBook.price"
+                    :showTooltip="showPriceTooltip && newBook.price"
+                    style="top:-32px; left:0;"
+                  />
                 </div>
                 <div class="col-md-4">
                   <label for="stockQuantity" class="form-label enhanced-label">
@@ -1020,6 +1029,7 @@ import { getBooks, createBook, updateBook, getAuthorsDropdown, getCategoriesDrop
 import { getPublishersDropdown } from '@/services/admin/publisher';
 import Swal from 'sweetalert2';
 import { getAllCategoriesParentExcepNotNull, getAllCategoriesParentNotNull } from '@/services/admin/category';
+import MoneyToWordsTooltip from '@/components/common/MoneyToWordsTooltip.vue';
 
 // Filter collapse toggle
 const showFilter = ref(true);
@@ -1039,6 +1049,30 @@ const maxPrice = ref('');
 
 // Loading state
 const loading = ref(false);
+
+// Tooltip cho giá bán
+const showPriceTooltip = ref(false);
+
+// Hàm format số có dấu chấm
+function formatPriceInput(val) {
+  if (val === null || val === undefined || val === '') return '';
+  const num = Number((val + '').replace(/\D/g, ''));
+  if (isNaN(num)) return '';
+  return num.toLocaleString('vi-VN');
+}
+
+// Xử lý nhập giá, chỉ nhận số và cập nhật newBook.price là số
+function onPriceInput(e) {
+  let val = e.target.value.replace(/\D/g, '');
+  if (val === '') {
+    newBook.value.price = '';
+    e.target.value = '';
+    return;
+  }
+  newBook.value.price = Number(val);
+  e.target.value = formatPriceInput(val);
+  showPriceTooltip.value = true;
+}
 
 // New/Edit book form data
 const newBook = ref({
