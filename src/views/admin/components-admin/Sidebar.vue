@@ -139,12 +139,7 @@ const sidebarLinks = [
       },
     ],
   },
-  {
-    type: "link",
-    to: "/admin/notification",
-    icon: "bi bi-bell",
-    label: "Thông báo",
-  },
+  
   // {
   //   type: "action",
   //   icon: "bi bi-box-arrow-right",

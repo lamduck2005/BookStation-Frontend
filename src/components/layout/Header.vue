@@ -258,7 +258,7 @@
                   <span>Đơn hàng</span>
                 </RouterLink>
 
-                <div v-if="userInfo?.role !== 'CUSTOMER'">
+                <div v-if="userInfo?.role !== 'CUSTOMER' && userInfo?.role">
                   <RouterLink to="/admin" class="user-dropdown">
                     <i class="bi bi-gear"></i>
                     <span>Giao diện quản lý</span>
@@ -321,14 +321,11 @@
               >
             </li>
             <li class="nav-item">
-              <RouterLink class="nav-link text-dark fw-semibold" to="/minigame">
-                <i class="bi bi-gift-fill me-1 text-warning"></i>
+              <RouterLink class="nav-link text-dark" to="/minigame">
                 Minigame
               </RouterLink>
             </li>
-            <li class="nav-item">
-              <a class="nav-link text-dark" href="#">Khuyến mãi</a>
-            </li>
+            
             <li class="nav-item">
               <RouterLink class="nav-link text-dark" to="/policies"
                 >Chính sách</RouterLink

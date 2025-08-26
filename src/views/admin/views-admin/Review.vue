@@ -187,7 +187,7 @@
               <tr>
                 <th style="width: 40px">#</th>
                 <th style="width: 300px">Sách</th>
-                <th style="width: 120px">Chức năng</th>
+                <th style="width: 150px">Chức năng</th>
                 <th style="width: 120px">Trạng thái</th>
                 <th style="width: 180px">Người đánh giá</th>
                 <th style="width: 100px">Đánh giá</th>
@@ -209,12 +209,21 @@
                 <td class="py-3 fw-bold">{{ item.bookName }}</td>
                 <td class="py-3">
                   <span class="tooltip-wrapper">
+                    <button
+                      class="btn btn-sm btn-outline-secondary action-btn"
+                      @click="viewReview(item)"
+                    >
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <span class="tooltip-bubble">Xem chi tiết</span>
+                  </span>
+                  <span class="tooltip-wrapper ms-2">
                     <EditButton @click="openEditForm(item)" />
                     <span class="tooltip-bubble">Chỉnh sửa</span>
                   </span>
                   <span class="tooltip-wrapper ms-2">
                     <button class="btn btn-sm btn-outline-secondary" @click="handleStatusChange(item)">
-                      <i :class="item.reviewStatus === 'APPROVED' ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+                      <i :class="item.reviewStatus === 'APPROVED' ? 'bi bi-ban' : 'bi bi-check-circle'"></i>
                     </button>
                     <span class="tooltip-bubble">{{ item.reviewStatus === 'APPROVED' ? 'Ẩn đánh giá' : 'Hiển thị đánh giá'}}</span>
                   </span>
@@ -230,8 +239,8 @@
                 </td>
                 <td class="py-3">{{ item.rating }} <i class="fas fa-star text-warning"></i></td>
                 <td class="py-3 text-center">
-                  <span v-if="item.isPositive === true" class="text-success"><i class="bi bi-hand-thumbs-up-fill"></i> Có</span>
-                  <span v-else-if="item.isPositive === false" class="text-danger"><i class="bi bi-hand-thumbs-down-fill"></i> Không</span>
+                  <span v-if="item.isPositive === true" class="text-success">Tích cực</span>
+                  <span v-else-if="item.isPositive === false" class="text-danger">Không tích cực</span>
                   <span v-else class="text-muted">Không có dữ liệu</span>
                 </td>
                 <td class="py-3">{{ item.comment }}</td>
@@ -342,6 +351,100 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal chi tiết Review -->
+    <div
+      v-if="showDetailModal"
+      class="modal fade show"
+      tabindex="-1"
+      style="display: block; background: rgba(0, 0, 0, 0.2); z-index: 1050"
+    >
+      <div class="modal-dialog" style="max-width: 600px">
+        <div class="modal-content">
+          <div class="modal-header form-modal-header">
+            <h5 class="modal-title">
+              <i class="bi bi-info-circle me-2"></i>
+              Chi tiết đánh giá
+            </h5>
+            <button
+              type="button"
+              class="custom-close-btn"
+              @click="closeDetailModal"
+            >
+              <i class="bx bx-x-circle"></i>
+            </button>
+          </div>
+          <div class="modal-body form-modal-body">
+            <table class="detail-info-table">
+              <tbody>
+                <tr>
+                  <td class="detail-label">ID</td>
+                  <td class="detail-value">{{ detailReview.id }}</td>
+                </tr>
+                <tr>
+                  <td class="detail-label">Sách</td>
+                  <td class="detail-value">{{ detailReview.bookName || "Chưa có dữ liệu" }}</td>
+                </tr>
+                <tr>
+                  <td class="detail-label">Người đánh giá</td>
+                  <td class="detail-value">{{ detailReview.userName || "Chưa có dữ liệu" }}</td>
+                </tr>
+                <tr>
+                  <td class="detail-label">Email</td>
+                  <td class="detail-value">{{ detailReview.userEmail || "Chưa có dữ liệu" }}</td>
+                </tr>
+                <tr>
+                  <td class="detail-label">Đánh giá</td>
+                  <td class="detail-value">
+                    {{ detailReview.rating }} <i class="fas fa-star text-warning"></i>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="detail-label">Nội dung</td>
+                  <td class="detail-value">{{ detailReview.comment || "Chưa có dữ liệu" }}</td>
+                </tr>
+                <tr>
+                  <td class="detail-label">Đánh giá tích cực</td>
+                  <td class="detail-value">
+                    <span v-if="detailReview.isPositive === true" class="text-success">Tích cực</span>
+                    <span v-else-if="detailReview.isPositive === false" class="text-danger">Không tích cực</span>
+                    <span v-else class="text-muted">Không có dữ liệu</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="detail-label">Trạng thái</td>
+                  <td class="detail-value">
+                    <StatusLabel :status-text="reviewStatusLabel(detailReview.reviewStatus)"
+                      :status-class="reviewStatusClass(detailReview.reviewStatus)" />
+                  </td>
+                </tr>
+                <tr>
+                  <td class="detail-label">Ngày đánh giá</td>
+                  <td class="detail-value">
+                    {{ toTime(detailReview.reviewDate) }} - {{ toDate(detailReview.reviewDate) }}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="detail-label">Ngày cập nhật</td>
+                  <td class="detail-value">
+                    {{ toTime(detailReview.updatedAt) }} - {{ toDate(detailReview.updatedAt) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn form-btn-secondary"
+              @click="closeDetailModal"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script setup>
@@ -439,13 +542,25 @@ const formData = ref({
   isPositive: null
 });
 
+// Modal chi tiết review
+const showDetailModal = ref(false);
+const detailReview = ref({
+  id: '',
+  bookId: '',
+  bookName: '',
+  userId: '',
+  userName: '',
+  userEmail: '',
+  rating: 0,
+  comment: '',
+  isPositive: null,
+  reviewDate: '',
+  reviewStatus: '',
+  updatedAt: ''
+});
+
 // Selected cho form (khác filter)
 const formSelected = reactive({ book: null, customer: null });
-
-// Đồng bộ selected form -> formData ids
-watch(() => formSelected.book, (opt) => { formData.value.bookId = opt?.id || ''; });
-watch(() => formSelected.customer, (opt) => { formData.value.userId = opt?.id || ''; });
-
 
 
 function reviewStatusLabel(status) {
@@ -581,6 +696,31 @@ const handleStatusChange = async (item) => {
   } catch (error) {
     showToast('error', error.response?.data?.message || 'Có lỗi xảy ra!');
   }
+};
+
+// Hàm xem chi tiết review
+const viewReview = (review) => {
+  detailReview.value = { ...review };
+  showDetailModal.value = true;
+};
+
+// Hàm đóng modal chi tiết
+const closeDetailModal = () => {
+  showDetailModal.value = false;
+  detailReview.value = {
+    id: '',
+    bookId: '',
+    bookName: '',
+    userId: '',
+    userName: '',
+    userEmail: '',
+    rating: 0,
+    comment: '',
+    isPositive: null,
+    reviewDate: '',
+    reviewStatus: '',
+    updatedAt: ''
+  };
 };
 
 // Modal actions
@@ -732,4 +872,5 @@ onMounted(() => {
 <style scoped>
 @import '@/assets/css/admin-global.css';
 @import '@/assets/css/form-global.css';
+@import '@/assets/css/form-detail-global.css';
 </style>

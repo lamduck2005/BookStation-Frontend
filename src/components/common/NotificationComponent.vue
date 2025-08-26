@@ -1,5 +1,5 @@
 <template>
-    <div class="notification-component" :class="componentClasses">
+    <div class="notification-component" :class="componentClasses" hidden>
         <!-- Notification Bell Icon (chỉ hiển thị khi mode là dropdown) -->
         <div v-if="mode === 'dropdown'" 
              class="notification-trigger d-flex flex-column align-items-center text-decoration-none text-dark position-relative" 

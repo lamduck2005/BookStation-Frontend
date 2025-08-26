@@ -14,7 +14,7 @@
           <button
             class="btn btn-sm btn-outline-secondary"
             type="button"
-            @click="toggleFilter"
+            @click="handleToggleFilter"
             :aria-expanded="showFilter"
           >
             <i
@@ -39,7 +39,6 @@
               class="form-control"
               placeholder="Nhập mã voucher..."
               v-model="searchQuery"
-              @input="onFilterChange"
             />
           </div>
           <!-- ✅ BỎ dropdown trạng thái -->
@@ -53,33 +52,45 @@
               class="form-control"
               placeholder="Nhập tên voucher..."
               v-model="nameFilter"
-              @input="onFilterChange"
             />
           </div>
-          <div class="col-md-6">
-            <label class="form-label">
-              <i class="bi bi-tag me-1"></i>
-              Loại voucher
-            </label>
-            <select
-              class="form-select"
-              v-model="voucherTypeFilter"
-              @change="onFilterChange"
-            >
-              <option value="">Tất cả loại</option>
-              <option value="PERCENTAGE">Phần trăm</option>
-              <option value="FIXED_AMOUNT">Số tiền</option>
-            </select>
-          </div>
+                     <div class="col-md-6">
+             <label class="form-label">
+               <i class="bi bi-tag me-1"></i>
+               Danh mục voucher
+             </label>
+             <select
+               class="form-select"
+               v-model="voucherCategoryFilter"
+             >
+               <option value="">Tất cả danh mục</option>
+               <option value="NORMAL">Giảm giá sản phẩm</option>
+               <option value="SHIPPING">Giảm phí vận chuyển</option>
+             </select>
+           </div>
+           <div class="col-md-6">
+             <label class="form-label">
+               <i class="bi bi-percent me-1"></i>
+               Cách tính giảm
+             </label>
+             <select
+               class="form-select"
+               v-model="discountTypeFilter"
+             >
+               <option value="">Tất cả cách tính</option>
+               <option value="PERCENTAGE">Phần trăm</option>
+               <option value="FIXED_AMOUNT">Số tiền</option>
+             </select>
+           </div>
         </div>
         <div class="row g-3 pt-3 d-flex justify-content-center">
           <div class="col-md-1">
-            <button class="btn btn-success w-100 me-2" @click="onFilterChange">
+            <button class="btn btn-success w-100 me-2" @click="handleApplyFilter">
               <i class="bi bi-funnel"></i> Lọc
             </button>
           </div>
           <div class="col-md-2">
-            <button class="btn btn-secondary w-100" @click="resetFilter">
+            <button class="btn btn-secondary w-100" @click="handleClearFilter">
               <i class="bi bi-x-circle me-1"></i> Xóa bộ lọc
             </button>
           </div>
@@ -101,7 +112,7 @@
         <div class="d-flex gap-2">
           <button
             class="btn btn-outline-info btn-sm py-2"
-            @click="fetchVouchers"
+            @click="handleFetchVouchers"
             :disabled="loading"
           >
             <i class="bi bi-arrow-repeat me-1"></i> Làm mới
@@ -116,7 +127,7 @@
           <button
             class="btn btn-primary btn-sm py-2"
             style="background-color: #33304e; border-color: #33304e"
-            @click="openAddVoucher"
+            @click="handleOpenAddVoucher"
           >
             <i class="bi bi-plus-circle me-1"></i> Thêm mới
           </button>
@@ -137,19 +148,17 @@
             <thead>
               <tr>
                 <th style="width: 40px">STT</th>
+                <th style="width: 120px">Thao tác</th>
                 <th style="width: 180px">MÃ VOUCHER</th>
                 <th style="width: 250px">TÊN VOUCHER</th>
                 <th style="width: 150px">NGÀY BẮT ĐẦU</th>
                 <th style="width: 150px">NGÀY KẾT THÚC</th>
-                <!-- ✅ BỎ cột TRẠNG THÁI -->
                 <th style="width: 120px">LƯỢT DÙNG</th>
-                <th style="width: 150px">CHỨC NĂNG</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="listVoucher.length === 0">
-                <!-- ✅ Giảm colspan từ 8 xuống 7 -->
-                <td colspan="7" class="text-center py-4 text-muted">
+                <td colspan="6" class="text-center py-4 text-muted">
                   <i class="bi bi-inbox me-2"></i>
                   Không có dữ liệu
                 </td>
@@ -158,11 +167,30 @@
                 v-else
                 v-for="(voucher, index) in listVoucher"
                 :key="voucher.id"
-                @click="showDetail(voucher)"
-                class="cursor-pointer align-middle"
+                class="align-middle"
               >
                 <td class="py-3">{{ currentPage * pageSize + index + 1 }}</td>
-                <td class="py-3 fw-bold" @click.stop>
+                <td class="py-3">
+                  <div class="d-flex gap-2">
+                    <span class="tooltip-wrapper">
+                      <button
+                        class="btn btn-sm btn-outline-secondary"
+                        @click="handleShowDetail(voucher)"
+                      >
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <span class="tooltip-bubble">Xem chi tiết</span>
+                    </span>
+                    <span class="tooltip-wrapper">
+                      <EditButton
+                        :tooltip="'Cập nhật voucher ' + voucher.code"
+                        @click="handleOpenEditVoucher(voucher)"
+                      />
+                      <span class="tooltip-bubble">Chỉnh sửa</span>
+                    </span>
+                  </div>
+                </td>
+                <td class="py-3 fw-bold">
                   <router-link
                     :to="`/admin/userVoucher/${voucher.id}`"
                     class="text-decoration-none"
@@ -179,13 +207,13 @@
                       class="text-muted d-block mt-1"
                       v-if="voucher.voucherCategory"
                     >
-                      {{
-                        voucher.voucherCategory === "NORMAL"
-                          ? "Thường"
-                          : voucher.voucherCategory === "SHIPPING"
-                          ? "Ship"
-                          : voucher.voucherCategory
-                      }}
+                                             {{
+                         voucher.voucherCategory === "NORMAL"
+                           ? "Giảm giá sản phẩm"
+                           : voucher.voucherCategory === "SHIPPING"
+                           ? "Giảm phí vận chuyển"
+                           : voucher.voucherCategory
+                       }}
                     </small>
                   </div>
                 </td>
@@ -201,26 +229,6 @@
                   </span>
                   <span v-else class="badge bg-danger">Hết lượt</span>
                 </td>
-                <td class="py-3">
-                  <div @click.stop class="d-flex gap-2">
-                    <span class="tooltip-wrapper">
-                      <button
-                        class="btn btn-sm btn-outline-secondary"
-                        @click="showDetail(voucher)"
-                      >
-                        <i class="bi bi-eye"></i>
-                      </button>
-                      <span class="tooltip-bubble">Xem chi tiết</span>
-                    </span>
-                    <span class="tooltip-wrapper">
-                      <EditButton
-                        :tooltip="'Cập nhật voucher ' + voucher.code"
-                        @click="openEditVoucher(voucher)"
-                      />
-                      <span class="tooltip-bubble">Chỉnh sửa</span>
-                    </span>
-                  </div>
-                </td>
               </tr>
             </tbody>
           </table>
@@ -235,8 +243,8 @@
             :page-size="pageSize"
             :items-per-page-options="itemsPerPageOptions"
             :total-elements="totalElements"
-            @prev="prevPage"
-            @next="nextPage"
+            @prev="handlePrevPage"
+            @next="handleNextPage"
             @update:pageSize="handlePageSizeChange"
           />
         </div>
@@ -260,7 +268,7 @@
             <button
               type="button"
               class="custom-close-btn"
-              @click="closeFormModal"
+              @click="handleCloseFormModal"
               aria-label="Đóng"
               title="Đóng"
             >
@@ -268,19 +276,28 @@
             </button>
           </div>
           <div class="modal-body form-modal-body">
-            <form @submit.prevent="submitVoucher">
+            <form @submit.prevent="handleSubmitVoucher">
               <div class="row">
-                <div class="mb-2 col-6">
-                  <label class="form-label">
-                    Mã voucher <span style="color: red">*</span>
-                  </label>
-                  <input
-                    v-model="formVoucher.code"
-                    class="form-control"
-                    placeholder="Nhập mã voucher"
-                    required
-                  />
-                </div>
+                                 <div class="mb-2 col-6">
+                   <label class="form-label">
+                     Mã voucher <span style="color: red">*</span>
+                     <small v-if="isEdit" class="text-muted ms-2"
+                       >(Không thể thay đổi)</small
+                     >
+                   </label>
+                   <input
+                     v-model="formVoucher.code"
+                     class="form-control"
+                     :class="{ 'bg-light': isEdit }"
+                     :disabled="isEdit"
+                     placeholder="Nhập mã voucher"
+                     required
+                   />
+                   <div v-if="isEdit" class="form-text text-warning">
+                     <i class="bi bi-exclamation-triangle me-1"></i>
+                     Mã voucher không thể thay đổi sau khi tạo
+                   </div>
+                 </div>
                 <div class="mb-2 col-6">
                   <label class="form-label">
                     Tên voucher <span style="color: red">*</span>
@@ -307,33 +324,42 @@
                     required
                   >
                     <option value="">Chọn loại voucher</option>
-                    <option value="NORMAL">Thường</option>
-                    <option value="SHIPPING">Giảm Giá SHIPPING</option>
+                                         <option value="NORMAL">Giảm giá sản phẩm</option>
+                     <option value="SHIPPING">Giảm phí vận chuyển</option>
                   </select>
                   <div v-if="isEdit" class="form-text text-warning">
                     <i class="bi bi-exclamation-triangle me-1"></i>
                     Loại voucher không thể thay đổi sau khi tạo
                   </div>
                 </div>
-                <div class="mb-2 col-6">
-                  <label class="form-label">
-                    Kiểu giảm giá <span style="color: red">*</span>
-                  </label>
-                  <select
-                    v-model="formVoucher.discountType"
-                    class="form-select"
-                    required
-                  >
-                    <option value="">Chọn kiểu giảm giá</option>
-                    <option
-                      value="PERCENTAGE"
-                      v-if="formVoucher.voucherCategory === 'NORMAL'"
-                    >
-                      Phần trăm
-                    </option>
-                    <option value="FIXED_AMOUNT">Số tiền</option>
-                  </select>
-                </div>
+                                 <div class="mb-2 col-6">
+                   <label class="form-label">
+                     Kiểu giảm giá <span style="color: red">*</span>
+                     <small v-if="isEdit" class="text-muted ms-2"
+                       >(Không thể thay đổi)</small
+                     >
+                   </label>
+                   <select
+                     v-model="formVoucher.discountType"
+                     class="form-select"
+                     :class="{ 'bg-light': isEdit }"
+                     :disabled="isEdit"
+                     required
+                   >
+                     <option value="">Chọn kiểu giảm giá</option>
+                     <option
+                       value="PERCENTAGE"
+                       v-if="formVoucher.voucherCategory === 'NORMAL'"
+                     >
+                       Phần trăm
+                     </option>
+                     <option value="FIXED_AMOUNT">Số tiền</option>
+                   </select>
+                   <div v-if="isEdit" class="form-text text-warning">
+                     <i class="bi bi-exclamation-triangle me-1"></i>
+                     Kiểu giảm giá không thể thay đổi sau khi tạo
+                   </div>
+                 </div>
                 <div class="mb-2 col-6">
                   <label class="form-label">
                     <span style="color: red">*</span> Phần trăm giảm (%)
@@ -459,14 +485,14 @@
             <button
               type="button"
               class="btn form-btn-secondary"
-              @click="closeFormModal"
+              @click="handleCloseFormModal"
             >
               Hủy
             </button>
             <button
               type="button"
               class="btn form-btn-primary"
-              @click="submitVoucher"
+              @click="handleSubmitVoucher"
             >
               {{ isEdit ? "Cập nhật" : "Thêm mới" }}
             </button>
@@ -492,7 +518,7 @@
             <button
               type="button"
               class="custom-close-btn"
-              @click="closeDetailModal"
+              @click="handleCloseDetailModal"
               aria-label="Đóng"
               title="Đóng"
             >
@@ -518,9 +544,9 @@
                 <div class="form-control bg-light">
                   {{
                     selectedVoucher.voucherCategory === "NORMAL"
-                      ? "Thường"
+                      ? "Giảm giá sản phẩm"
                       : selectedVoucher.voucherCategory === "SHIPPING"
-                      ? "Giảm Giá SHIPPING"
+                      ? "Giảm phí vận chuyển"
                       : "Trống"
                   }}
                 </div>
@@ -579,7 +605,7 @@
             <button
               type="button"
               class="btn form-btn-secondary"
-              @click="closeDetailModal"
+              @click="handleCloseDetailModal"
             >
               Đóng
             </button>
@@ -590,14 +616,12 @@
   </div>
 </template>
 
-<script>
-import EditButton from "@/components/common/EditButton.vue";
-import DeleteButton from "@/components/common/DeleteButton.vue";
-import Pagination from "@/components/common/Pagination.vue";
-import OverviewStatsComponent from "@/components/common/OverviewStatsComponent.vue";
-import { getUserId, getUserFullName } from "@/utils/utils";
-import { Modal } from "bootstrap";
-import { ref, computed, watch, onMounted } from "vue";
+<script setup>
+import { ref, computed, onMounted, watch } from "vue";
+import { showToast, showQuickConfirm } from "@/utils/swalHelper.js";
+import { validate } from "@/utils/validation.js";
+import { toDate, toTime } from "@/utils/utils.js";
+// ========== IMPORT SERVICES ==========
 import {
   getVouchers,
   createVouchers,
@@ -605,512 +629,334 @@ import {
   deleteVouchers,
   getVoucherStats,
 } from "@/services/admin/voucher";
-import Swal from "sweetalert2";
-import { showToast } from "@/utils/swalHelper";
+
+// ========== IMPORT COMPONENTS ==========
+import Pagination from "@/components/common/Pagination.vue";
+import EditButton from "@/components/common/EditButton.vue";
+import DeleteButton from "@/components/common/DeleteButton.vue";
+import OverviewStatsComponent from "@/components/common/OverviewStatsComponent.vue";
 import ExcelExportButton from "@/components/common/ExcelExportButton.vue";
 
-export default {
-  components: {
-    Pagination,
-    EditButton,
-    DeleteButton,
-    OverviewStatsComponent,
-    ExcelExportButton,
-    showToast,
-  },
-  setup() {
-    const currentPage = ref(0);
-    const pageSize = ref(10);
-    const totalElements = ref(0);
-    const totalPages = ref(1);
-    const isLastPage = computed(
-      () => currentPage.value >= totalPages.value - 1
-    );
-    const voucherChannel = new BroadcastChannel("voucher-status");
+// ========== REACTIVE VARIABLES ==========
+const currentPage = ref(0);
+const pageSize = ref(10);
+const totalElements = ref(0);
+const totalPages = ref(1);
+const isLastPage = computed(() => currentPage.value >= totalPages.value - 1);
+const itemsPerPageOptions = ref([5, 10, 20, 50]);
 
-    const itemsPerPageOptions = ref([5, 10, 20, 50]);
+const listVoucher = ref([]);
+const searchQuery = ref("");
+const nameFilter = ref("");
+const voucherCategoryFilter = ref("");
+const discountTypeFilter = ref("");
+const showDetailModal = ref(false);
+const selectedVoucher = ref(null);
+const showFormModal = ref(false);
+const isEdit = ref(false);
+const loading = ref(false);
+const showFilter = ref(true);
 
-    const listVoucher = ref([]);
+const formVoucher = ref({
+  id: null,
+  code: "",
+  name: "",
+  description: "",
+  voucherCategory: "",
+  discountType: "",
+  discountPercentage: "",
+  discountAmount: "",
+  startTime: "",
+  endTime: "",
+  minOrderValue: "",
+  maxDiscountValue: "",
+  usageLimit: "",
+  usedCount: "",
+  usageLimitPerUser: "",
+  createdBy: "",
+  updatedBy: "",
+});
 
-    const searchQuery = ref("");
-    const nameFilter = ref("");
-    const voucherTypeFilter = ref("");
-    const showDetailModal = ref(false);
-    const selectedVoucher = ref(null);
-    const showFormModal = ref(false);
-    const isEdit = ref(false);
-    const formVoucher = ref({
-      id: null,
-      code: "",
-      name: "",
-      description: "",
-      voucherCategory: "",
-      discountType: "",
-      discountPercentage: "",
-      discountAmount: "",
-      startTime: "",
-      endTime: "",
-      minOrderValue: "",
-      maxDiscountValue: "",
-      usageLimit: "",
-      usedCount: "",
-      usageLimitPerUser: "",
-      // ✅ BỎ status khỏi form
-      // status: 1,
-      createdBy: "",
-      updatedBy: "",
-    });
-    const loading = ref(false);
-    const showFilter = ref(false);
+// ========== STATS DATA ==========
+const stats = ref([
+  { label: "Tổng số voucher", value: 0 },
+  { label: "Voucher đang hoạt động", value: 0 },
+  { label: "Lượt sử dụng voucher", value: 0 },
+  { label: "Voucher phổ biến nhất", value: "—" },
+]);
 
-    // ✅ Stats khởi tạo với giá trị mặc định
-    const stats = ref([
-      { label: "Tổng số voucher", value: 0 },
-      { label: "Voucher đang hoạt động", value: 0 },
-      { label: "Lượt sử dụng voucher", value: 0 },
-      { label: "Voucher phổ biến nhất", value: "—" },
-    ]);
-
-    // ✅ Function fetch stats từ API thật - khớp với response structure
-    const fetchStats = async () => {
-      try {
-        console.log("🔄 Đang tải thống kê voucher...");
-        const response = await getVoucherStats();
-        console.log("📊 Response stats:", response);
-
-        // ✅ Sửa để khớp với cấu trúc API response thật
-        const data = response.data; // Lấy trực tiếp data từ response
-
-        stats.value = [
-          { label: "Tổng số voucher", value: data.totalVouchers || 0 },
-          { label: "Voucher đang hoạt động", value: data.activeVouchers || 0 },
-          { label: "Lượt sử dụng voucher", value: data.totalUsageCount || 0 },
-          {
-            label: "Voucher phổ biến nhất",
-            value: data.mostPopularVoucher || "—",
-          },
-        ];
-
-        console.log("✅ Stats đã cập nhật:", stats.value);
-      } catch (error) {
-        console.error("❌ Lỗi khi tải thống kê voucher:", error);
-
-        // ✅ Fallback với data fake khi có lỗi
-        stats.value = [
-          { label: "Tổng số voucher", value: 25 },
-          { label: "Voucher đang hoạt động", value: 18 },
-          { label: "Lượt sử dụng voucher", value: 342 },
-          { label: "Voucher phổ biến nhất", value: "SUMMER2024" },
-        ];
-
-        showToast("warning", "Không thể tải thống kê, hiển thị dữ liệu mẫu");
-      }
-    };
-
-    // Thêm toggle filter function
-    const toggleFilter = () => {
-      showFilter.value = !showFilter.value;
-    };
-
-    onMounted(() => {
-      console.log("🚀 Component mounted, loading data...");
-      fetchStats(); // ✅ Gọi stats khi component mount
-      fetchVouchers();
-    });
-
-    async function fetchVouchers() {
-      loading.value = true;
-      try {
-        const res = await getVouchers({
-          page: currentPage.value,
-          size: pageSize.value,
-          code: searchQuery.value || null,
-          name: nameFilter.value || null,
-          voucherType: voucherTypeFilter.value || null,
-          // ✅ BỎ status filter
-          // status:
-          //   statusFilter.value === ""
-          //     ? null
-          //     : statusFilter.value === "Hoạt động"
-          //     ? 1
-          //     : 0,
-        });
-
-        listVoucher.value = res.content.map((voucher) => ({
-          id: voucher.id,
-          code: voucher.code,
-          name: voucher.name,
-          description: voucher.description,
-          voucherCategory: voucher.voucherCategory,
-          discountType: voucher.discountType,
-          discountPercentage: voucher.discountPercentage,
-          discountAmount: voucher.discountAmount,
-          start_time: formatDate(voucher.startTime),
-          end_time: formatDate(voucher.endTime),
-          startTime: voucher.startTime,
-          endTime: voucher.endTime,
-          minOrderValue: voucher.minOrderValue,
-          maxDiscountValue: voucher.maxDiscountValue,
-          usageLimit: voucher.usageLimit,
-          usedCount: voucher.usedCount,
-          usageLimitPerUser: voucher.usageLimitPerUser,
-          // ✅ BỎ status
-          // status: voucher.status,
-          createdBy: voucher.createdBy,
-          updatedBy: voucher.updatedBy,
-          // Tính số lần dùng còn lại
-          soLanDungConLai: Math.max(voucher.usageLimit - voucher.usedCount, 0),
-        }));
-
-        totalElements.value = res.totalElements;
-        totalPages.value = res.totalPages;
-
-        // ✅ Cập nhật lại stats sau khi fetch vouchers
-        await fetchStats();
-      } catch (error) {
-        console.error("Lỗi khi tải voucher:", error);
-      } finally {
-        loading.value = false;
-      }
-    }
-
-    function formatDate(dateStr) {
-      if (!dateStr) return "";
-      const date = new Date(dateStr);
-      return date.toLocaleString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    }
-
-    watch([currentPage, pageSize], () => {
-      fetchVouchers();
-    });
-
-    function onFilterChange() {
-      currentPage.value = 0;
-      fetchVouchers();
-    }
-
-    function prevPage() {
-      if (currentPage.value > 0) currentPage.value--;
-    }
-
-    function nextPage() {
-      if (currentPage.value < totalPages.value - 1) currentPage.value++;
-    }
-
-    function handlePageSizeChange(newSize) {
-      pageSize.value = newSize;
-      currentPage.value = 0;
-    }
-
-    function showDetail(voucher) {
-      selectedVoucher.value = voucher;
-      showDetailModal.value = true;
-    }
-
-    function closeDetailModal() {
-      showDetailModal.value = false;
-      selectedVoucher.value = null;
-    }
-
-    function openAddVoucher() {
-      isEdit.value = false;
-      formVoucher.value = {
-        id: null,
-        code: "",
-        name: "",
-        description: "",
-        voucherCategory: "",
-        discountType: "",
-        discountPercentage: "",
-        discountAmount: "",
-        startTime: "",
-        endTime: "",
-        minOrderValue: "",
-        maxDiscountValue: "",
-        usageLimit: "",
-        usedCount: "",
-        usageLimitPerUser: "",
-        // ✅ BỎ status
-        // status: 1,
-        createdBy: getUserFullName(),
-        updatedBy: "",
-      };
-      showFormModal.value = true;
-    }
-
-    // Thêm mới hoặc cập nhật voucher
-    async function submitVoucher() {
-      formVoucher.value.code = formVoucher.value.code.trim();
-
-      // Validate rỗng
-      if (
-        !formVoucher.value.code ||
-        !formVoucher.value.voucherCategory ||
-        !formVoucher.value.discountType ||
-        !formVoucher.value.startTime ||
-        !formVoucher.value.endTime ||
-        formVoucher.value.minOrderValue === "" ||
-        !formVoucher.value.createdBy
-      ) {
-        showToast("error", "Vui lòng nhập đầy đủ thông tin!");
-        return;
-      }
-
-      const codeExists = listVoucher.value.some((v) => {
-        const currentCode = formVoucher.value.code.trim().toLowerCase();
-        const voucherCode = v.code.trim().toLowerCase();
-        const sameCode = voucherCode === currentCode;
-        const isDifferentId = isEdit.value
-          ? v.id !== formVoucher.value.id
-          : true;
-        return sameCode && isDifferentId;
-      });
-
-      if (codeExists) {
-        showToast("error", "Mã voucher đã tồn tại trong hệ thống!");
-        return;
-      }
-
-      // Validate số
-      if (
-        formVoucher.value.discountType === "PERCENTAGE" &&
-        (isNaN(formVoucher.value.discountPercentage) ||
-          formVoucher.value.discountPercentage < 1 ||
-          formVoucher.value.discountPercentage > 100)
-      ) {
-        showToast("error", "Phần trăm giảm phải từ 1 đến 100!");
-        return;
-      }
-      if (
-        formVoucher.value.discountType === "FIXED_AMOUNT" &&
-        (isNaN(formVoucher.value.discountAmount) ||
-          Number(formVoucher.value.discountAmount) < 1)
-      ) {
-        showToast("error", "Số tiền giảm phải lớn hơn 0!");
-        return;
-      }
-      if (
-        formVoucher.value.minOrderValue !== "" &&
-        (isNaN(formVoucher.value.minOrderValue) ||
-          Number(formVoucher.value.minOrderValue) < 0)
-      ) {
-        showToast("error", "Giá trị đơn tối thiểu phải >= 0!");
-        return;
-      }
-      if (
-        formVoucher.value.maxDiscountValue !== "" &&
-        (isNaN(formVoucher.value.maxDiscountValue) ||
-          Number(formVoucher.value.maxDiscountValue) < 0)
-      ) {
-        showToast("error", "Giá trị giảm tối đa phải >= 0!");
-        return;
-      }
-
-      // Validate ngày
-      const start = new Date(formVoucher.value.startTime);
-      const end = new Date(formVoucher.value.endTime);
-      if (end <= start) {
-        showToast("error", "Ngày kết thúc phải sau ngày bắt đầu!");
-        return;
-      }
-
-      // Helper chuyển đổi
-      const toNumberOrNull = (val) =>
-        val === "" || val === null || typeof val === "undefined"
-          ? null
-          : Number(val);
-
-      const toStringOrNull = (val) =>
-        val === "" || typeof val === "undefined" ? null : val;
-
-      const toTimestampOrNull = (val) =>
-        val === "" || val === null || typeof val === "undefined"
-          ? null
-          : new Date(val).getTime();
-
-      const payload = {
-        code: formVoucher.value.code,
-        name: toStringOrNull(formVoucher.value.name),
-        description: toStringOrNull(formVoucher.value.description),
-        voucherCategory: formVoucher.value.voucherCategory,
-        discountType: formVoucher.value.discountType,
-        discountPercentage: toNumberOrNull(
-          formVoucher.value.discountPercentage
-        ),
-        discountAmount: toNumberOrNull(formVoucher.value.discountAmount),
-        startTime: toTimestampOrNull(formVoucher.value.startTime),
-        endTime: toTimestampOrNull(formVoucher.value.endTime),
-        minOrderValue: toNumberOrNull(formVoucher.value.minOrderValue),
-        maxDiscountValue: toNumberOrNull(formVoucher.value.maxDiscountValue),
-        usageLimit: toNumberOrNull(formVoucher.value.usageLimit),
-        usedCount: toNumberOrNull(formVoucher.value.usedCount),
-        usageLimitPerUser: toNumberOrNull(formVoucher.value.usageLimitPerUser),
-        createdBy: formVoucher.value.createdBy,
-        updatedBy: getUserFullName(),
-      };
-
-      if (isEdit.value) {
-        payload.id = formVoucher.value.id;
-        // ✅ Khi sửa, không gửi voucherCategory để đảm bảo backend không thay đổi
-        // Tùy vào logic backend, có thể bỏ dòng này hoặc giữ lại
-        // delete payload.voucherCategory;
-      }
-
-      try {
-        if (payload.discountType === "FIXED_AMOUNT") {
-          payload.maxDiscountValue = 0;
-        }
-        if (isEdit.value) {
-          await updateVouchers(payload);
-          voucherChannel.postMessage("updated");
-          showToast("success", "Cập nhật voucher thành công!");
-        } else {
-          await createVouchers(payload);
-          showToast("success", "Thêm voucher thành công!");
-        }
-        closeFormModal();
-        await fetchVouchers();
-      } catch (error) {
-        let msg = "Có lỗi xảy ra!";
-        if (
-          error.response &&
-          error.response.data &&
-          error.response.data.message
-        ) {
-          msg = error.response.data.message;
-        }
-        showToast("error", msg);
-      }
-    }
-
-    // ✅ BỎ function toggleStatus
-    // async function toggleStatus(voucher, newStatus) {
-    //   try {
-    //     await upStatusVouchers(
-    //       voucher.id,
-    //       newStatus,
-    //       voucher.createdBy || "getUserFullName()"
-    //     );
-    //     voucherChannel.postMessage("updated");
-    //     showToast("success", "Cập nhật trạng thái thành công!");
-    //     await fetchVouchers();
-    //   } catch (error) {
-    //     showToast("error", "Cập nhật trạng thái thất bại!");
-    //   }
-    // }
-
-    // Khi click Sửa voucher
-    function openEditVoucher(voucher) {
-      isEdit.value = true;
-
-      function toInputDate(val) {
-        if (!val) return "";
-        const d = new Date(val);
-        if (isNaN(d.getTime())) return "";
-        return d.toISOString().slice(0, 16);
-      }
-
-      formVoucher.value = {
-        id: voucher.id,
-        code: voucher.code,
-        name: voucher.name,
-        description: voucher.description,
-        voucherCategory: voucher.voucherCategory,
-        discountType: voucher.discountType,
-        discountPercentage: voucher.discountPercentage,
-        discountAmount: voucher.discountAmount,
-        startTime: toInputDate(voucher.startTime),
-        endTime: toInputDate(voucher.endTime),
-        minOrderValue: voucher.minOrderValue,
-        maxDiscountValue: voucher.maxDiscountValue,
-        usageLimit: voucher.usageLimit,
-        usedCount: voucher.usedCount,
-        usageLimitPerUser: voucher.usageLimitPerUser,
-        // ✅ BỎ status khỏi edit form
-        // status: voucher.status,
-        createdBy: voucher.createdBy || "admin",
-        updatedBy: voucher.updatedBy || "admin",
-      };
-      showFormModal.value = true;
-    }
-
-    function closeFormModal() {
-      showFormModal.value = false;
-    }
-
-    // Watch voucherType để reset trường còn lại về 0
-    watch(
-      () => formVoucher.value.voucherType,
-      (newType) => {
-        if (newType === "PERCENTAGE") {
-          formVoucher.value.discountAmount = 0;
-        } else if (newType === "FIXED_AMOUNT") {
-          formVoucher.value.discountPercentage = 0;
-        }
-      }
-    );
-
-    function resetFilter() {
-      searchQuery.value = "";
-      // ✅ BỎ reset statusFilter
-      // statusFilter.value = "";
-      nameFilter.value = "";
-      voucherTypeFilter.value = "";
-      currentPage.value = 0;
-      fetchVouchers();
-    }
-
-    return {
-      currentPage,
-      pageSize,
-      totalPages,
-      totalElements,
-      isLastPage,
-      itemsPerPageOptions,
-      listVoucher,
-      searchQuery,
-      // ✅ BỎ statusFilter khỏi return
-      // statusFilter,
-      nameFilter,
-      voucherTypeFilter,
-      onFilterChange,
-      prevPage,
-      nextPage,
-      handlePageSizeChange,
-      showDetail,
-      closeDetailModal,
-      openAddVoucher,
-      openEditVoucher,
-      // ✅ BỎ toggleStatus khỏi return
-      // toggleStatus,
-      showDetailModal,
-      selectedVoucher,
-      showFormModal,
-      isEdit,
-      formVoucher,
-      closeFormModal,
-      submitVoucher,
-      resetFilter,
-      loading,
-      showFilter,
-      toggleFilter,
-      fetchVouchers,
-      stats,
-      fetchStats,
-    };
-  },
+// ========== HANDLER FUNCTIONS ==========
+const handleToggleFilter = () => {
+  showFilter.value = !showFilter.value;
 };
+
+const handleApplyFilter = () => {
+  currentPage.value = 0;
+  handleFetchVouchers();
+};
+
+const handleClearFilter = () => {
+  searchQuery.value = "";
+  nameFilter.value = "";
+  voucherCategoryFilter.value = "";
+  discountTypeFilter.value = "";
+  currentPage.value = 0;
+  handleFetchVouchers();
+};
+
+const handleFetchStats = async () => {
+  try {
+    const response = await getVoucherStats();
+    const data = response.data || response;
+
+    stats.value = [
+      { label: "Tổng số voucher", value: data.totalVouchers || 0 },
+      { label: "Voucher đang hoạt động", value: data.activeVouchers || 0 },
+      { label: "Lượt sử dụng voucher", value: data.totalUsageCount || 0 },
+      { label: "Voucher phổ biến nhất", value: data.mostPopularVoucher || "—" },
+    ];
+  } catch (error) {
+    console.error("Lỗi khi tải thống kê voucher:", error);
+    showToast("error", "Không thể tải thống kê voucher");
+  }
+};
+
+const handleFetchVouchers = async () => {
+  loading.value = true;
+  try {
+         const res = await getVouchers({
+       page: currentPage.value,
+       size: pageSize.value,
+       code: searchQuery.value || null,
+       name: nameFilter.value || null,
+       voucherCategory: voucherCategoryFilter.value || null,
+       discountType: discountTypeFilter.value || null,
+     });
+
+    listVoucher.value = res.content.map((voucher) => ({
+      id: voucher.id,
+      code: voucher.code,
+      name: voucher.name,
+      description: voucher.description,
+      voucherCategory: voucher.voucherCategory,
+      discountType: voucher.discountType,
+      discountPercentage: voucher.discountPercentage,
+      discountAmount: voucher.discountAmount,
+      start_time: toDate(voucher.startTime),
+      end_time: toDate(voucher.endTime),
+      startTime: voucher.startTime,
+      endTime: voucher.endTime,
+      minOrderValue: voucher.minOrderValue,
+      maxDiscountValue: voucher.maxDiscountValue,
+      usageLimit: voucher.usageLimit,
+      usedCount: voucher.usedCount,
+      usageLimitPerUser: voucher.usageLimitPerUser,
+      createdBy: voucher.createdBy,
+      updatedBy: voucher.updatedBy,
+      soLanDungConLai: Math.max(voucher.usageLimit - voucher.usedCount, 0),
+    }));
+
+    totalElements.value = res.totalElements;
+    totalPages.value = res.totalPages;
+
+    await handleFetchStats();
+  } catch (error) {
+    console.error("Lỗi khi tải voucher:", error);
+    showToast("error", "Không thể tải danh sách voucher");
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleShowDetail = (voucher) => {
+  selectedVoucher.value = voucher;
+  showDetailModal.value = true;
+};
+
+const handleCloseDetailModal = () => {
+  showDetailModal.value = false;
+  selectedVoucher.value = null;
+};
+
+const handleOpenAddVoucher = () => {
+  isEdit.value = false;
+  formVoucher.value = {
+    id: null,
+    code: "",
+    name: "",
+    description: "",
+    voucherCategory: "",
+    discountType: "",
+    discountPercentage: "",
+    discountAmount: "",
+    startTime: "",
+    endTime: "",
+    minOrderValue: "",
+    maxDiscountValue: "",
+    usageLimit: "",
+    usedCount: "",
+    usageLimitPerUser: "",
+    createdBy: "admin",
+    updatedBy: "",
+  };
+  showFormModal.value = true;
+};
+
+const handleOpenEditVoucher = (voucher) => {
+  isEdit.value = true;
+  
+  const toInputDate = (val) => {
+    if (!val) return "";
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return "";
+    return d.toISOString().slice(0, 16);
+  };
+
+  formVoucher.value = {
+    id: voucher.id,
+    code: voucher.code,
+    name: voucher.name,
+    description: voucher.description,
+    voucherCategory: voucher.voucherCategory,
+    discountType: voucher.discountType,
+    discountPercentage: voucher.discountPercentage,
+    discountAmount: voucher.discountAmount,
+    startTime: toInputDate(voucher.startTime),
+    endTime: toInputDate(voucher.endTime),
+    minOrderValue: voucher.minOrderValue,
+    maxDiscountValue: voucher.maxDiscountValue,
+    usageLimit: voucher.usageLimit,
+    usedCount: voucher.usedCount,
+    usageLimitPerUser: voucher.usageLimitPerUser,
+    createdBy: voucher.createdBy || "admin",
+    updatedBy: voucher.updatedBy || "admin",
+  };
+  showFormModal.value = true;
+};
+
+const handleCloseFormModal = () => {
+  showFormModal.value = false;
+};
+
+const handleValidateVoucherForm = () => {
+  const validations = [
+    validate.voucher.code(formVoucher.value.code),
+    validate.voucher.name(formVoucher.value.name),
+    validate.voucher.description(formVoucher.value.description),
+    validate.voucher.voucherCategory(formVoucher.value.voucherCategory),
+    validate.voucher.discountType(formVoucher.value.discountType),
+    validate.voucher.discountPercentage(formVoucher.value.discountPercentage, formVoucher.value.discountType),
+    validate.voucher.discountAmount(formVoucher.value.discountAmount, formVoucher.value.discountType),
+    validate.voucher.startTime(formVoucher.value.startTime),
+    validate.voucher.endTime(formVoucher.value.endTime, formVoucher.value.startTime),
+    validate.voucher.minOrderValue(formVoucher.value.minOrderValue),
+    validate.voucher.maxDiscountValue(formVoucher.value.maxDiscountValue),
+    validate.voucher.usageLimit(formVoucher.value.usageLimit),
+    validate.voucher.usageLimitPerUser(formVoucher.value.usageLimitPerUser),
+  ];
+
+  for (const validation of validations) {
+    if (validation !== null) {
+      showToast("error", validation);
+      return false;
+    }
+  }
+
+  return true;
+};
+
+const handleSubmitVoucher = async () => {
+  const result = await showQuickConfirm(
+    isEdit.value ? "Xác nhận cập nhật" : "Xác nhận thêm mới",
+    isEdit.value 
+      ? "Bạn có chắc chắn muốn cập nhật voucher này?" 
+      : "Bạn có chắc chắn muốn thêm voucher này?",
+    "question",
+    isEdit.value ? "Cập nhật" : "Thêm mới",
+    "Hủy"
+  );
+  
+  if (!result.isConfirmed) return;
+
+  if (!handleValidateVoucherForm()) {
+    return;
+  }
+
+  const toNumberOrNull = (val) => val === "" || val === null || typeof val === "undefined" ? null : Number(val);
+  const toStringOrNull = (val) => val === "" || typeof val === "undefined" ? null : val;
+  const toTimestampOrNull = (val) => val === "" || val === null || typeof val === "undefined" ? null : new Date(val).getTime();
+
+  const payload = {
+    code: formVoucher.value.code.trim(),
+    name: toStringOrNull(formVoucher.value.name),
+    description: toStringOrNull(formVoucher.value.description),
+    voucherCategory: formVoucher.value.voucherCategory,
+    discountType: formVoucher.value.discountType,
+    discountPercentage: toNumberOrNull(formVoucher.value.discountPercentage),
+    discountAmount: toNumberOrNull(formVoucher.value.discountAmount),
+    startTime: toTimestampOrNull(formVoucher.value.startTime),
+    endTime: toTimestampOrNull(formVoucher.value.endTime),
+    minOrderValue: toNumberOrNull(formVoucher.value.minOrderValue),
+    maxDiscountValue: toNumberOrNull(formVoucher.value.maxDiscountValue),
+    usageLimit: toNumberOrNull(formVoucher.value.usageLimit),
+    usedCount: toNumberOrNull(formVoucher.value.usedCount),
+    usageLimitPerUser: toNumberOrNull(formVoucher.value.usageLimitPerUser),
+    createdBy: formVoucher.value.createdBy,
+    updatedBy: "admin",
+  };
+
+  if (isEdit.value) {
+    payload.id = formVoucher.value.id;
+  }
+
+  try {
+    if (isEdit.value) {
+      await updateVouchers(payload);
+      showToast("success", "Cập nhật voucher thành công!");
+    } else {
+      await createVouchers(payload);
+      showToast("success", "Thêm voucher thành công!");
+    }
+    handleCloseFormModal();
+    await handleFetchVouchers();
+  } catch (error) {
+    let msg = "Có lỗi xảy ra!";
+    if (error.response?.data?.message) {
+      msg = error.response.data.message;
+    }
+    showToast("error", msg);
+  }
+};
+
+// ========== PAGINATION FUNCTIONS ==========
+const handlePrevPage = () => {
+  if (currentPage.value > 0) currentPage.value--;
+};
+
+const handleNextPage = () => {
+  if (currentPage.value < totalPages.value - 1) currentPage.value++;
+};
+
+const handlePageSizeChange = (newSize) => {
+  pageSize.value = newSize;
+  currentPage.value = 0;
+};
+
+// ========== WATCH & LIFECYCLE ==========
+watch([currentPage, pageSize], () => {
+  handleFetchVouchers();
+});
+
+onMounted(() => {
+  handleFetchStats();
+  handleFetchVouchers();
+});
 </script>
 
 <style scoped>
 @import "@/assets/css/admin-global.css";
 @import "@/assets/css/form-global.css";
+@import "@/assets/css/form-detail-global.css";
 /* Chỉ giữ lại style cho modal và phần riêng */
 .modal-dialog {
   max-width: 800px !important;

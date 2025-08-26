@@ -1,6 +1,6 @@
 <template>
   <!-- filepath: d:\BookStation-Frontend\src\views\admin\set-up\Account.vue -->
-  <div class="account-container">
+  <div class="account-container px-2">
     <div class="account-wrapper">
       <!-- Header với avatar và thông tin cơ bản -->
       <div class="account-header">

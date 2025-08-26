@@ -63,3 +63,42 @@ export const addVoucherForNewuser = async (request) => {
     throw error;
   }
 };
+
+// Phát voucher cho người dùng hạng Bạc
+export const distributeVoucherToSilver = async (voucherId) => {
+  try {
+    const response = await axiosClient.post(
+      `/api/vouchers/distribute/silver?voucherId=${voucherId}`
+    );
+    return response;
+  } catch (error) {
+    console.error("Error distributing voucher to silver users:", error);
+    throw error;
+  }
+};
+
+// Phát voucher cho người dùng hạng Vàng
+export const distributeVoucherToGold = async (voucherId) => {
+  try {
+    const response = await axiosClient.post(
+      `/api/vouchers/distribute/gold?voucherId=${voucherId}`
+    );
+    return response;
+  } catch (error) {
+    console.error("Error distributing voucher to gold users:", error);
+    throw error;
+  }
+};
+
+// Phát voucher cho người dùng hạng Kim cương
+export const distributeVoucherToDiamond = async (voucherId) => {
+  try {
+    const response = await axiosClient.post(
+      `/api/vouchers/distribute/diamond?voucherId=${voucherId}`
+    );
+    return response;
+  } catch (error) {
+    console.error("Error distributing voucher to diamond users:", error);
+    throw error;
+  }
+};
