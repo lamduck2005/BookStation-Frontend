@@ -970,14 +970,7 @@
           </form>
         </div>
         <div class="modal-footer enhanced-footer">
-          <button
-            type="button"
-            class="btn btn-outline-secondary fake-data-btn"
-            @click="fillFakeData"
-          >
-            <i class="bi bi-magic me-1"></i>
-            Điền dữ liệu mẫu
-          </button>
+          
           <button
             type="button"
             class="btn btn-cancel"

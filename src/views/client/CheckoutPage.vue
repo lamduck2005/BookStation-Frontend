@@ -438,7 +438,12 @@
             </div>
             <div class="d-flex justify-content-between align-items-center">
               <span class="small text-muted me-3">Tổng Số Tiền </span>
-              <span class="fw-bold text-warning">{{ formatPrice(session?.totalAmount || 0) }}</span>
+              <div class="d-flex flex-column align-items-end">
+                <span class="fw-bold text-warning">{{ formatPrice(session?.totalAmount || 0) }}</span>
+                <small v-if="(session?.totalAmount || 0) > 90000000" class="text-danger">
+                  {{ (session?.totalAmount || 0) > 100000000 ? '⚠️ Vượt giới hạn 100M' : '⚠️ Gần giới hạn 100M' }}
+                </small>
+              </div>
             </div>
           </div>
         </div>
@@ -462,6 +467,16 @@
           <button class="btn btn-danger px-4 py-2 fw-bold" @click="handleShowPaymentConfirmation">
             Xác nhận thanh toán
           </button>
+          
+          <!-- Test button chỉ hiển thị trong development -->
+          <div v-if="process.env.NODE_ENV === 'development'" class="mt-2">
+            <button class="btn btn-outline-warning btn-sm" @click="testOrderLimit(150000000)">
+              🧪 Test Limit (150M)
+            </button>
+            <button class="btn btn-outline-success btn-sm ms-1" @click="testOrderLimit(50000000)">
+              ✅ Test OK (50M)
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -521,7 +536,7 @@
   </div>
 
   <!-- Modal backdrop -->
-  <div v-if="showAddressModal || showVoucherList || showPaymentConfirmation" class="modal-backdrop fade show"></div>
+  <div v-if="showAddressModal || showVoucherList || showPaymentConfirmation || showOrderLimitExceeded" class="modal-backdrop fade show"></div>
 
   <!-- Payment Confirmation Modal -->
   <div 
@@ -645,6 +660,80 @@
     @accept-changes="acceptPriceChanges"
   />
 
+  <!-- Order Limit Exceeded Popup -->
+  <div 
+    v-if="showOrderLimitExceeded"
+    class="modal fade show d-block"
+    style="z-index: 1060;"
+    @click="showOrderLimitExceeded = false"
+  >
+    <div 
+      class="modal-dialog modal-dialog-centered"
+      @click.stop
+    >
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Vượt quá giới hạn đặt hàng
+          </h5>
+          <button 
+            type="button" 
+            class="btn-close btn-close-white" 
+            @click="showOrderLimitExceeded = false"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <div class="text-center mb-3">
+            <i class="bi bi-exclamation-circle text-danger" style="font-size: 3rem;"></i>
+          </div>
+          <div class="alert alert-warning">
+            <h6 class="alert-heading">Thông báo từ hệ thống</h6>
+            <p class="mb-2">
+              Theo chính sách của BookStation, đơn hàng có tổng giá trị vượt quá 
+              <strong class="text-danger">100.000.000 ₫</strong> không thể đặt hàng online.
+            </p>
+            <p class="mb-2">
+              Tổng giá trị đơn hàng hiện tại: 
+              <strong class="text-danger">{{ formatPrice(session?.totalAmount || 0) }}</strong>
+            </p>
+            <hr>
+            <p class="mb-0 small">
+              <i class="bi bi-info-circle me-1"></i>
+              Vui lòng đọc kỹ chính sách đặt hàng hoặc liên hệ với chúng tôi để được hỗ trợ.
+              <br>
+              <span 
+                class="text-primary fw-bold"
+                style="cursor: pointer; text-decoration: underline;"
+                @click="openPolicyFromLimitPopup"
+              >
+                <i class="bi bi-shield-check me-1"></i>
+                Xem chính sách đặt hàng
+              </span>
+            </p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button 
+            type="button" 
+            class="btn btn-outline-secondary" 
+            @click="showOrderLimitExceeded = false"
+          >
+            Đóng
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-primary"
+            @click="$router.push('/cart')"
+          >
+            <i class="bi bi-cart me-1"></i>
+            Quay lại giỏ hàng
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </template>
 
 
@@ -697,6 +786,7 @@ const voucherLoading = ref(false)
 // Payment confirmation states
 const showPaymentConfirmation = ref(false)
 const showPolicyPreview = ref(false)
+const showOrderLimitExceeded = ref(false)
 
 // Price change popup states
 const showPriceChangePopup = ref(false)
@@ -716,6 +806,24 @@ const appliedVouchers = ref([])
 const initialSessionSnapshot = ref(null)
 
 const handleShowPaymentConfirmation = async () => {
+  // Kiểm tra giới hạn 100 triệu trước khi validate
+  const totalAmount = session.value?.totalAmount || 0
+  const limitAmount = 100000000 // 100 triệu
+  
+  console.log('🔍 Checking order limit:', {
+    totalAmount,
+    limitAmount,
+    formattedAmount: formatPrice(totalAmount),
+    exceedsLimit: totalAmount > limitAmount
+  })
+  
+  if (totalAmount > limitAmount) {
+    console.log('⚠️ Order exceeds limit, showing popup')
+    showOrderLimitExceeded.value = true
+    return
+  }
+  
+  console.log('✅ Order within limit, proceeding with validation')
   // Validate trước khi hiển thị popup xác nhận
   const noChanges = await validateWithPriceCheck()
   // Chỉ hiển thị popup xác nhận nếu KHÔNG có thay đổi giá
@@ -723,6 +831,44 @@ const handleShowPaymentConfirmation = async () => {
   if (noChanges) {
     showPaymentConfirmation.value = true
   }
+}
+
+// Hàm để mở chính sách từ popup giới hạn đơn hàng
+const openPolicyFromLimitPopup = () => {
+  showOrderLimitExceeded.value = false
+  showPolicyPreview.value = true
+}
+
+// Test function để test giới hạn đơn hàng (chỉ dùng trong development)
+const testOrderLimit = (testAmount = 150000000) => {
+  if (!session.value) {
+    console.warn('No session available for testing')
+    return
+  }
+  
+  const originalAmount = session.value.totalAmount
+  session.value.totalAmount = testAmount
+  
+  console.log(`🧪 Testing order limit:`, {
+    originalAmount: formatPrice(originalAmount),
+    testAmount: formatPrice(testAmount),
+    exceedsLimit: testAmount > 100000000
+  })
+  
+  handleShowPaymentConfirmation()
+  
+  // Khôi phục giá trị gốc sau 5 giây
+  setTimeout(() => {
+    if (session.value) {
+      session.value.totalAmount = originalAmount
+      console.log('✅ Test completed, amount restored to:', formatPrice(originalAmount))
+    }
+  }, 5000)
+}
+
+// Expose cho development testing
+if (process.env.NODE_ENV === 'development') {
+  window.testOrderLimit = testOrderLimit
 }
 
 // Shipping Fee auto-calc
@@ -1182,6 +1328,25 @@ const setupValidationTimer = () => {
 }
 
 const confirmAndPay = async () => {
+  // Kiểm tra giới hạn 100 triệu trước khi xử lý thanh toán
+  const totalAmount = session.value?.totalAmount || 0
+  const limitAmount = 100000000 // 100 triệu
+  
+  console.log('💳 Confirming payment with amount check:', {
+    totalAmount,
+    limitAmount,
+    formattedAmount: formatPrice(totalAmount),
+    exceedsLimit: totalAmount > limitAmount
+  })
+  
+  if (totalAmount > limitAmount) {
+    console.log('⚠️ Payment blocked - order exceeds limit')
+    showPaymentConfirmation.value = false
+    showOrderLimitExceeded.value = true
+    return
+  }
+  
+  console.log('✅ Payment amount within limit, proceeding...')
   // Validate một lần nữa trước khi thanh toán để đảm bảo giá không thay đổi
   const noChanges = await validateWithPriceCheck()
   
