@@ -920,14 +920,6 @@
                    :key="item.id || item.bookId" 
                    class="order-item-detail">
                 <div class="row align-items-center">
-                  <div class="col-md-1">
-                    <img 
-                      :src="item.bookImage || '/src/assets/img/book-placeholder.svg'" 
-                      :alt="item.bookName || item.bookTitle"
-                      class="item-thumbnail"
-                      @error="$event.target.src = '/src/assets/img/book-placeholder.svg'"
-                    >
-                  </div>
                   <div class="col-md-4">
                     <div class="item-info">
                       <h6 class="item-name">{{ item.bookName || item.bookTitle }}</h6>
@@ -1003,7 +995,7 @@
                 <div v-for="voucher in selectedOrder.vouchers" :key="voucher.id" class="voucher-item-detail">
                   <div class="voucher-header">
                     <div class="voucher-code">{{ voucher.code }}</div>
-                    <div class="voucher-discount">-{{ formatCurrency(voucher.discountAmount || selectedOrder.voucherDiscountAmount || selectedOrder.discountAmount) }}</div>
+                    <div class="voucher-discount">-{{ formatCurrency(calculateIndividualVoucherDiscount(voucher, selectedOrder)) }}</div>
                   </div>
                   <div class="voucher-name">{{ voucher.name }}</div>
                   <div class="voucher-description small text-muted">{{ voucher.description }}</div>
@@ -2500,6 +2492,54 @@ const calculateOrderSubtotal = (order) => {
 const calculateVoucherDiscount = (order) => {
   if (!order.vouchers) return 0;
   return order.vouchers.reduce((sum, voucher) => sum + (voucher.discountAmount || 0), 0);
+};
+
+// Tính toán số tiền giảm giá thực tế cho từng voucher
+const calculateIndividualVoucherDiscount = (voucher, order) => {
+  try {
+    const subtotal = order.subtotal || calculateOrderSubtotal(order);
+    const shippingFee = order.shippingFee || 0;
+
+    if (voucher.voucherCategory === 'SHIPPING') {
+      // Voucher miễn phí vận chuyển
+      if (voucher.discountType === 'FIXED_AMOUNT') {
+        // Sử dụng discountAmount từ API hoặc tính toán
+        const voucherValue = voucher.discountAmount || voucher.maxDiscountValue || 0;
+        return Math.min(voucherValue, shippingFee);
+      } else if (voucher.discountType === 'PERCENTAGE') {
+        const percentage = voucher.discountPercentage || 0;
+        const discountAmount = (shippingFee * percentage) / 100;
+        return Math.min(discountAmount, voucher.maxDiscountValue || shippingFee);
+      }
+      
+      // Fallback: sử dụng từ order
+      return order.discountShipping || order.shippingVoucherDiscount || 0;
+    } else {
+      // Voucher giảm giá sản phẩm (NORMAL, FLASHSALE, etc.)
+      if (voucher.discountType === 'FIXED_AMOUNT') {
+        const voucherValue = voucher.discountAmount || voucher.maxDiscountValue || 0;
+        return Math.min(voucherValue, subtotal);
+      } else if (voucher.discountType === 'PERCENTAGE') {
+        const percentage = voucher.discountPercentage || 0;
+        const discountAmount = (subtotal * percentage) / 100;
+        return Math.min(discountAmount, voucher.maxDiscountValue || subtotal);
+      }
+      
+      // Fallback: nếu chỉ có 1 voucher product thì lấy toàn bộ discount
+      const productVouchers = order.vouchers?.filter(v => v.voucherCategory !== 'SHIPPING') || [];
+      if (productVouchers.length === 1) {
+        return order.voucherDiscountAmount || order.discountAmount || 0;
+      } else if (productVouchers.length > 1) {
+        // Phân chia đều discount cho các voucher product
+        return (order.voucherDiscountAmount || order.discountAmount || 0) / productVouchers.length;
+      }
+    }
+    
+    return 0;
+  } catch (error) {
+    console.warn('Error calculating voucher discount:', error, voucher);
+    return 0;
+  }
 };
 
 const showToast = (icon, title) => {
