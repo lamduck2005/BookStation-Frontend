@@ -168,28 +168,6 @@
           
           <!-- Overview Cards -->
           <BookOverviewCards ref="overviewCardsRef" />
-          
-          <!-- Charts Section -->
-          <div class="row mt-4">
-            <div class="col-12">
-              <div class="d-flex gap-2 mb-3 flex-wrap">
-                <!-- Performance Chart Toggle -->
-                <button 
-                  class="btn btn-sm"
-                  :class="showPerformanceChart ? 'btn-primary' : 'btn-outline-primary'"
-                  @click="togglePerformanceChart"
-                >
-                  <i class="bi bi-graph-up-arrow me-1"></i>
-                  {{ showPerformanceChart ? 'Ẩn biểu đồ' : 'Hiệu suất sách' }}
-                </button>
-              </div>
-              
-              <!-- Performance Chart -->
-              <div v-show="showPerformanceChart" class="mb-4">
-                <BookPerformanceChart ref="performanceChartRef" />
-              </div>
-            </div>
-          </div>
         </div>
         
         <!-- Danh sách Book -->
@@ -684,23 +662,32 @@
                     <option value="WORKBOOK">Sách bài tập</option>
                   </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4" style="position:relative;">
                   <label for="price" class="form-label enhanced-label">
                     Giá bán <span class="text-danger">*</span>
                   </label>
-                  <div class="input-group">
+                  <div class="input-group align-items-center">
                     <input
-                      type="number"
+                      type="text"
                       class="form-control enhanced-input"
                       id="price"
-                      v-model="newBook.price"
+                      :value="formatPriceInput(newBook.price)"
                       placeholder="0"
                       min="0"
                       step="1000"
                       required
+                      @focus="showPriceTooltip = true"
+                      @blur="showPriceTooltip = false"
+                      @input="onPriceInput($event)"
+                      inputmode="numeric"
                     />
                     <span class="input-group-text">VNĐ</span>
                   </div>
+                  <MoneyToWordsTooltip
+                    :value="newBook.price"
+                    :showTooltip="showPriceTooltip && newBook.price"
+                    style="top:-32px; left:0;"
+                  />
                 </div>
                 <div class="col-md-4">
                   <label for="stockQuantity" class="form-label enhanced-label">
@@ -983,14 +970,7 @@
           </form>
         </div>
         <div class="modal-footer enhanced-footer">
-          <button
-            type="button"
-            class="btn btn-outline-secondary fake-data-btn"
-            @click="fillFakeData"
-          >
-            <i class="bi bi-magic me-1"></i>
-            Điền dữ liệu mẫu
-          </button>
+          
           <button
             type="button"
             class="btn btn-cancel"
@@ -1035,7 +1015,6 @@ import MultiImageUpload from '@/components/common/MultiImageUpload.vue';
 import ImagePreviewModal from '@/components/common/ImagePreviewModal.vue';
 import ProcessingOrdersPopup from '@/components/common/ProcessingOrdersPopup.vue';
 import BookOverviewCards from '@/views/admin/components-admin/statistics/BookOverviewCards.vue';
-import BookPerformanceChart from '@/views/admin/components-admin/statistics/BookPerformanceChart.vue';
 import ExcelExportButton from '@/components/common/ExcelExportButton.vue';
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
 import { Modal } from 'bootstrap';
@@ -1043,14 +1022,13 @@ import { getBooks, createBook, updateBook, getAuthorsDropdown, getCategoriesDrop
 import { getPublishersDropdown } from '@/services/admin/publisher';
 import Swal from 'sweetalert2';
 import { getAllCategoriesParentExcepNotNull, getAllCategoriesParentNotNull } from '@/services/admin/category';
-
-// Statistics chart toggle
-const showPerformanceChart = ref(false);
-const overviewCardsRef = ref(null);
-const performanceChartRef = ref(null);
+import MoneyToWordsTooltip from '@/components/common/MoneyToWordsTooltip.vue';
 
 // Filter collapse toggle
 const showFilter = ref(true);
+
+// Refs for components
+const overviewCardsRef = ref(null);
 
 // Search and filter states
 const searchQuery = ref('');
@@ -1064,6 +1042,30 @@ const maxPrice = ref('');
 
 // Loading state
 const loading = ref(false);
+
+// Tooltip cho giá bán
+const showPriceTooltip = ref(false);
+
+// Hàm format số có dấu chấm
+function formatPriceInput(val) {
+  if (val === null || val === undefined || val === '') return '';
+  const num = Number((val + '').replace(/\D/g, ''));
+  if (isNaN(num)) return '';
+  return num.toLocaleString('vi-VN');
+}
+
+// Xử lý nhập giá, chỉ nhận số và cập nhật newBook.price là số
+function onPriceInput(e) {
+  let val = e.target.value.replace(/\D/g, '');
+  if (val === '') {
+    newBook.value.price = '';
+    e.target.value = '';
+    return;
+  }
+  newBook.value.price = Number(val);
+  e.target.value = formatPriceInput(val);
+  showPriceTooltip.value = true;
+}
 
 // New/Edit book form data
 const newBook = ref({
@@ -2021,26 +2023,10 @@ const goToFlashSaleManagement = (bookId) => {
   });
 };
 
-// Toggle function for performance chart
-const togglePerformanceChart = () => {
-  showPerformanceChart.value = !showPerformanceChart.value;
-  if (showPerformanceChart.value && performanceChartRef.value) {
-    // Refresh performance chart data when opened
-    setTimeout(() => {
-      performanceChartRef.value.fetchChartData();
-    }, 100);
-  }
-};
-
 const refreshStatistics = () => {
   // Refresh overview cards
   if (overviewCardsRef.value) {
     overviewCardsRef.value.fetchOverviewStats();
-  }
-  
-  // Refresh performance chart if it's open
-  if (showPerformanceChart.value && performanceChartRef.value) {
-    performanceChartRef.value.fetchChartData();
   }
   
   Swal.fire({

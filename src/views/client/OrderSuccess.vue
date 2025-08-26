@@ -56,7 +56,12 @@
                   <strong>Trạng thái:</strong>
                 </div>
                 <div class="col-6">
-                  <span class="badge bg-warning">Chờ xác nhận</span>
+                  <span class="badge bg-warning">
+                    <i class="fas fa-hourglass-half me-1"></i>Chờ xác nhận
+                  </span>
+                  <div class="text-muted small mt-1">
+                    (Trạng thái hiện tại có thể đã thay đổi nếu bạn thanh toán bằng <span class="fw-bold text-primary">VNPAY</span>, trạng thái sẽ tự động chuyển sang <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Đã xác nhận</span>)
+                  </div>
                 </div>
               </div>
             </div>

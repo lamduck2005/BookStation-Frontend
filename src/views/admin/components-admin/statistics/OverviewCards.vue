@@ -49,7 +49,7 @@
               </div>
               <div class="text-end">
                 <div class="stat-value gradient-text-revenue">{{ formatCurrency(data?.revenueToday) }}</div>
-                <div class="stat-label">Doanh thu hôm nay</div>
+                <div class="stat-label">Doanh thu (thuần) hôm nay</div>
               </div>
             </div>
             <div class="stat-footer">

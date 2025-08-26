@@ -201,40 +201,6 @@ export default {
                 </ul>
               </div>
 
-              <h4 class="text-primary mb-3 mt-4"><i class="bi bi-calendar-check me-2"></i>Thời Hạn & Điều Kiện</h4>
-              <div class="table-responsive">
-                <table class="table table-bordered">
-                  <thead class="table-primary">
-                    <tr>
-                      <th>Loại Voucher</th>
-                      <th>Thời Hạn</th>
-                      <th>Điều Kiện Tối Thiểu</th>
-                      <th>Giới Hạn Sử Dụng</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Voucher Tân Thủ</td>
-                      <td>30 ngày từ khi đăng ký</td>
-                      <td>Đơn hàng từ 100.000đ</td>
-                      <td>1 lần/tài khoản</td>
-                    </tr>
-                    <tr>
-                      <td>Voucher Sinh Nhật</td>
-                      <td>Tháng sinh nhật</td>
-                      <td>Không giới hạn</td>
-                      <td>2 lần/tháng</td>
-                    </tr>
-                    <tr>
-                      <td>Voucher Khuyến Mãi</td>
-                      <td>Theo từng chương trình</td>
-                      <td>Theo quy định riêng</td>
-                      <td>Theo chương trình</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
           `
         },
         {
@@ -306,6 +272,7 @@ export default {
                   <li><strong>Thông tin giao dịch:</strong> Lịch sử mua hàng, phương thức thanh toán</li>
                   <li><strong>Thông tin kỹ thuật:</strong> IP, trình duyệt, thiết bị truy cập</li>
                   <li><strong>Thông tin hành vi:</strong> Sản phẩm yêu thích, thời gian truy cập</li>
+                  <li class="mt-2 text-danger"><i class="bi bi-envelope-x-fill me-2"></i><strong>Lưu ý:</strong> Email đăng ký tài khoản <u>không thể thay đổi</u> sau khi tạo tài khoản.</li>
                 </ul>
               </div>
 
@@ -333,40 +300,7 @@ export default {
                 </div>
               </div>
 
-              <h4 class="text-primary mb-3 mt-4"><i class="bi bi-lock-fill me-2"></i>Bảo Mật Thông Tin</h4>
-              <div class="security-measures">
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="security-item">
-                      <i class="bi bi-shield-check text-success fs-3"></i>
-                      <h6>Mã Hóa SSL</h6>
-                      <p class="text-muted small">Tất cả dữ liệu được mã hóa 256-bit khi truyền tải</p>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="security-item">
-                      <i class="bi bi-server text-success fs-3"></i>
-                      <h6>Server Bảo Mật</h6>
-                      <p class="text-muted small">Hệ thống được bảo vệ bởi firewall và giám sát 24/7</p>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="security-item">
-                      <i class="bi bi-key text-success fs-3"></i>
-                      <h6>Xác Thực 2 Lớp</h6>
-                      <p class="text-muted small">Tài khoản được bảo vệ bằng xác thực đa yếu tố</p>
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="security-item">
-                      <i class="bi bi-trash text-success fs-3"></i>
-                      <h6>Xóa Dữ Liệu</h6>
-                      <p class="text-muted small">Dữ liệu được xóa an toàn khi không còn cần thiết</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
+               
               <div class="alert alert-warning mt-4">
                 <h6><i class="bi bi-exclamation-triangle me-2"></i>Quyền Của Khách Hàng</h6>
                 <ul class="policy-list mb-0">
@@ -396,6 +330,7 @@ export default {
                       <li>Được bảo mật thông tin cá nhân</li>
                       <li>Được đổi trả sản phẩm theo quy định</li>
                       <li>Được khiếu nại khi có vấn đề phát sinh</li>
+                      <li class="mt-2 text-warning"><i class="bi bi-cash-coin me-2"></i><strong>Lưu ý:</strong> Giá trị mỗi đơn hàng tối đa <b>100.000.000đ</b>. Nếu muốn mua vượt hạn mức này, vui lòng liên hệ trực tiếp <a href="tel:19001234">19001234</a> để được hỗ trợ ký hợp đồng riêng.</li>
                     </ul>
                   </div>
                 </div>

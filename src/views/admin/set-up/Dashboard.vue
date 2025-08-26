@@ -3,15 +3,41 @@
     <!-- 1. Overview Stats -->
     <OverviewStats />
 
-    <!-- Location Stats -->
-    <LocationStats />
+    
+    
+    <!-- Toggle Revenue Chart -->
+    <div class="mb-4">
+      <button
+      class="btn mb-2 rounded-pill px-4 fw-bold"
+      style="background: linear-gradient(90deg, #4f8cff 0%, #6ed0fa 100%); color: #fff; border: none; box-shadow: 0 2px 8px #e3e8ee;"
+      @click="showRevenueChart = !showRevenueChart"
+      >
+      <i :class="showRevenueChart ? 'bi bi-bar-chart-line-fill' : 'bi bi-bar-chart-line'" style="font-size: 1.2em;"></i>
+      <span class="ms-2">{{ showRevenueChart ? 'Ẩn thống kê đơn hàng' : 'Hiện thống kê đơn hàng' }}</span>
+    </button>
+    <div v-show="showRevenueChart">
+      <OrderPerformanceChart />
+    </div>
+  </div>
 
-    <!-- 2. Revenue Chart (top) & Books Sold Chart (bottom) -->
-    <!-- <div class="charts-col">
-      <RevenueChart />
-      <BooksSoldChart />
-    </div> -->
 
+  <!-- Toggle Performance Chart -->
+  <div class="mb-4">
+    <button
+      class="btn mb-2 rounded-pill px-4 fw-bold"
+      style="background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; box-shadow: 0 2px 8px #e3e8ee;"
+      @click="showPerformanceChart = !showPerformanceChart"
+    >
+      <i :class="showPerformanceChart ? 'bi bi-graph-up-arrow-fill' : 'bi bi-graph-up-arrow'" style="font-size: 1.2em;"></i>
+      <span class="ms-2">{{ showPerformanceChart ? 'Ẩn biểu đồ hiệu suất sách' : 'Hiện biểu đồ hiệu suất sách' }}</span>
+    </button>
+    <div v-show="showPerformanceChart">
+      <BookPerformanceChart ref="performanceChartRef" />
+    </div>
+  </div>
+
+  <!-- Location Stats -->
+  <LocationStats />
     <!-- 3. Top Books & Top Users Tables -->
     <div class="top-tables-row">
       <TopBooksTable />
@@ -119,6 +145,18 @@ import SupplierStatisticsCards from "../components-admin/statistics/SupplierStat
 import PublisherStatisticsCards from "../components-admin/statistics/PublisherStatisticsCards.vue";
 import RankStatisticsCards from "../components-admin/statistics/RankStatisticsCards.vue";
 import PointStatisticsCards from "../components-admin/statistics/PointStatisticsCards.vue";
+import OrderPerformanceChart from "../components-admin/statistics/OrderPerformanceChart.vue";
+import { ref } from "vue";
+import BookPerformanceChart from "../components-admin/statistics/BookPerformanceChart.vue";
+
+// Toggle for RevenueChart
+const showRevenueChart = ref(false);
+
+// Toggle for PerformanceChart
+const showPerformanceChart = ref(false);
+const performanceChartRef = ref(null);
+
+
 </script>
 
 <style scoped>

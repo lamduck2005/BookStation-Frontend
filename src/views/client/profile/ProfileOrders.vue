@@ -146,9 +146,9 @@
                 </span>
               </button>
               
-              <!-- Hoàn hàng (chỉ khi DELIVERED) -->
+              <!-- Hoàn hàng (chỉ khi DELIVERED và trong vòng 7 ngày) -->
               <button 
-                v-if="canRefundOrder(order.orderStatus)" 
+                v-if="canRefundOrderWithTime(order)" 
                 class="btn btn-outline-warning btn-sm"
                 @click="openRefundModal(order)"
               >
@@ -660,6 +660,22 @@ export default {
 
     const canRefundOrder = (status) => {
       return orderService.canRefundOrder(status)
+    }
+
+    const canRefundOrderWithTime = (order) => {
+      // Kiểm tra trạng thái đơn hàng có thể hoàn trả không
+      if (!orderService.canRefundOrder(order.orderStatus)) {
+        return false
+      }
+      
+      // Kiểm tra thời gian update cuối cùng
+      const updatedAt = order.updatedAt || order.createdAt
+      const currentTime = Date.now()
+      const timeDiff = currentTime - updatedAt
+      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24))
+      
+      // Chỉ cho phép hoàn hàng trong vòng 7 ngày
+      return daysDiff <= 7
     }
 
     const cancelOrderConfirm = async (order) => {
@@ -1177,6 +1193,7 @@ export default {
       isFinancialExpanded: (orderId) => expandedFinancial.value.has(orderId),
       canCancelOrder,
       canRefundOrder,
+      canRefundOrderWithTime,
       cancelOrderConfirm,
       buyAgain,
       viewOrderDetail,

@@ -227,7 +227,7 @@
                           <button
                             v-if="refund.status === 'PENDING'"
                             @click="approveRefundRequest(refund)"
-                            class="btn btn-sm btn-outline-success"
+                            class="btn btn-sm btn-outline-success me-2"
                             title="Phê duyệt"
                           >
                             <i class="bi bi-check-circle"></i>

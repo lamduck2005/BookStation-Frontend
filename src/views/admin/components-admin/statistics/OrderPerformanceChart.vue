@@ -1154,7 +1154,7 @@ onUnmounted(() => {
   transform: none !important;
   transition: none !important;
   margin-top: 150px !important;
-  margin-left: 300px !important;
+  margin-right: 300px !important;
 }
 
 .chart-container :deep(.apexcharts-tooltip.apexcharts-active) {
