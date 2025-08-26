@@ -26,39 +26,39 @@
             </div>
           </div>
           <div class="card-body filter-collapse" :class="{ 'filter-collapsed': !showFilter }">
-                         <div class="mb-3">
-               <label class="form-label">
-                 <i class="bi bi-search me-1"></i>
-                 Tìm kiếm
-               </label>
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-search me-1"></i>
+                Tìm kiếm
+              </label>
                <input type="text" class="form-control form-control-sm" placeholder="Nhập tên hoặc email"
                  v-model="searchQuery" @keyup.enter="applyFilters" />
-             </div>
+            </div>
 
-                         <div class="mb-3">
-               <label class="form-label">
-                 <i class="bi bi-toggle-on me-1"></i>
-                 Trạng thái
-               </label>
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-toggle-on me-1"></i>
+                Trạng thái
+              </label>
                <select class="form-select form-select-sm" v-model="selectedStatus">
-                 <option value="">Tất cả trạng thái</option>
+                <option value="">Tất cả trạng thái</option>
                  <option value="1">Hoạt động</option>
                  <option value="0">Ngừng hoạt động</option>
-               </select>
-             </div>
+              </select>
+            </div>
 
-                         <div class="mb-3">
-               <label class="form-label">
-                 <i class="bi bi-person-badge me-1"></i>
-                 Vai trò
-               </label>
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-person-badge me-1"></i>
+                Vai trò
+              </label>
                <select class="form-select form-select-sm" v-model="selectedRole">
-                 <option value="">Tất cả vai trò</option>
+                <option value="">Tất cả vai trò</option>
                  <option v-for="role in rolesList" :key="role.id" :value="role.id">
-                   {{ role.tenVaiTro }}
-                 </option>
-               </select>
-             </div>
+                  {{ role.tenVaiTro }}
+                </option>
+              </select>
+            </div>
 
             <div class="d-grid gap-2">
               <button class="btn btn-success btn-sm" @click="applyFilters">
@@ -89,10 +89,10 @@
               <button class="btn btn-outline-info btn-sm py-2" @click="fetchUsers" :disabled="loading">
                 <i class="bi bi-arrow-repeat me-1"></i> Làm mới
               </button>
-
+              
               <!-- Nút Export Excel -->
               <ExcelExportButton data-type="users" button-text="Xuất Excel" />
-
+              
 
             </div>
           </div>
@@ -106,9 +106,9 @@
 
             <!-- Data table -->
             <div>
-              <table class="table align-middle table-hover mb-0">
-                <thead class="table-light">
-                  <tr>
+                <table class="table align-middle table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
                     <th style="width: 40px">#</th>
                     <th style="width: 120px">Thao tác</th>
                     <th style="width: 150px">Họ tên</th>
@@ -120,9 +120,9 @@
                     <th style="width: 100px">Tổng điểm</th>
                     <th style="width: 150px">Ngày tạo</th>
                     <th style="width: 150px">Ngày cập nhật</th>
-                  </tr>
-                </thead>
-                <tbody>
+                    </tr>
+                  </thead>
+                  <tbody>
                   <tr v-if="users.length === 0">
                     <td colspan="11" class="text-center py-4 text-muted">
                       <i class="bi bi-inbox me-2"></i>
@@ -132,7 +132,7 @@
                   <tr v-for="(user, idx) in users" :key="user.user_id" class="align-middle" style="vertical-align: middle;">
                     <td class="py-3">{{ currentPage * pageSize + idx + 1 }}</td>
                     <td class="py-3">
-                      <div class="d-flex gap-2">
+                        <div class="d-flex gap-2">
                         <span class="tooltip-wrapper">
                           <button
                             class="btn btn-sm btn-outline-secondary action-btn"
@@ -146,42 +146,42 @@
                           <EditButton :user="user" @click="openEditModal(user)" />
                           <span class="tooltip-bubble">Chỉnh sửa</span>
                         </span>
-                      </div>
-                    </td>
+                        </div>
+                      </td>
                     <td class="py-3 fw-bold">{{ user.full_name }}</td>
                     <td class="py-3">{{ user.email }}</td>
                     <td class="py-3">{{ user.phone_number }}</td>
                     <td class="py-3">
                       <span :class="['badge', getRoleInfo(user.role_name).class]">
                         {{ getRoleInfo(user.role_name).text }}
-                      </span>
-                    </td>
+                        </span>
+                      </td>
                     <td class="py-3">
                       <span :class="['badge', getStatusInfo(user.status).class]">
                         {{ getStatusInfo(user.status).text }}
-                      </span>
-                    </td>
+                        </span>
+                      </td>
                     <td class="py-3">
-                      <span class="text-success">{{
-                        formatCurrency(user.total_spent)
-                      }}</span>
-                    </td>
+                        <span class="text-success">{{
+                          formatCurrency(user.total_spent)
+                        }}</span>
+                      </td>
                     <td class="py-3">
-                      <span class="text-primary">{{ user.total_point }}</span>
-                    </td>
+                        <span class="text-primary">{{ user.total_point }}</span>
+                      </td>
                     <td class="py-3">
                       <span class="fw-bold">{{ toTime(user.created_at) }}</span>
                       <br />
                       <small class="text-muted">{{ toDate(user.created_at) }}</small>
-                    </td>
+                      </td>
                     <td class="py-3">
                       <span class="fw-bold">{{ toTime(user.updated_at) }}</span>
                       <br />
                       <small class="text-muted">{{ toDate(user.updated_at) }}</small>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
 
               <!-- Pagination -->
               <div class="p-3">
@@ -619,8 +619,8 @@ async function handleSubmitUser() {
   for (const validation of validations) {
     if (validation !== null) {
       showToast("error", validation);
-      return;
-    }
+    return;
+  }
   }
 
   // Đảm bảo status là số

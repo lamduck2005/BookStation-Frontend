@@ -77,7 +77,6 @@
             <i class="bi bi-arrow-repeat me-1"></i> Làm mới
           </button>
           
-          <!-- Nút Export Excel -->
           <ExcelExportButton 
             data-type="categories"
             button-text="Xuất Excel"
@@ -93,14 +92,12 @@
         </div>
       </div>
       <div class="card-body p-0">
-        <!-- Loading state -->
         <div v-if="loading" class="text-center py-4">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Đang tải...</span>
           </div>
           <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
         </div>
-        <!-- Error state -->
         <div v-else-if="error" class="alert alert-danger m-4" role="alert">
           <i class="bi bi-exclamation-triangle-fill me-2"></i>
           {{ error }}
@@ -111,7 +108,6 @@
             Thử lại
           </button>
         </div>
-        <!-- Data table -->
         <div v-else>
           <table
             class="table align-middle table-hover mb-0 category-table-custom"
@@ -119,9 +115,9 @@
             <thead>
               <tr>
                 <th style="width: 60px">#</th>
-                <th style="width: 45%">TÊN DANH MỤC</th>
-                <th style="width: 25%">MÔ TẢ</th>
-                <th class="text-center" style="width: 150px">CHỨC NĂNG</th>
+                <th style="width: 100px">Thao tác</th>
+                <th style="width: 400px">TÊN THỂ LOẠI</th>
+                <th style="width: 300px">MÔ TẢ</th>
               </tr>
             </thead>
             <tbody>
@@ -131,7 +127,6 @@
                   Không có dữ liệu
                 </td>
               </tr>
-              <!-- Dòng dữ liệu danh mục cha -->
               <template
                 v-for="(category, index) in categories"
                 :key="category.id"
@@ -142,6 +137,23 @@
                 >
                   <td class="py-3 text-center fw-bold">
                     {{ currentPage * pageSize + index + 1 }}
+                  </td>
+                  <td class="py-3 text-center">
+                    <div class="d-flex gap-2">
+                      <span class="tooltip-wrapper">
+                        <button
+                          class="btn btn-sm btn-outline-secondary action-btn"
+                          @click="viewCategory(category.id)"
+                        >
+                          <i class="bi bi-eye"></i>
+                        </button>
+                        <span class="tooltip-bubble">Xem chi tiết</span>
+                      </span>
+                      <span class="tooltip-wrapper">
+                        <EditButton @click="editCategory(category.id)" />
+                        <span class="tooltip-bubble">Chỉnh sửa</span>
+                      </span>
+                    </div>
                   </td>
                   <td class="py-3">
                     <div class="d-flex align-items-center">
@@ -169,27 +181,7 @@
                       {{ category.description || "Không có mô tả" }}
                     </div>
                   </td>
-                  <td class="py-3 text-center">
-                    <div class="d-inline-flex gap-1">
-                      <button
-                        class="btn btn-outline-info btn-sm action-btn"
-                        @click="viewCategory(category.id)"
-                        title="Xem chi tiết"
-                      >
-                        <i class="bi bi-eye"></i>
-                      </button>
-                      <EditButton
-                        @click="editCategory(category.id)"
-                        title="Sửa"
-                      />
-                      <DeleteButton
-                        @click="handleDeleteCategory(category.id)"
-                        title="Xóa"
-                      />
-                    </div>
-                  </td>
                 </tr>
-                <!-- Hiển thị danh mục con -->
                 <template
                   v-if="
                     category.parentCategory &&
@@ -208,6 +200,23 @@
                         childIndex + 1
                       }}
                     </td>
+                    <td class="py-2 text-center">
+                      <div class="d-flex gap-2">
+                        <span class="tooltip-wrapper">
+                          <button
+                            class="btn btn-sm btn-outline-secondary action-btn"
+                            @click="viewCategory(child.id)"
+                          >
+                            <i class="bi bi-eye"></i>
+                          </button>
+                          <span class="tooltip-bubble">Xem chi tiết</span>
+                        </span>
+                        <span class="tooltip-wrapper">
+                          <EditButton @click="editCategory(child.id)" />
+                          <span class="tooltip-bubble">Chỉnh sửa</span>
+                        </span>
+                      </div>
+                    </td>
                     <td class="py-2" style="padding-left: 60px">
                       <div class="d-flex align-items-center">
                         <i class="bi bi-arrow-return-right me-2 text-muted"></i>
@@ -219,25 +228,6 @@
                     <td class="py-2">
                       <div class="description-text" :title="child.description">
                         {{ child.description || "Không có mô tả" }}
-                      </div>
-                    </td>
-                    <td class="py-2 text-center">
-                      <div class="d-inline-flex gap-1">
-                        <button
-                          class="btn btn-outline-info btn-sm action-btn"
-                          @click="viewCategory(child.id)"
-                          title="Xem chi tiết"
-                        >
-                          <i class="bi bi-eye"></i>
-                        </button>
-                        <EditButton
-                          @click="editCategory(child.id)"
-                          title="Sửa"
-                        />
-                        <DeleteButton
-                          @click="handleDeleteCategory(child.id)"
-                          title="Xóa"
-                        />
                       </div>
                     </td>
                   </tr>
@@ -271,7 +261,6 @@
   >
     <div class="modal-dialog" style="max-width: 600px">
       <div class="modal-content">
-        <!-- ✅ Đổi từ category-modal-header thành form-modal-header -->
         <div class="modal-header form-modal-header">
           <h5 class="modal-title">
             <i class="bi bi-plus-circle me-2"></i>
@@ -281,7 +270,6 @@
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
-        <!-- ✅ Đổi từ category-modal-body thành form-modal-body -->
         <div class="modal-body form-modal-body">
           <div class="mb-3">
             <label class="form-label">
@@ -320,7 +308,6 @@
           </div>
         </div>
         <div class="modal-footer">
-          <!-- ✅ Đổi từ category-form-btn thành form-btn -->
           <button
             type="button"
             class="btn form-btn-secondary"
@@ -345,7 +332,6 @@
   >
     <div class="modal-dialog" style="max-width: 450px">
       <div class="modal-content">
-        <!-- ✅ Đổi từ category-modal-header thành form-modal-header -->
         <div class="modal-header form-modal-header">
           <h5 class="modal-title">
             <i class="bi bi-info-circle me-2"></i>
@@ -359,32 +345,37 @@
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
-        <!-- ✅ Đổi từ category-modal-body thành form-modal-body -->
         <div class="modal-body form-modal-body">
-          <div class="mb-2"><b>ID:</b> {{ detailCategory.id }}</div>
-          <div class="mb-2">
-            <b>Tên danh mục:</b> {{ detailCategory.categoryName }}
-          </div>
-          <div class="mb-2"><b>Mô tả:</b> {{ detailCategory.description }}</div>
-          <div class="mb-2">
-            <b>Ngày tạo:</b> {{ detailCategory.createdAt }}
-          </div>
-          <div class="mb-2">
-            <b>Ngày cập nhật:</b> {{ detailCategory.updatedAt }}
-          </div>
-          <div class="mb-2">
-            <b>Người tạo:</b> {{ detailCategory.createdBy }}
-          </div>
-          <div class="mb-2">
-            <b>Người cập nhật:</b> {{ detailCategory.updatedBy }}
-          </div>
-          <div class="mb-2">
-            <b>Danh Mục Cha:</b>
-            {{ detailCategory.parentCategory?.categoryName || "Không có" }}
-          </div>
+          <table class="detail-info-table">
+            <tbody>
+              <tr>
+                <td class="detail-label">ID</td>
+                <td class="detail-value">{{ detailCategory.id }}</td>
+              </tr>
+              <tr>
+                <td class="detail-label">Tên danh mục</td>
+                <td class="detail-value">{{ detailCategory.categoryName }}</td>
+              </tr>
+              <tr>
+                <td class="detail-label">Mô tả</td>
+                <td class="detail-value">{{ detailCategory.description || "Không có mô tả" }}</td>
+              </tr>
+              <tr>
+                <td class="detail-label">Danh mục cha</td>
+                <td class="detail-value">{{ detailCategory.parentCategory?.categoryName || "Không có" }}</td>
+              </tr>
+              <tr>
+                <td class="detail-label">Ngày tạo</td>
+                <td class="detail-value">{{ toDate(detailCategory.createdAt) }} {{ toTime(detailCategory.createdAt) }}</td>
+              </tr>
+              <tr>
+                <td class="detail-label">Ngày cập nhật</td>
+                <td class="detail-value">{{ toDate(detailCategory.updatedAt) }} {{ toTime(detailCategory.updatedAt) }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
         <div class="modal-footer">
-          <!-- ✅ Đổi từ category-form-btn thành form-btn -->
           <button
             type="button"
             class="btn form-btn-secondary"
@@ -406,7 +397,6 @@
   >
     <div class="modal-dialog" style="max-width: 600px">
       <div class="modal-content">
-        <!-- ✅ Đổi từ category-modal-header thành form-modal-header -->
         <div class="modal-header form-modal-header">
           <h5 class="modal-title d-flex align-items-center gap-2">
             <i class="bi bi-pencil-square me-2"></i> Sửa danh mục
@@ -419,7 +409,6 @@
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
-        <!-- ✅ Đổi từ category-modal-body thành form-modal-body -->
         <div class="modal-body form-modal-body">
           <div class="mb-3">
             <label class="form-label">
@@ -458,7 +447,6 @@
           </div>
         </div>
         <div class="modal-footer">
-          <!-- ✅ Đổi từ category-form-btn thành form-btn -->
           <button
             type="button"
             class="btn form-btn-secondary"
@@ -482,10 +470,11 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import Swal from "sweetalert2";
+import { showToast, showQuickConfirm } from "@/utils/swalHelper.js";
+import { validate } from "@/utils/validation.js";
+import { toDate, toTime } from "@/utils/utils.js";
 import {
   addCategory,
-  deleteCategory,
   getAllCategories,
   getAllExceptId,
   getAllParentCategories,
@@ -496,11 +485,8 @@ import {
 } from "../../../services/admin/category";
 import AddButton from "@/components/common/AddButton.vue";
 import EditButton from "@/components/common/EditButton.vue";
-import DeleteButton from "@/components/common/DeleteButton.vue";
 import Pagination from "@/components/common/Pagination.vue";
 import ToggleStatus from "@/components/common/ToggleStatus.vue";
-// ✅ Import hàm timestampToDatetimeLocal từ utils.js
-import { debounce, timestampToDatetimeLocal } from "@/utils/utils";
 import ExcelExportButton from "@/components/common/ExcelExportButton.vue";
 
 const categories = ref([]);
@@ -521,8 +507,6 @@ const detailCategory = ref({
   parentCategory: "",
   createdAt: "",
   updatedAt: "",
-  createdBy: "",
-  updatedBy: "",
 });
 const showDetailModal = ref(false);
 const showEditModal = ref(false);
@@ -574,22 +558,10 @@ const fetchCategory = async () => {
     currentPage.value = data.page ?? currentPage.value;
     pageSize.value = data.size ?? pageSize.value;
     isLastPage.value = currentPage.value >= totalPages.value - 1;
-
-    console.log("=== DEBUG PAGINATION DATA ===");
-    console.log("Original response:", response);
-    console.log("Processed data:", data);
-    console.log("categories.value:", categories.value);
-    console.log("totalPages:", totalPages.value);
-    console.log("totalElements:", totalElements.value);
-    console.log("currentPage:", currentPage.value);
-    console.log("pageSize:", pageSize.value);
-    console.log("isLastPage:", isLastPage.value);
-    console.log("============================");
-
-    console.log("Danh sách danh mục sau khi xử lý:", categories.value);
   } catch (error) {
     console.error("Lỗi khi tải danh sách danh mục:", error);
     error.value = "Không thể tải danh sách danh mục.";
+    showToast("error", "Không thể tải danh sách danh mục.");
   } finally {
     loading.value = false;
   }
@@ -604,13 +576,13 @@ const viewCategory = async (id) => {
     const categoryData = await getCategoryById(id);
     detailCategory.value = {
       ...categoryData,
-      // ✅ Format ngày tạo và ngày cập nhật
-      createdAt: timestampToDatetimeLocal(categoryData.createdAt),
-      updatedAt: timestampToDatetimeLocal(categoryData.updatedAt),
+      createdAt: categoryData.createdAt,
+      updatedAt: categoryData.updatedAt,
     };
     showDetailModal.value = true;
   } catch (error) {
     console.error("Lỗi khi lấy thông tin danh mục:", error);
+    showToast("error", "Không thể lấy thông tin danh mục.");
   }
 };
 
@@ -625,108 +597,32 @@ const closeModal = () => {
 
 // Thêm validation functions
 const validateCategoryForm = () => {
-  // Validate tên danh mục (bắt buộc)
-  if (
-    !category.value.categoryName ||
-    category.value.categoryName.trim() === ""
-  ) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cảnh báo!",
-      text: "Vui lòng nhập tên danh mục",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    return false;
-  }
+  const validations = [
+    validate.category.categoryName(category.value.categoryName),
+    validate.category.description(category.value.description)
+  ];
 
-  // Validate độ dài tên danh mục
-  if (category.value.categoryName.trim().length < 2) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cảnh báo!",
-      text: "Tên danh mục phải có ít nhất 2 ký tự",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    return false;
-  }
-
-  if (category.value.categoryName.trim().length > 100) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cảnh báo!",
-      text: "Tên danh mục không được vượt quá 100 ký tự",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    return false;
-  }
-
-  // Validate mô tả (nếu có)
-  if (category.value.description && category.value.description.length > 500) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cảnh báo!",
-      text: "Mô tả không được vượt quá 500 ký tự",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    return false;
+  for (const validation of validations) {
+    if (validation !== null) {
+      showToast("error", validation);
+      return false;
+    }
   }
 
   return true;
 };
 
 const validateEditForm = () => {
-  // Validate tên danh mục (bắt buộc)
-  if (
-    !editData.value.categoryName ||
-    editData.value.categoryName.trim() === ""
-  ) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cảnh báo!",
-      text: "Vui lòng nhập tên danh mục",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    return false;
-  }
+  const validations = [
+    validate.category.categoryName(editData.value.categoryName),
+    validate.category.description(editData.value.description)
+  ];
 
-  // Validate độ dài tên danh mục
-  if (editData.value.categoryName.trim().length < 2) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cảnh báo!",
-      text: "Tên danh mục phải có ít nhất 2 ký tự",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    return false;
-  }
-
-  if (editData.value.categoryName.trim().length > 100) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cảnh báo!",
-      text: "Tên danh mục không được vượt quá 100 ký tự",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    return false;
-  }
-
-  // Validate mô tả (nếu có)
-  if (editData.value.description && editData.value.description.length > 500) {
-    Swal.fire({
-      icon: "warning",
-      title: "Cảnh báo!",
-      text: "Mô tả không được vượt quá 500 ký tự",
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    return false;
+  for (const validation of validations) {
+    if (validation !== null) {
+      showToast("error", validation);
+      return false;
+    }
   }
 
   return true;
@@ -734,6 +630,16 @@ const validateEditForm = () => {
 
 // Sửa lại hàm add
 const add = async () => {
+  const result = await showQuickConfirm(
+    "Xác nhận thêm mới",
+    "Bạn có chắc chắn muốn thêm danh mục này?",
+    "question",
+    "Thêm mới",
+    "Hủy"
+  );
+  
+  if (!result.isConfirmed) return;
+
   // Validate form trước khi submit
   if (!validateCategoryForm()) {
     return;
@@ -749,19 +655,10 @@ const add = async () => {
   };
 
   try {
-    console.log("Payload sent to BE:", payload);
     await addCategory(payload);
-    fetchCategory(); // Cập nhật lại danh sách danh mục
+    fetchCategory();
     closeModal();
-    Swal.fire({
-      icon: "success",
-      title: "Thêm danh mục thành công!",
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true,
-    });
+    showToast("success", "Thêm danh mục thành công!");
   } catch (error) {
     console.error("Lỗi khi thêm danh mục:", error);
 
@@ -773,21 +670,22 @@ const add = async () => {
       errorMessage = Object.values(error.response.data.errors).join(", ");
     }
 
-    Swal.fire({
-      icon: "error",
-      title: "Thêm thất bại!",
-      text: errorMessage,
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
-    });
+    showToast("error", errorMessage);
   }
 };
 
 // Sửa lại hàm handleUpdateCategory
 const handleUpdateCategory = async (id, categoryData) => {
+  const result = await showQuickConfirm(
+    "Xác nhận cập nhật",
+    "Bạn có chắc chắn muốn cập nhật danh mục này?",
+    "question",
+    "Cập nhật",
+    "Hủy"
+  );
+  
+  if (!result.isConfirmed) return;
+
   // Validate form trước khi submit
   if (!validateEditForm()) {
     return;
@@ -803,15 +701,7 @@ const handleUpdateCategory = async (id, categoryData) => {
     await updateCategory(id, payload);
     fetchCategory();
     showEditModal.value = false;
-    Swal.fire({
-      icon: "success",
-      title: "Cập nhật danh mục thành công!",
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true,
-    });
+    showToast("success", "Cập nhật danh mục thành công!");
   } catch (error) {
     console.error("Lỗi khi cập nhật danh mục:", error);
 
@@ -823,120 +713,13 @@ const handleUpdateCategory = async (id, categoryData) => {
       errorMessage = Object.values(error.response.data.errors).join(", ");
     }
 
-    Swal.fire({
-      icon: "error",
-      title: "Cập nhật thất bại!",
-      text: errorMessage,
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
-    });
-  }
-};
-
-// Thêm hàm để điền dữ liệu mẫu (giống Book)
-const fillFakeData = () => {
-  const timestamp = Date.now();
-  const categoryNames = [
-    "Văn học",
-    "Kinh tế",
-    "Thiếu nhi",
-    "Khoa học",
-    "Lịch sử",
-    "Ngoại ngữ",
-    "Kỹ năng sống",
-    "Tâm lý học",
-  ];
-
-  const descriptions = [
-    "Danh mục chứa các sách hay và bổ ích",
-    "Tập hợp những cuốn sách chất lượng cao",
-    "Phù hợp cho mọi lứa tuổi",
-    "Nội dung giáo dục và giải trí",
-    "Kiến thức chuyên sâu và thực tiễn",
-  ];
-
-  const randomCategoryName =
-    categoryNames[Math.floor(Math.random() * categoryNames.length)];
-  const randomDescription =
-    descriptions[Math.floor(Math.random() * descriptions.length)];
-  const randomStatus = Math.random() > 0.2 ? 1 : 0; // 80% active
-
-  // Random parent category
-  const randomParentId =
-    dataGetAll.value.length > 0 && Math.random() > 0.5
-      ? dataGetAll.value[Math.floor(Math.random() * dataGetAll.value.length)].id
-      : null;
-
-  category.value = {
-    categoryName: `${randomCategoryName} #${timestamp}`,
-    description: randomDescription,
-    parentCategory: {
-      id: randomParentId,
-      categoryName: "",
-      description: "",
-    },
-  };
-
-  Swal.fire({
-    icon: "success",
-    title: "Đã điền dữ liệu mẫu!",
-    text: "Dữ liệu mẫu đã được điền vào form",
-    timer: 1500,
-    timerProgressBar: true,
-  });
-};
-
-const handleDeleteCategory = async (id) => {
-  const result = await Swal.fire({
-    title: "Bạn có chắc chắn muốn xóa danh mục này?",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Xóa",
-    cancelButtonText: "Hủy",
-  });
-  if (result.isConfirmed) {
-    try {
-      await deleteCategory(id);
-      fetchCategory(); // Cập nhật lại danh sách danh mục
-
-      Swal.fire({
-        icon: "success",
-        title: "Xóa danh mục thành công!",
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-      });
-    } catch (error) {
-      console.error("Lỗi khi xóa danh mục:", error);
-      // ✅ Lấy message từ API nếu có
-      let errorMessage = "Không thể xóa danh mục.";
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.data?.errors) {
-        errorMessage = Object.values(error.response.data.errors).join(", ");
-      }
-      Swal.fire({
-        icon: "error",
-        title: "Xóa thất bại!",
-        text: errorMessage,
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-      });
-    }
+    showToast("error", errorMessage);
   }
 };
 
 // Watch để tự động fetch khi thay đổi filter hoặc phân trang
-watch([searchQuery, pageSize, currentPage], () => {
-  debounce(fetchCategory(), 500);
+watch([pageSize, currentPage], () => {
+  fetchCategory();
 });
 
 // Hàm chuyển trang
@@ -990,13 +773,7 @@ const editCategory = async (id) => {
     showEditModal.value = true;
   } catch (error) {
     console.error("Lỗi khi lấy thông tin danh mục để sửa:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Lỗi!",
-      text: "Không thể lấy thông tin danh mục để chỉnh sửa.",
-      timer: 2000,
-      timerProgressBar: true,
-    });
+    showToast("error", "Không thể lấy thông tin danh mục để chỉnh sửa.");
   }
 };
 
@@ -1010,8 +787,6 @@ const closeDetailModal = () => {
     parentCategory: "",
     createdAt: "",
     updatedAt: "",
-    createdBy: "",
-    updatedBy: "",
   };
 };
 
@@ -1038,4 +813,5 @@ const clearFilters = () => {
 <style scoped>
 @import "@/assets/css/admin-global.css";
 @import "@/assets/css/form-global.css";
+@import "@/assets/css/form-detail-global.css";
 </style>

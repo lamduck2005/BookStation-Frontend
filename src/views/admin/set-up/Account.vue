@@ -1,6 +1,6 @@
 <template>
   <!-- filepath: d:\BookStation-Frontend\src\views\admin\set-up\Account.vue -->
-  <div class="account-container">
+  <div class="account-container px-2">
     <div class="account-wrapper">
       <!-- Header với avatar và thông tin cơ bản -->
       <div class="account-header">
@@ -51,7 +51,7 @@
                 class="form-input"
                 placeholder="Nhập địa chỉ email"
                 v-model="editData.email"
-                :disabled="!isEditMode"
+                disabled
               />
             </div>
 
@@ -88,8 +88,8 @@
                 disabled
                 
                 >
-                <option value="ACTIVE">Hoạt động</option>
-                <option value="INACTIVE">Không hoạt động</option>
+                <option value="1">Hoạt động</option>
+                <option value="0">Không hoạt động</option>
               </select>
             </div>
 

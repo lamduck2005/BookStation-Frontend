@@ -155,13 +155,13 @@
             <thead class="table-light">
               <tr>
                 <th style="width: 40px">#</th>
-                <th>Tên chương trình</th>
-                <th>Thời gian bắt đầu</th>
-                <th>Thời gian kết thúc</th>
-                <th>Ngày tạo</th>
-                <th>Ngày cập nhật</th>
-                <th style="width: 200px">Trạng thái</th>
-                <th style="width: 120px">Chức năng</th>
+                <th style="width: 200px">Tên chương trình</th>
+                <th style="width: 120px">Thao tác</th>
+                <th style="width: 150px">Trạng thái</th>
+                <th style="width: 150px">Thời gian bắt đầu</th>
+                <th style="width: 150px">Thời gian kết thúc</th>
+                <th style="width: 150px">Ngày tạo</th>
+                <th style="width: 150px">Ngày cập nhật</th>
               </tr>
             </thead>
             <tbody>
@@ -171,7 +171,6 @@
                   Không có dữ liệu
                 </td>
               </tr>
-              <!-- Dòng dữ liệu, dãn dọc py-3 -->
               <tr
                 v-for="(item, index) in flashSales"
                 :key="item.id"
@@ -187,10 +186,9 @@
                     {{ item.name }}
                   </router-link>
                 </td>
-                <td class="py-3">{{ formatDateTime(item.startTime) }}</td>
-                <td class="py-3">{{ formatDateTime(item.endTime) }}</td>
-                <td class="py-3">{{ formatDateTime(item.createdAt) }}</td>
-                <td class="py-3">{{ formatDateTime(item.updatedAt) }}</td>
+                <td class="py-3">
+                  <EditButton @click="openEditForm(item)" />
+                </td>
                 <td class="py-3">
                   <ToggleStatus
                     :id="item.id"
@@ -203,8 +201,24 @@
                   />
                 </td>
                 <td class="py-3">
-                  <EditButton @click="openEditForm(item)" />
-                  <!-- <DeleteButton @click="handleDeleteFunction(item)" /> -->
+                  <span class="fw-bold">{{ toTime(item.startTime) }}</span>
+                  <br />
+                  <small class="text-muted">{{ toDate(item.startTime) }}</small>
+                </td>
+                <td class="py-3">
+                  <span class="fw-bold">{{ toTime(item.endTime) }}</span>
+                  <br />
+                  <small class="text-muted">{{ toDate(item.endTime) }}</small>
+                </td>
+                <td class="py-3">
+                  <span class="fw-bold">{{ toTime(item.createdAt) }}</span>
+                  <br />
+                  <small class="text-muted">{{ toDate(item.createdAt) }}</small>
+                </td>
+                <td class="py-3">
+                  <span class="fw-bold">{{ toTime(item.updatedAt) }}</span>
+                  <br />
+                  <small class="text-muted">{{ toDate(item.updatedAt) }}</small>
                 </td>
               </tr>
             </tbody>
@@ -239,7 +253,6 @@
     >
       <div class="modal-dialog">
         <div class="modal-content">
-          <!-- ✅ Đổi từ .modal-header thành .form-modal-header -->
           <div class="modal-header form-modal-header">
             <h5 class="modal-title" id="formModalLabel">
               <i class="bi bi-lightning-charge me-2"></i>
@@ -249,7 +262,6 @@
               <i class="bi bi-x-lg"></i>
             </button>
           </div>
-          <!-- ✅ Đổi từ .modal-body thành .form-modal-body -->
           <div class="modal-body form-modal-body">
             <div class="mb-3">
               <label class="form-label">
@@ -295,7 +307,6 @@
             </div>
           </div>
           <div class="modal-footer">
-            <!-- ✅ Đổi button classes -->
             <button
               type="button"
               class="btn form-btn-secondary"
@@ -337,6 +348,8 @@ import {
 import {
   datetimeLocalToTimestamp,
   timestampToDatetimeLocal,
+  toDate,
+  toTime
 } from "@/utils/utils.js";
 
 const filter = ref({
@@ -383,14 +396,11 @@ const stats = ref([
   },
 ]);
 
-// Định dạng ngày giờ
-function formatDateTime(timestamp) {
-  if (!timestamp) return "";
-  const date = new Date(timestamp);
-  return date.toLocaleString("vi-VN", { hour12: false });
-}
+const showFilter = ref(false);
+const toggleFilter = () => {
+  showFilter.value = !showFilter.value;
+};
 
-// Gọi API với các bộ lọc hiện tại
 const searchWithFilter = () => {
   getDataFromApi(0, pageSize.value);
 };
@@ -405,12 +415,10 @@ const clearFilters = () => {
   getDataFromApi(0, pageSize.value);
 };
 
-//reload
 const reloadPage = () => {
   getDataFromApi(currentPage.value, pageSize.value);
 };
 
-//trạng thái
 const handleStatusChange = (id) => {
   toggleStatusFlashSale(id)
     .then((res) => {
@@ -425,7 +433,6 @@ const handleStatusChange = (id) => {
     });
 };
 
-// thêm sửa
 const openAddForm = async () => {
   isEditMode.value = false;
   resetFormData();
@@ -438,7 +445,6 @@ const openAddForm = async () => {
 
 const openEditForm = async (item) => {
   isEditMode.value = true;
-  // Set dữ liệu vào form
   formData.value = {
     id: item.id,
     name: item.name,
@@ -463,7 +469,6 @@ const validateForm = () => {
     return false;
   }
 
-  // Kiểm tra thời gian kết thúc phải lớn hơn thời gian bắt đầu
   const startTime = datetimeLocalToTimestamp(formData.value.startTime);
   const endTime = datetimeLocalToTimestamp(formData.value.endTime);
 
@@ -474,13 +479,13 @@ const validateForm = () => {
 
   return true;
 };
+
 const handleSubmitForm = async () => {
   try {
     if (!validateForm()) {
       return;
     }
 
-    // Chuyển đổi datetime-local thành timestamp milliseconds
     const submitData = {
       name: formData.value.name,
       startTime: datetimeLocalToTimestamp(formData.value.startTime),
@@ -492,18 +497,14 @@ const handleSubmitForm = async () => {
       const res = await addFlashSale(submitData);
       showToast("success", res.data.message || "Thêm mới thành công!");
       closeModal();
-      // Reload lại dữ liệu sau khi thêm thành công
       await getDataFromApi(currentPage.value, pageSize.value);
     } else {
       const res = await updateFlashSale(formData.value.id, submitData);
       showToast("success", res.data.message || "Cập nhật thành công!");
       closeModal();
-      // Reload lại dữ liệu sau khi thêm thành công
       await getDataFromApi(currentPage.value, pageSize.value);
-      showToast("success", "Cập nhật thành công!");
     }
   } catch (error) {
-    // ✅ Lấy message từ API nếu có
     let errorMessage = "Có lỗi xảy ra!";
     if (error.response?.data?.message) {
       errorMessage = error.response.data.message;
@@ -514,10 +515,6 @@ const handleSubmitForm = async () => {
   }
 };
 
-const handleDeleteFunction = async (item) => {
-  showToast("warning", "Chức năng xoá!");
-};
-
 const closeModal = () => {
   const modalElement = document.getElementById("formModal");
   if (modalElement) {
@@ -526,20 +523,21 @@ const closeModal = () => {
   }
 };
 
-// Pagination functions
 const handlePrev = () => {
   if (currentPage.value > 0) {
     getDataFromApi(currentPage.value - 1, pageSize.value);
   }
 };
+
 const handleNext = () => {
   if (!isLastPage.value) {
     getDataFromApi(currentPage.value + 1, pageSize.value);
   }
 };
+
 const handlePageSizeChange = (newSize) => {
   pageSize.value = newSize;
-  getDataFromApi(0, newSize); // Reset về trang đầu khi thay đổi page size
+  getDataFromApi(0, newSize);
 };
 
 const resetFormData = () => {
@@ -551,19 +549,10 @@ const resetFormData = () => {
   };
 };
 
-// Format datetime for input datetime-local
-function formatDateTimeForInput(timestamp) {
-  if (!timestamp) return "";
-  const date = new Date(timestamp);
-  return date.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:MM
-}
-
-//load dữ liệu
 const getDataFromApi = async (page, size) => {
   loading.value = true;
   error.value = null;
   try {
-    // Xây dựng params đúng với API mới
     const params = {
       page,
       size,
@@ -576,7 +565,6 @@ const getDataFromApi = async (page, size) => {
 
     const res = await getAllFlashSale(params);
     const resData = res.data.data;
-    console.log("🚀 ~ getDataFromApi ~ res:", res);
 
     if (res && res.status === 200 && resData) {
       flashSales.value = resData.content;
@@ -629,11 +617,6 @@ onMounted(() => {
   fetchStats();
   getDataFromApi(currentPage.value, pageSize.value);
 });
-
-const showFilter = ref(false);
-const toggleFilter = () => {
-  showFilter.value = !showFilter.value;
-};
 </script>
 
 <style scoped>

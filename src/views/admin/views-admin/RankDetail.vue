@@ -1,16 +1,9 @@
 <template>
-  <div class="container-fluid py-4">
-    <!-- Breadcrumb -->
-    <div class="mb-3">
-      <h6 class="text-muted">
-        Admin / <router-link :to="{ name: 'Hạng' }">Xếp hạng</router-link> / <strong>Chi tiết xếp hạng: {{ rankName }}</strong>
-      </h6>
-    </div>
-
+  <div class="admin-page container-fluid py-4">
     <!-- Layout 2 cột: Bộ lọc bên trái, Bảng bên phải -->
     <div class="row">
       <!-- Cột bộ lọc (bên trái) -->
-      <div class="col-lg-2 col-xl-2">
+      <div class="filter-sidebar" :class="{ 'filter-sidebar-collapsed': !showFilter }">
         <div class="card shadow-lg border-0 filter-card sticky-filter">
           <div class="card-header bg-light border-0 py-3">
             <div class="d-flex justify-content-between align-items-center">
@@ -24,7 +17,7 @@
                 @click="toggleFilter"
                 :aria-expanded="showFilter"
               >
-                <i :class="showFilter ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
+                <i :class="showFilter ? 'bi bi-chevron-left' : 'bi bi-chevron-right'"></i>
               </button>
             </div>
           </div>
@@ -37,23 +30,10 @@
               <input 
                 type="text" 
                 class="form-control form-control-sm" 
-                placeholder="Nhập tên người dùng" 
+                placeholder="Nhập tên hoặc email" 
                 v-model="searchQuery" 
-                @input="debouncedSearch"
                 @keyup.enter="applyFilters"
               />
-            </div>
-            
-            <div class="mb-3">
-              <label class="form-label">
-                <i class="bi bi-toggle-on me-1"></i>
-                Trạng thái
-              </label>
-              <select class="form-select form-select-sm" v-model="selectedStatus" @change="applyFilters">
-                <option value="">Tất cả trạng thái</option>
-                <option value="1">Hoạt động</option>
-                <option value="0">Không hoạt động</option>
-              </select>
             </div>
             
             <div class="d-grid gap-2">
@@ -69,7 +49,7 @@
       </div>
       
       <!-- Cột bảng (bên phải) -->
-      <div class="col-lg-10 col-xl-10">
+      <div class="table-main-content" :class="{ 'table-main-content-expanded': !showFilter }">
         <!-- Danh sách User Rank -->
         <div class="card shadow-lg border-0 mb-4 admin-table-card">
           <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3">
@@ -83,12 +63,12 @@
               <button class="btn btn-outline-info btn-sm py-2" @click="fetchUserRanks" :disabled="loading">
                 <i class="bi bi-arrow-repeat me-1"></i> Làm mới
               </button>
-              <button
+              <!-- <button
                 class="btn btn-success btn-sm"
                 @click="showAddUserModal = true"
               >
                 <i class="bi bi-plus-circle me-2"></i> Thêm người dùng
-              </button>
+              </button> -->
             </div>
           </div>
           <div class="card-body p-0" :class="{ loading: loading }">
@@ -101,61 +81,30 @@
             
             <!-- Data table -->
             <div>
-              <div class="table-responsive">
                 <table class="table align-middle table-hover mb-0">
                   <thead class="table-light">
                     <tr>
-                      <th style="min-width: 50px;">STT</th>
-                      <th style="min-width: 120px;">Thao tác</th>
-                      <th style="min-width: 150px;">Tên người dùng</th>
-                      <th style="min-width: 200px;">Email</th>
-                      <th style="min-width: 100px;">Trạng thái</th>
-                      <th style="min-width: 130px;">Tổng chi tiêu</th>
-                      <th style="min-width: 150px;">Ngày thêm vào rank</th>
-                      <th style="min-width: 150px;">Ngày cập nhật</th>
+                      <th style="width: 40px">#</th>
+                      <th style="width: 150px">Tên người dùng</th>
+                      <th style="width: 200px">Email</th>
+                      <th style="width: 150px">Ngày thêm vào rank</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(user, index) in users" :key="user.id">
-                      <td>{{ (page * pageSize) + index + 1 }}</td>
-                      <td>
-                        <div class="d-flex gap-2">
-                          <ToggleStatus
-                            :status="user.status"
-                            @toggle="handleUserRankStatusChange(user)"
-                          />
-                        </div>
-                      </td>
-                      <td>
-                        <strong>{{ user.userName || user.full_name }}</strong>
-                      </td>
-                      <td>
-                        <div>
-                          {{ user.email }}
-                        </div>
-                      </td>
-                      <td>
-                        <span :class="user.status === 1 ? 'status-active' : 'status-inactive'">
-                          {{ user.status === 1 ? 'Hoạt động' : 'Không hoạt động' }}
-                        </span>
-                      </td>
-                      <td>
-                        <span class="text-success">{{ formatCurrency(user.totalSpent || 0) }}</span>
-                      </td>
-                      <td>
-                        <div class="small">
-                          {{ formatDate(user.createdAt) }}
-                        </div>
-                      </td>
-                      <td>
-                        <div class="small">
-                          {{ formatDate(user.updatedAt) }}
-                        </div>
+                    <tr v-if="users.length === 0">
+                      <td colspan="4" class="text-center py-4 text-muted">
+                        <i class="bi bi-inbox me-2"></i>
+                        Không có dữ liệu
                       </td>
                     </tr>
-                    <tr v-if="users.length === 0">
-                      <td colspan="8" class="text-center text-muted">
-                        Không có dữ liệu
+                    <tr v-for="(user, idx) in users" :key="user.id" class="align-middle" style="vertical-align: middle;">
+                      <td class="py-3">{{ currentPage * pageSize + idx + 1 }}</td>
+                      <td class="py-3 fw-bold">{{ user.userName || user.full_name }}</td>
+                      <td class="py-3">{{ user.userEmail || user.email }}</td>
+                      <td class="py-3">
+                        <span class="fw-bold">{{ toTime(user.createdAt) }}</span>
+                        <br />
+                        <small class="text-muted">{{ toDate(user.createdAt) }}</small>
                       </td>
                     </tr>
                   </tbody>
@@ -165,7 +114,7 @@
               <!-- Pagination -->
               <div class="p-3">
                 <Pagination 
-                  :page-number="page" 
+                  :page-number="currentPage" 
                   :total-pages="totalPages" 
                   :is-last-page="isLastPage"
                   :page-size="pageSize" 
@@ -181,31 +130,7 @@
         </div>
       </div>
     </div>
-  </div>
-          <tbody>
-            <tr v-for="(user, index) in users" :key="user.id">
-              <td>{{ index + 1 + page * pageSize }}</td>
-              <td>{{ user.userName }}</td>
-              <td>{{ user.userEmail }}</td>
-              <td style="width: 200px;">
-                <span :class="user.status == 1 ? 'status-active' : 'status-inactive'">
-                  {{ user.status == 1 ? 'Hoạt động' : 'Không hoạt động' }}
-                </span>
-              </td>
-              <td>{{ user.createdAt ? new Date(user.createdAt).toLocaleString() : '-' }}</td>
-            </tr>
-          </tbody>
-        <Pagination
-          :page-number="page"
-          :total-pages="totalPages"
-          :is-last-page="isLastPage"
-          :page-size="pageSize"
-          :items-per-page-options="itemsPerPageOptions"
-          :total-elements="totalElements"
-          @prev="handlePrev"
-          @next="handleNext"
-          @update:pageSize="handlePageSizeChange"
-        />
+ 
     <!-- Add User to Rank Modal -->
     <div class="modal fade" :class="{ show: showAddUserModal }" tabindex="-1" style="display: block;" v-if="showAddUserModal">
       <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -295,15 +220,15 @@ import ToggleStatus from '@/components/common/ToggleStatus.vue';
 import { getUserRanksByRankId, addUserToRank, toggleUserRankStatus } from '@/services/admin/userRank.js';
 import { showToast } from '@/utils/swalHelper';
 import { getRanksDropdown } from '@/services/admin/rank.js';
+import { toDate, toTime } from '@/utils/utils.js';
 
 const route = useRoute();
 const rankId = route.params.id;
 const rankName = route.query.name || '';
 const searchQuery = ref('');
-const selectedStatus = ref('');
 const users = ref([]);
-const page = ref(0);
-const pageSize = ref(5);
+const currentPage = ref(0);
+const pageSize = ref(10);
 const totalPages = ref(1);
 const totalElements = ref(0);
 const itemsPerPageOptions = ref([5, 10, 25, 50]);
@@ -316,24 +241,14 @@ const rankOptions = ref([]);
 const loading = ref(false);
 const showFilter = ref(true);
 
-// Debounce search function
-let searchTimeout = null;
-const debouncedSearch = () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    applyFilters();
-  }, 300);
-};
-
 const applyFilters = () => {
-  page.value = 0;
+  currentPage.value = 0;
   fetchUserRanks();
 };
 
 const clearFilters = () => {
   searchQuery.value = "";
-  selectedStatus.value = "";
-  page.value = 0;
+  currentPage.value = 0;
   fetchUserRanks();
 };
 
@@ -357,22 +272,18 @@ const formatDate = (dateString) => {
 const fetchUserRanks = async () => {
   try {
     const params = {
-      page: page.value,
+      page: currentPage.value,
       size: pageSize.value,
     };
     
     if (searchQuery.value) {
-      params.search = searchQuery.value; // Thay đổi param name nếu cần
+      params.search = searchQuery.value;
     }
     
-    if (selectedStatus.value !== '') {
-      params.status = selectedStatus.value;
-    }
-    
-    console.log('Fetching user ranks for rankId:', rankId, 'with params:', params); // Debug log
+    console.log('Fetching user ranks for rankId:', rankId, 'with params:', params);
     
     const response = await getUserRanksByRankId(rankId, params);
-    console.log('User ranks response:', response); // Debug log
+    console.log('User ranks response:', response);
     
     // Handle different response structures
     let data;
@@ -387,7 +298,7 @@ const fetchUserRanks = async () => {
     users.value = data.content || [];
     totalPages.value = data.totalPages ?? 1;
     totalElements.value = data.totalElements ?? users.value.length;
-    isLastPage.value = data.last ?? (page.value >= totalPages.value - 1);
+    isLastPage.value = data.last ?? (currentPage.value >= totalPages.value - 1);
     
     console.log('Users loaded:', users.value.length);
   } catch (e) {
@@ -431,27 +342,27 @@ const fetchRankDropdown = async () => {
 };
 
 const handlePrev = () => {
-  if (page.value > 0) {
-    page.value--;
+  if (currentPage.value > 0) {
+    currentPage.value--;
     fetchUserRanks();
   }
 };
 
 const handleNext = () => {
   if (!isLastPage.value) {
-    page.value++;
+    currentPage.value++;
     fetchUserRanks();
   }
 };
 
 const handlePageSizeChange = (newSize) => {
   pageSize.value = newSize;
-  page.value = 0;
+  currentPage.value = 0;
   fetchUserRanks();
 };
 
-watch([searchQuery, pageSize, selectedStatus], () => {
-  page.value = 0;
+watch([pageSize], () => {
+  currentPage.value = 0;
   fetchUserRanks();
 });
 
@@ -535,8 +446,70 @@ async function handleUserRankStatusChange(user) {
 </script>
 
 <style scoped>
-@import "@/assets/css/admin-table-responsive.css";
-@import '@/assets/css/admin-global.css';
+@import "@/assets/css/admin-global.css";
+@import "@/assets/css/form-global.css";
+@import "@/assets/css/form-detail-global.css";
+
+/* Layout 2 cột cho filter sidebar */
+.filter-sidebar {
+  width: 250px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  flex-shrink: 0;
+  padding-right: 15px;
+}
+
+.filter-sidebar-collapsed {
+  width: 100px;
+}
+
+.filter-sidebar-collapsed .filter-card .card-body {
+  opacity: 0;
+  pointer-events: none;
+  max-height: 0;
+  padding: 0;
+}
+
+.filter-sidebar-collapsed .filter-card .card-header h6 {
+  opacity: 0;
+}
+
+.filter-sidebar-collapsed .filter-card .card-header {
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.filter-sidebar-collapsed .filter-card .card-header .d-flex {
+  justify-content: center !important;
+}
+
+.filter-sidebar-collapsed .filter-card .card-header .btn {
+  margin: 0;
+}
+
+/* Table content */
+.table-main-content {
+  flex: 1;
+  transition: all 0.3s ease;
+  margin-left: 0;
+  min-width: 0;
+}
+
+.table-main-content-expanded {
+  margin-left: 0;
+}
+
+/* Sticky filter */
+.sticky-filter {
+  position: sticky;
+  top: 20px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+
+.row > [class*="col-"] {
+  padding: 0;
+}
 
 /* Loading Overlay */
 .loading-overlay {
@@ -564,14 +537,6 @@ async function handleUserRankStatusChange(user) {
 .loading-overlay .spinner-border {
   width: 3rem;
   height: 3rem;
-}
-
-/* Sticky filter sidebar */
-.sticky-filter {
-  position: sticky;
-  top: 20px;
-  max-height: calc(100vh - 100px);
-  overflow-y: auto;
 }
 
 /* Compact filter styles */
@@ -608,7 +573,7 @@ async function handleUserRankStatusChange(user) {
 /* Force layout to stay in same row */
 .row {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   margin: 0;
 }
 
@@ -618,32 +583,32 @@ async function handleUserRankStatusChange(user) {
 }
 
 .col-lg-2 {
-  width: 16.666667%;
-  max-width: 16.666667%;
+  width: 100%;
+  max-width: 100%;
 }
 
 .col-lg-10 {
-  width: 83.333333%;
-  max-width: 83.333333%;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Responsive adjustments */
 @media (max-width: 991.98px) {
-  .row {
-    flex-wrap: wrap;
-  }
-  
-  .sticky-filter {
-    position: relative;
-    top: auto;
-    max-height: none;
+  .filter-sidebar {
+    width: 100%;
     margin-bottom: 1rem;
   }
   
-  .col-lg-2,
-  .col-lg-10 {
+  .filter-sidebar-collapsed {
     width: 100%;
-    max-width: 100%;
+  }
+  
+  .table-main-content {
+    margin-left: 0;
+  }
+  
+  .table-main-content-expanded {
+    margin-left: 0;
   }
 }
 
@@ -677,27 +642,6 @@ async function handleUserRankStatusChange(user) {
 .admin-table-card .card-header h5 {
   margin: 0;
   font-weight: 600;
-}
-
-/* Status Styles */
-.status-active {
-  background: #d4edda;
-  color: #218838;
-  font-weight: 500;
-  border-radius: 8px;
-  padding: 4px 16px;
-  font-size: 0.9rem;
-  border: 1px solid #c3e6cb;
-}
-
-.status-inactive {
-  background: #f8d7da;
-  color: #721c24;
-  font-weight: 500;
-  border-radius: 8px;
-  padding: 4px 16px;
-  font-size: 0.9rem;
-  border: 1px solid #f5c6cb;
 }
 
 /* Enhanced Modal Styles */

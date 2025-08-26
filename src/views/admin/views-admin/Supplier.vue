@@ -306,43 +306,48 @@
                 />
               </div>
               <div class="col-12">
-                <label class="form-label">Tên người liên hệ</label>
+                <label class="form-label">Tên người liên hệ <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   class="form-control"
                   v-model="formData.contactName"
+                  required
                   placeholder="Nhập tên người liên hệ (tối đa 100 ký tự)"
                   maxlength="100"
                 />
               </div>
               <div class="col-md-6">
-                <label class="form-label">Email</label>
+                <label class="form-label">Email <span class="text-danger">*</span></label>
                 <input
                   type="email"
                   class="form-control"
                   v-model="formData.email"
+                  required
                   placeholder="Nhập email (tối đa 100 ký tự)"
                   maxlength="100"
                 />
               </div>
               <div class="col-md-6">
-                <label class="form-label">Số điện thoại</label>
+                <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
                 <input
                   type="text"
                   class="form-control"
                   v-model="formData.phoneNumber"
+                  required
                   placeholder="Nhập số điện thoại (10 số, bắt đầu bằng 0)"
                   maxlength="10"
                   pattern="^0\d{9}$"
                 />
               </div>
               <div class="col-12">
-                <label class="form-label">Địa chỉ</label>
+                <label class="form-label">Địa chỉ <span class="text-danger">*</span></label>
                 <textarea
                   class="form-control"
                   v-model="formData.address"
+                  required
                   placeholder="Nhập địa chỉ chi tiết"
                   rows="3"
+                  maxlength="500"
                 ></textarea>
               </div>
               <!-- <div class="col-12">
@@ -371,6 +376,7 @@
               type="button"
               class="btn form-btn-primary"
               @click="handleSubmit"
+              :disabled="!isFormValid"
             >
               {{ isEditMode ? "Cập nhật" : "Thêm mới" }}
             </button>
@@ -387,6 +393,7 @@ import { Modal } from 'bootstrap';
 import { getSuppliers, createSupplier, updateSupplier, deleteSupplier } from '@/services/admin/supplier.js';
 import { showToast, showQuickConfirm } from '@/utils/swalHelper';
 import { debounce } from '@/utils/utils';
+import { validate } from '@/utils/validation';
 
 // Components
 import AddButton from '@/components/common/AddButton.vue';
@@ -432,6 +439,15 @@ const formData = ref({
   address: '',
   createdBy: 'admin',
   updatedBy: 'admin'
+});
+
+// Computed property để kiểm tra form hợp lệ
+const isFormValid = computed(() => {
+  return formData.value.supplierName?.trim() &&
+         formData.value.contactName?.trim() &&
+         formData.value.email?.trim() &&
+         formData.value.phoneNumber?.trim() &&
+         formData.value.address?.trim();
 });
 
 // UI functions
@@ -551,45 +567,39 @@ const showSupplierModal = () => {
 };
 
 const validateForm = () => {
-  // Validate tên nhà cung cấp (bắt buộc)
-  if (!formData.value.supplierName || formData.value.supplierName.trim() === '') {
-    showToast('error', 'Vui lòng nhập tên nhà cung cấp');
+  // Validate tên nhà cung cấp
+  const supplierNameError = validate.supplier.supplierName(formData.value.supplierName);
+  if (supplierNameError) {
+    showToast('error', supplierNameError);
     return false;
   }
 
-  // Validate độ dài tên nhà cung cấp
-  if (formData.value.supplierName.trim().length > 100) {
-    showToast('error', 'Tên nhà cung cấp không được vượt quá 100 ký tự');
+  // Validate tên liên hệ
+  const contactNameError = validate.supplier.contactName(formData.value.contactName);
+  if (contactNameError) {
+    showToast('error', contactNameError);
     return false;
   }
 
-  // Validate tên liên hệ (nếu có)
-  if (formData.value.contactName && formData.value.contactName.trim().length > 100) {
-    showToast('error', 'Tên người liên hệ không được vượt quá 100 ký tự');
+  // Validate email
+  const emailError = validate.supplier.email(formData.value.email);
+  if (emailError) {
+    showToast('error', emailError);
     return false;
   }
 
-  // Validate email (nếu có)
-  if (formData.value.email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.value.email)) {
-      showToast('error', 'Email không hợp lệ');
-      return false;
-    }
-    if (formData.value.email.length > 100) {
-      showToast('error', 'Email không được vượt quá 100 ký tự');
-      return false;
-    }
+  // Validate số điện thoại
+  const phoneError = validate.supplier.phoneNumber(formData.value.phoneNumber);
+  if (phoneError) {
+    showToast('error', phoneError);
+    return false;
   }
 
-  // Validate số điện thoại (nếu có)
-  if (formData.value.phoneNumber) {
-    // Kiểm tra format: phải là 10 số và bắt đầu bằng 0
-    const phoneRegex = /^0\d{9}$/;
-    if (!phoneRegex.test(formData.value.phoneNumber)) {
-      showToast('error', 'Số điện thoại phải có 10 số và bắt đầu bằng 0');
-      return false;
-    }
+  // Validate địa chỉ
+  const addressError = validate.supplier.address(formData.value.address);
+  if (addressError) {
+    showToast('error', addressError);
+    return false;
   }
 
   return true;
