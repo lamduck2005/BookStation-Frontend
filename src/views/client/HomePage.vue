@@ -144,7 +144,7 @@ const voucher = ref(null);
           <div class="col-lg-6">
             <div class="text-center">
               <img
-                src="https://via.placeholder.com/500x300?text=Hero+Image"
+                src="../../assets/img/logo.png"
                 alt="Hero"
                 class="img-fluid rounded shadow"
               />

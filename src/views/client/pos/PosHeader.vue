@@ -96,6 +96,7 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import { getBooksDropdown, getBookByIsbn } from "@/services/admin/book";
 import BarcodeScanner from "./BarcodeScanner.vue";
+import { showToast } from "@/utils/swalHelper";
 
 // Emit để gửi sản phẩm được chọn lên component cha
 const emit = defineEmits(["add-product"]);
@@ -159,13 +160,18 @@ const handleClickOutside = (event) => {
 const onBarcodeDetected = async (isbn) => {
   if (scanning.value) return;
   scanning.value = true;
+
+  // Gán mã vừa quét vào ô input search
+  productSearchTerm.value = isbn;
+
   try {
     const resp = await getBookByIsbn(isbn);
     const data = resp?.data;
     console.log("RAW book data:", data);
 
     if (!data) {
-      toast.warning("Không tìm thấy sách với mã: " + isbn);
+      showToast("warning", "Không tìm thấy sách với mã: " + isbn);
+      closeScanner();
       return;
     }
 
@@ -208,16 +214,18 @@ const onBarcodeDetected = async (isbn) => {
     console.log("Book chuẩn hoá:", book);
 
     emit("add-product", book);
-    toast.success("Đã thêm: " + book.title);
+    showToast("success", "Đã thêm: " + book.title);
     closeScanner();
   } catch (e) {
     console.error(e);
-    toast.error(e.response?.data?.message || "Lỗi lấy sách");
+    showToast("error", e.response?.data?.message || "Lỗi lấy sách");
   } finally {
     scanning.value = false;
   }
 };
-
+const closeScanner = () => {
+  showScanner.value = false;
+};
 // Sửa formatCurrency
 const formatCurrency = (amount) => {
   if (amount === undefined || amount === null || isNaN(amount)) return "—";

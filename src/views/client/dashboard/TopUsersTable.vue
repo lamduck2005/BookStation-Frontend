@@ -26,7 +26,6 @@
             </td>
             <td class="user-info">
               <div class="user-name">{{ user.name }}</div>
-              <div class="user-detail">Khách hàng VIP</div>
             </td>
             <td class="spent-cell">
               <div class="spent-amount">{{ user.spent }} ₫</div>

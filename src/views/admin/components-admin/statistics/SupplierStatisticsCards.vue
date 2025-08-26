@@ -219,26 +219,7 @@ const fetchSupplierStatistics = async () => {
   } catch (error) {
     console.error('Error fetching supplier statistics:', error);
     
-    // Fallback data để tránh lỗi hiển thị
-    data.value = {
-      bookStatistics: [
-        { supplierName: "Công ty ABC", totalBooks: 800 },
-        { supplierName: "Công ty XYZ", totalBooks: 650 },
-        { supplierName: "Công ty DEF", totalBooks: 720 }
-      ],
-      revenueStatistics: [
-        { supplierName: "Công ty ABC", totalRevenue: 45000000.00, totalQuantitySold: 2250 },
-        { supplierName: "Công ty XYZ", totalRevenue: 42000000.00, totalQuantitySold: 2100 }
-      ],
-      topSuppliersByRevenue: [
-        { supplierName: "Công ty ABC", totalRevenue: 45000000.00, totalQuantitySold: 2250 },
-        { supplierName: "Công ty XYZ", totalRevenue: 42000000.00, totalQuantitySold: 2100 }
-      ],
-      topSuppliersByQuantity: [
-        { supplierName: "Công ty XYZ", totalQuantitySold: 2500, totalRevenue: 42000000.00 },
-        { supplierName: "Công ty ABC", totalQuantitySold: 2250, totalRevenue: 45000000.00 }
-      ]
-    };
+    
     
     Swal.fire({
       title: 'Lỗi!',
