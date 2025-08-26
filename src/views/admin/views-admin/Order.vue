@@ -771,7 +771,25 @@
                         <div class="col-md-6">
                           <div class="summary-total">
                             <span>Tổng cộng:</span>
-                            <strong class="text-primary fs-5">{{ formatCurrency(orderCalculation.finalTotal) }}</strong>
+                            <strong 
+                              :class="orderCalculation.subtotal > 100000000 ? 'text-danger fs-5' : 'text-primary fs-5'"
+                            >
+                              {{ formatCurrency(orderCalculation.finalTotal) }}
+                            </strong>
+                          </div>
+                          
+                          <!-- ✅ CẢNH BÁO GIỚI HẠN 100 TRIỆU THEO SUBTOTAL -->
+                          <div v-if="orderCalculation.subtotal > 100000000" class="mt-2">
+                            <div class="alert alert-danger py-2 px-3 mb-0 small">
+                              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                              <strong>⚠️ VƯỢT GIỚI HẠN ĐẶT HÀNG ONLINE!</strong>
+                              <br>
+                              <span class="small">
+                                Giá trị sản phẩm: <strong>{{ formatCurrency(orderCalculation.subtotal) }}</strong> vượt quá giới hạn 
+                                <strong>100,000,000 VNĐ</strong>. 
+                                Chính sách cửa hàng không cho phép đặt hàng online với giá trị sản phẩm vượt quá mức này.
+                              </span>
+                            </div>
                           </div>
                           
                           <!-- Applied vouchers detail -->
@@ -809,10 +827,24 @@
             class="btn btn-primary btn-submit" 
             @click="handleSubmitOrder"
             :disabled="!canSubmitOrder"
+            :title="getSubmitButtonTooltip"
+            :class="{
+              'btn-danger': orderCalculation && orderCalculation.subtotal > 100000000,
+              'btn-primary': !orderCalculation || orderCalculation.subtotal <= 100000000
+            }"
           >
-            <i class="bi bi-check-circle me-1"></i>
-            Tạo đơn hàng
+            <i class="bi bi-check-circle me-1" v-if="!orderCalculation || orderCalculation.subtotal <= 100000000"></i>
+            <i class="bi bi-exclamation-triangle-fill me-1" v-else></i>
+            {{ getSubmitButtonText }}
           </button>
+          
+          <!-- ✅ NOTE BÊN DƯỚI BUTTON KHI VƯỢT GIỚI HẠN -->
+          <div v-if="orderCalculation && orderCalculation.subtotal > 100000000" class="mt-2">
+            <div class="alert alert-danger py-2 px-3 mb-0 small">
+              <i class="bi bi-info-circle me-1"></i>
+              <strong>Lý do không thể đặt hàng:</strong> Giá trị sản phẩm {{ formatCurrency(orderCalculation.subtotal) }} vượt quá giới hạn {{ formatCurrency(100000000) }} theo chính sách cửa hàng. Vui lòng liên hệ khách hàng đặt hàng trực tiếp tại cửa hàng hoặc giảm số lượng sản phẩm.
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1457,11 +1489,49 @@ const orderTotal = computed(() => {
 });
 
 const canSubmitOrder = computed(() => {
-  return newOrder.value.userId && 
+  const basicValidation = newOrder.value.userId && 
          newOrder.value.addressId && 
          newOrder.value.items.length > 0 &&
          newOrder.value.items.every(detail => detail.bookId && detail.quantity > 0) &&
          !isCalculating.value;
+         
+  // ✅ KIỂM TRA THÊM GIỚI HẠN 100 TRIỆU THEO GIÁ TRỊ SẢN PHẨM (SUBTOTAL)
+  if (!basicValidation) return false;
+  
+  const ORDER_VALUE_LIMIT = 100000000; // 100 triệu
+  const currentSubtotal = orderCalculation.value ? orderCalculation.value.subtotal : 0;
+  
+  return currentSubtotal <= ORDER_VALUE_LIMIT;
+});
+
+// ✅ COMPUTED CHO BUTTON TEXT VÀ TOOLTIP
+const getSubmitButtonText = computed(() => {
+  const ORDER_VALUE_LIMIT = 100000000; // 100 triệu
+  const currentSubtotal = orderCalculation.value ? orderCalculation.value.subtotal : 0;
+  
+  if (currentSubtotal > ORDER_VALUE_LIMIT) {
+    return 'Vượt giới hạn đặt hàng online';
+  }
+  return 'Tạo đơn hàng';
+});
+
+const getSubmitButtonTooltip = computed(() => {
+  if (!newOrder.value.userId) return 'Vui lòng chọn khách hàng';
+  if (!newOrder.value.addressId) return 'Vui lòng chọn địa chỉ giao hàng';
+  if (newOrder.value.items.length === 0) return 'Vui lòng thêm sản phẩm vào đơn hàng';
+  if (!newOrder.value.items.every(detail => detail.bookId && detail.quantity > 0)) {
+    return 'Vui lòng điền đầy đủ thông tin sản phẩm';
+  }
+  if (isCalculating.value) return 'Đang tính toán đơn hàng...';
+  
+  const ORDER_VALUE_LIMIT = 100000000; // 100 triệu
+  const currentSubtotal = orderCalculation.value ? orderCalculation.value.subtotal : 0;
+  
+  if (currentSubtotal > ORDER_VALUE_LIMIT) {
+    return `Chính sách cửa hàng: Giá trị sản phẩm không được vượt ${formatCurrency(ORDER_VALUE_LIMIT)}`;
+  }
+  
+  return 'Click để tạo đơn hàng';
 });
 
 // Debounced search function
@@ -1992,6 +2062,15 @@ const calculateShippingFee = async () => {
 const handleSubmitOrder = async () => {
   if (!canSubmitOrder.value) {
     showToast('warning', 'Vui lòng điền đầy đủ thông tin đơn hàng!');
+    return;
+  }
+
+  // ✅ KIỂM TRA GIỚI HẠN 100 TRIỆU THEO GIÁ TRỊ SẢN PHẨM (SUBTOTAL)
+  const ORDER_VALUE_LIMIT = 100000000; // 100 triệu
+  const currentSubtotal = orderCalculation.value ? orderCalculation.value.subtotal : 0;
+  
+  if (currentSubtotal > ORDER_VALUE_LIMIT) {
+    showToast('error', 'Không thể đặt hàng online! Giá trị sản phẩm vượt quá 100 triệu VNĐ theo chính sách cửa hàng.');
     return;
   }
 
