@@ -3,7 +3,7 @@
     <div class="header-section">
       <div class="icon-title">
         <i class="bi bi-trophy-fill trophy-icon"></i>
-        <h3>Top nhà xuất bản theo doanh thu</h3>
+        <h3>Top sách bán chạy</h3>
       </div>
     </div>
 
@@ -13,7 +13,7 @@
           <tr>
             <th class="rank-header">STT</th>
             <th class="book-header">Sách</th>
-            <th class="revenue-header">Doanh thu</th>
+            <th class="sold-header">Đã bán</th>
           </tr>
         </thead>
         <tbody>
@@ -25,11 +25,10 @@
             </td>
             <td class="book-info">
               <div class="book-name">{{ book.name }}</div>
-              <div class="book-detail">Đã bán: {{ book.sold }} cuốn</div>
             </td>
-            <td class="revenue-cell">
-              <div class="revenue-amount">{{ book.revenue }}</div>
-              <div class="revenue-label">doanh thu</div>
+            <td class="sold-cell">
+              <div class="sold-amount">{{ book.sold }}</div>
+              <div class="sold-label">cuốn</div>
             </td>
           </tr>
         </tbody>
@@ -49,7 +48,6 @@ onMounted(async () => {
   books.value = res.map((item) => ({
     name: item.bookName,
     sold: item.soldQuantity,
-    revenue: (item.soldQuantity * 98000).toLocaleString() + " đ",
   }));
 });
 
@@ -62,8 +60,6 @@ const getRankClass = (index) => {
 </script>
 
 <style scoped>
-
-
 .top-books-container:hover {
   box-shadow: 0 12px 35px rgba(102, 126, 234, 0.25);
   border-color: rgba(102, 126, 234, 0.3);
@@ -139,7 +135,7 @@ const getRankClass = (index) => {
   width: 60%;
 }
 
-.revenue-header {
+.sold-header {
   width: 30%;
   text-align: right !important;
 }
@@ -228,19 +224,12 @@ const getRankClass = (index) => {
   font-weight: 800;
 }
 
-.book-detail {
-  font-size: 12px;
-  color: #7f8c8d;
-  line-height: 1.2;
-  font-weight: 600;
-}
-
-.revenue-cell {
+.sold-cell {
   text-align: right;
   white-space: nowrap;
 }
 
-.revenue-amount {
+.sold-amount {
   font-size: 15px;
   font-weight: 800;
   color: #27ae60;
@@ -250,12 +239,12 @@ const getRankClass = (index) => {
   font-variant-numeric: tabular-nums;
 }
 
-.book-row:hover .revenue-amount {
+.book-row:hover .sold-amount {
   color: #229954;
   transform: scale(1.05);
 }
 
-.revenue-label {
+.sold-label {
   font-size: 11px;
   color: #95a5a6;
   line-height: 1;
@@ -284,11 +273,7 @@ const getRankClass = (index) => {
     font-size: 13px;
   }
 
-  .book-detail {
-    font-size: 11px;
-  }
-
-  .revenue-amount {
+  .sold-amount {
     font-size: 14px;
   }
 }

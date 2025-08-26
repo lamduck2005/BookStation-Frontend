@@ -5,12 +5,13 @@
       <UserStatisticsCards />
     </div>
 
-
-
     <!-- Layout 2 cột: Bộ lọc bên trái, Bảng bên phải -->
     <div class="row">
       <!-- Cột bộ lọc (bên trái) -->
-      <div class="filter-sidebar" :class="{ 'filter-sidebar-collapsed': !showFilter }">
+      <div
+        class="filter-sidebar"
+        :class="{ 'filter-sidebar-collapsed': !showFilter }"
+      >
         <div class="card shadow-lg border-0 filter-card sticky-filter">
           <div class="card-header bg-light border-0 py-3">
             <div class="d-flex justify-content-between align-items-center">
@@ -18,47 +19,69 @@
                 <i class="bi bi-funnel me-2"></i>
                 Bộ lọc
               </h6>
-              <button class="btn btn-sm btn-outline-secondary" type="button" @click="toggleFilter"
-                :aria-expanded="showFilter">
-                <i :class="showFilter ? 'bi bi-chevron-left' : 'bi bi-chevron-right'
-                  "></i>
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                type="button"
+                @click="toggleFilter"
+                :aria-expanded="showFilter"
+              >
+                <i
+                  :class="
+                    showFilter ? 'bi bi-chevron-left' : 'bi bi-chevron-right'
+                  "
+                ></i>
               </button>
             </div>
           </div>
-          <div class="card-body filter-collapse" :class="{ 'filter-collapsed': !showFilter }">
-                         <div class="mb-3">
-               <label class="form-label">
-                 <i class="bi bi-search me-1"></i>
-                 Tìm kiếm
-               </label>
-               <input type="text" class="form-control form-control-sm" placeholder="Nhập tên hoặc email"
-                 v-model="searchQuery" @keyup.enter="applyFilters" />
-             </div>
+          <div
+            class="card-body filter-collapse"
+            :class="{ 'filter-collapsed': !showFilter }"
+          >
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-search me-1"></i>
+                Tìm kiếm
+              </label>
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                placeholder="Nhập tên hoặc email"
+                v-model="searchQuery"
+                @keyup.enter="applyFilters"
+              />
+            </div>
 
-                         <div class="mb-3">
-               <label class="form-label">
-                 <i class="bi bi-toggle-on me-1"></i>
-                 Trạng thái
-               </label>
-               <select class="form-select form-select-sm" v-model="selectedStatus">
-                 <option value="">Tất cả trạng thái</option>
-                 <option value="1">Hoạt động</option>
-                 <option value="0">Ngừng hoạt động</option>
-               </select>
-             </div>
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-toggle-on me-1"></i>
+                Trạng thái
+              </label>
+              <select
+                class="form-select form-select-sm"
+                v-model="selectedStatus"
+              >
+                <option value="">Tất cả trạng thái</option>
+                <option value="1">Hoạt động</option>
+                <option value="0">Ngừng hoạt động</option>
+              </select>
+            </div>
 
-                         <div class="mb-3">
-               <label class="form-label">
-                 <i class="bi bi-person-badge me-1"></i>
-                 Vai trò
-               </label>
-               <select class="form-select form-select-sm" v-model="selectedRole">
-                 <option value="">Tất cả vai trò</option>
-                 <option v-for="role in rolesList" :key="role.id" :value="role.id">
-                   {{ role.tenVaiTro }}
-                 </option>
-               </select>
-             </div>
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="bi bi-person-badge me-1"></i>
+                Vai trò
+              </label>
+              <select class="form-select form-select-sm" v-model="selectedRole">
+                <option value="">Tất cả vai trò</option>
+                <option
+                  v-for="role in rolesList"
+                  :key="role.id"
+                  :value="role.id"
+                >
+                  {{ role.tenVaiTro }}
+                </option>
+              </select>
+            </div>
 
             <div class="d-grid gap-2">
               <button class="btn btn-success btn-sm" @click="applyFilters">
@@ -73,12 +96,15 @@
       </div>
 
       <!-- Cột bảng (bên phải) -->
-      <div class="table-main-content" :class="{ 'table-main-content-expanded': !showFilter }">
-
-
+      <div
+        class="table-main-content"
+        :class="{ 'table-main-content-expanded': !showFilter }"
+      >
         <!-- Danh sách User -->
         <div class="card shadow-lg border-0 mb-4 admin-table-card">
-          <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3">
+          <div
+            class="card-header bg-white border-0 d-flex align-items-center justify-content-between py-3"
+          >
             <div>
               <h5 class="mb-0 text-secondary">
                 <i class="bi bi-people me-2"></i>
@@ -86,14 +112,16 @@
               </h5>
             </div>
             <div class="d-flex gap-2">
-              <button class="btn btn-outline-info btn-sm py-2" @click="fetchUsers" :disabled="loading">
+              <button
+                class="btn btn-outline-info btn-sm py-2"
+                @click="fetchUsers"
+                :disabled="loading"
+              >
                 <i class="bi bi-arrow-repeat me-1"></i> Làm mới
               </button>
 
               <!-- Nút Export Excel -->
               <ExcelExportButton data-type="users" button-text="Xuất Excel" />
-
-
             </div>
           </div>
           <div class="card-body p-0" :class="{ loading: loading }">
@@ -129,7 +157,12 @@
                       Không có dữ liệu
                     </td>
                   </tr>
-                  <tr v-for="(user, idx) in users" :key="user.user_id" class="align-middle" style="vertical-align: middle;">
+                  <tr
+                    v-for="(user, idx) in users"
+                    :key="user.user_id"
+                    class="align-middle"
+                    style="vertical-align: middle"
+                  >
                     <td class="py-3">{{ currentPage * pageSize + idx + 1 }}</td>
                     <td class="py-3">
                       <div class="d-flex gap-2">
@@ -143,21 +176,36 @@
                           <span class="tooltip-bubble">Xem chi tiết</span>
                         </span>
                         <span class="tooltip-wrapper">
-                          <EditButton :user="user" @click="openEditModal(user)" />
+                          <EditButton
+                            :user="user"
+                            @click="openEditModal(user)"
+                          />
                           <span class="tooltip-bubble">Chỉnh sửa</span>
                         </span>
                       </div>
                     </td>
-                    <td class="py-3 fw-bold">{{ user.full_name }}</td>
+                    <td class="py-3 fw-bold">
+                      {{ user.full_name }}
+                      <span
+                        v-if="user.isRetail === 1"
+                        class="badge bg-info ms-2"
+                        style="font-size: 12px"
+                        >Khách hàng vãng lai</span
+                      >
+                    </td>
                     <td class="py-3">{{ user.email }}</td>
                     <td class="py-3">{{ user.phone_number }}</td>
                     <td class="py-3">
-                      <span :class="['badge', getRoleInfo(user.role_name).class]">
+                      <span
+                        :class="['badge', getRoleInfo(user.role_name).class]"
+                      >
                         {{ getRoleInfo(user.role_name).text }}
                       </span>
                     </td>
                     <td class="py-3">
-                      <span :class="['badge', getStatusInfo(user.status).class]">
+                      <span
+                        :class="['badge', getStatusInfo(user.status).class]"
+                      >
                         {{ getStatusInfo(user.status).text }}
                       </span>
                     </td>
@@ -172,12 +220,16 @@
                     <td class="py-3">
                       <span class="fw-bold">{{ toTime(user.created_at) }}</span>
                       <br />
-                      <small class="text-muted">{{ toDate(user.created_at) }}</small>
+                      <small class="text-muted">{{
+                        toDate(user.created_at)
+                      }}</small>
                     </td>
                     <td class="py-3">
                       <span class="fw-bold">{{ toTime(user.updated_at) }}</span>
                       <br />
-                      <small class="text-muted">{{ toDate(user.updated_at) }}</small>
+                      <small class="text-muted">{{
+                        toDate(user.updated_at)
+                      }}</small>
                     </td>
                   </tr>
                 </tbody>
@@ -185,9 +237,17 @@
 
               <!-- Pagination -->
               <div class="p-3">
-                <Pagination :page-number="currentPage" :total-pages="totalPages" :is-last-page="isLastPage"
-                  :page-size="pageSize" :items-per-page-options="itemsPerPageOptions" :total-elements="totalElements"
-                  @prev="handlePrev" @next="handleNext" @update:pageSize="handlePageSizeChange" />
+                <Pagination
+                  :page-number="currentPage"
+                  :total-pages="totalPages"
+                  :is-last-page="isLastPage"
+                  :page-size="pageSize"
+                  :items-per-page-options="itemsPerPageOptions"
+                  :total-elements="totalElements"
+                  @prev="handlePrev"
+                  @next="handleNext"
+                  @update:pageSize="handlePageSizeChange"
+                />
               </div>
             </div>
           </div>
@@ -196,7 +256,13 @@
     </div>
   </div>
   <!-- Modal Add/Edit User -->
-  <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+  <div
+    class="modal fade"
+    id="userModal"
+    tabindex="-1"
+    aria-labelledby="userModalLabel"
+    aria-hidden="true"
+  >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <!-- header dùng form-modal-header -->
@@ -205,7 +271,12 @@
             <i class="bi bi-pencil me-2"></i>
             Cập nhật người dùng
           </h5>
-          <button type="button" class="custom-close-btn" data-bs-dismiss="modal" aria-label="Close">
+          <button
+            type="button"
+            class="custom-close-btn"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          >
             <i class="bx bx-x-circle"></i>
           </button>
         </div>
@@ -218,28 +289,54 @@
                 <label class="form-label">
                   Họ tên <span class="text-danger">*</span>
                 </label>
-                <input type="text" class="form-control" v-model="newUser.full_name" placeholder="Nhập họ và tên"
-                  :disabled="isReadOnly" required />
+                <input
+                  type="text"
+                  class="form-control"
+                  v-model="newUser.full_name"
+                  placeholder="Nhập họ và tên"
+                  :disabled="isReadOnly"
+                  required
+                />
               </div>
               <div class="col-12">
                 <label class="form-label">
                   Email <span class="text-danger">*</span>
                 </label>
-                <input type="email" class="form-control" v-model="newUser.email" placeholder="Nhập địa chỉ email"
-                  required disabled />
+                <input
+                  type="email"
+                  class="form-control"
+                  v-model="newUser.email"
+                  placeholder="Nhập địa chỉ email"
+                  required
+                  disabled
+                />
               </div>
               <div class="col-12">
                 <label class="form-label">Số điện thoại</label>
-                <input type="text" class="form-control" v-model="newUser.phone_number" placeholder="Nhập số điện thoại"
-                  :disabled="isReadOnly" />
+                <input
+                  type="text"
+                  class="form-control"
+                  v-model="newUser.phone_number"
+                  placeholder="Nhập số điện thoại"
+                  :disabled="isReadOnly"
+                />
               </div>
               <div class="col-12">
                 <label class="form-label">
                   Vai trò <span class="text-danger">*</span>
                 </label>
-                <select class="form-select" v-model="newUser.role_id" required :disabled="currentUserRole != 'ADMIN'">
+                <select
+                  class="form-select"
+                  v-model="newUser.role_id"
+                  required
+                  :disabled="currentUserRole != 'ADMIN'"
+                >
                   <option value="">Chọn vai trò</option>
-                  <option v-for="role in rolesList" :key="role.id" :value="role.id">
+                  <option
+                    v-for="role in rolesList"
+                    :key="role.id"
+                    :value="role.id"
+                  >
                     {{ role.tenVaiTro }}
                   </option>
                 </select>
@@ -255,13 +352,25 @@
               </div>
               <div class="col-12">
                 <label class="form-label">Tổng chi tiêu</label>
-                <input type="number" class="form-control" v-model="newUser.total_spent" min="0"
-                  placeholder="Nhập tổng chi tiêu" :disabled="isReadOnly" />
+                <input
+                  type="number"
+                  class="form-control"
+                  v-model="newUser.total_spent"
+                  min="0"
+                  placeholder="Nhập tổng chi tiêu"
+                  :disabled="isReadOnly"
+                />
               </div>
               <div class="col-12">
                 <label class="form-label">Tổng điểm</label>
-                <input type="number" class="form-control" v-model="newUser.total_point" min="0"
-                  placeholder="Nhập tổng điểm" :disabled="isReadOnly" />
+                <input
+                  type="number"
+                  class="form-control"
+                  v-model="newUser.total_point"
+                  min="0"
+                  placeholder="Nhập tổng điểm"
+                  :disabled="isReadOnly"
+                />
               </div>
             </div>
           </form>
@@ -269,11 +378,20 @@
 
         <!-- footer chỉ dùng modal-footer + form-btn-* -->
         <div class="modal-footer">
-          <button type="button" class="btn form-btn-secondary" data-bs-dismiss="modal">
+          <button
+            type="button"
+            class="btn form-btn-secondary"
+            data-bs-dismiss="modal"
+          >
             Hủy
           </button>
 
-          <button v-if="!isReadOnly" type="button" class="btn form-btn-primary" @click="handleSubmitUser">
+          <button
+            v-if="!isReadOnly"
+            type="button"
+            class="btn form-btn-primary"
+            @click="handleSubmitUser"
+          >
             Cập nhật
           </button>
         </div>
@@ -312,7 +430,9 @@
               </tr>
               <tr>
                 <td class="detail-label">Họ tên</td>
-                <td class="detail-value">{{ detailUser.full_name || "Chưa có dữ liệu" }}</td>
+                <td class="detail-value">
+                  {{ detailUser.full_name || "Chưa có dữ liệu" }}
+                </td>
               </tr>
               <tr>
                 <td class="detail-label">Email</td>
@@ -320,12 +440,16 @@
               </tr>
               <tr>
                 <td class="detail-label">Số điện thoại</td>
-                <td class="detail-value">{{ detailUser.phone_number || "Chưa có dữ liệu" }}</td>
+                <td class="detail-value">
+                  {{ detailUser.phone_number || "Chưa có dữ liệu" }}
+                </td>
               </tr>
               <tr>
                 <td class="detail-label">Vai trò</td>
                 <td class="detail-value">
-                  <span :class="['badge', getRoleInfo(detailUser.role_name).class]">
+                  <span
+                    :class="['badge', getRoleInfo(detailUser.role_name).class]"
+                  >
                     {{ getRoleInfo(detailUser.role_name).text }}
                   </span>
                 </td>
@@ -333,7 +457,9 @@
               <tr>
                 <td class="detail-label">Trạng thái</td>
                 <td class="detail-value">
-                  <span :class="['badge', getStatusInfo(detailUser.status).class]">
+                  <span
+                    :class="['badge', getStatusInfo(detailUser.status).class]"
+                  >
                     {{ getStatusInfo(detailUser.status).text }}
                   </span>
                 </td>
@@ -341,33 +467,50 @@
               <tr>
                 <td class="detail-label">Xác thực email</td>
                 <td class="detail-value">
-                  <span :class="['badge', detailUser.email_verified ? 'badge-success' : 'badge-warning']">
-                    {{ detailUser.email_verified ? 'Đã xác thực' : 'Chưa xác thực' }}
+                  <span
+                    :class="[
+                      'badge',
+                      detailUser.email_verified
+                        ? 'badge-success'
+                        : 'badge-warning',
+                    ]"
+                  >
+                    {{
+                      detailUser.email_verified
+                        ? "Đã xác thực"
+                        : "Chưa xác thực"
+                    }}
                   </span>
                 </td>
               </tr>
               <tr>
                 <td class="detail-label">Tổng chi tiêu</td>
                 <td class="detail-value">
-                  <span class="text-success fw-bold">{{ formatCurrency(detailUser.total_spent) }}</span>
+                  <span class="text-success fw-bold">{{
+                    formatCurrency(detailUser.total_spent)
+                  }}</span>
                 </td>
               </tr>
               <tr>
                 <td class="detail-label">Tổng điểm</td>
                 <td class="detail-value">
-                  <span class="text-primary fw-bold">{{ detailUser.total_point }}</span>
+                  <span class="text-primary fw-bold">{{
+                    detailUser.total_point
+                  }}</span>
                 </td>
               </tr>
               <tr>
                 <td class="detail-label">Ngày tạo</td>
                 <td class="detail-value">
-                  {{ toTime(detailUser.created_at) }} - {{ toDate(detailUser.created_at) }}
+                  {{ toTime(detailUser.created_at) }} -
+                  {{ toDate(detailUser.created_at) }}
                 </td>
               </tr>
               <tr>
                 <td class="detail-label">Ngày cập nhật</td>
                 <td class="detail-value">
-                  {{ toTime(detailUser.updated_at) }} - {{ toDate(detailUser.updated_at) }}
+                  {{ toTime(detailUser.updated_at) }} -
+                  {{ toDate(detailUser.updated_at) }}
                 </td>
               </tr>
             </tbody>
@@ -399,7 +542,13 @@ import {
   getDropdownRoles,
 } from "@/services/admin/user";
 import EditButton from "@/components/common/EditButton.vue";
-import { getUserId, getUserRole, formatCurrency, toDate, toTime } from "@/utils/utils.js";
+import {
+  getUserId,
+  getUserRole,
+  formatCurrency,
+  toDate,
+  toTime,
+} from "@/utils/utils.js";
 import { validate } from "@/utils/validation.js";
 import ExcelExportButton from "@/components/common/ExcelExportButton.vue";
 
@@ -436,8 +585,6 @@ const detailUser = ref({
   total_point: 0,
 });
 
-
-
 const applyFilters = () => {
   currentPage.value = 0;
   loadUsers();
@@ -465,21 +612,27 @@ const roleMap = computed(() => {
 // Hàm đơn giản để lấy badge class và text dựa trên role_name
 const getRoleInfo = (roleName) => {
   const roleMap = {
-    'ADMIN': { class: "badge-danger", text: "Quản trị viên" },
-    'STAFF': { class: "badge-warning", text: "Nhân viên" },
-    'CUSTOMER': { class: "badge-primary", text: "Khách hàng" }
+    ADMIN: { class: "badge-danger", text: "Quản trị viên" },
+    STAFF: { class: "badge-warning", text: "Nhân viên" },
+    CUSTOMER: { class: "badge-primary", text: "Khách hàng" },
   };
-  return roleMap[roleName] || { class: "badge-secondary", text: "Không xác định" };
+  return (
+    roleMap[roleName] || { class: "badge-secondary", text: "Không xác định" }
+  );
 };
 
 const getStatusInfo = (status) => {
   const statusMap = {
     1: { class: "badge-success", text: "Hoạt động" },
-    0: { class: "badge-danger", text: "Ngừng hoạt động" }
+    0: { class: "badge-danger", text: "Ngừng hoạt động" },
   };
-  return statusMap[Number(status)] || { class: "badge-secondary", text: "Không xác định" };
+  return (
+    statusMap[Number(status)] || {
+      class: "badge-secondary",
+      text: "Không xác định",
+    }
+  );
 };
-
 
 function getUserParams() {
   return {
@@ -563,7 +716,6 @@ const handlePageSizeChange = (newSize) => {
   loadUsers();
 };
 
-
 // Hàm xem chi tiết người dùng
 const viewUser = (user) => {
   detailUser.value = { ...user };
@@ -599,20 +751,30 @@ function showUserModal() {
   modal.show();
 }
 async function handleSubmitUser() {
-  const result = await showQuickConfirm("Xác nhận lưu thay đổi", "Bạn có chắc chắn muốn lưu những thay đổi này?", "info", "Cập nhật", "Hủy");
+  const result = await showQuickConfirm(
+    "Xác nhận lưu thay đổi",
+    "Bạn có chắc chắn muốn lưu những thay đổi này?",
+    "info",
+    "Cập nhật",
+    "Hủy"
+  );
   if (!result.isConfirmed) return;
-  
+
   // Validate
   // Validate using common validation functions
   const validations = [
-    validate.required(newUser.value.full_name, 'Họ tên'),
-    validate.required(newUser.value.email, 'Email'),
-    validate.required(newUser.value.role_id, 'Vai trò'),
+    validate.required(newUser.value.full_name, "Họ tên"),
+    validate.required(newUser.value.email, "Email"),
+    validate.required(newUser.value.role_id, "Vai trò"),
     validate.status(newUser.value.status),
     validate.email(newUser.value.email),
     validate.phone(newUser.value.phone_number),
-    validate.number(newUser.value.total_spent, 'Tổng chi tiêu', { allowNegative: false }),
-    validate.number(newUser.value.total_point, 'Tổng điểm', { allowNegative: false })
+    validate.number(newUser.value.total_spent, "Tổng chi tiêu", {
+      allowNegative: false,
+    }),
+    validate.number(newUser.value.total_point, "Tổng điểm", {
+      allowNegative: false,
+    }),
   ];
 
   // Check if any validation failed
@@ -626,7 +788,7 @@ async function handleSubmitUser() {
   // Đảm bảo status là số
   const userData = {
     ...newUser.value,
-    status: Number(newUser.value.status)
+    status: Number(newUser.value.status),
   };
 
   try {
@@ -649,13 +811,11 @@ async function handleToggleUserStatus(user) {
   }
 }
 
-
-
 const currentUserRole = getUserRole(); // 'ADMIN' hoặc 'NHANVIEN'
 const isStaff = computed(() => currentUserRole !== "ADMIN");
 
 // Khi staff mở modal với 1 user có role_name === 'ADMIN', thì read-only
-const isEditingAdmin = computed(() => newUser.value.role_name === 'ADMIN');
+const isEditingAdmin = computed(() => newUser.value.role_name === "ADMIN");
 const isReadOnly = computed(() => isStaff.value && isEditingAdmin.value);
 </script>
 
@@ -723,5 +883,4 @@ const isReadOnly = computed(() => isStaff.value && isEditingAdmin.value);
 .row > [class*="col-"] {
   padding: 0;
 }
-
 </style>

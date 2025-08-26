@@ -157,6 +157,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import { userpos } from "@/services/admin/user";
+import { addretailer } from "@/services/admin/user"; // Thêm dòng này
 
 // Props
 const props = defineProps({
@@ -201,7 +202,7 @@ const setCustomerType = (type) => {
   showDropdown.value = false;
 };
 
-const saveGuestInfo = () => {
+const saveGuestInfo = async () => {
   if (!guestInfo.value.customerName || !guestInfo.value.customerPhone) {
     return;
   }
@@ -215,15 +216,25 @@ const saveGuestInfo = () => {
     return;
   }
 
-  const guestCustomer = {
-    userId: null,
-    customerName: guestInfo.value.customerName.trim(),
-    customerPhone: guestInfo.value.customerPhone.trim(),
-    isGuest: true,
-  };
-
-  selectedCustomer.value = guestCustomer;
-  emit("customer-selected", guestCustomer);
+  // Gọi API thêm khách vãng lai
+  try {
+    const response = await addretailer({
+      fullName: guestInfo.value.customerName.trim(),
+      phoneNumber: guestInfo.value.customerPhone.trim(),
+    });
+    const data = response.data?.data || {};
+    const guestCustomer = {
+      userId: data.id || null,
+      customerName: data.fullName || guestInfo.value.customerName.trim(),
+      customerPhone: data.phoneNumber || guestInfo.value.customerPhone.trim(),
+      isGuest: true,
+    };
+    selectedCustomer.value = guestCustomer;
+    emit("customer-selected", guestCustomer);
+  } catch (error) {
+    alert("Có lỗi khi thêm khách vãng lai!");
+    console.error(error);
+  }
 };
 
 const searchCustomers = async () => {

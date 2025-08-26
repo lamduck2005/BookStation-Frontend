@@ -59,61 +59,7 @@
       </div>
     </div>
 
-    <!-- Average Points by Rank Row -->
-    <div v-if="!loading && data?.averagePointsByRank && data.averagePointsByRank.length > 0" class="row g-3 mt-2">
-      <div class="col-lg-12">
-        <div class="card insights-card">
-          <div class="card-body">
-            <h6 class="card-title mb-3">
-              <i class="bi bi-graph-up me-2 text-success"></i>
-              Điểm trung bình theo xếp hạng
-            </h6>
-            <div class="row g-2">
-              <div 
-                v-for="rank in data.averagePointsByRank" 
-                :key="rank.rankName"
-                class="col-md-6"
-              >
-                <div class="d-flex align-items-center p-3 border rounded bg-light">
-                  <div class="rank-icon me-3" :class="getRankIconClass(rank.rankName)">
-                    <i :class="getRankIcon(rank.rankName)"></i>
-                  </div>
-                  <div class="flex-grow-1">
-                    <div class="fw-bold">{{ rank.rankName }}</div>
-                    <small class="text-muted">{{ formatCurrency(rank.minSpent) }} - Chi tiêu tối thiểu</small>
-                  </div>
-                  <div class="text-end">
-                    <div class="fw-bold text-primary">{{ formatNumber(rank.averagePoints) }}</div>
-                    <small class="text-muted">điểm TB</small>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- <div class="col-lg-4">
-        <div class="card actions-card">
-          <div class="card-body">
-            <h6 class="card-title mb-3">
-              <i class="bi bi-lightning-charge me-2 text-warning"></i>
-              Hành động nhanh
-            </h6>
-            <div class="d-grid gap-2">
-                  <button class="btn btn-outline-warning btn-sm" @click="refreshData">
-                <i class="bi bi-arrow-clockwise me-1"></i>
-                Làm mới dữ liệu
-              </button>
-              <button class="btn btn-outline-info btn-sm" @click="exportData">
-                <i class="bi bi-download me-1"></i>
-                Xuất báo cáo
-              </button>
-            </div>
-          </div>
-        </div>
-      </div> -->
-    </div>
+   
 
     <!-- Monthly Growth Rates Row -->
     <div v-if="!loading && data?.monthlyGrowthRates && data.monthlyGrowthRates.length > 0" class="row g-3 mt-2">
