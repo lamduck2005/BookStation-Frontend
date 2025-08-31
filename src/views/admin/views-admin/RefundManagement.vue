@@ -923,7 +923,7 @@ const debouncedSearch = debounce(() => {
 }, 300);
 
 // UI functions
-const showFilter = ref(false);
+const showFilter = ref(true);
 const toggleFilter = () => {
   showFilter.value = !showFilter.value;
 };
