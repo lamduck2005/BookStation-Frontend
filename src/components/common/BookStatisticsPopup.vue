@@ -45,36 +45,7 @@
 
         <!-- Data State -->
         <div v-else-if="detailsData && detailsData.length > 0">
-          <!-- Summary Stats Row -->
-          <div class="row mb-4">
-            <div class="col-md-4">
-              <div class="summary-stat bg-primary">
-                <i class="bi bi-graph-up-arrow"></i>
-                <div class="stat-info">
-                  <h6>Tổng doanh thu</h6>
-            <h4 :title="`Tổng doanh thu: ${totalRevenue.toLocaleString()} VND`">{{ formatCurrency(totalRevenue) }}</h4>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="summary-stat bg-success">
-                <i class="bi bi-bag-check"></i>
-                <div class="stat-info">
-                  <h6>Tổng số bán</h6>
-            <h4 :title="`Tổng số bán: ${totalQuantitySold.toLocaleString()} cuốn`">{{ totalQuantitySold }}</h4>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="summary-stat bg-info">
-                <i class="bi bi-collection"></i>
-                <div class="stat-info">
-                  <h6>Số loại sách</h6>
-                  <h4>{{ detailsData.length }}</h4>
-                </div>
-              </div>
-            </div>
-          </div>
+         
 
           <!-- Books List -->
           <div class="books-list">
@@ -119,9 +90,9 @@
                 <div class="book-stats">
                   <!-- Revenue -->
                   <div class="stat-item">
-                    <div class="stat-label">Doanh thu</div>
+                    <div class="stat-label">Doanh thu thuần</div>
                     <div class="stat-value">
-                      {{ formatCurrency(book.revenue) }}
+                      {{ formatCurrency(book.netRevenue) }}
                     </div>
                     <div class="stat-growth" v-if="book.revenueGrowthPercent !== undefined || book.revenueGrowthLabel">
                       <!-- Trường hợp có tăng trưởng % -->
@@ -150,7 +121,7 @@
                   <!-- Quantity -->
                   <div class="stat-item">
                     <div class="stat-label">Số lượng bán</div>
-                    <div class="stat-value">
+                    <div class="stat-value text-success">
                       {{ book.totalQuantity }} cuốn
                     </div>
                      
@@ -611,7 +582,7 @@ watch(() => [props.selectedDate, props.period], () => {
 
 .stat-value {
   font-weight: 600;
-  color: #2d3748;
+  color: #ad9a5c;
   font-size: 0.9rem;
   margin-bottom: 0.25rem;
 }
