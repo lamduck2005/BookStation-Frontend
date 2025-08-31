@@ -10,7 +10,7 @@
             Voucher
           </h6>
         </div>
-        
+
         <div class="voucher-search">
           <div class="search-input-wrap">
             <input
@@ -24,11 +24,14 @@
               <i class="bi bi-search"></i>
             </button>
           </div>
-          
+
           <!-- Voucher search results -->
-          <div v-if="showVoucherResults && voucherSearchResults.length > 0" class="voucher-dropdown">
-            <div 
-              v-for="voucher in voucherSearchResults" 
+          <div
+            v-if="showVoucherResults && voucherSearchResults.length > 0"
+            class="voucher-dropdown"
+          >
+            <div
+              v-for="voucher in voucherSearchResults"
               :key="voucher.id"
               class="voucher-option"
               @click="applyVoucher(voucher)"
@@ -49,25 +52,30 @@
             </div>
           </div>
         </div>
-        
+
         <!-- Applied vouchers -->
         <div v-if="appliedVouchers.length > 0" class="applied-vouchers">
-          <div 
-            v-for="voucher in appliedVouchers" 
+          <div
+            v-for="voucher in appliedVouchers"
             :key="voucher.id"
             class="applied-voucher"
           >
             <div class="voucher-details">
               <span class="voucher-name">{{ voucher.name }}</span>
-              <span class="voucher-discount">-{{ formatCurrency(voucher.discountAmount) }}</span>
+              <span class="voucher-discount"
+                >-{{ formatCurrency(voucher.discountAmount) }}</span
+              >
             </div>
-            <button class="remove-voucher-btn" @click="removeVoucher(voucher.id)">
+            <button
+              class="remove-voucher-btn"
+              @click="removeVoucher(voucher.id)"
+            >
               <i class="bi bi-x"></i>
             </button>
           </div>
         </div>
       </div>
-      
+
       <!-- Payment Methods -->
       <div class="payment-section">
         <div class="section-header">
@@ -76,7 +84,7 @@
             Phương thức thanh toán
           </h6>
         </div>
-        
+
         <div class="payment-methods">
           <button
             class="pay-method"
@@ -95,7 +103,7 @@
             Chuyển khoản
           </button>
         </div>
-        
+
         <!-- Cash payment details -->
         <div v-if="paymentMethod === 'CASH'" class="cash-details">
           <div class="form-group">
@@ -111,11 +119,13 @@
           <div class="payment-summary">
             <div class="summary-row">
               <span>Tiền thừa trả khách:</span>
-              <span class="change-amount">{{ formatCurrency(changeAmount) }}</span>
+              <span class="change-amount">{{
+                formatCurrency(changeAmount)
+              }}</span>
             </div>
           </div>
         </div>
-        
+
         <!-- Order notes -->
         <div class="form-group">
           <label class="form-label">Ghi chú đơn hàng</label>
@@ -128,10 +138,10 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Confirm Payment Button -->
-    <button 
-      class="confirm-btn" 
+    <button
+      class="confirm-btn"
       @click="showConfirmationPopup"
       :disabled="!canConfirmPayment"
     >
@@ -141,7 +151,11 @@
     </button>
 
     <!-- Payment Confirmation Popup -->
-    <div v-if="showConfirmPopup" class="popup-overlay" @click="closeConfirmPopup">
+    <div
+      v-if="showConfirmPopup"
+      class="popup-overlay"
+      @click="closeConfirmPopup"
+    >
       <div class="confirm-popup" @click.stop>
         <div class="popup-header">
           <h4 class="popup-title">
@@ -152,26 +166,26 @@
             <i class="bi bi-x"></i>
           </button>
         </div>
-        
+
         <div class="popup-content">
           <div class="confirmation-message">
-            <p>Vui lòng kiểm tra lại thông tin đơn hàng trước khi thanh toán:</p>
+            <p>
+              Vui lòng kiểm tra lại thông tin đơn hàng trước khi thanh toán:
+            </p>
           </div>
 
           <!-- Order Items Summary -->
           <div class="order-summary">
             <h5 class="summary-title">Chi tiết đơn hàng:</h5>
             <div class="items-list">
-              <div 
-                v-for="item in orderItems" 
-                :key="item.id" 
-                class="item-row"
-              >
+              <div v-for="item in orderItems" :key="item.id" class="item-row">
                 <div class="item-info">
                   <div class="item-name">{{ item.title || item.name }}</div>
                   <div class="item-details">
                     <div class="item-code">{{ item.bookCode }}</div>
-                    <div class="item-price-detail">{{ item.quantity }} × {{ formatCurrency(item.unitPrice) }}</div>
+                    <div class="item-price-detail">
+                      {{ item.quantity }} × {{ formatCurrency(item.unitPrice) }}
+                    </div>
                     <div v-if="item.isFlashSale" class="flash-sale-badge">
                       <i class="bi bi-lightning-fill"></i> Flash Sale
                     </div>
@@ -187,9 +201,15 @@
           <!-- Applied Vouchers -->
           <div v-if="appliedVouchers.length > 0" class="vouchers-summary">
             <h5 class="summary-title">Voucher áp dụng:</h5>
-            <div class="voucher-item" v-for="voucher in appliedVouchers" :key="voucher.id">
+            <div
+              class="voucher-item"
+              v-for="voucher in appliedVouchers"
+              :key="voucher.id"
+            >
               <span class="voucher-name">{{ voucher.name }}</span>
-              <span class="voucher-discount">-{{ formatCurrency(voucher.discountAmount) }}</span>
+              <span class="voucher-discount"
+                >-{{ formatCurrency(voucher.discountAmount) }}</span
+              >
             </div>
           </div>
 
@@ -199,7 +219,10 @@
               <span>Tổng tiền hàng:</span>
               <span>{{ formatCurrency(calculateSubtotal()) }}</span>
             </div>
-            <div v-if="totalVoucherDiscount > 0" class="summary-row discount-row">
+            <div
+              v-if="totalVoucherDiscount > 0"
+              class="summary-row discount-row"
+            >
               <span>Giảm giá voucher:</span>
               <span>-{{ formatCurrency(totalVoucherDiscount) }}</span>
             </div>
@@ -213,10 +236,14 @@
           <div class="payment-method-info">
             <h5 class="summary-title">Phương thức thanh toán:</h5>
             <div class="method-details">
-              <i :class="paymentMethod === 'CASH' ? 'bi bi-cash' : 'bi bi-bank'"></i>
-              <span>{{ paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản' }}</span>
+              <i
+                :class="paymentMethod === 'CASH' ? 'bi bi-cash' : 'bi bi-bank'"
+              ></i>
+              <span>{{
+                paymentMethod === "CASH" ? "Tiền mặt" : "Chuyển khoản"
+              }}</span>
             </div>
-            
+
             <div v-if="paymentMethod === 'CASH'" class="cash-info">
               <div class="cash-row">
                 <span>Tiền khách đưa:</span>
@@ -227,6 +254,24 @@
                 <span>{{ formatCurrency(changeAmount) }}</span>
               </div>
             </div>
+
+            <!-- QR Code trong popup cho BANK_TRANSFER -->
+            <div
+              v-if="paymentMethod === 'BANK_TRANSFER'"
+              class="qr-popup-section"
+            >
+              <div v-if="isGeneratingQr" class="qr-loading">
+                <i class="bi bi-arrow-repeat"></i> Đang tạo mã QR...
+              </div>
+              <div v-else-if="qrImage" class="qr-image-container">
+                <img :src="qrImage" alt="QR Code" class="qr-image-popup" />
+                <p class="qr-info">Quét mã QR để thanh toán</p>
+              </div>
+              <div v-else class="qr-error">
+                <i class="bi bi-exclamation-triangle"></i>
+                Không thể tạo mã QR
+              </div>
+            </div>
           </div>
 
           <!-- Order Notes -->
@@ -235,7 +280,7 @@
             <p class="notes-text">{{ orderNotes }}</p>
           </div>
         </div>
-        
+
         <div class="popup-footer">
           <button class="cancel-btn" @click="closeConfirmPopup">
             <i class="bi bi-x-circle"></i>
@@ -252,61 +297,74 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import { searchVouchers as searchVouchersAPI } from '@/services/admin/counterSales';
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
+import { searchVouchers as searchVouchersAPI } from "@/services/admin/counterSales";
+import { generateQr } from "@/services/admin/qr";
 
 // Props
 const props = defineProps({
   totalAmount: {
     type: Number,
-    default: 0
+    default: 0,
   },
   orderItems: {
     type: Array,
-    default: () => []
-  }
+    default: () => [],
+  },
 });
 
 // Emit events
-const emit = defineEmits(['voucher-applied', 'voucher-removed', 'payment-confirmed']);
+const emit = defineEmits([
+  "voucher-applied",
+  "voucher-removed",
+  "payment-confirmed",
+]);
 
 // Data
-const paymentMethod = ref('CASH');
-const orderNotes = ref('');
+const paymentMethod = ref("CASH");
+const orderNotes = ref("");
 const customerPaid = ref(0);
 const changeAmount = ref(0);
 
 // Voucher states
-const voucherSearchTerm = ref('');
+const voucherSearchTerm = ref("");
 const voucherSearchResults = ref([]);
 const appliedVouchers = ref([]);
 const showVoucherResults = ref(false);
 const showConfirmPopup = ref(false);
+const qrImage = ref("");
+const isGeneratingQr = ref(false);
 let voucherSearchTimeout = null;
 
 // Computed
 const canConfirmPayment = computed(() => {
   if (!props.orderItems.length) return false;
-  if (paymentMethod.value === 'CASH') {
+  if (paymentMethod.value === "CASH") {
     return customerPaid.value >= props.totalAmount;
   }
   return true;
 });
 
 const totalVoucherDiscount = computed(() => {
-  return appliedVouchers.value.reduce((total, voucher) => total + voucher.discountAmount, 0);
+  return appliedVouchers.value.reduce(
+    (total, voucher) => total + voucher.discountAmount,
+    0
+  );
 });
 
 const calculateSubtotal = () => {
-  return props.orderItems.reduce((total, item) => total + (item.quantity * item.unitPrice), 0);
+  return props.orderItems.reduce(
+    (total, item) => total + item.quantity * item.unitPrice,
+    0
+  );
 };
 
 // Methods
 const formatCurrency = (amount) => {
-  if (!amount) return '0 ₫';
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
+  if (!amount) return "0 ₫";
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
   }).format(amount);
 };
 
@@ -314,22 +372,29 @@ const calculateChange = () => {
   const paid = Number(customerPaid.value) || 0;
   const total = Number(props.totalAmount) || 0;
   changeAmount.value = Math.max(0, paid - total);
-  console.log('Calculating change:', { paid, total, change: changeAmount.value });
+  console.log("Calculating change:", {
+    paid,
+    total,
+    change: changeAmount.value,
+  });
 };
 
 const onVoucherSearch = async () => {
   if (voucherSearchTimeout) {
     clearTimeout(voucherSearchTimeout);
   }
-  
+
   voucherSearchTimeout = setTimeout(async () => {
     if (voucherSearchTerm.value.trim().length >= 2) {
       try {
-        const response = await searchVouchersAPI(voucherSearchTerm.value.trim(), 5);
+        const response = await searchVouchersAPI(
+          voucherSearchTerm.value.trim(),
+          5
+        );
         voucherSearchResults.value = response.data || [];
         showVoucherResults.value = true;
       } catch (error) {
-        console.error('Error searching vouchers:', error);
+        console.error("Error searching vouchers:", error);
         voucherSearchResults.value = [];
       }
     } else {
@@ -342,36 +407,42 @@ const onVoucherSearch = async () => {
 const applyVoucherByCode = async () => {
   const code = voucherSearchTerm.value.trim();
   if (!code) return;
-  
+
   try {
     const response = await searchVouchersAPI(code, 1);
     const vouchers = response.data || [];
-    const voucher = vouchers.find(v => v.code.toLowerCase() === code.toLowerCase());
-    
+    const voucher = vouchers.find(
+      (v) => v.code.toLowerCase() === code.toLowerCase()
+    );
+
     if (voucher) {
       applyVoucher(voucher);
     } else {
-      alert('Không tìm thấy voucher với mã: ' + code);
+      alert("Không tìm thấy voucher với mã: " + code);
     }
   } catch (error) {
-    console.error('Error applying voucher by code:', error);
-    alert('Lỗi khi áp dụng voucher');
+    console.error("Error applying voucher by code:", error);
+    alert("Lỗi khi áp dụng voucher");
   }
 };
 
 const applyVoucher = (voucher) => {
-  if (appliedVouchers.value.find(v => v.id === voucher.id)) {
-    alert('Voucher này đã được áp dụng');
+  if (appliedVouchers.value.find((v) => v.id === voucher.id)) {
+    alert("Voucher này đã được áp dụng");
     return;
   }
-  
+
   if (voucher.minOrderValue && props.totalAmount < voucher.minOrderValue) {
-    alert(`Đơn hàng tối thiểu ${formatCurrency(voucher.minOrderValue)} để sử dụng voucher này`);
+    alert(
+      `Đơn hàng tối thiểu ${formatCurrency(
+        voucher.minOrderValue
+      )} để sử dụng voucher này`
+    );
     return;
   }
-  
+
   let discountAmount = 0;
-  if (voucher.discountType === 'PERCENTAGE') {
+  if (voucher.discountType === "PERCENTAGE") {
     discountAmount = (props.totalAmount * voucher.discountPercentage) / 100;
     if (voucher.maxDiscountValue) {
       discountAmount = Math.min(discountAmount, voucher.maxDiscountValue);
@@ -379,32 +450,35 @@ const applyVoucher = (voucher) => {
   } else {
     discountAmount = voucher.discountAmount;
   }
-  
+
   const voucherWithDiscount = {
     ...voucher,
-    discountAmount: discountAmount
+    discountAmount: discountAmount,
   };
-  
+
   appliedVouchers.value.push(voucherWithDiscount);
-  emit('voucher-applied', voucherWithDiscount);
-  
-  voucherSearchTerm.value = '';
+  emit("voucher-applied", voucherWithDiscount);
+
+  voucherSearchTerm.value = "";
   voucherSearchResults.value = [];
   showVoucherResults.value = false;
 };
 
 const removeVoucher = (voucherId) => {
-  const index = appliedVouchers.value.findIndex(v => v.id === voucherId);
+  const index = appliedVouchers.value.findIndex((v) => v.id === voucherId);
   if (index !== -1) {
     const removedVoucher = appliedVouchers.value.splice(index, 1)[0];
-    emit('voucher-removed', removedVoucher);
+    emit("voucher-removed", removedVoucher);
   }
 };
 
 const showConfirmationPopup = () => {
   if (!canConfirmPayment.value) {
-    if (paymentMethod.value === 'CASH' && customerPaid.value < props.totalAmount) {
-      alert('Số tiền khách đưa phải lớn hơn hoặc bằng tổng tiền đơn hàng');
+    if (
+      paymentMethod.value === "CASH" &&
+      customerPaid.value < props.totalAmount
+    ) {
+      alert("Số tiền khách đưa phải lớn hơn hoặc bằng tổng tiền đơn hàng");
       return;
     }
     return;
@@ -421,14 +495,18 @@ const proceedPayment = () => {
     paymentMethod: paymentMethod.value,
     notes: orderNotes.value.trim(),
     appliedVouchers: appliedVouchers.value,
-    customerPaid: paymentMethod.value === 'CASH' ? Number(customerPaid.value) : props.totalAmount,
-    changeAmount: paymentMethod.value === 'CASH' ? Number(changeAmount.value) : 0
+    customerPaid:
+      paymentMethod.value === "CASH"
+        ? Number(customerPaid.value)
+        : props.totalAmount,
+    changeAmount:
+      paymentMethod.value === "CASH" ? Number(changeAmount.value) : 0,
   };
-  
-  console.log('Payment data being emitted:', paymentData);
-  
+
+  console.log("Payment data being emitted:", paymentData);
+
   showConfirmPopup.value = false;
-  emit('payment-confirmed', paymentData);
+  emit("payment-confirmed", paymentData);
 };
 
 const confirmPayment = () => {
@@ -436,38 +514,86 @@ const confirmPayment = () => {
 };
 
 const handleClickOutside = (event) => {
-  const voucherSection = event.target.closest('.voucher-section');
+  const voucherSection = event.target.closest(".voucher-section");
   if (!voucherSection) {
     showVoucherResults.value = false;
   }
 };
 
-watch(() => props.totalAmount, (newTotal) => {
-  if (paymentMethod.value === 'CASH' && newTotal > 0) {
-    // Chỉ cập nhật customerPaid nếu chưa có giá trị hoặc nhỏ hơn tổng tiền
-    if (!customerPaid.value || customerPaid.value < newTotal) {
-      customerPaid.value = newTotal;
-    }
-    calculateChange();
+// Watcher cho paymentMethod để tạo QR khi chọn BANK_TRANSFER
+watch(paymentMethod, async (newMethod) => {
+  if (newMethod === "BANK_TRANSFER") {
+    await generateQrCode();
+  } else {
+    qrImage.value = "";
   }
 });
 
+// Hàm tạo QR với thông tin tài khoản thực tế
+const generateQrCode = async () => {
+  isGeneratingQr.value = true;
+  try {
+    const params = {
+      amount: props.totalAmount.toString(),
+      addInfo: orderNotes.value.trim() || "Thanh toan don hang BookStation",
+      accountNumber: "1028549215",
+      accountName: "DOAN THE PHONG",
+      bankCode: "970418",
+    };
+
+    console.log("🔄 QR params:", params);
+
+    const qrResponse = await generateQr(params);
+
+    console.log("✅ QR response received:", qrResponse);
+    console.log("📊 QR response type:", typeof qrResponse);
+
+    // qrResponse bây giờ là object có cấu trúc: { data: "url_string", message: "...", status: 200 }
+    if (qrResponse && qrResponse.data) {
+      const qrUrl = qrResponse.data;
+
+      console.log("📊 QR URL type:", typeof qrUrl);
+      console.log("📊 QR URL:", qrUrl);
+
+      if (
+        qrUrl &&
+        typeof qrUrl === "string" &&
+        qrUrl.startsWith("https://img.vietqr.io/")
+      ) {
+        qrImage.value = qrUrl; // Lưu URL trực tiếp
+        console.log("✅ QR image URL set successfully");
+      } else {
+        console.error("❌ Invalid QR URL format:", qrUrl);
+        alert("URL QR không đúng định dạng");
+      }
+    } else {
+      console.error("❌ No data in QR response:", qrResponse);
+      alert("Lỗi: Không nhận được URL QR");
+    }
+  } catch (error) {
+    console.error("❌ QR generation error:", error);
+    alert("Lỗi khi tạo mã QR thanh toán: " + error.message);
+  } finally {
+    isGeneratingQr.value = false;
+  }
+};
+
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
-  
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'F6') {
+  document.addEventListener("click", handleClickOutside);
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "F6") {
       e.preventDefault();
-      document.querySelector('.voucher-input')?.focus();
-    } else if (e.key === 'F9') {
+      document.querySelector(".voucher-input")?.focus();
+    } else if (e.key === "F9") {
       e.preventDefault();
       showConfirmationPopup();
-    } else if (e.key === 'Escape' && showConfirmPopup.value) {
+    } else if (e.key === "Escape" && showConfirmPopup.value) {
       e.preventDefault();
       closeConfirmPopup();
     }
   });
-  
+
   if (props.totalAmount > 0) {
     customerPaid.value = props.totalAmount;
     calculateChange();
@@ -475,7 +601,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener("click", handleClickOutside);
   if (voucherSearchTimeout) {
     clearTimeout(voucherSearchTimeout);
   }
@@ -815,16 +941,16 @@ onUnmounted(() => {
   .payment-section {
     padding: 12px 16px;
   }
-  
+
   .payment-methods {
     grid-template-columns: 1fr;
   }
-  
+
   .confirm-btn {
     padding: 16px;
     font-size: 14px;
   }
-  
+
   .payment-amount {
     font-size: 16px;
   }
@@ -1141,32 +1267,221 @@ onUnmounted(() => {
   transform: translateY(-1px);
 }
 
+.qr-code-section {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f8f9fa;
+  text-align: center;
+}
+
+.qr-code {
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.qr-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.no-qr-info {
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 8px;
+}
+
+/* QR Section Styles */
+.qr-section {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.qr-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qr-content {
+  text-align: center;
+}
+
+.qr-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.qr-image-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.qr-image {
+  width: min(300px, 80vw); /* Tối đa 300px hoặc 80% chiều rộng màn hình */
+  height: min(300px, 80vw);
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+/* Mobile responsive */
 @media (max-width: 768px) {
+  .qr-image {
+    width: min(250px, 70vw);
+    height: min(250px, 70vw);
+  }
+}
+
+.qr-info {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.qr-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #dc2626;
+  font-size: 14px;
+}
+
+/* QR trong popup - Full size */
+.qr-popup-section {
+  background: linear-gradient(135deg, #f8fffe 0%, #f0fdfa 100%);
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 16px;
+  text-align: center;
+  border: 2px solid #00bfae20;
+  box-shadow: 0 4px 12px rgba(0, 191, 174, 0.1);
+}
+
+.qr-image-popup {
+  width: 280px; /* Tăng từ 200px lên 280px */
+  height: 280px; /* Tăng từ 200px lên 280px */
+  border: 3px solid #00bfae;
+  border-radius: 12px;
+  object-fit: contain;
+  margin: 0 auto 16px auto;
+  box-shadow: 0 8px 24px rgba(0, 191, 174, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.qr-image-popup:hover {
+  transform: scale(1.02);
+}
+
+.qr-popup-section .qr-info {
+  font-size: 16px; /* Tăng từ 13px lên 16px */
+  color: #00796b;
+  margin: 0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.qr-popup-section .qr-info::before {
+  content: "📱";
+  font-size: 18px;
+}
+
+/* Tăng kích thước popup để chứa QR lớn hơn */
+.confirm-popup {
+  background: white;
+  border-radius: 16px;
+  width: 95%; /* Tăng từ 90% lên 95% */
+  max-width: 650px; /* Tăng từ 600px lên 650px */
+  max-height: 90vh; /* Tăng từ 85vh lên 90vh */
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  animation: popupSlideIn 0.3s ease-out;
+}
+
+/* Responsive cho màn hình nhỏ */
+@media (max-width: 768px) {
+  .qr-image-popup {
+    width: 240px; /* Tăng từ 160px lên 240px */
+    height: 240px;
+  }
+
+  .qr-popup-section {
+    padding: 20px;
+  }
+
   .confirm-popup {
     width: 95%;
-    max-height: 90vh;
+    max-width: none;
+    margin: 20px;
   }
-  
-  .popup-header {
-    padding: 16px 20px;
+}
+
+@media (max-width: 480px) {
+  .qr-image-popup {
+    width: 200px;
+    height: 200px;
   }
-  
-  .popup-title {
-    font-size: 16px;
+
+  .qr-popup-section {
+    padding: 16px;
   }
-  
-  .popup-content {
-    padding: 16px 20px;
+}
+
+/* Animation cho loading */
+.qr-popup-section .qr-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 16px; /* Tăng từ 14px lên 16px */
+  padding: 24px; /* Tăng từ 20px lên 24px */
+}
+
+.qr-popup-section .qr-loading i {
+  animation: spin 1s linear infinite;
+  font-size: 20px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
   }
-  
-  .popup-footer {
-    padding: 16px 20px;
+  to {
+    transform: rotate(360deg);
   }
-  
-  .cancel-btn,
-  .proceed-btn {
-    padding: 10px 16px;
-    font-size: 13px;
-  }
+}
+
+.qr-popup-section .qr-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #dc2626;
+  font-size: 16px; /* Tăng từ 14px lên 16px */
+  padding: 24px; /* Tăng từ 20px lên 24px */
 }
 </style>
