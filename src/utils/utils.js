@@ -107,3 +107,44 @@ export const formatDate = (timestamp) => {
   if (isNaN(date.getTime())) return '';
   return date.toLocaleDateString('vi-VN');
 };
+
+
+// Format Date (dd/MM/yyyy)
+export const toDate1 = (timestamp) => {
+  if (!timestamp) return '';
+  // Nếu là string ISO mà không có timezone thì thêm 'Z' để tránh lỗi
+  const date = new Date(
+    typeof timestamp === 'string' && !timestamp.endsWith('Z')
+      ? timestamp + 'Z'
+      : timestamp
+  );
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+};
+
+// Format Time (HH:mm:ss) + cộng thêm 5 giờ
+export const toTime1 = (timestamp) => {
+  if (!timestamp) return '';
+  const date = new Date(
+    typeof timestamp === 'string' && !timestamp.endsWith('Z')
+      ? timestamp + 'Z'
+      : timestamp
+  );
+  if (isNaN(date.getTime())) return '';
+
+  // ✅ Cộng thêm 5 giờ
+  date.setHours(date.getHours() + 5);
+
+  return date.toLocaleTimeString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+};
+
+
