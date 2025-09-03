@@ -123,35 +123,37 @@ const voucher = ref(null);
 <template>
   <div class="home-page">
     <!-- Hero section -->
-    <section class="hero-section bg-light py-5">
+    <section class="hero-section">
+      <div class="bg-white py-5">
       <div class="container">
         <div class="row align-items-center">
           <div class="col-lg-6">
-            <h1 class="display-4 fw-bold text-primary mb-4">
-              Chào mừng đến với BookStation
+            <h1 class="display-4 fw-bold mb-4">
+              <span style="color: #f1b963;">Chào mừng bạn đến với</span> <span style="color: #ff6b6b;">BookStation</span>
             </h1>
             <p class="lead text-muted mb-4">
-              Khám phá thế giới sách với hàng ngàn đầu sách hay, từ văn học đến
+              Khám phá thế giới sách với hàng ngàn cuốn sách hay, từ văn học đến
               khoa học, từ thiếu nhi đến kinh doanh.
             </p>
-            <div class="d-flex gap-3">
-              <button class="btn btn-danger btn-lg px-4">Mua sắm ngay</button>
+            <!-- <div class="d-flex gap-3">
+              <button class="btn btn-danger btn-lg px-4" >Mua sắm ngay</button>
               <button class="btn btn-outline-danger btn-lg px-4">
                 Khám phá
               </button>
-            </div>
+            </div> -->
           </div>
           <div class="col-lg-6">
             <div class="text-center">
               <img
                 src="../../assets/img/logo.png"
                 alt="Hero"
-                class="img-fluid rounded shadow"
+                class="img-fluid rounded-circle shadow "
               />
             </div>
           </div>
         </div>
       </div>
+    </div>
     </section>
     
     <!-- Minigame Banner Section -->
@@ -162,27 +164,27 @@ const voucher = ref(null);
             <div class="minigame-content">
               <div class="minigame-badge mb-3">
                 <i class="bi bi-gift-fill me-2"></i>
-                🎮 MINIGAME MỚI
+                MINIGAME MỚI
               </div>
               <h2 class="minigame-title mb-3">
                 Mở Hộp Quà Thần Bí
               </h2>
               <p class="minigame-desc mb-4">
-                Tham gia minigame mở hộp để nhận những phần thưởng hấp dẫn! 
+                Tham gia minigame mở hộp để nhận những phần thưởng hấp dẫn! <br>
                 Voucher giảm giá, điểm thưởng và nhiều quà tặng đang chờ bạn khám phá.
               </p>
               <div class="minigame-features mb-4">
                 <div class="feature-item">
                   <i class="bi bi-gift text-success"></i>
-                  <span> dùng lượt miễn phí mỗi ngày</span>
+                  <span>Nhận miễn phí lượt chơi</span>
                 </div>
                 <div class="feature-item">
                   <i class="bi bi-coin text-warning"></i>
-                  <span>Dùng điểm để mở thêm</span>
+                  <span>Dùng điểm để mở thêm quà</span>
                 </div>
                 <div class="feature-item">
                   <i class="bi bi-trophy text-danger"></i>
-                  <span>Phần thưởng giá trị</span>
+                  <span>Cơ hội nhận các phần thưởng giá trị</span>
                 </div>
               </div>
               <RouterLink to="/minigame" class="btn btn-minigame btn-lg">
@@ -238,6 +240,7 @@ const voucher = ref(null);
 /* Hero section */
 .hero-section {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* Minigame Banner */
@@ -246,6 +249,7 @@ const voucher = ref(null);
   color: white;
   position: relative;
   overflow: hidden;
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .minigame-banner::before {
@@ -273,6 +277,8 @@ const voucher = ref(null);
   font-weight: 600;
   font-size: 0.9rem;
   animation: pulse 2s infinite;
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: 0.5px;
 }
 
 .minigame-title {
@@ -283,12 +289,15 @@ const voucher = ref(null);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: -0.5px;
 }
 
 .minigame-desc {
   font-size: 1.1rem;
   opacity: 0.9;
   line-height: 1.6;
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .minigame-features {
@@ -302,6 +311,7 @@ const voucher = ref(null);
   align-items: center;
   gap: 0.8rem;
   font-size: 1rem;
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .feature-item i {
@@ -327,6 +337,7 @@ const voucher = ref(null);
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .btn-minigame:hover {
@@ -494,13 +505,14 @@ const voucher = ref(null);
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+  @media (max-width: 768px) {
   .hero-section .display-4 {
     font-size: 2rem;
   }
   
   .minigame-title {
     font-size: 2rem;
+    letter-spacing: -0.3px;
   }
   
   .minigame-features {

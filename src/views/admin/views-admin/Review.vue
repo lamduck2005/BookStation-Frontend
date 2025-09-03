@@ -160,10 +160,10 @@
             button-text="Xuất Excel"
           />
           
-          <button class="btn btn-primary btn-sm py-2" style="background-color: #33304e; border-color: #33304e;"
+          <!-- <button class="btn btn-primary btn-sm py-2" style="background-color: #33304e; border-color: #33304e;"
             @click="openAddForm">
             <i class="bi bi-plus-circle me-1"></i> Thêm mới
-          </button>
+          </button> -->
         </div>
       </div>
       <div class="card-body p-0" :class="{ loading: loading }">
@@ -315,13 +315,13 @@
               </div>
               <div class="mb-3">
                 <label class="form-label">Đánh giá <span class="text-danger">*</span></label>
-                <select class="form-select" v-model="formData.rating" required>
+                <select class="form-select" v-model="formData.rating" required disabled>
                   <option v-for="n in 5" :key="n" :value="n">{{ n }} sao</option>
                 </select>
               </div>
               <div class="mb-3">
                 <label class="form-label">Bình luận <span class="text-danger">*</span></label>
-                <textarea class="form-control" rows="3" v-model="formData.comment" placeholder="Nhập bình luận (3-500 ký tự)" maxlength="500" required></textarea>
+                <textarea class="form-control" rows="3" v-model="formData.comment" placeholder="Nhập bình luận (3-500 ký tự)" maxlength="500" required disabled></textarea>
                 <div class="form-text">
                   {{ formData.comment ? formData.comment.length : 0 }}/500 ký tự
                 </div>

@@ -18,7 +18,7 @@
     <!-- Statistics Cards -->
     <div v-else class="row g-3">
       <!-- Total Users Card -->
-      <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+      <div class="col-3">
         <div class="card stats-card users-card">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-2">
@@ -40,7 +40,7 @@
       </div>
 
       <!-- New Users This Month Card -->
-      <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+      <div class="col-3">
         <div class="card stats-card new-users-card">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-2">
@@ -128,7 +128,7 @@
       </div>
 
       <!-- Top User by Points Card -->
-      <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
+      <!-- <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
         <div class="card stats-card top-user-card">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-2">
@@ -147,7 +147,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
 
     </div>
