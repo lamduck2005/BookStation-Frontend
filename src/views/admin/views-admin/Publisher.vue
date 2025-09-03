@@ -400,7 +400,7 @@ import {
   deletePublisher 
 } from '@/services/admin/publisher'
 import Pagination from '@/components/common/Pagination.vue'
-import { showToast } from '@/utils/swalHelper'
+import { showToast, showQuickConfirm } from '@/utils/swalHelper'
 import EditButton from '@/components/common/EditButton.vue'
 
 // Statistics API
@@ -456,7 +456,7 @@ const fetchPublishers = async () => {
     const params = {
       page: currentPage.value,
       size: pageSize.value,
-      ...(searchQuery.value && { publisherName: searchQuery.value }),
+      ...(searchQuery.value && { name: searchQuery.value }),
       ...(emailFilter.value && { email: emailFilter.value })
     }
 
@@ -540,6 +540,7 @@ const resetForm = () => {
     publisherName: '',
     email: '',
     phone: '',
+    establishedYear: null,
     address: '',
     website: '',
     description: '',
@@ -646,6 +647,20 @@ const submitForm = async () => {
     return
   }
 
+  // Xác nhận trước khi thực hiện
+  const actionText = isEditing.value ? 'cập nhật' : 'thêm mới';
+  const result = await showQuickConfirm(
+    `Xác nhận ${actionText} nhà xuất bản`,
+    `Bạn có chắc chắn muốn ${actionText} nhà xuất bản "${publisherForm.publisherName}"?`,
+    'info',
+    isEditing.value ? 'Cập nhật' : 'Thêm mới',
+    'Hủy'
+  );
+  
+  if (!result.isConfirmed) {
+    return;
+  }
+
   loading.value = true
   try {
     const submitData = {
@@ -671,7 +686,7 @@ const submitForm = async () => {
     closeModal()
   } catch (error) {
     console.error('Error submitting form:', error)
-    showToast('error', isEditing.value ? 'Lỗi khi cập nhật nhà xuất bản!' : 'Lỗi khi thêm nhà xuất bản!')
+    showToast('error', error.response?.data?.message || 'Có lỗi khi thêm / cập nhật nhà xuất bản')
   } finally {
     loading.value = false
   }

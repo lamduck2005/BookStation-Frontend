@@ -121,7 +121,7 @@
                 <th style="width: 40px">#</th>
                 <th style="width: 120px">Thao tác</th>
                 <th style="width: 200px">Tên tác giả</th>
-                <th style="width: 120px">Ngày sinh</th>
+                <th style="width: 150px">Ngày sinh</th>
                 <th>Tiểu sử</th>
                 <th style="width: 150px">Ngày tạo</th>
                 <th style="width: 150px">Ngày cập nhật</th>
@@ -159,12 +159,12 @@
                   </div>
                 </td>
                 <td class="py-3 fw-bold">{{ author.authorName }}</td>
-                <td class="py-3">{{ author.birthDate }}</td>
+                <td class="py-3">{{ author.birthDate || "Chưa có dữ liệu" }}</td>
                 <td
                   class="py-3"
                   style="max-width: 300px; white-space: pre-line"
                 >
-                  {{ author.biography }}
+                  {{ author.biography || "Chưa có dữ liệu" }}
                 </td>
                 <td class="py-3">
                   <span class="fw-bold">{{ toTime(author.createdAt) }}</span>
@@ -248,6 +248,7 @@
               </div>
               <div class="mb-3">
                 <label class="form-label">Ngày sinh</label>
+                <span class="small text-muted"> (Nếu không xác định có thể để trống)</span>
                 <input
                   v-model="author.birthDate"
                   type="date"
@@ -408,6 +409,7 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Ngày sinh</label>
+              <span class="small text-muted"> (Nếu không xác định có thể để trống)</span>
               <input
                 v-model="editData.birthDate"
                 type="date"

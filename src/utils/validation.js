@@ -120,7 +120,7 @@ export const validate = {
     
     const birth = new Date(birthDate);
     const current = new Date();
-    
+
     // Kiểm tra ngày hợp lệ
     if (isNaN(birth.getTime())) {
       return 'Ngày sinh không hợp lệ';

@@ -19,7 +19,7 @@
       <div class="stats-content">
         <div class="row">
           <div class="col-md-6">
-            <h4 class="section-title">Ưu đãi của bạn</h4>
+            <h4 class="section-title">Số điểm hiện có</h4>
             <div class="stats-grid">
               <div class="stat-item">
                 <span class="stat-label">B-Point hiện có</span>
@@ -27,24 +27,14 @@
                   user.totalPoint || 0
                 }}</span>
               </div>
-              <div class="stat-item">
-                <span class="stat-label">Freeship hiện có</span>
-                <span class="stat-value text-danger"
-                  >{{ user.freeship || 0 }} lần</span
-                >
-              </div>
+             
             </div>
           </div>
 
           <div class="col-md-6">
-            <h4 class="section-title">Thành tích của bạn</h4>
+            <h4 class="section-title">Số tiền đã thanh toán</h4>
             <div class="stats-grid">
-              <div class="stat-item">
-                <span class="stat-label">Số đơn hàng</span>
-                <span class="stat-value text-danger"
-                  >{{ user.orders || 0 }} đơn hàng</span
-                >
-              </div>
+              
               <div class="stat-item">
                 <span class="stat-label">Đã thanh toán</span>
                 <span class="stat-value text-danger"

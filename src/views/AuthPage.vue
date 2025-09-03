@@ -1,6 +1,6 @@
 <script setup>
 import router from '@/router'
-import { showAlert, showToast } from '@/utils/swalHelper'
+import { showAlert, showToast, showLoading, closeAllSwal } from '@/utils/swalHelper'
 import { ref } from 'vue'
 import { register, login, forgotPassword } from '@/services/auth'
 import { validate } from '@/utils/validation.js'
@@ -140,7 +140,9 @@ const handleRegister = async (e) => {
     }
     
     try{
+        showLoading('Đang đăng ký...', 'Vui lòng đợi trong giây lát')
         const res = await register(registerForm.value);
+        closeAllSwal()
         console.log('Register data:', res)
     
         showToast('success', res.data.message || 'Đăng ký thành công!')
@@ -153,6 +155,8 @@ const handleRegister = async (e) => {
     }
     } catch (error) {
         showToast('error', error.response.data?.message || 'Đăng ký thất bại!')
+    } finally {
+        // closeSwal()
     }
 }
 
@@ -171,7 +175,9 @@ const handleForgotPassword = async (e) => {
     }
 
     try {
+        showLoading('Đang gửi link khôi phục...', 'Vui lòng đợi trong giây lát')
         const res = await forgotPassword(email)
+        closeAllSwal()
 
         // Hiển thị thông báo với message trả về hoặc mặc định
         showAlert('Thông báo', res?.data?.message || 'Link khôi phục đã được gửi đến email của bạn!')

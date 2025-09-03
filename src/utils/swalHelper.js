@@ -73,3 +73,24 @@ export const showAlert = (
   });
 };
 
+// Hiển thị loading modal (không cho đóng khi đang xử lý)
+export const showLoading = (
+  title = "Đang xử lý...",
+  text = "Vui lòng đợi trong giây lát"
+) => {
+  return Swal.fire({
+    title,
+    text,
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    allowEnterKey: false,
+    showConfirmButton: false,
+    didOpen: () => {
+      Swal.showLoading();
+    },
+  });
+};
+
+// Đóng mọi Swal đang mở (bao gồm loading)
+export const closeAllSwal = () => Swal.close();
+
