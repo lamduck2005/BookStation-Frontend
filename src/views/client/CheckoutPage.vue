@@ -169,7 +169,7 @@
           </div>
           <div class="card-body py-3">
             <div class="row">
-              <div class="col-8">
+              <!-- <div class="col-8">
                 <input type="text" class="form-control form-control-sm" placeholder="Nhập mã khuyến mãi/Quà tặng"
                   v-model="couponCode" style="font-size: 14px" />
               </div>
@@ -177,11 +177,11 @@
                 <button class="btn btn-primary btn-sm w-100" @click="applyCoupon" style="font-size: 14px">
                   Áp dụng
                 </button>
-              </div>
+              </div> -->
             </div>
             <div class="mt-2">
-              <button class="btn btn-link p-0 text-primary text-decoration-none small" @click="openVoucherModal">
-                <i class="fas fa-ticket-alt me-1"></i>Chọn mã khuyến mãi 
+              <button class="btn btn-primary p-3" @click="openVoucherModal">
+                <i class="fas fa-ticket-alt me-1"></i>Chọn mã giảm giá
               </button>
             </div>
             <!-- Modal chọn voucher -->
