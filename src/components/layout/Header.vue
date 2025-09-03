@@ -309,7 +309,7 @@
             </li>
             <li class="nav-item">
               <a class="nav-link text-dark" href="#Trend"
-                >Xu hướng mua sẵm -Sách hot</a
+                >Xu hướng mua sắm - sách hot</a
               >
             </li>
             <li class="nav-item">

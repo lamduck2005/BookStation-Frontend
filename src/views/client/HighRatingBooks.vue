@@ -89,7 +89,7 @@
         <div class="books-showcase">
           <div class="row g-4 justify-content-center">
             <div
-              class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6"
+              class="col-2"
               v-for="(book, index) in books"
               :key="book.id"
             >
@@ -163,7 +163,7 @@
         </div>
 
         <!-- View more section -->
-        <div v-if="hasMore || books.length > 5" class="view-more-section mt-5">
+        <div v-if="hasMore || books.length > 5" class="view-more-section">
           <div class="text-center">
             <div class="view-more-container">
               <button 
@@ -282,7 +282,10 @@ onMounted(() => {
   background: linear-gradient(135deg, #fff8f0 0%, #f0f8ff 50%, #fff0f8 100%);
   position: relative;
   overflow: hidden;
-  margin: 20px;
+  margin-bottom: 40px;
+  padding: 10px;
+  border-radius: 15px;
+  box-shadow: 1px 4px 15px rgba(0,0,0,0.5);
 }
 
 .high-rating-section::before {
@@ -450,6 +453,7 @@ onMounted(() => {
   position: relative;
   transition: all 0.4s ease;
   animation: fadeInUp 0.8s ease-out both;
+  margin-bottom: 120px;
 }
 
 @keyframes fadeInUp {
@@ -562,16 +566,16 @@ onMounted(() => {
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.3));
+  background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0));
   color: white;
   padding: 15px 10px;
-  transform: translateY(100%);
+  transform: translateY(100%);  
   transition: all 0.4s ease;
   border-radius: 0 0 15px 15px;
 }
 
 .book-card-wrapper:hover .hover-overlay {
-  transform: translateY(0);
+  /* transform: translateY(0); */
 }
 
 .hover-content {
@@ -790,6 +794,7 @@ onMounted(() => {
 /* View More Section */
 .view-more-section {
   position: relative;
+  margin-top: 50px; 
 }
 
 .view-more-container {
