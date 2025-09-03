@@ -58,13 +58,13 @@
               >
             </li>
            
-            <li>
+            <!-- <li>
               <RouterLink
                 to="/profile/benefits"
                 class="nav-sublink member-benefits"
                 >Ưu đãi thành viên</RouterLink
               >
-            </li>
+            </li> -->
           </ul>
         </li>
 
@@ -86,19 +86,19 @@
           </RouterLink>
         </li>
 
-        <li class="nav-item">
+        <!-- <li class="nav-item">
           <RouterLink to="/profile/bpoint" class="nav-link">
             <i class="bi bi-coin"></i>
             <span>Tài Khoản B-Point / Freeship</span>
           </RouterLink>
-        </li>
+        </li> -->
 
-        <li class="nav-item">
+        <!-- <li class="nav-item">
           <RouterLink to="/profile/notifications" class="nav-link">
             <i class="bi bi-bell"></i>
             <span>Thông Báo</span>
           </RouterLink>
-        </li>
+        </li> -->
 
        
       </ul>
