@@ -193,7 +193,7 @@
                           <ul class="policy-list">
                             <li>Dữ liệu phí vận chuyển được cung cấp bởi Giaohangnhanh.vn</li>
                             <li>Phí vận chuyển được tính dựa trên số lượng sách và địa chỉ giao hàng</li>
-                            <li>Thời gian giao hàng có thể thay đổi sau khi đặt hàng (chỉ áp dụng cho trạng thái chờ xác nhận và đã được xác nhận)</li>
+                            <li>Địa chỉ giao hàng <strong>không</strong> thể thay đổi sau khi đặt hàng</li>
                           </ul>
                         </div>
                       </div>
