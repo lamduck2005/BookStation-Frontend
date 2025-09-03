@@ -38,35 +38,7 @@
         <!-- Data State -->
         <div v-else-if="detailsData && detailsData.length > 0">
           <!-- Summary Stats Row -->
-          <div class="row mb-4">
-            <div class="col-md-4">
-              <div class="summary-stat bg-primary">
-                <i class="bi bi-cart-check"></i>
-                <div class="stat-info">
-                  <h6>Tổng đơn hàng</h6>
-                  <h4 :title="`Tổng số đơn hàng: ${totalOrders.toLocaleString()}`">{{ totalOrders }}</h4>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="summary-stat bg-success">
-                <i class="bi bi-currency-dollar"></i>
-                <div class="stat-info">
-                  <h6>Tổng doanh thu</h6>
-                  <h4 :title="`Tổng doanh thu: ${totalRevenue.toLocaleString()} VND`">{{ formatCurrency(totalRevenue) }}</h4>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="summary-stat bg-info">
-                <i class="bi bi-calculator"></i>
-                <div class="stat-info">
-                  <h6>Giá trị TB/Đơn</h6>
-                  <h4>{{ formatCurrency(averageOrderValue) }}</h4>
-                </div>
-              </div>
-            </div>
-          </div>
+           
 
           <!-- Orders List -->
           <div class="orders-list">
@@ -118,6 +90,12 @@
                     <div class="stat-label">Tổng tiền</div>
                     <div class="stat-value">
                       {{ formatCurrency(order.totalAmount) }}
+                    </div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-label">Doanh thu thuần</div>
+                    <div class="stat-value text-success">
+                      {{ formatCurrency(order.netRevenue) }}
                     </div>
                   </div>
                 </div>

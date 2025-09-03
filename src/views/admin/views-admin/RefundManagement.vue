@@ -377,6 +377,7 @@
                         <span class="badge" :class="selectedRefund.refundType === 'FULL' ? 'bg-warning text-dark' : 'bg-info'">
                           {{ selectedRefund.refundType === 'PARTIAL' ? 'Hoàn một phần' : 'Hoàn toàn bộ' }}
                         </span>
+                     
                       </td>
                     </tr>
                     <tr v-if="selectedRefund.shippingFee">
@@ -498,6 +499,13 @@
                     </table>
                   </div>
                 </div>
+                   <!-- Note for full refund -->
+                        <div v-if="selectedRefund.refundType === 'FULL'" class="mt-2">
+                          <div class="alert alert-info alert-sm py-2 px-3 mb-0">
+                            <i class="bi bi-info-circle me-1"></i>
+                            <strong>Lưu ý:</strong> Đây là hoàn toàn bộ đơn hàng. Vui lòng xem chi tiết các sản phẩm được hoàn ở quản lý đơn hàng.
+                          </div>
+                        </div>
 
               <!-- Timeline (nếu có) -->
               <div
@@ -915,7 +923,7 @@ const debouncedSearch = debounce(() => {
 }, 300);
 
 // UI functions
-const showFilter = ref(false);
+const showFilter = ref(true);
 const toggleFilter = () => {
   showFilter.value = !showFilter.value;
 };

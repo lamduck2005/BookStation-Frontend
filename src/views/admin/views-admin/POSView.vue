@@ -26,6 +26,7 @@
       <PosPayment
         :total-amount="finalTotal"
         :order-items="orderItems"
+        :selected-customer="selectedCustomer"
         @voucher-applied="handleVoucherApplied"
         @voucher-removed="handleVoucherRemoved"
         @payment-confirmed="handlePaymentConfirmed"
@@ -55,6 +56,8 @@ import {
 } from "@/services/admin/counterSales";
 import { getUserId } from "@/utils/utils.js";
 import Swal from "sweetalert2";
+// SỬA IMPORT ĐỂ SỬ DỤNG FILE pdf.js
+import { downloadInvoiceWithCustomName } from "@/services/admin/pdf"; // DÙNG pdf.js thay vì invoice.js
 
 // State
 const orderItems = ref([]);
@@ -118,6 +121,7 @@ function handleAddProduct(book) {
       quantity: 1,
     });
   }
+
   console.log("Product added, orderItems:", orderItems.value);
 
   // Auto calculate if we have customer
@@ -173,38 +177,9 @@ const handleClearOrder = () => {
   });
 };
 
-const handleCustomerSelected = (customer) => {
-  selectedCustomer.value = customer;
-  console.log("Customer selected in POSView:", customer);
-
-  // Auto calculate when customer is selected
-  if (orderItems.value.length > 0) {
-    calculateOrder();
-  }
-};
-
-const handleCustomerChanged = () => {
-  selectedCustomer.value = null;
-  orderCalculation.value = null;
-  appliedVouchers.value = [];
-  console.log("Customer changed/cleared in POSView");
-};
-
-const handleVoucherApplied = (voucher) => {
-  appliedVouchers.value.push(voucher);
-  calculateOrder();
-};
-
-const handleVoucherRemoved = (voucher) => {
-  const index = appliedVouchers.value.findIndex((v) => v.id === voucher.id);
-  if (index !== -1) {
-    appliedVouchers.value.splice(index, 1);
-    calculateOrder();
-  }
-};
-
 const calculateOrder = async () => {
-  if (!selectedCustomer.value || orderItems.value.length === 0) {
+  // CHỈ TÍNH TOÁN KHI CÓ SẢN PHẨM
+  if (orderItems.value.length === 0) {
     orderCalculation.value = null;
     return;
   }
@@ -235,19 +210,61 @@ const calculateOrder = async () => {
   }
 };
 
+const handleCustomerSelected = (customer) => {
+  selectedCustomer.value = customer;
+  console.log("🔥 Customer selected in POSView:", customer);
+  console.log("🔥 Customer type check:", {
+    isAnonymous: customer?.isAnonymous,
+    isGuest: customer?.isGuest,
+    hasUserId: !!customer?.userId,
+    customerName: customer?.customerName || customer?.fullName,
+  });
+
+  // Auto calculate when customer is selected
+  if (orderItems.value.length > 0) {
+    calculateOrder();
+  }
+};
+
+const handleCustomerChanged = () => {
+  selectedCustomer.value = null;
+  orderCalculation.value = null;
+  appliedVouchers.value = [];
+  console.log("Customer changed/cleared in POSView");
+};
+
+const handleVoucherApplied = (voucher) => {
+  appliedVouchers.value.push(voucher);
+  calculateOrder();
+};
+
+const handleVoucherRemoved = (voucher) => {
+  const index = appliedVouchers.value.findIndex((v) => v.id === voucher.id);
+  if (index !== -1) {
+    appliedVouchers.value.splice(index, 1);
+    calculateOrder();
+  }
+};
+
 const handlePaymentConfirmed = async (paymentData) => {
-  console.log("Payment confirmation started:", {
+  console.log("🚀 Payment confirmation started:", {
     hasCustomer: !!selectedCustomer.value,
     customerData: selectedCustomer.value,
     orderItemsCount: orderItems.value.length,
-    orderItems: orderItems.value,
+    wantInvoice: paymentData.wantInvoice, // LOG THÔNG TIN HÓA ĐƠN
   });
 
-  if (!selectedCustomer.value || orderItems.value.length === 0) {
-    const errorMsg = !selectedCustomer.value
-      ? "Vui lòng chọn khách hàng"
-      : "Vui lòng thêm sản phẩm vào đơn hàng";
-    showToast("error", errorMsg);
+  if (orderItems.value.length === 0) {
+    showToast("error", "Vui lòng thêm sản phẩm vào đơn hàng");
+    return;
+  }
+
+  // THÊM VALIDATION KHÁCH HÀNG LẠI VÌ CẦN ĐẢM BẢO
+  if (!selectedCustomer.value) {
+    showToast(
+      "error",
+      "Vui lòng chọn thông tin khách hàng hoặc chọn 'Không lưu thông tin'"
+    );
     return;
   }
 
@@ -261,86 +278,197 @@ const handlePaymentConfirmed = async (paymentData) => {
     orderData.customerPaid = paymentData.customerPaid;
     orderData.changeAmount = paymentData.changeAmount;
 
-    console.log("Order Data being sent:", orderData);
+    console.log("📦 Order Data being sent:", orderData);
 
     const response = await createCounterOrder(orderData);
 
     if (response.status === 200) {
-      // Tắt loading ngay sau khi tạo đơn thành công
-      isProcessing.value = false;
+      const orderInfo = response.data;
 
-      // Success
-      let paymentInfo = "";
-      if (paymentData.paymentMethod === "CASH") {
-        paymentInfo = `
-          <p><strong>Tiền khách đưa:</strong> ${formatCurrency(
-            paymentData.customerPaid
+      // TÌM ĐÚNG FIELD ID
+      const actualOrderId =
+        orderInfo.id ||
+        orderInfo.orderId ||
+        orderInfo.orderCode ||
+        orderInfo._id;
+      console.log("🎯 Using actualOrderId:", actualOrderId);
+
+      // HIỂN THỊ THÔNG BÁO THÀNH CÔNG TRƯỚC
+      const successTitle = paymentData.wantInvoice
+        ? "Thanh toán thành công! Đang tạo hóa đơn..."
+        : "Thanh toán thành công!";
+
+      const successHtml = `
+        <div class="text-left">
+          <p><strong>Mã đơn hàng:</strong> ${orderInfo.orderCode}</p>
+          <p><strong>Khách hàng:</strong> ${
+            orderInfo.customerName || "Khách hàng không lưu thông tin"
+          }</p>
+          <p><strong>Tổng tiền:</strong> ${formatCurrency(
+            orderInfo.totalAmount
           )}</p>
+          <p><strong>Phương thức:</strong> ${
+            paymentData.paymentMethod === "CASH" ? "Tiền mặt" : "Chuyển khoản"
+          }</p>
           ${
-            paymentData.changeAmount > 0
+            paymentData.paymentMethod === "CASH" && paymentData.changeAmount > 0
               ? `<p><strong>Tiền thừa:</strong> ${formatCurrency(
                   paymentData.changeAmount
                 )}</p>`
               : ""
           }
-        `;
+          ${
+            paymentData.wantInvoice
+              ? `<p style="color: #059669; margin-top: 12px;">
+                <i class="bi bi-receipt"></i> 
+                <strong>Đang tạo hóa đơn PDF...</strong>
+               </p>`
+              : ""
+          }
+        </div>
+      `;
+
+      isProcessing.value = false;
+
+      // XỬ LÝ TẠO HÓA ĐƠN NẾU KHÁCH HÀNG MUỐN
+      if (paymentData.wantInvoice) {
+        try {
+          // Hiển thị loading popup
+          const loadingSwal = Swal.fire({
+            title: "Đang tạo hóa đơn PDF...",
+            html: `
+              <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3">Vui lòng đợi trong giây lát...</p>
+              </div>
+            `,
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            didOpen: () => {
+              Swal.showLoading();
+            },
+          });
+
+          // KIỂM TRA ID TRƯỚC KHI GỌI API
+          if (!actualOrderId) {
+            throw new Error(
+              "Không tìm thấy ID đơn hàng trong response từ backend"
+            );
+          }
+
+          // Gọi API tạo PDF với actualOrderId
+          const customerName =
+            orderInfo.customerName ||
+            selectedCustomer.value?.customerName ||
+            "";
+
+          console.log("🧾 Calling PDF API with:", {
+            orderId: actualOrderId,
+            customerName: customerName,
+          });
+
+          await downloadInvoiceWithCustomName(actualOrderId, customerName);
+
+          // Đóng loading popup
+          Swal.close();
+
+          // Hiển thị thông báo thành công
+          await Swal.fire({
+            title: "Hoàn thành!",
+            html: `
+              <div class="text-center">
+                <i class="bi bi-check-circle-fill" style="font-size: 48px; color: #16a34a;"></i>
+                <h4 style="margin: 16px 0; color: #374151;">Thanh toán và tạo hóa đơn thành công!</h4>
+                <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 12px 0;">
+                  <p style="margin: 4px 0;"><strong>Mã đơn hàng:</strong> ${
+                    orderInfo.orderCode
+                  }</p>
+                  <p style="margin: 4px 0;"><strong>Tổng tiền:</strong> ${formatCurrency(
+                    orderInfo.totalAmount
+                  )}</p>
+                </div>
+                <p style="color: #16a34a; font-weight: 600;">
+                  <i class="bi bi-download"></i> 
+                  Hóa đơn đã được tải xuống vào thư mục Downloads
+                </p>
+                <p style="font-size: 12px; color: #9ca3af; margin-top: 8px;">
+                  Tên file: HoaDon_${orderInfo.id}_${
+              customerName ? customerName.replace(/\s+/g, "_") + "_" : ""
+            }${new Date().toISOString().slice(0, 10)}.pdf
+                </p>
+              </div>
+            `,
+            icon: "success",
+            confirmButtonText: "Tiếp tục bán hàng",
+            confirmButtonColor: "#00bfae",
+            width: "500px",
+          });
+        } catch (invoiceError) {
+          console.error("❌ Error generating invoice:", invoiceError);
+
+          // Đóng loading popup nếu có lỗi
+          Swal.close();
+
+          // Thông báo lỗi nhưng không làm fail toàn bộ thanh toán
+          await Swal.fire({
+            title: "Thanh toán thành công",
+            html: `
+              <div class="text-center">
+                <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 12px 0;">
+                  <p style="color: #16a34a; margin-bottom: 12px;">
+                    <i class="bi bi-check-circle-fill"></i> 
+                    Đơn hàng đã được tạo thành công
+                  </p>
+                  <p style="margin: 4px 0;"><strong>Mã đơn hàng:</strong> ${orderInfo.orderCode}</p>
+                </div>
+                <div style="background: #fef2f2; padding: 12px; border-radius: 8px; border: 1px solid #fecaca;">
+                  <p style="color: #dc2626; margin: 0;">
+                    <i class="bi bi-exclamation-triangle-fill"></i> 
+                    Không thể tạo hóa đơn PDF: ${invoiceError.message}
+                  </p>
+                </div>
+                <p style="font-size: 12px; color: #64748b; margin-top: 12px;">
+                  Bạn có thể in lại hóa đơn từ phần quản lý đơn hàng
+                </p>
+              </div>
+            `,
+            icon: "warning",
+            confirmButtonText: "Tiếp tục",
+            confirmButtonColor: "#f59e0b",
+            width: "500px",
+          });
+        }
+      } else {
+        // KHÔNG CẦN HÓA ĐƠN - CHỈ HIỂN THỊ THÔNG BÁO THÀNH CÔNG
+        await Swal.fire({
+          title: "Thanh toán thành công!",
+          html: successHtml,
+          icon: "success",
+          confirmButtonText: "Tiếp tục bán hàng",
+          confirmButtonColor: "#00bfae",
+        });
       }
 
-      await Swal.fire({
-        title: "Thanh toán thành công!",
-        html: `
-          <div class="text-left">
-            <p><strong>Mã đơn hàng:</strong> ${response.data.orderCode}</p>
-            <p><strong>Khách hàng:</strong> ${response.data.customerName}</p>
-            <p><strong>Tổng tiền:</strong> ${formatCurrency(
-              response.data.totalAmount
-            )}</p>
-            <p><strong>Phương thức:</strong> ${
-              response.data.paymentMethod === "CASH"
-                ? "Tiền mặt"
-                : "Chuyển khoản"
-            }</p>
-            ${paymentInfo}
-            <hr style="margin: 15px 0;">
-            <p style="color: #059669; font-weight: 500;">
-              <i class="bi bi-info-circle"></i> 
-              Khách hàng có thể tiếp tục mua sắm mà không cần chọn lại!
-            </p>
-          </div>
-        `,
-        icon: "success",
-        confirmButtonText: "Tiếp tục bán hàng",
-        confirmButtonColor: "#00bfae",
-        showCancelButton: true,
-        cancelButtonText: "Đổi khách hàng",
-        cancelButtonColor: "#6b7280",
-      }).then((result) => {
-        if (result.dismiss === Swal.DismissReason.cancel) {
-          // Nếu chọn "Đổi khách hàng" thì reset tất cả
-          resetAll();
-        }
-        // Nếu chọn "Tiếp tục bán hàng" thì chỉ reset đơn hàng (đã làm ở resetOrder())
-      });
-
-      // Reset form for new order
+      // RESET ĐƠN HÀNG SAU KHI HOÀN THÀNH
       resetOrder();
     }
   } catch (error) {
-    console.error("Error creating counter order:", error);
+    console.error("💥 Error creating counter order:", error);
 
     let errorMessage = "Có lỗi xảy ra khi tạo đơn hàng";
     if (error.response?.data?.message) {
       errorMessage = error.response.data.message;
     }
 
-    Swal.fire({
+    await Swal.fire({
       title: "Lỗi thanh toán",
       text: errorMessage,
       icon: "error",
       confirmButtonText: "Đóng",
     });
   } finally {
-    // Chỉ tắt loading nếu chưa được tắt (trường hợp lỗi)
     if (isProcessing.value) {
       isProcessing.value = false;
     }
@@ -358,9 +486,18 @@ const buildOrderData = () => {
   const voucherIds = appliedVouchers.value.map((v) => v.id);
 
   return {
-    userId: selectedCustomer.value.userId,
-    customerName: selectedCustomer.value.customerName,
-    customerPhone: selectedCustomer.value.customerPhone,
+    // XỬ LÝ CẢ 3 LOẠI KHÁCH HÀNG
+    userId: selectedCustomer.value?.isAnonymous
+      ? null // Anonymous không có userId
+      : selectedCustomer.value?.userId || null,
+    customerName:
+      selectedCustomer.value?.customerName ||
+      selectedCustomer.value?.fullName ||
+      null,
+    customerPhone:
+      selectedCustomer.value?.customerPhone ||
+      selectedCustomer.value?.phoneNumber ||
+      null,
     staffId: getUserId(),
     orderDetails: orderDetails,
     voucherIds: voucherIds,
@@ -469,18 +606,17 @@ onUnmounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px; /* Giảm gap từ 16px xuống 12px */
+  gap: 12px;
   min-width: 350px;
   max-width: 400px;
   height: calc(100vh - 32px);
-  overflow-y: auto; /* Cho phép scroll dọc */
-  overflow-x: hidden; /* Ẩn scroll ngang */
-  padding-right: 4px; /* Thêm padding cho scrollbar */
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
 }
 
-/* Đảm bảo các component trong sidebar có flex-shrink phù hợp */
 .pos-sidebar > * {
-  flex-shrink: 0; /* Ngăn các component bị thu nhỏ */
+  flex-shrink: 0;
 }
 
 /* Loading overlay */
@@ -546,7 +682,7 @@ onUnmounted(() => {
   .pos-sidebar {
     min-width: 300px;
     max-width: 320px;
-    gap: 8px; /* Giảm gap để tiết kiệm không gian */
+    gap: 8px;
   }
 
   .pos-layout {

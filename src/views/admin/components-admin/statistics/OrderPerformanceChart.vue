@@ -182,8 +182,8 @@
                   <div class="icon-wrapper mb-3">
                     <i class="bi bi-currency-dollar"></i>
                   </div>
-                  <h3 class="card-title mb-1">{{ Math.round(summaryStats.totalRevenue).toLocaleString('vi-VN') }}</h3>
-                  <p class="card-subtitle mb-0">Tổng doanh thu</p>
+                  <h3 class="card-title mb-1">{{ Math.round(summaryStats.netRevenueSum).toLocaleString('vi-VN') }}</h3>
+                  <p class="card-subtitle mb-0">Tổng doanh thu thuần </p>
                 </div>
               </div>
             </div>
@@ -275,7 +275,7 @@ const summaryStats = computed(() => {
   if (summaryData.value) {
     return {
       totalOrders: summaryData.value.totalOrdersSum || 0,
-      totalRevenue: summaryData.value.totalRevenueSum || 0,
+      netRevenueSum: summaryData.value.netRevenueSum || 0,
       averageOrderValue: summaryData.value.averageAOV || 0,
       completionRate: summaryData.value.completionRate ? Math.round(summaryData.value.completionRate) : 0,
       completedOrders: summaryData.value.completedOrdersSum || 0,

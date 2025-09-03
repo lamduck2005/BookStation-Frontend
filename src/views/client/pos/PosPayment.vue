@@ -110,18 +110,57 @@
             <label class="form-label">Tiền khách đưa</label>
             <input
               v-model.number="customerPaid"
-              class="form-input"
+              class="form-input editable-input"
               type="number"
-              :placeholder="formatCurrency(totalAmount)"
+              :placeholder="`Mặc định: ${formatCurrency(totalAmount)}`"
+              min="0"
+              step="1000"
               @input="calculateChange"
+              @focus="$event.target.select()"
             />
+            <div class="input-note">
+              <i class="bi bi-info-circle"></i>
+              Có thể chỉnh sửa số tiền khách đưa
+            </div>
           </div>
+
           <div class="payment-summary">
             <div class="summary-row">
               <span>Tiền thừa trả khách:</span>
-              <span class="change-amount">{{
-                formatCurrency(changeAmount)
-              }}</span>
+              <span
+                class="change-amount"
+                :class="{ negative: changeAmount < 0 }"
+              >
+                {{ formatCurrency(changeAmount) }}
+              </span>
+            </div>
+
+            <!-- Cảnh báo khi thiếu tiền -->
+            <div v-if="changeAmount < 0" class="insufficient-warning">
+              <i class="bi bi-exclamation-triangle"></i>
+              Thiếu {{ formatCurrency(Math.abs(changeAmount)) }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Invoice checkbox -->
+        <div class="invoice-section">
+          <div class="invoice-checkbox">
+            <label class="checkbox-container">
+              <input
+                v-model="wantInvoice"
+                type="checkbox"
+                class="checkbox-input"
+              />
+              <span class="checkmark"></span>
+              <span class="checkbox-label">
+                <i class="bi bi-receipt"></i>
+                Khách hàng muốn lấy hóa đơn PDF
+              </span>
+            </label>
+            <div v-if="wantInvoice" class="invoice-note">
+              <i class="bi bi-info-circle"></i>
+              Hóa đơn sẽ được tự động tải xuống sau khi thanh toán thành công
             </div>
           </div>
         </div>
@@ -178,7 +217,11 @@
           <div class="order-summary">
             <h5 class="summary-title">Chi tiết đơn hàng:</h5>
             <div class="items-list">
-              <div v-for="item in orderItems" :key="item.id" class="item-row">
+              <div
+                v-for="item in orderItems"
+                :key="item.bookId"
+                class="item-row"
+              >
                 <div class="item-info">
                   <div class="item-name">{{ item.title || item.name }}</div>
                   <div class="item-details">
@@ -255,7 +298,7 @@
               </div>
             </div>
 
-            <!-- QR Code trong popup cho BANK_TRANSFER -->
+            <!-- QR Code cho BANK_TRANSFER -->
             <div
               v-if="paymentMethod === 'BANK_TRANSFER'"
               class="qr-popup-section"
@@ -271,6 +314,18 @@
                 <i class="bi bi-exclamation-triangle"></i>
                 Không thể tạo mã QR
               </div>
+            </div>
+          </div>
+
+          <!-- Invoice Info -->
+          <div v-if="wantInvoice" class="invoice-info">
+            <h5 class="summary-title">
+              <i class="bi bi-receipt"></i>
+              Hóa đơn:
+            </h5>
+            <div class="invoice-details">
+              <i class="bi bi-check-circle text-success"></i>
+              <span>Sẽ tự động tải xuống hóa đơn PDF sau khi thanh toán</span>
             </div>
           </div>
 
@@ -311,6 +366,14 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  selectedCustomer: {
+    type: Object,
+    default: null,
+  },
+  appliedVouchers: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 // Emit events
@@ -325,26 +388,21 @@ const paymentMethod = ref("CASH");
 const orderNotes = ref("");
 const customerPaid = ref(0);
 const changeAmount = ref(0);
+const showConfirmPopup = ref(false);
+const wantInvoice = ref(false); // New state for invoice checkbox
 
-// Voucher states
+// Voucher data
 const voucherSearchTerm = ref("");
 const voucherSearchResults = ref([]);
-const appliedVouchers = ref([]);
 const showVoucherResults = ref(false);
-const showConfirmPopup = ref(false);
-const qrImage = ref("");
-const isGeneratingQr = ref(false);
+const appliedVouchers = ref(props.appliedVouchers || []);
 let voucherSearchTimeout = null;
 
-// Computed
-const canConfirmPayment = computed(() => {
-  if (!props.orderItems.length) return false;
-  if (paymentMethod.value === "CASH") {
-    return customerPaid.value >= props.totalAmount;
-  }
-  return true;
-});
+// QR data
+const qrImage = ref(null);
+const isGeneratingQr = ref(false);
 
+// Computed
 const totalVoucherDiscount = computed(() => {
   return appliedVouchers.value.reduce(
     (total, voucher) => total + voucher.discountAmount,
@@ -352,12 +410,56 @@ const totalVoucherDiscount = computed(() => {
   );
 });
 
-const calculateSubtotal = () => {
-  return props.orderItems.reduce(
-    (total, item) => total + item.quantity * item.unitPrice,
-    0
-  );
-};
+// CHỈ GIỮ LẠI 1 HÀM canConfirmPayment
+const canConfirmPayment = computed(() => {
+  console.log("🔍 Payment validation:", {
+    hasItems: !!props.orderItems?.length,
+    hasCustomer: !!props.selectedCustomer,
+    customerType: props.selectedCustomer
+      ? {
+          isAnonymous: props.selectedCustomer.isAnonymous,
+          isGuest: props.selectedCustomer.isGuest,
+          hasUserId: !!props.selectedCustomer.userId,
+        }
+      : null,
+  });
+
+  // 1. Kiểm tra sản phẩm
+  if (!props.orderItems?.length) {
+    return false;
+  }
+
+  // 2. Kiểm tra tổng tiền
+  if (!props.totalAmount || props.totalAmount <= 0) {
+    return false;
+  }
+
+  // 3. Kiểm tra khách hàng
+  if (!props.selectedCustomer) {
+    return false;
+  }
+
+  const customer = props.selectedCustomer;
+
+  // 4. Kiểm tra loại khách hàng
+  if (customer.isAnonymous === true) {
+    return true;
+  }
+
+  if (
+    customer.isGuest === true &&
+    customer.customerName &&
+    customer.customerPhone
+  ) {
+    return true;
+  }
+
+  if (customer.userId && !customer.isGuest && !customer.isAnonymous) {
+    return true;
+  }
+
+  return false;
+});
 
 // Methods
 const formatCurrency = (amount) => {
@@ -368,17 +470,69 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
+const calculateSubtotal = () => {
+  return props.orderItems.reduce(
+    (total, item) => total + item.quantity * item.unitPrice,
+    0
+  );
+};
+
 const calculateChange = () => {
   const paid = Number(customerPaid.value) || 0;
   const total = Number(props.totalAmount) || 0;
   changeAmount.value = Math.max(0, paid - total);
-  console.log("Calculating change:", {
+
+  console.log("🧮 Change calculation:", {
     paid,
     total,
     change: changeAmount.value,
   });
 };
 
+// Watchers - CHỈ GIỮ LẠI 1 WATCHER CHO MỖI THUỘC TÍNH
+watch(
+  () => props.totalAmount,
+  (newTotal) => {
+    // CHỈ TỰ ĐỘNG FILL KHI CÓ TỔNG TIỀN VÀ CHƯA CÓ GIÁ TRỊ
+    if (newTotal > 0 && customerPaid.value === 0) {
+      customerPaid.value = newTotal;
+      calculateChange();
+      console.log("🔄 Auto-filled customer paid:", newTotal);
+    }
+    // NẾU TỔNG TIỀN = 0 THÌ RESET VỀ 0
+    else if (newTotal === 0) {
+      customerPaid.value = 0;
+      changeAmount.value = 0;
+      console.log("🔄 Reset customer paid to 0");
+    }
+  },
+  { immediate: true }
+);
+
+// CHỈ GIỮ LẠI 1 WATCHER CHO paymentMethod
+watch(paymentMethod, (newMethod) => {
+  if (
+    newMethod === "CASH" &&
+    props.totalAmount > 0 &&
+    customerPaid.value === 0
+  ) {
+    customerPaid.value = props.totalAmount;
+    calculateChange();
+  } else if (newMethod === "BANK_TRANSFER") {
+    generateQrCode();
+  }
+});
+
+// Watcher cho appliedVouchers từ props
+watch(
+  () => props.appliedVouchers,
+  (newVouchers) => {
+    appliedVouchers.value = newVouchers || [];
+  },
+  { immediate: true, deep: true }
+);
+
+// Voucher methods
 const onVoucherSearch = async () => {
   if (voucherSearchTimeout) {
     clearTimeout(voucherSearchTimeout);
@@ -472,17 +626,22 @@ const removeVoucher = (voucherId) => {
   }
 };
 
+// Payment methods
 const showConfirmationPopup = () => {
+  // Đảm bảo tiền khách đưa ít nhất bằng tổng tiền
+  if (
+    paymentMethod.value === "CASH" &&
+    customerPaid.value < props.totalAmount
+  ) {
+    customerPaid.value = props.totalAmount;
+    calculateChange();
+  }
+
   if (!canConfirmPayment.value) {
-    if (
-      paymentMethod.value === "CASH" &&
-      customerPaid.value < props.totalAmount
-    ) {
-      alert("Số tiền khách đưa phải lớn hơn hoặc bằng tổng tiền đơn hàng");
-      return;
-    }
+    console.log("❌ Cannot show popup - validation failed");
     return;
   }
+
   showConfirmPopup.value = true;
 };
 
@@ -490,7 +649,37 @@ const closeConfirmPopup = () => {
   showConfirmPopup.value = false;
 };
 
+const resetPaymentForm = () => {
+  customerPaid.value = 0;
+  changeAmount.value = 0;
+  orderNotes.value = "";
+  paymentMethod.value = "CASH";
+  voucherSearchTerm.value = "";
+  voucherSearchResults.value = [];
+  showVoucherResults.value = false;
+  appliedVouchers.value = [];
+  qrImage.value = null;
+  wantInvoice.value = false; // Reset invoice checkbox
+
+  console.log("💰 Payment form reset to default values");
+};
+
 const proceedPayment = () => {
+  // Kiểm tra tiền mặt trước khi xác nhận
+  if (paymentMethod.value === "CASH") {
+    const paid = Number(customerPaid.value) || 0;
+    const total = Number(props.totalAmount) || 0;
+
+    if (paid < total) {
+      alert(
+        `Tiền khách đưa không đủ!\nCần: ${total.toLocaleString(
+          "vi-VN"
+        )} ₫\nĐã nhận: ${paid.toLocaleString("vi-VN")} ₫`
+      );
+      return;
+    }
+  }
+
   const paymentData = {
     paymentMethod: paymentMethod.value,
     notes: orderNotes.value.trim(),
@@ -501,18 +690,26 @@ const proceedPayment = () => {
         : props.totalAmount,
     changeAmount:
       paymentMethod.value === "CASH" ? Number(changeAmount.value) : 0,
+    wantInvoice: wantInvoice.value, // Add invoice info to payment data
   };
 
   console.log("Payment data being emitted:", paymentData);
 
   showConfirmPopup.value = false;
   emit("payment-confirmed", paymentData);
+
+  // RESET FORM SAU KHI THANH TOÁN THÀNH CÔNG
+  setTimeout(() => {
+    resetPaymentForm();
+  }, 100); // Delay nhỏ để đảm bảo emit đã hoàn thành
 };
 
-const confirmPayment = () => {
-  showConfirmationPopup();
-};
+// Thêm defineExpose để parent component có thể gọi reset
+defineExpose({
+  resetPaymentForm,
+});
 
+// Event handlers
 const handleClickOutside = (event) => {
   const voucherSection = event.target.closest(".voucher-section");
   if (!voucherSection) {
@@ -520,64 +717,7 @@ const handleClickOutside = (event) => {
   }
 };
 
-// Watcher cho paymentMethod để tạo QR khi chọn BANK_TRANSFER
-watch(paymentMethod, async (newMethod) => {
-  if (newMethod === "BANK_TRANSFER") {
-    await generateQrCode();
-  } else {
-    qrImage.value = "";
-  }
-});
-
-// Hàm tạo QR với thông tin tài khoản thực tế
-const generateQrCode = async () => {
-  isGeneratingQr.value = true;
-  try {
-    const params = {
-      amount: props.totalAmount.toString(),
-      addInfo: orderNotes.value.trim() || "Thanh toan don hang BookStation",
-      accountNumber: "1028549215",
-      accountName: "DOAN THE PHONG",
-      bankCode: "970418",
-    };
-
-    console.log("🔄 QR params:", params);
-
-    const qrResponse = await generateQr(params);
-
-    console.log("✅ QR response received:", qrResponse);
-    console.log("📊 QR response type:", typeof qrResponse);
-
-    // qrResponse bây giờ là object có cấu trúc: { data: "url_string", message: "...", status: 200 }
-    if (qrResponse && qrResponse.data) {
-      const qrUrl = qrResponse.data;
-
-      console.log("📊 QR URL type:", typeof qrUrl);
-      console.log("📊 QR URL:", qrUrl);
-
-      if (
-        qrUrl &&
-        typeof qrUrl === "string" &&
-        qrUrl.startsWith("https://img.vietqr.io/")
-      ) {
-        qrImage.value = qrUrl; // Lưu URL trực tiếp
-        console.log("✅ QR image URL set successfully");
-      } else {
-        console.error("❌ Invalid QR URL format:", qrUrl);
-        alert("URL QR không đúng định dạng");
-      }
-    } else {
-      console.error("❌ No data in QR response:", qrResponse);
-      alert("Lỗi: Không nhận được URL QR");
-    }
-  } catch (error) {
-    console.error("❌ QR generation error:", error);
-    alert("Lỗi khi tạo mã QR thanh toán: " + error.message);
-  } finally {
-    isGeneratingQr.value = false;
-  }
-};
-
+// Lifecycle hooks
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
 
@@ -594,9 +734,11 @@ onMounted(() => {
     }
   });
 
+  // Tự động điền tiền khách đưa ngay khi mount
   if (props.totalAmount > 0) {
     customerPaid.value = props.totalAmount;
     calculateChange();
+    console.log("🚀 Initial auto-fill customer paid:", props.totalAmount);
   }
 });
 
@@ -1483,5 +1625,138 @@ onUnmounted(() => {
   color: #dc2626;
   font-size: 16px; /* Tăng từ 14px lên 16px */
   padding: 24px; /* Tăng từ 20px lên 24px */
+}
+
+/* Invoice checkbox styles */
+.invoice-section {
+  margin: 16px 0;
+  padding: 12px;
+  background: #f8fffe;
+  border: 1px solid #00bfae20;
+  border-radius: 8px;
+}
+
+.invoice-checkbox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  position: relative;
+  font-size: 14px;
+  user-select: none;
+}
+
+.checkbox-input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  height: 20px;
+  width: 20px;
+  background-color: #fff;
+  border: 2px solid #00bfae;
+  border-radius: 4px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.checkbox-container:hover .checkmark {
+  background-color: #f0fdfa;
+}
+
+.checkbox-container .checkbox-input:checked ~ .checkmark {
+  background-color: #00bfae;
+  border-color: #00bfae;
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox-container .checkbox-input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkbox-label {
+  color: #374151;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-label i {
+  color: #00bfae;
+  font-size: 16px;
+}
+
+.invoice-note {
+  margin-left: 32px;
+  font-size: 12px;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #ecfdf5;
+  border-radius: 6px;
+  border: 1px solid #a7f3d0;
+}
+
+.invoice-note i {
+  color: #059669;
+  font-size: 14px;
+}
+
+/* Styles for invoice info in popup */
+.invoice-info {
+  background: #f0fdf4;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 2px solid #bbf7d0;
+}
+
+.invoice-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #166534;
+}
+
+.text-success {
+  color: #16a34a !important;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .checkbox-container {
+    font-size: 13px;
+  }
+
+  .invoice-note {
+    margin-left: 24px;
+    font-size: 11px;
+  }
 }
 </style>

@@ -17,7 +17,7 @@
 
     <!-- Statistics Cards -->
     <div v-else class="row g-3">
-      <!-- Today Orders Card -->
+      <!-- Total Orders Card -->
       <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
         <div class="card stats-card orders-card">
           <div class="card-body">
@@ -39,7 +39,7 @@
         </div>
       </div>
 
-      <!-- Revenue Card -->
+      <!-- Net Revenue Card -->
       <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
         <div class="card stats-card revenue-card">
           <div class="card-body">
@@ -48,44 +48,64 @@
                 <i class="bi bi-currency-dollar"></i>
               </div>
               <div class="text-end">
-                <div class="stat-value gradient-text-revenue">{{ formatCurrency(data?.revenueToday) }}</div>
-                <div class="stat-label">Doanh thu (thuần) hôm nay</div>
+                <div class="stat-value gradient-text-revenue">{{ formatCurrency(data?.netRevenueToday) }}</div>
+                <div class="stat-label">Doanh thu thuần hôm nay</div>
               </div>
             </div>
             <div class="stat-footer">
               <small class="text-success">
-                Tổng tháng này: <strong>{{ data?.revenueThisMonth ? formatCurrency(data.revenueThisMonth) : 0 }}</strong>
+                Tổng tháng này: <strong>{{ formatCurrency(data?.netRevenueThisMonth) }}</strong>
               </small>
             </div>
           </div>
         </div>
       </div>
 
-  <!-- ...đã xoá card phí ship... -->
-
-      <!-- Returns & Cancellations Card -->
+      <!-- Refunded Orders Card -->
       <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
-        <div class="card stats-card returns-card">
+        <div class="card stats-card refunded-card">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-2">
-              <div class="icon-wrapper returns-icon">
-                <i class="bi bi-arrow-counterclockwise"></i>
+              <div class="icon-wrapper refunded-icon">
+                <i class="bi bi-arrow-return-left"></i>
               </div>
               <div class="text-end">
-                <div class="stat-value gradient-text-returns">{{ (data?.refundedOrdersToday || 0) + (data?.canceledOrdersToday || 0) }}</div>
-                <div class="stat-label">Hoàn trả/Hủy</div>
+                <div class="stat-value gradient-text-refunded">{{ data?.refundedOrdersToday || 0 }}</div>
+                <div class="stat-label">Đơn hoàn trả hôm nay</div>
+              </div>
+            </div>
+            <div class="stat-footer">
+              <small class="text-warning">
+                Tổng tháng này: <strong>{{ data?.refundedOrdersThisMonth || 0 }}</strong>
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Canceled Orders Card -->
+      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+        <div class="card stats-card canceled-card">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div class="icon-wrapper canceled-icon">
+                <i class="bi bi-x-circle"></i>
+              </div>
+              <div class="text-end">
+                <div class="stat-value gradient-text-canceled">{{ data?.canceledOrdersToday || 0 }}</div>
+                <div class="stat-label">Đơn hủy hôm nay</div>
               </div>
             </div>
             <div class="stat-footer">
               <small class="text-danger">
-                COD thất bại hôm nay: <strong>{{ formatPercentage(data?.failedCodRateToday) }}</strong>
+                Tổng tháng này: <strong>{{ data?.canceledOrdersThisMonth || 0 }}</strong>
               </small>
             </div>
           </div>
         </div>
       </div>
     </div>
-
+ 
    
   </div>
 </template>
@@ -114,15 +134,12 @@ const fetchOverviewData = async () => {
     data.value = {
       totalOrdersToday: Math.floor(Math.random() * 50) + 10,
       totalOrdersThisMonth: Math.floor(Math.random() * 500) + 100,
-      revenueToday: Math.floor(Math.random() * 5000000) + 10000000,
-      revenueThisMonth: Math.floor(Math.random() * 50000000) + 100000000,
-      completedOrdersToday: Math.floor(Math.random() * 40) + 8,
-      completedOrdersThisMonth: Math.floor(Math.random() * 400) + 80,
-      successRateToday: Math.floor(Math.random() * 20) + 80,
-      successRateThisMonth: Math.floor(Math.random() * 15) + 85,
-      netProfitThisMonth: Math.floor(Math.random() * 10000000) + 20000000,
-      codRateThisMonth: Math.floor(Math.random() * 30) + 60,
-      failedCodRateToday: Math.floor(Math.random() * 10) + 5
+      netRevenueToday: Math.floor(Math.random() * 5000000) + 1000000,
+      netRevenueThisMonth: Math.floor(Math.random() * 50000000) + 10000000,
+      refundedOrdersToday: Math.floor(Math.random() * 5) + 1,
+      refundedOrdersThisMonth: Math.floor(Math.random() * 20) + 5,
+      canceledOrdersToday: Math.floor(Math.random() * 3),
+      canceledOrdersThisMonth: Math.floor(Math.random() * 15) + 2
     };
     
     Swal.fire({
@@ -157,6 +174,23 @@ const exportData = () => {
     timer: 2000,
     showConfirmButton: false
   });
+};
+
+// Helper methods for summary section
+const calculateSuccessRate = () => {
+  if (!data.value) return '0';
+  const total = data.value.totalOrdersToday || 0;
+  const failed = (data.value.refundedOrdersToday || 0) + (data.value.canceledOrdersToday || 0);
+  const successful = total - failed;
+  const rate = total > 0 ? (successful / total) * 100 : 0;
+  return Math.round(rate * 10) / 10; // Round to 1 decimal place
+};
+
+const getSuccessRateClass = () => {
+  const rate = calculateSuccessRate();
+  if (rate >= 90) return 'text-success';
+  if (rate >= 75) return 'text-warning';
+  return 'text-danger';
 };
 
 onMounted(() => {
@@ -207,12 +241,12 @@ onMounted(() => {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
-.shipping-icon {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+.refunded-icon {
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
 }
 
-.returns-icon {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+.canceled-icon {
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
 }
 
 .stat-value {
@@ -235,10 +269,51 @@ onMounted(() => {
 }
 
 .insights-card,
-.actions-card {
+.actions-card,
+.summary-card {
   border: none;
   border-radius: 16px;
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.08);
+}
+
+.summary-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.summary-card .card-body {
+  padding: 1.25rem 1.5rem;
+}
+
+.summary-stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.summary-item {
+  font-size: 0.9rem;
+}
+
+.summary-divider {
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0.25rem;
+}
+
+.success-rate {
+  text-align: right;
+}
+
+.rate-label {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  margin-right: 0.5rem;
+}
+
+.rate-value {
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .insight-item {
@@ -283,6 +358,21 @@ onMounted(() => {
   .card-body {
     padding: 1rem;
   }
+
+  .summary-stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .summary-divider {
+    display: none;
+  }
+
+  .success-rate {
+    text-align: left;
+    margin-top: 0.5rem;
+  }
 }
 
 /* Animation */
@@ -312,21 +402,27 @@ onMounted(() => {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
 }
+
 .gradient-text-revenue {
   background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
 }
-.gradient-text-returns {
-  background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+
+.gradient-text-refunded {
+  background: linear-gradient(90deg, #ffecd2 0%, #fcb69f 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-fill-color: transparent;
+}
+
+.gradient-text-canceled {
+  background: linear-gradient(90deg, #ff9a9e 0%, #fecfef 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 </style>

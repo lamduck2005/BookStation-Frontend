@@ -51,14 +51,22 @@
           required
         />
       </div>
-      <button
-        class="save-btn"
-        @click="saveGuestInfo"
-        :disabled="!guestInfo.customerName || !guestInfo.customerPhone"
-      >
-        <i class="bi bi-check-lg"></i>
-        Xác nhận
-      </button>
+
+      <!-- 2 BUTTON: XÁC NHẬN VÀ KHÔNG LƯU THÔNG TIN -->
+      <div class="button-row">
+        <button
+          class="save-btn"
+          @click="saveGuestInfo"
+          :disabled="!guestInfo.customerName || !guestInfo.customerPhone"
+        >
+          <i class="bi bi-check-lg"></i>
+          Xác nhận
+        </button>
+        <button class="anonymous-btn" @click="confirmAnonymous">
+          <i class="bi bi-x-lg"></i>
+          Không lưu thông tin
+        </button>
+      </div>
     </div>
 
     <!-- Tìm kiếm khách hàng có tài khoản -->
@@ -118,8 +126,12 @@
     <div v-if="selectedCustomer" class="selected-customer">
       <div class="customer-card">
         <div class="customer-info">
-          <div class="customer-avatar">
-            <i v-if="selectedCustomer.isGuest" class="bi bi-person"></i>
+          <div
+            class="customer-avatar"
+            :class="{ anonymous: selectedCustomer.isAnonymous }"
+          >
+            <i v-if="selectedCustomer.isAnonymous" class="bi bi-person-x"></i>
+            <i v-else-if="selectedCustomer.isGuest" class="bi bi-person"></i>
             <span v-else>{{
               getInitials(
                 selectedCustomer.customerName || selectedCustomer.fullName
@@ -129,11 +141,19 @@
           <div class="customer-details">
             <div class="customer-name">
               {{ selectedCustomer.customerName || selectedCustomer.fullName }}
-              <span v-if="selectedCustomer.isGuest" class="guest-badge"
+              <span v-if="selectedCustomer.isAnonymous" class="anonymous-badge"
+                >Không lưu</span
+              >
+              <span v-else-if="selectedCustomer.isGuest" class="guest-badge"
                 >Vãng lai</span
               >
             </div>
-            <div class="customer-phone">
+            <div
+              v-if="
+                selectedCustomer.customerPhone || selectedCustomer.phoneNumber
+              "
+              class="customer-phone"
+            >
               <i class="bi bi-telephone"></i>
               {{
                 selectedCustomer.customerPhone || selectedCustomer.phoneNumber
@@ -157,7 +177,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import { userpos } from "@/services/admin/user";
-import { addretailer } from "@/services/admin/user"; // Thêm dòng này
+import { addretailer } from "@/services/admin/user";
 
 // Props
 const props = defineProps({
@@ -204,15 +224,6 @@ const setCustomerType = (type) => {
 
 const saveGuestInfo = async () => {
   if (!guestInfo.value.customerName || !guestInfo.value.customerPhone) {
-    return;
-  }
-
-  // Validate phone number (basic validation)
-  const phoneRegex = /^0\d{9}$/;
-  if (!phoneRegex.test(guestInfo.value.customerPhone)) {
-    alert(
-      "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại 10 chữ số bắt đầu bằng 0."
-    );
     return;
   }
 
@@ -266,6 +277,7 @@ const selectRegisteredCustomer = (customer) => {
     fullName: customer.fullName,
     phoneNumber: customer.phoneNumber,
     isGuest: false,
+    isAnonymous: false,
   };
 
   selectedCustomer.value = registeredCustomer;
@@ -347,6 +359,24 @@ watch(searchTerm, () => {
     searchResults.value = [];
   }
 });
+
+// SỬA LẠI METHOD confirmAnonymous
+const confirmAnonymous = () => {
+  const anonymousCustomer = {
+    userId: null,
+    customerName:
+      guestInfo.value.customerName.trim() || "Khách hàng không lưu thông tin",
+    customerPhone: guestInfo.value.customerPhone.trim() || null,
+    isAnonymous: true, // QUAN TRỌNG
+    isGuest: false,
+  };
+
+  selectedCustomer.value = anonymousCustomer;
+  emit("customer-selected", anonymousCustomer);
+
+  console.log("🔥 Anonymous customer emitted:", anonymousCustomer);
+  console.log("🔥 isAnonymous value:", anonymousCustomer.isAnonymous);
+};
 </script>
 
 <style scoped>
@@ -479,6 +509,30 @@ watch(searchTerm, () => {
   cursor: not-allowed;
 }
 
+.anonymous-btn {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.anonymous-btn:hover {
+  background: #e5e7eb;
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
 .search-dropdown {
   position: absolute;
   top: 100%;
@@ -555,6 +609,12 @@ watch(searchTerm, () => {
   flex-shrink: 0;
 }
 
+/* Style riêng cho anonymous avatar */
+.customer-avatar.anonymous {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
 .customer-details {
   flex: 1;
   min-width: 0;
@@ -572,6 +632,16 @@ watch(searchTerm, () => {
 
 .guest-badge {
   background: #fbbf24;
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Style cho anonymous badge */
+.anonymous-badge {
+  background: #0284c7;
   color: white;
   font-size: 10px;
   font-weight: 600;
