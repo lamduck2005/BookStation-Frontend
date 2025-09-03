@@ -126,7 +126,28 @@ export const toDate1 = (timestamp) => {
   });
 };
 
-// Format Time (HH:mm:ss) + cộng thêm 5 giờ
+// // Format Time (HH:mm:ss) + cộng thêm 5 giờ
+// export const toTime1 = (timestamp) => {
+//   if (!timestamp) return '';
+//   const date = new Date(
+//     typeof timestamp === 'string' && !timestamp.endsWith('Z')
+//       ? timestamp + 'Z'
+//       : timestamp
+//   );
+//   if (isNaN(date.getTime())) return '';
+
+//   // ✅ Cộng thêm 5 giờ
+//   date.setHours(date.getHours() + 5);
+
+//   return date.toLocaleTimeString('vi-VN', {
+//     hour: '2-digit',
+//     minute: '2-digit',
+//     second: '2-digit',
+//     hour12: false
+//   });
+// };
+
+// Format Time (HH:mm:ss)
 export const toTime1 = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(
@@ -135,10 +156,6 @@ export const toTime1 = (timestamp) => {
       : timestamp
   );
   if (isNaN(date.getTime())) return '';
-
-  // ✅ Cộng thêm 5 giờ
-  date.setHours(date.getHours() + 5);
-
   return date.toLocaleTimeString('vi-VN', {
     hour: '2-digit',
     minute: '2-digit',
@@ -146,5 +163,4 @@ export const toTime1 = (timestamp) => {
     hour12: false
   });
 };
-
 

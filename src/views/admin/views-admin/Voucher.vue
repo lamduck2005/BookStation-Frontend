@@ -817,12 +817,25 @@ const handleOpenAddVoucher = () => {
 const handleOpenEditVoucher = (voucher) => {
   isEdit.value = true;
   
-  const toInputDate = (val) => {
-    if (!val) return "";
-    const d = new Date(val);
-    if (isNaN(d.getTime())) return "";
-    return d.toISOString().slice(0, 16);
-  };
+  // const toInputDate = (val) => {
+  //   if (!val) return "";
+  //   const d = new Date(val);
+  //   if (isNaN(d.getTime())) return "";
+  //   return d.toISOString().slice(0, 16);
+  // };
+
+ // Chuyển timestamp (long từ DB) sang chuỗi yyyy-MM-ddTHH:mm để hiển thị
+const toInputDate = (val) => {
+  if (!val) return "";
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return "";
+
+  // Trừ đi timezone offset (phút -> ms) để datetime-local hiển thị đúng giờ
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+};
+
 
   formVoucher.value = {
     id: voucher.id,
@@ -883,10 +896,10 @@ const handleValidateVoucherForm = () => {
     }
   }
 
-  if (!v.maxDiscountValue || v.maxDiscountValue <= 0) {
-    showToast("error", "Giá trị giảm tối đa phải lớn hơn 0");
-    return false;
-  }
+  if (v.discountType === "PERCENTAGE" && (!v.maxDiscountValue || v.maxDiscountValue <= 0)) {
+  showToast("error", "Giá trị giảm tối đa phải lớn hơn 0");
+  return false;
+}
 
   // usageLimit bắt buộc > 0
   if (!v.usageLimit || v.usageLimit <= 0) {
@@ -938,7 +951,17 @@ const handleValidateVoucherForm = () => {
 };
 
 
+const adjustDateForServer = (val) => {
+  if (!val) return null;
+  const d = new Date(val);
+  d.setHours(d.getHours() - 5); // Trừ lại 5 giờ
+  return d.toISOString();
+};
+
+
 const handleSubmitVoucher = async () => {
+
+  
   const result = await showQuickConfirm(
     isEdit.value ? "Xác nhận cập nhật" : "Xác nhận thêm mới",
     isEdit.value 
@@ -959,24 +982,26 @@ const handleSubmitVoucher = async () => {
   const toStringOrNull = (val) => val === "" || typeof val === "undefined" ? null : val;
   const toTimestampOrNull = (val) => val === "" || val === null || typeof val === "undefined" ? null : new Date(val).getTime();
 
-  const payload = {
-    code: formVoucher.value.code.trim(),
-    name: toStringOrNull(formVoucher.value.name),
-    description: toStringOrNull(formVoucher.value.description),
-    voucherCategory: formVoucher.value.voucherCategory,
-    discountType: formVoucher.value.discountType,
-    discountPercentage: toNumberOrNull(formVoucher.value.discountPercentage),
-    discountAmount: toNumberOrNull(formVoucher.value.discountAmount),
-    startTime: toTimestampOrNull(formVoucher.value.startTime),
-    endTime: toTimestampOrNull(formVoucher.value.endTime),
-    minOrderValue: toNumberOrNull(formVoucher.value.minOrderValue),
-    maxDiscountValue: toNumberOrNull(formVoucher.value.maxDiscountValue),
-    usageLimit: toNumberOrNull(formVoucher.value.usageLimit),
-    usedCount: toNumberOrNull(formVoucher.value.usedCount),
-    usageLimitPerUser: toNumberOrNull(formVoucher.value.usageLimitPerUser),
-    createdBy: formVoucher.value.createdBy,
-    updatedBy: "admin",
-  };
+const payload = {
+  id: formVoucher.value.id, // Bắt buộc cho update
+  code: formVoucher.value.code.trim(),
+  name: toStringOrNull(formVoucher.value.name),
+  description: toStringOrNull(formVoucher.value.description),
+  voucherCategory: formVoucher.value.voucherCategory, // Enum: "NORMAL", ...
+  discountType: formVoucher.value.discountType,       // Enum: "PERCENTAGE", "FIXED_AMOUNT"
+  discountPercentage: toNumberOrNull(formVoucher.value.discountPercentage),
+  discountAmount: toNumberOrNull(formVoucher.value.discountAmount),
+  startTime: formVoucher.value.startTime ? new Date(formVoucher.value.startTime).getTime() : null,
+  endTime: formVoucher.value.endTime ? new Date(formVoucher.value.endTime).getTime() : null,
+  minOrderValue: toNumberOrNull(formVoucher.value.minOrderValue),
+  maxDiscountValue: toNumberOrNull(formVoucher.value.maxDiscountValue),
+  usageLimit: toNumberOrNull(formVoucher.value.usageLimit),
+  usedCount: toNumberOrNull(formVoucher.value.usedCount),
+  usageLimitPerUser: toNumberOrNull(formVoucher.value.usageLimitPerUser),
+  status: formVoucher.value.status ?? 1,
+  createdBy: formVoucher.value.createdBy || "system", // Không được null
+  updatedBy: "admin"
+};
 
   if (isEdit.value) {
     payload.id = formVoucher.value.id;
