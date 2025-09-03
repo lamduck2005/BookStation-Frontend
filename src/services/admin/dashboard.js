@@ -63,3 +63,24 @@ export const getTotalUsers = async () => {
   const res = await apiClient.get("/dashboard/stats/total-users");
   return res.data.data;
 };
+
+export const getNetRevenueSummary = async () => {
+  // Tính toán thời gian từ đầu tháng 8/2025 đến hiện tại
+  const fromDate = new Date(2025, 7, 1); // Tháng 8 năm 2025 (tháng 0-indexed)
+  const toDate = new Date(); // Hiện tại
+  
+  // Chuyển sang timestamp (milliseconds)
+  const fromTimestamp = fromDate.getTime();
+  const toTimestamp = toDate.getTime();
+  
+  const res = await apiClient.get("/orders/statistics/summary", {
+    params: {
+      period: "month",
+      fromDate: fromTimestamp,
+      toDate: toTimestamp
+    }
+  });
+  
+  // Trả về netRevenueSum từ response
+  return res.data.data.netRevenueSum;
+};

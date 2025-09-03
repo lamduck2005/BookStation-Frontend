@@ -307,9 +307,6 @@
                         <button type="button" class="btn btn-outline-secondary me-2" @click="clearVoucherSelection">
                           Xóa tất cả
                         </button>
-                        <button type="button" class="btn btn-primary" @click="applySelectedVouchers">
-                          Áp dụng ({{ selectedVouchers.length }})
-                        </button>
                       </div>
                     </div>
                   </div>

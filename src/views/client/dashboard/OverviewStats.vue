@@ -10,7 +10,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import {
-  getTotalRevenue,
+  getNetRevenueSummary,
   getTotalSoldBooks,
   getTotalStockBooks,
   getTotalDeliveredOrders,
@@ -18,14 +18,14 @@ import {
 } from "@/services/admin/dashboard";
 
 const stats = ref([
-  { label: "Tổng doanh thu", value: "..." },
+  { label: "Tổng doanh thu thuần", value: "..." },
   { label: "Sách đã bán", value: "..." },
   { label: "Người dùng", value: "..." }, // Đổi thành "..."
   { label: "Sách tồn kho", value: "..." },
 ]);
 
 onMounted(async () => {
-  const revenue = await getTotalRevenue();
+  const revenue = await getNetRevenueSummary();
   stats.value[0].value = "₫" + revenue.toLocaleString();
 
   const orders = await getTotalDeliveredOrders();
