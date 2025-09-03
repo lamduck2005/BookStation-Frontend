@@ -20,7 +20,7 @@
           <i class="fa fa-shopping-cart text-muted" style="font-size: 4rem"></i>
           <h4 class="mt-3 text-muted">Giỏ hàng trống</h4>
           <p class="text-muted">
-            <span v-if="!getUserId()">Vui lòng <button class="btn btn-link p-0" @click="router.push('/login')">đăng nhập</button> để mua hàng</span>
+            <span v-if="!getUserId()">Vui lòng <button class="btn btn-link p-0" @click="router.push('/auth')">đăng nhập</button> để mua hàng</span>
             <span v-else>Thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm</span>
           </p>
           <button v-if="getUserId()" class="btn btn-primary" @click="router.push('/')">Tiếp tục mua sắm</button>
@@ -91,7 +91,7 @@
                 </div>
               </div>
               <div class="product-info flex-grow-1 me-3">
-                <div class="fw-normal mb-2">
+                <div class="fw-bold mb-2 clickable" @click="goToProduct(item.bookId)">
                   {{ item.bookName || "Tên sản phẩm không có" }}
                 </div>
                 <div class="fw-bold text-danger" style="font-size: 1.1rem">
@@ -210,7 +210,7 @@
             <span>{{ formatPrice(totalAmount) }}</span>
           </div>
           <div class="d-flex justify-content-between mb-2">
-            <span>Phí vận chuyển (Giao hàng tiêu chuẩn)</span>
+            <span>Phí vận chuyển </span>
             <span>{{ formatPrice(shippingFee) }}</span>
           </div>
           <div
@@ -225,7 +225,7 @@
           <hr class="my-2" />
           <div class="d-flex justify-content-between align-items-center mb-3">
             <span class="fw-bold" style="font-size: 1.1rem"
-              >Tổng Số Tiền (gồm VAT)</span
+              >Tổng tiền thanh toán</span
             >
             <span class="text-danger fw-bold" style="font-size: 1.4rem">{{
               formatPrice(totalAmount + shippingFee)
@@ -245,9 +245,7 @@
               THANH TOÁN ({{ selectedItems.length }})
             </span>
           </button>
-          <div class="text-center" style="font-size: 0.85rem; color: #d32f2f">
-            (Giảm giá trên web chỉ áp dụng cho bán lẻ)
-          </div>
+          
         </div>
       </div>
     </div>
@@ -513,6 +511,10 @@ const formatPrice = (price) => {
   return new Intl.NumberFormat('vi-VN').format(price) + ' đ'
 }
 
+const goToProduct = (bookId) => {
+  router.push(`/product/${bookId}`)
+}
+
 const numberOnly = (event) => {
   const keyCode = event.keyCode || event.which
   if (keyCode < 48 || keyCode > 57) {
@@ -675,7 +677,7 @@ onBeforeUnmount(() => {
 .cart-container {
   max-width: 1400px;
   margin: 24px auto;
-  background: #f5f5f5;
+  background: #ffffff;
   border-radius: 8px;
   padding: 24px 32px;
   box-shadow: none;
@@ -994,5 +996,18 @@ input[type="number"] {
     color: #ffb300;
     text-shadow: 0 0 10px #ffb300;
   }
+}
+
+/* Clickable product name styles */
+.clickable {
+  color: #6b0000;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  text-decoration-line: underline;
+}
+
+.clickable:hover {
+  color: #007bff;
+  text-decoration: underline;
 }
 </style>
