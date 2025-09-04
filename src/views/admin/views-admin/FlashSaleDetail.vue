@@ -165,7 +165,7 @@
                 <th style="width: 40px">#</th>
                 <th>Sách</th>
                 <th style="width: 120px">Thao tác</th>
-                <th style="width: 100px">Trạng thái</th>
+                <!-- BỎ TRẠNG THÁI -->
                 <th>Phần trăm giảm</th>
                 <th>Giá sau giảm</th>
                 <th>Số lượng sản phẩm khuyến mãi</th>
@@ -174,7 +174,7 @@
             </thead>
             <tbody>
               <tr v-if="items.length === 0">
-                <td colspan="8" class="text-center py-4 text-muted">
+                <td colspan="7" class="text-center py-4 text-muted">
                   <i class="bi bi-inbox me-2"></i>
                   Không có dữ liệu
                 </td>
@@ -196,14 +196,12 @@
                     <EditButton @click="openEditForm(item)" />
                   </div>
                 </td>
-                <td class="py-3">
-                  <span :class="['badge', getStatusInfo(item.status).class]">
-                    {{ getStatusInfo(item.status).text }}
-                  </span>
-                </td>
+                <!-- BỎ TRẠNG THÁI -->
                 <td class="py-3">{{ item.discountPercentage }}%</td>
                 <td class="py-3">
-                  <span class="text-success fw-bold">{{ formatCurrency(item.discountPrice) }}</span>
+                  <span class="text-success fw-bold">{{
+                    formatCurrency(item.discountPrice)
+                  }}</span>
                 </td>
                 <td class="py-3">{{ item.stockQuantity }}</td>
                 <td class="py-3">{{ item.maxPurchasePerUser }}</td>
@@ -234,7 +232,6 @@
       tabindex="-1"
       aria-labelledby="formModalLabel"
       aria-hidden="true"
-    
     >
       <div class="modal-dialog">
         <div class="modal-content">
@@ -278,7 +275,8 @@
                       ISBN: {{ option.isbn }}
                     </small>
                     <small class="text-muted">
-                      Giá: {{ formatCurrency(option.price) }} | Tồn: {{ option.stockQuantity }}
+                      Giá: {{ formatCurrency(option.price) }} | Tồn:
+                      {{ option.stockQuantity }}
                     </small>
                   </div>
                 </template>
@@ -481,20 +479,28 @@
                 </tr>
                 <tr>
                   <td class="detail-label">Flash Sale</td>
-                  <td class="detail-value">{{ detailItem.flashSaleName || "Chưa có dữ liệu" }}</td>
+                  <td class="detail-value">
+                    {{ detailItem.flashSaleName || "Chưa có dữ liệu" }}
+                  </td>
                 </tr>
                 <tr>
                   <td class="detail-label">Sách</td>
-                  <td class="detail-value">{{ detailItem.bookName || "Chưa có dữ liệu" }}</td>
+                  <td class="detail-value">
+                    {{ detailItem.bookName || "Chưa có dữ liệu" }}
+                  </td>
                 </tr>
                 <tr>
                   <td class="detail-label">Phần trăm giảm</td>
-                  <td class="detail-value">{{ detailItem.discountPercentage }}%</td>
+                  <td class="detail-value">
+                    {{ detailItem.discountPercentage }}%
+                  </td>
                 </tr>
                 <tr>
                   <td class="detail-label">Giá sau giảm</td>
                   <td class="detail-value">
-                    <span class="text-success fw-bold">{{ formatCurrency(detailItem.discountPrice) }}</span>
+                    <span class="text-success fw-bold">{{
+                      formatCurrency(detailItem.discountPrice)
+                    }}</span>
                   </td>
                 </tr>
                 <tr>
@@ -503,16 +509,11 @@
                 </tr>
                 <tr>
                   <td class="detail-label">Giới hạn/người</td>
-                  <td class="detail-value">{{ detailItem.maxPurchasePerUser }}</td>
-                </tr>
-                <tr>
-                  <td class="detail-label">Trạng thái</td>
                   <td class="detail-value">
-                    <span :class="['badge', getStatusInfo(detailItem.status).class]">
-                      {{ getStatusInfo(detailItem.status).text }}
-                    </span>
+                    {{ detailItem.maxPurchasePerUser }}
                   </td>
                 </tr>
+                <!-- BỎ TRẠNG THÁI TRONG CHI TIẾT -->
               </tbody>
             </table>
           </div>
@@ -581,7 +582,7 @@ const error = ref(null);
 
 const isEditMode = ref(false);
 
-// Modal chi tiết Flash Sale Item
+// Modal chi tiết Flash Sale Item - BỎ status
 const showDetailModal = ref(false);
 const detailItem = ref({
   id: "",
@@ -593,9 +594,10 @@ const detailItem = ref({
   discountPercentage: "",
   stockQuantity: "",
   maxPurchasePerUser: "",
-  status: ""
+  // BỎ status: ""
 });
 
+// BỎ status trong formData
 const formData = ref({
   id: "",
   bookId: "",
@@ -603,6 +605,7 @@ const formData = ref({
   discountPercentage: "",
   stockQuantity: "",
   maxPurchasePerUser: "",
+  // BỎ status field
 });
 
 // Selected cho form (khác filter)
@@ -775,6 +778,7 @@ const reloadPage = () => {
   getDataFromApi(currentPage.value, pageSize.value);
 };
 
+// BỎ status trong resetFormData
 const resetFormData = () => {
   formData.value = {
     id: "",
@@ -783,6 +787,7 @@ const resetFormData = () => {
     discountPercentage: "",
     stockQuantity: "",
     maxPurchasePerUser: "",
+    // BỎ status: ""
   };
   formSelected.book = null;
 };
@@ -795,6 +800,7 @@ const openAddForm = async () => {
   modal.show();
 };
 
+// BỎ status trong openEditForm
 const openEditForm = async (item) => {
   isEditMode.value = true;
   await loadBooksForEdit();
@@ -806,15 +812,18 @@ const openEditForm = async (item) => {
     discountPercentage: item.discountPercentage,
     stockQuantity: item.stockQuantity,
     maxPurchasePerUser: item.maxPurchasePerUser,
+    // BỎ status: item.status
   };
-  
+
   // Set selected book để hiển thị trong multiselect
-  formSelected.book = availableBooks.value.find(book => book.bookId === item.bookId) || null;
-  
+  formSelected.book =
+    availableBooks.value.find((book) => book.bookId === item.bookId) || null;
+
   const modal = Modal.getOrCreateInstance(document.getElementById("formModal"));
   modal.show();
 };
 
+// BỎ validation cho status
 const validateForm = () => {
   const f = formData.value;
 
@@ -823,7 +832,8 @@ const validateForm = () => {
     validate.flashSaleItem.discountPercentage(f.discountPercentage),
     validate.flashSaleItem.discountPrice(f.discountPrice),
     validate.flashSaleItem.stockQuantity(f.stockQuantity),
-    validate.flashSaleItem.maxPurchasePerUser(f.maxPurchasePerUser)
+    validate.flashSaleItem.maxPurchasePerUser(f.maxPurchasePerUser),
+    // BỎ validate.flashSaleItem.status(f.status)
   ];
 
   for (const validation of validations) {
@@ -845,6 +855,7 @@ const validateForm = () => {
   return true;
 };
 
+// BỎ status trong submitData
 const handleSubmitForm = async () => {
   const actionText = isEditMode.value ? "cập nhật" : "thêm mới";
   const result = await showQuickConfirm(
@@ -854,7 +865,7 @@ const handleSubmitForm = async () => {
     isEditMode.value ? "Cập nhật" : "Thêm mới",
     "Hủy"
   );
-  
+
   if (!result.isConfirmed) return;
 
   try {
@@ -866,6 +877,7 @@ const handleSubmitForm = async () => {
       discountPercentage: parseFloat(formData.value.discountPercentage),
       stockQuantity: parseInt(formData.value.stockQuantity),
       maxPurchasePerUser: parseInt(formData.value.maxPurchasePerUser),
+      // BỎ status: parseInt(formData.value.status)
     };
     if (!isEditMode.value) {
       await addFlashSaleItem(defaultFlashSaleId, submitData);
@@ -913,9 +925,12 @@ watch(
 );
 
 // Đồng bộ formSelected.book với formData.bookId
-watch(() => formSelected.book, (opt) => {
-  formData.value.bookId = opt?.bookId || '';
-});
+watch(
+  () => formSelected.book,
+  (opt) => {
+    formData.value.bookId = opt?.bookId || "";
+  }
+);
 
 watch(
   () => formData.value.discountPercentage,
@@ -978,23 +993,25 @@ const stockErrorMessage = computed(() => {
   return "";
 });
 
-const getStatusInfo = (status) => {
-  const statusNum = Number(status);
-  switch (statusNum) {
-    case 1:
-      return { text: "Hoạt động", class: "badge-success" };
-    case 0:
-      return { text: "Không hoạt động", class: "badge-danger" };
-    default:
-      return { text: "Không xác định", class: "badge-secondary" };
-  }
-};
+// BỎ HOÀN TOÀN getStatusInfo function
+// const getStatusInfo = (status) => {
+//   const statusNum = Number(status);
+//   switch (statusNum) {
+//     case 1:
+//       return { text: "Hoạt động", class: "badge-success" };
+//     case 0:
+//       return { text: "Không hoạt động", class: "badge-danger" };
+//     default:
+//       return { text: "Không xác định", class: "badge-secondary" };
+//   }
+// };
 
 const viewFlashSaleItem = (item) => {
   detailItem.value = item;
   showDetailModal.value = true;
 };
 
+// BỎ status trong closeDetailModal
 const closeDetailModal = () => {
   showDetailModal.value = false;
   detailItem.value = {
@@ -1007,7 +1024,7 @@ const closeDetailModal = () => {
     discountPercentage: "",
     stockQuantity: "",
     maxPurchasePerUser: "",
-    status: ""
+    // BỎ status: ""
   };
 };
 </script>
@@ -1017,5 +1034,4 @@ const closeDetailModal = () => {
 @import "@/assets/css/form-global.css";
 @import "@/assets/css/form-detail-global.css";
 @import "@/assets/css/vue-multiselect.css";
-
 </style>

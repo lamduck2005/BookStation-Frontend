@@ -76,12 +76,9 @@
           >
             <i class="bi bi-arrow-repeat me-1"></i> Làm mới
           </button>
-          
-          <ExcelExportButton 
-            data-type="categories"
-            button-text="Xuất Excel"
-          />
-          
+
+          <ExcelExportButton data-type="categories" button-text="Xuất Excel" />
+
           <button
             class="btn btn-primary btn-sm py-2"
             style="background-color: #33304e; border-color: #33304e"
@@ -358,19 +355,31 @@
               </tr>
               <tr>
                 <td class="detail-label">Mô tả</td>
-                <td class="detail-value">{{ detailCategory.description || "Không có mô tả" }}</td>
+                <td class="detail-value">
+                  {{ detailCategory.description || "Không có mô tả" }}
+                </td>
               </tr>
               <tr>
                 <td class="detail-label">Danh mục cha</td>
-                <td class="detail-value">{{ detailCategory.parentCategory?.categoryName || "Không có" }}</td>
+                <td class="detail-value">
+                  {{
+                    detailCategory.parentCategory?.categoryName || "Không có"
+                  }}
+                </td>
               </tr>
               <tr>
                 <td class="detail-label">Ngày tạo</td>
-                <td class="detail-value">{{ toDate(detailCategory.createdAt) }} {{ toTime(detailCategory.createdAt) }}</td>
+                <td class="detail-value">
+                  {{ toDate(detailCategory.createdAt) }}
+                  {{ toTime(detailCategory.createdAt) }}
+                </td>
               </tr>
               <tr>
                 <td class="detail-label">Ngày cập nhật</td>
-                <td class="detail-value">{{ toDate(detailCategory.updatedAt) }} {{ toTime(detailCategory.updatedAt) }}</td>
+                <td class="detail-value">
+                  {{ toDate(detailCategory.updatedAt) }}
+                  {{ toTime(detailCategory.updatedAt) }}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -599,7 +608,7 @@ const closeModal = () => {
 const validateCategoryForm = () => {
   const validations = [
     validate.category.categoryName(category.value.categoryName),
-    validate.category.description(category.value.description)
+    validate.category.description(category.value.description),
   ];
 
   for (const validation of validations) {
@@ -615,7 +624,7 @@ const validateCategoryForm = () => {
 const validateEditForm = () => {
   const validations = [
     validate.category.categoryName(editData.value.categoryName),
-    validate.category.description(editData.value.description)
+    validate.category.description(editData.value.description),
   ];
 
   for (const validation of validations) {
@@ -630,6 +639,12 @@ const validateEditForm = () => {
 
 // Sửa lại hàm add
 const add = async () => {
+  // KIỂM TRA VALIDATION TRƯỚC KHI HIỆN CONFIRM
+  if (!validateCategoryForm()) {
+    return; // Dừng lại nếu validation fail, không hiện confirm
+  }
+
+  // CHỈ HIỆN CONFIRM KHI ĐÃ PASS VALIDATION
   const result = await showQuickConfirm(
     "Xác nhận thêm mới",
     "Bạn có chắc chắn muốn thêm danh mục này?",
@@ -637,13 +652,8 @@ const add = async () => {
     "Thêm mới",
     "Hủy"
   );
-  
-  if (!result.isConfirmed) return;
 
-  // Validate form trước khi submit
-  if (!validateCategoryForm()) {
-    return;
-  }
+  if (!result.isConfirmed) return;
 
   // Tạo payload chỉ chứa ID của parentCategory
   const payload = {
@@ -674,8 +684,14 @@ const add = async () => {
   }
 };
 
-// Sửa lại hàm handleUpdateCategory
+// Tương tự cho hàm handleUpdateCategory
 const handleUpdateCategory = async (id, categoryData) => {
+  // KIỂM TRA VALIDATION TRƯỚC KHI HIỆN CONFIRM
+  if (!validateEditForm()) {
+    return; // Dừng lại nếu validation fail, không hiện confirm
+  }
+
+  // CHỈ HIỆN CONFIRM KHI ĐÃ PASS VALIDATION
   const result = await showQuickConfirm(
     "Xác nhận cập nhật",
     "Bạn có chắc chắn muốn cập nhật danh mục này?",
@@ -683,13 +699,8 @@ const handleUpdateCategory = async (id, categoryData) => {
     "Cập nhật",
     "Hủy"
   );
-  
-  if (!result.isConfirmed) return;
 
-  // Validate form trước khi submit
-  if (!validateEditForm()) {
-    return;
-  }
+  if (!result.isConfirmed) return;
 
   try {
     const payload = {

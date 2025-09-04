@@ -201,8 +201,8 @@
                 </td>
                 <td>
                   <div>
-                    <strong>{{ order.userName }}</strong>
-                    <div class="text-muted small">{{ order.userEmail }}</div>
+                    <strong>{{ order.userName || 'Khách vãng lai' }}</strong>
+                    <div class="text-muted small">{{ order.userEmail || 'Không có email' }}</div>
                   </div>
                 </td>
                 <td>
@@ -899,11 +899,15 @@
                   <h6 class="section-title">
                     <i class="bi bi-person me-2"></i>Thông tin khách hàng
                   </h6>
-                  <p><strong>Tên:</strong> {{ selectedOrder.userName }}</p>
-                  <p><strong>Email:</strong> {{ selectedOrder.userEmail }}</p>
+                  <p><strong>Tên:</strong> {{ selectedOrder.userName || 'Khách vãng lai' }}</p>
+                  <p><strong>Email:</strong> {{ selectedOrder.userEmail || 'Không có email' }}</p>
                   <p v-if="selectedOrder.addressDetail">
                     <strong>Địa chỉ giao hàng:</strong><br>
                     <span class="text-muted">{{ selectedOrder.addressDetail }}</span>
+                  </p>
+                  <p v-else>
+                    <strong>Địa chỉ giao hàng:</strong><br>
+                    <span class="text-muted">Lấy tại cửa hàng</span>
                   </p>
                 </div>
               </div>
@@ -1807,15 +1811,11 @@ const loadUserAddresses = async (userId) => {
     showToast('error', 'Lỗi khi tải địa chỉ người dùng');
   }
 };
-
-const onAddressChange = () => {
-  currentAddress.value = userAddresses.value.find(addr => addr.id == newOrder.value.addressId) || null;
-  calculateShippingFee();
-  // ✅ MANUAL TRIGGER thay vì watch
+  // // ✅ MANUAL TRIGGER thay vì watch
   if (newOrder.value.userId && newOrder.value.items.length > 0) {
     calculateOrderPreview();
   }
-};
+
 
 const loadUserVouchers = async (userId) => {
   try {
@@ -2333,8 +2333,8 @@ const cancelOrder = async (order) => {
       title: 'Hủy đơn hàng',
       html: `
         <div class="text-start">
-          <p><strong>Mã đơn hàng:</strong> ${order.code}</p>
-          <p><strong>Khách hàng:</strong> ${order.customerName}</p>
+          <p><strong>Mã đơn hàng:</strong> ${order.orderCode || order.code}</p>
+          <p><strong>Khách hàng:</strong> ${order.userName || 'Khách vãng lai'}</p>
           <div class="alert alert-warning mt-3">
             <strong><i class="bi bi-exclamation-triangle"></i> Lưu ý quan trọng:</strong>
             <ul class="mb-0 mt-2">
@@ -2372,7 +2372,8 @@ const cancelOrder = async (order) => {
         title: 'Đã hủy đơn hàng!',
         html: `
           <div class="text-start">
-            <p>Đơn hàng <strong>${order.code}</strong> đã được hủy thành công</p>
+            <p>Đơn hàng <strong>${order.orderCode || order.code}</strong> đã được hủy thành công</p>
+            <p><strong>Khách hàng:</strong> ${order.userName || 'Khách vãng lai'}</p>
             <div class="alert alert-success mt-3 small">
               <strong>Đã thực hiện:</strong>
               <ul class="mb-0 mt-2">
@@ -2973,7 +2974,6 @@ const openAddAddressModal = async () => {
   
   // Use Bootstrap Modal
   const modalElement = document.getElementById('addAddressModal');
-  const modal = Modal.getOrCreateInstance(modalElement);
   modal.show();
 };
 
