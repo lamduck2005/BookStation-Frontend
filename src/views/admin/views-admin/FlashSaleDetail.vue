@@ -330,20 +330,20 @@
                   class="form-control"
                   v-model="formData.discountPercentage"
                   required
-                  :min="0"
-                  :max="100"
-                  placeholder="Nhập phần trăm giảm (0-100)"
+                  :min="1"
+                  :max="30"
+                  placeholder="Nhập phần trăm giảm (1-30)"
                 />
                 <div
                   v-if="formData.discountPrice"
                   class="form-text text-success"
                 >
-                  Giá sau giảm: {{ formatCurrency(formData.discountPrice) }}
+                  Giá sau khi giảm: {{ formatCurrency(formData.discountPrice) }}
                 </div>
               </div>
               <div class="mb-3">
                 <label class="form-label">
-                  Giá giảm <span class="text-danger">*</span>
+                  Giá sau khi giảm <span class="text-danger">*</span>
                 </label>
                 <input
                   type="number"
@@ -830,7 +830,7 @@ const validateForm = () => {
   const validations = [
     validate.flashSaleItem.bookId(f.bookId),
     validate.flashSaleItem.discountPercentage(f.discountPercentage),
-    validate.flashSaleItem.discountPrice(f.discountPrice),
+    // validate.flashSaleItem.discountPrice(f.discountPrice),
     validate.flashSaleItem.stockQuantity(f.stockQuantity),
     validate.flashSaleItem.maxPurchasePerUser(f.maxPurchasePerUser),
     // BỎ validate.flashSaleItem.status(f.status)
@@ -851,6 +851,8 @@ const validateForm = () => {
     showToast("error", stockErrorMessage.value);
     return false;
   }
+
+ 
 
   return true;
 };

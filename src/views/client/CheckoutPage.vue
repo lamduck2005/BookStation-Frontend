@@ -1856,11 +1856,12 @@ const updateFilteredVouchers = () => {
     filteredVouchers.value = userVouchers.value
   } else {
     const searchTerm = voucherSearch.value.toLowerCase()
-    filteredVouchers.value = userVouchers.value.filter(voucher => 
-      voucher.code.toLowerCase().includes(searchTerm) ||
-      voucher.name.toLowerCase().includes(searchTerm) ||
-      voucher.description.toLowerCase().includes(searchTerm)
-    )
+    filteredVouchers.value = userVouchers.value.filter(voucher => {
+      const code = (voucher.code || '').toString().toLowerCase()
+      const name = (voucher.name || '').toString().toLowerCase()
+      const description = (voucher.description || '').toString().toLowerCase()
+      return code.includes(searchTerm) || name.includes(searchTerm) || description.includes(searchTerm)
+    })
   }
 }
 
@@ -2094,11 +2095,12 @@ const filteredVouchersComputed = computed(() => {
     return userVouchers.value
   } else {
     const searchTerm = voucherSearch.value.toLowerCase()
-    return userVouchers.value.filter(voucher => 
-      voucher.code.toLowerCase().includes(searchTerm) ||
-      voucher.name.toLowerCase().includes(searchTerm) ||
-      voucher.description.toLowerCase().includes(searchTerm)
-    )
+    return userVouchers.value.filter(voucher => {
+      const code = (voucher.code || '').toString().toLowerCase()
+      const name = (voucher.name || '').toString().toLowerCase()
+      const description = (voucher.description || '').toString().toLowerCase()
+      return code.includes(searchTerm) || name.includes(searchTerm) || description.includes(searchTerm)
+    })
   }
 })
 
@@ -2138,7 +2140,7 @@ onMounted(async () => {
     error.value = 'Vui lòng đăng nhập để tiếp tục.'
     loading.value = false
     showToast('error', 'Vui lòng đăng nhập để tiếp tục')
-    router.push('/login')
+    router.push('/auth')
     return
   }
 

@@ -175,7 +175,7 @@ export const validate = {
       if (!percentage && percentage !== 0) return 'Phần trăm giảm không được để trống';
       const num = Number(percentage);
       if (isNaN(num)) return 'Phần trăm giảm phải là số';
-      if (num < 0 || num > 100) return 'Phần trăm giảm phải từ 0 đến 100';
+      if (num < 1 || num > 30) return 'Phần trăm giảm chỉ được phép từ 1% đến 30%';
       return null;
     },
     

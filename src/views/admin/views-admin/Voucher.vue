@@ -301,6 +301,8 @@
                      :disabled="isEdit"
                      placeholder="Nhập mã voucher"
                      required
+                     pattern="^[A-Za-z0-9]{1,20}$"
+                     maxlength="20"
                    />
                    <div v-if="isEdit" class="form-text text-warning">
                      <i class="bi bi-exclamation-triangle me-1"></i>
@@ -316,6 +318,7 @@
                     class="form-control"
                     placeholder="Nhập tên voucher"
                     required
+                    maxlength="50"
                   />
                 </div>
                 <div class="mb-2 col-6">
@@ -376,8 +379,8 @@
                   <input
                     v-model="formVoucher.discountPercentage"
                     type="number"
-                    min="0"
-                    max="100"
+                    min="1"
+                    max="20"
                     step="0.01"
                     class="form-control"
                     :disabled="formVoucher.discountType !== 'PERCENTAGE'"
@@ -390,7 +393,8 @@
                   <input
                     v-model="formVoucher.discountAmount"
                     type="number"
-                    min="0"
+                    min="1000"
+                    max="100000000"
                     step="0.01"
                     class="form-control"
                     :disabled="formVoucher.discountType !== 'FIXED_AMOUNT'"
@@ -426,6 +430,7 @@
                     v-model="formVoucher.minOrderValue"
                     type="number"
                     min="0"
+                    max="100000000"
                     step="0.01"
                     class="form-control"
                     required
@@ -442,30 +447,37 @@
                     v-model="formVoucher.maxDiscountValue"
                     type="number"
                     min="0"
+                    max="99999999"
                     step="0.01"
                     class="form-control"
                   />
                 </div>
                 <div class="mb-2 col-6">
                   <label class="form-label">
-                    <span style="color: red">*</span> Giới hạn lượt dùng
+                    <span style="color: red">*</span> Giới hạn lượt dùng tổng cộng
+                    <br>
+                    <small class="text-muted">( Tổng lượt dùng voucher của tất cả người dùng )</small>
                   </label>
                   <input
                     v-model="formVoucher.usageLimit"
                     type="number"
-                    min="0"
+                    min="1"
+                    max="100"
                     class="form-control"
                     required
                   />
                 </div>
                 <div class="mb-2 col-6">
                   <label class="form-label">
-                    <span style="color: red">*</span> Giới hạn/người
+                    <span style="color: red">*</span> Giới hạn lượt dùng mỗi người
+                    <br>
+                    <small class="text-muted">( Tổng lượt dùng của 1 người dùng )</small>
                   </label>
                   <input
                     v-model="formVoucher.usageLimitPerUser"
                     type="number"
-                    min="0"
+                    min="1"
+                    max="100"
                     class="form-control"
                     required
                   />
@@ -871,8 +883,18 @@ const handleValidateVoucherForm = () => {
     showToast("error", "Mã voucher không được để trống");
     return false;
   }
+  // Regex mã: A-Za-z0-9, 1-20 ký tự
+  if (!/^[A-Za-z0-9]{1,20}$/.test(v.code)) {
+    showToast("error", "Mã voucher chỉ gồm A-Z, a-z, 0-9 và dài 1-20 ký tự");
+    return false;
+  }
   if (!v.name || v.name.trim() === "") {
     showToast("error", "Tên voucher không được để trống");
+    return false;
+  }
+  // Tên 1-50 ký tự
+  if (v.name.trim().length < 1 || v.name.trim().length > 50) {
+    showToast("error", "Tên voucher phải từ 1-50 ký tự");
     return false;
   }
   if (!v.voucherCategory) {
@@ -880,36 +902,53 @@ const handleValidateVoucherForm = () => {
     return false;
   }
 
-  // Nếu loại giảm giá là % thì discountPercentage phải > 0
+  // Nếu loại giảm giá là % thì phần trăm 1-20, maxDiscountValue < 100 triệu
   if (v.discountType === "PERCENTAGE") {
-    if (!v.discountPercentage || v.discountPercentage <= 0) {
-      showToast("error", "Phần trăm giảm giá phải lớn hơn 0");
+    const percent = Number(v.discountPercentage);
+    if (!percent || percent < 1 || percent > 20) {
+      showToast("error", "Phần trăm giảm phải từ 1-20%");
+      return false;
+    }
+    const maxVal = Number(v.maxDiscountValue ?? 0);
+    if (!(maxVal > 0) || maxVal >= 100_000_000) {
+      showToast("error", "Giá trị giảm tối đa phải > 0 và < 100,000,000");
       return false;
     }
   }
 
-  // Nếu loại giảm giá là số tiền thì discountAmount phải > 0
-  if (v.discountType === "AMOUNT") {
-    if (!v.discountAmount || v.discountAmount <= 0) {
-      showToast("error", "Số tiền giảm giá phải lớn hơn 0");
+  // Nếu loại giảm giá là số tiền thì trong [1,000 ; 100,000,000]
+  if (v.discountType === "FIXED_AMOUNT") {
+    const amt = Number(v.discountAmount);
+    if (!amt || amt < 1000 || amt > 100_000_000) {
+      showToast("error", "Số tiền giảm phải từ 1,000 đến 100,000,000");
       return false;
     }
   }
 
-  if (v.discountType === "PERCENTAGE" && (!v.maxDiscountValue || v.maxDiscountValue <= 0)) {
-  showToast("error", "Giá trị giảm tối đa phải lớn hơn 0");
-  return false;
-}
-
-  // usageLimit bắt buộc > 0
-  if (!v.usageLimit || v.usageLimit <= 0) {
-    showToast("error", "Số lượt sử dụng phải lớn hơn 0");
+  // Giá trị đơn tối thiểu 0 - 100 triệu
+  if (v.minOrderValue === "" || v.minOrderValue === null || typeof v.minOrderValue === "undefined") {
+    showToast("error", "Giá trị đơn tối thiểu không được để trống");
+    return false;
+  }
+  const minOrder = Number(v.minOrderValue ?? 0);
+  if (isNaN(minOrder) || minOrder < 0 || minOrder > 100_000_000) {
+    showToast("error", "Giá trị đơn tối thiểu phải từ 0 đến 100,000,000");
     return false;
   }
 
-  // usageLimitPerUser bắt buộc > 0
-  if (!v.usageLimitPerUser || v.usageLimitPerUser <= 0) {
-    showToast("error", "Số lượt sử dụng / user phải lớn hơn 0");
+  // Giới hạn tổng 1 - 100
+  if (!v.usageLimit || v.usageLimit < 1 || v.usageLimit > 100) {
+    showToast("error", "Giới hạn lượt dùng tổng cộng phải từ 1 đến 100");
+    return false;
+  }
+
+  // Giới hạn mỗi người 1 - 100 và <= tổng cộng
+  if (!v.usageLimitPerUser || v.usageLimitPerUser < 1 || v.usageLimitPerUser > 100) {
+    showToast("error", "Giới hạn lượt dùng mỗi người phải từ 1 đến 100");
+    return false;
+  }
+  if (Number(v.usageLimitPerUser) > Number(v.usageLimit)) {
+    showToast("error", "Giới hạn mỗi người phải nhỏ hơn hoặc bằng tổng cộng");
     return false;
   }
 
