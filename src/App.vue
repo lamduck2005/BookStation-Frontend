@@ -14,7 +14,7 @@ import DemoPage from './views/client/DemoPage.vue';
 /* Global styles */
 body {
     background: #ffffff !important;
-    font-family: 'Arial', sans-serif;
+    /* font-family: 'Arial', sans-serif; */
 }
 
 * {

@@ -217,8 +217,17 @@
                     </small>
                   </div>
                 </td>
-                <td class="py-3">{{ voucher.start_time }}</td>
-                <td class="py-3">{{ voucher.end_time }}</td>
+                <!-- <td class="py-3">{{ voucher.start_time }}</td> -->
+                <td class="py-3">
+                  <span class="fw-bold">{{ voucher.startHour }}</span>
+                  <br />
+                  <small class="text-muted">{{ toDate1(voucher.startTime) }}</small>
+                </td>
+                <td class="py-3">
+                  <span class="fw-bold">{{ voucher.endHour }}</span>
+                  <br />
+                  <small class="text-muted">{{ toDate1(voucher.endTime) }}</small>
+                </td>
                 <!-- ✅ BỎ cột trạng thái với ToggleStatus -->
                 <td class="py-3">
                   <span
@@ -620,7 +629,7 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { showToast, showQuickConfirm } from "@/utils/swalHelper.js";
 import { validate } from "@/utils/validation.js";
-import { toDate, toTime } from "@/utils/utils.js";
+import { toDate1, toTime1,formatDate,formatDateTime } from "@/utils/utils.js";
 // ========== IMPORT SERVICES ==========
 import {
   getVouchers,
@@ -733,28 +742,31 @@ const handleFetchVouchers = async () => {
        discountType: discountTypeFilter.value || null,
      });
 
-    listVoucher.value = res.content.map((voucher) => ({
-      id: voucher.id,
-      code: voucher.code,
-      name: voucher.name,
-      description: voucher.description,
-      voucherCategory: voucher.voucherCategory,
-      discountType: voucher.discountType,
-      discountPercentage: voucher.discountPercentage,
-      discountAmount: voucher.discountAmount,
-      start_time: toDate(voucher.startTime),
-      end_time: toDate(voucher.endTime),
-      startTime: voucher.startTime,
-      endTime: voucher.endTime,
-      minOrderValue: voucher.minOrderValue,
-      maxDiscountValue: voucher.maxDiscountValue,
-      usageLimit: voucher.usageLimit,
-      usedCount: voucher.usedCount,
-      usageLimitPerUser: voucher.usageLimitPerUser,
-      createdBy: voucher.createdBy,
-      updatedBy: voucher.updatedBy,
-      soLanDungConLai: Math.max(voucher.usageLimit - voucher.usedCount, 0),
-    }));
+  listVoucher.value = res.content.map((voucher) => ({
+  id: voucher.id,
+  code: voucher.code,
+  name: voucher.name,
+  description: voucher.description,
+  voucherCategory: voucher.voucherCategory,
+  discountType: voucher.discountType,
+  discountPercentage: voucher.discountPercentage,
+  discountAmount: voucher.discountAmount,
+  start_time: toDate1(voucher.startTime),
+  end_time: toDate1(voucher.endTime),
+  startHour: toTime1(voucher.startTime),   // nếu muốn thêm giờ
+  endHour: toTime1(voucher.endTime),       // nếu muốn thêm giờ
+  startTime: voucher.startTime,
+  endTime: voucher.endTime,
+  minOrderValue: voucher.minOrderValue,
+  maxDiscountValue: voucher.maxDiscountValue,
+  usageLimit: voucher.usageLimit,
+  usedCount: voucher.usedCount,
+  usageLimitPerUser: voucher.usageLimitPerUser,
+  createdBy: voucher.createdBy,
+  updatedBy: voucher.updatedBy,
+  soLanDungConLai: Math.max(voucher.usageLimit - voucher.usedCount, 0),
+}));
+
 
     totalElements.value = res.totalElements;
     totalPages.value = res.totalPages;
@@ -805,12 +817,25 @@ const handleOpenAddVoucher = () => {
 const handleOpenEditVoucher = (voucher) => {
   isEdit.value = true;
   
-  const toInputDate = (val) => {
-    if (!val) return "";
-    const d = new Date(val);
-    if (isNaN(d.getTime())) return "";
-    return d.toISOString().slice(0, 16);
-  };
+  // const toInputDate = (val) => {
+  //   if (!val) return "";
+  //   const d = new Date(val);
+  //   if (isNaN(d.getTime())) return "";
+  //   return d.toISOString().slice(0, 16);
+  // };
+
+ // Chuyển timestamp (long từ DB) sang chuỗi yyyy-MM-ddTHH:mm để hiển thị
+const toInputDate = (val) => {
+  if (!val) return "";
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return "";
+
+  // Trừ đi timezone offset (phút -> ms) để datetime-local hiển thị đúng giờ
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+};
+
 
   formVoucher.value = {
     id: voucher.id,
@@ -839,20 +864,80 @@ const handleCloseFormModal = () => {
 };
 
 const handleValidateVoucherForm = () => {
+  const v = formVoucher.value;
+
+  // check trống hoặc = 0 cho các field bắt buộc
+  if (!v.code || v.code.trim() === "") {
+    showToast("error", "Mã voucher không được để trống");
+    return false;
+  }
+  if (!v.name || v.name.trim() === "") {
+    showToast("error", "Tên voucher không được để trống");
+    return false;
+  }
+  if (!v.voucherCategory) {
+    showToast("error", "Loại voucher không được để trống");
+    return false;
+  }
+
+  // Nếu loại giảm giá là % thì discountPercentage phải > 0
+  if (v.discountType === "PERCENTAGE") {
+    if (!v.discountPercentage || v.discountPercentage <= 0) {
+      showToast("error", "Phần trăm giảm giá phải lớn hơn 0");
+      return false;
+    }
+  }
+
+  // Nếu loại giảm giá là số tiền thì discountAmount phải > 0
+  if (v.discountType === "AMOUNT") {
+    if (!v.discountAmount || v.discountAmount <= 0) {
+      showToast("error", "Số tiền giảm giá phải lớn hơn 0");
+      return false;
+    }
+  }
+
+  if (v.discountType === "PERCENTAGE" && (!v.maxDiscountValue || v.maxDiscountValue <= 0)) {
+  showToast("error", "Giá trị giảm tối đa phải lớn hơn 0");
+  return false;
+}
+
+  // usageLimit bắt buộc > 0
+  if (!v.usageLimit || v.usageLimit <= 0) {
+    showToast("error", "Số lượt sử dụng phải lớn hơn 0");
+    return false;
+  }
+
+  // usageLimitPerUser bắt buộc > 0
+  if (!v.usageLimitPerUser || v.usageLimitPerUser <= 0) {
+    showToast("error", "Số lượt sử dụng / user phải lớn hơn 0");
+    return false;
+  }
+
+  // thời gian
+  if (!v.startTime) {
+    showToast("error", "Ngày bắt đầu không được để trống");
+    return false;
+  }
+  if (!v.endTime) {
+    showToast("error", "Ngày kết thúc không được để trống");
+    return false;
+  }
+
+  // --- gọi thêm validate cũ nếu cần ---
   const validations = [
-    validate.voucher.code(formVoucher.value.code),
-    validate.voucher.name(formVoucher.value.name),
-    validate.voucher.description(formVoucher.value.description),
-    validate.voucher.voucherCategory(formVoucher.value.voucherCategory),
-    validate.voucher.discountType(formVoucher.value.discountType),
-    validate.voucher.discountPercentage(formVoucher.value.discountPercentage, formVoucher.value.discountType),
-    validate.voucher.discountAmount(formVoucher.value.discountAmount, formVoucher.value.discountType),
-    validate.voucher.startTime(formVoucher.value.startTime),
-    validate.voucher.endTime(formVoucher.value.endTime, formVoucher.value.startTime),
-    validate.voucher.minOrderValue(formVoucher.value.minOrderValue),
-    validate.voucher.maxDiscountValue(formVoucher.value.maxDiscountValue),
-    validate.voucher.usageLimit(formVoucher.value.usageLimit),
-    validate.voucher.usageLimitPerUser(formVoucher.value.usageLimitPerUser),
+    validate.voucher.code(v.code),
+    validate.voucher.name(v.name),
+    validate.voucher.description(v.description),
+    validate.voucher.voucherCategory(v.voucherCategory),
+    validate.voucher.discountType(v.discountType),
+    validate.voucher.discountPercentage(v.discountPercentage, v.discountType),
+    validate.voucher.discountAmount(v.discountAmount, v.discountType),
+    validate.voucher.startTime(v.startTime),
+    validate.voucher.endTime(v.endTime, v.startTime),
+    validate.voucher.minOrderValue(v.minOrderValue),
+    validate.voucher.maxDiscountValue(v.maxDiscountValue),
+    validate.voucher.usageLimit(v.usageLimit),
+    validate.voucher.usageLimitPerUser(v.usageLimitPerUser),
   ];
 
   for (const validation of validations) {
@@ -865,7 +950,18 @@ const handleValidateVoucherForm = () => {
   return true;
 };
 
+
+const adjustDateForServer = (val) => {
+  if (!val) return null;
+  const d = new Date(val);
+  d.setHours(d.getHours() - 5); // Trừ lại 5 giờ
+  return d.toISOString();
+};
+
+
 const handleSubmitVoucher = async () => {
+
+  
   const result = await showQuickConfirm(
     isEdit.value ? "Xác nhận cập nhật" : "Xác nhận thêm mới",
     isEdit.value 
@@ -886,24 +982,26 @@ const handleSubmitVoucher = async () => {
   const toStringOrNull = (val) => val === "" || typeof val === "undefined" ? null : val;
   const toTimestampOrNull = (val) => val === "" || val === null || typeof val === "undefined" ? null : new Date(val).getTime();
 
-  const payload = {
-    code: formVoucher.value.code.trim(),
-    name: toStringOrNull(formVoucher.value.name),
-    description: toStringOrNull(formVoucher.value.description),
-    voucherCategory: formVoucher.value.voucherCategory,
-    discountType: formVoucher.value.discountType,
-    discountPercentage: toNumberOrNull(formVoucher.value.discountPercentage),
-    discountAmount: toNumberOrNull(formVoucher.value.discountAmount),
-    startTime: toTimestampOrNull(formVoucher.value.startTime),
-    endTime: toTimestampOrNull(formVoucher.value.endTime),
-    minOrderValue: toNumberOrNull(formVoucher.value.minOrderValue),
-    maxDiscountValue: toNumberOrNull(formVoucher.value.maxDiscountValue),
-    usageLimit: toNumberOrNull(formVoucher.value.usageLimit),
-    usedCount: toNumberOrNull(formVoucher.value.usedCount),
-    usageLimitPerUser: toNumberOrNull(formVoucher.value.usageLimitPerUser),
-    createdBy: formVoucher.value.createdBy,
-    updatedBy: "admin",
-  };
+const payload = {
+  id: formVoucher.value.id, // Bắt buộc cho update
+  code: formVoucher.value.code.trim(),
+  name: toStringOrNull(formVoucher.value.name),
+  description: toStringOrNull(formVoucher.value.description),
+  voucherCategory: formVoucher.value.voucherCategory, // Enum: "NORMAL", ...
+  discountType: formVoucher.value.discountType,       // Enum: "PERCENTAGE", "FIXED_AMOUNT"
+  discountPercentage: toNumberOrNull(formVoucher.value.discountPercentage),
+  discountAmount: toNumberOrNull(formVoucher.value.discountAmount),
+  startTime: formVoucher.value.startTime ? new Date(formVoucher.value.startTime).getTime() : null,
+  endTime: formVoucher.value.endTime ? new Date(formVoucher.value.endTime).getTime() : null,
+  minOrderValue: toNumberOrNull(formVoucher.value.minOrderValue),
+  maxDiscountValue: toNumberOrNull(formVoucher.value.maxDiscountValue),
+  usageLimit: toNumberOrNull(formVoucher.value.usageLimit),
+  usedCount: toNumberOrNull(formVoucher.value.usedCount),
+  usageLimitPerUser: toNumberOrNull(formVoucher.value.usageLimitPerUser),
+  status: formVoucher.value.status ?? 1,
+  createdBy: formVoucher.value.createdBy || "system", // Không được null
+  updatedBy: "admin"
+};
 
   if (isEdit.value) {
     payload.id = formVoucher.value.id;

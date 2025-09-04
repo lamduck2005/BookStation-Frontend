@@ -21,23 +21,6 @@
         <!-- Session info -->
         <!-- Đã xoá phần hiển thị Phiên thanh toán, Tổng cộng, Sản phẩm -->
 
-        <!-- Validation errors -->
-        <div v-if="validationErrors && validationErrors.length > 0" class="alert alert-warning">
-          <h6>⚠️ Có vấn đề cần kiểm tra:</h6>
-          <ul class="mb-0">
-            <li v-for="error in validationErrors" :key="error">{{ error }}</li>
-          </ul>
-          <button class="btn btn-outline-warning btn-sm mt-2" @click="handleManualValidation">
-            🔄 Kiểm tra lại
-          </button>
-          <button class="btn btn-outline-info btn-sm mt-2 ms-2" @click="validateWithInitialSnapshot">
-            🧪 Test với snapshot ban đầu
-          </button>
-          <button class="btn btn-outline-secondary btn-sm mt-2 ms-2" @click="debugSessionInfo">
-            📊 Debug Info
-          </button>
-        </div>
-
         <!-- Địa chỉ giao hàng -->
         <div class="card mb-3">
           <div class="card-header bg-white py-2">
@@ -49,7 +32,7 @@
               <div class="spinner-border spinner-border-sm text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
               </div>
-              <span class="ms-2 small">Đang tải địa chỉ...</span>
+              <span class="ms-2 small">Đang tải địa chỉ....</span>
             </div>
 
             <!-- Có địa chỉ -->
@@ -169,7 +152,7 @@
           </div>
           <div class="card-body py-3">
             <div class="row">
-              <div class="col-8">
+              <!-- <div class="col-8">
                 <input type="text" class="form-control form-control-sm" placeholder="Nhập mã khuyến mãi/Quà tặng"
                   v-model="couponCode" style="font-size: 14px" />
               </div>
@@ -177,11 +160,11 @@
                 <button class="btn btn-primary btn-sm w-100" @click="applyCoupon" style="font-size: 14px">
                   Áp dụng
                 </button>
-              </div>
+              </div> -->
             </div>
             <div class="mt-2">
-              <button class="btn btn-link p-0 text-primary text-decoration-none small" @click="openVoucherModal">
-                <i class="fas fa-ticket-alt me-1"></i>Chọn mã khuyến mãi 
+              <button class="btn btn-primary p-3" @click="openVoucherModal">
+                <i class="fas fa-ticket-alt me-1"></i>Chọn mã giảm giá
               </button>
             </div>
             <!-- Modal chọn voucher -->
@@ -306,9 +289,6 @@
                       <div>
                         <button type="button" class="btn btn-outline-secondary me-2" @click="clearVoucherSelection">
                           Xóa tất cả
-                        </button>
-                        <button type="button" class="btn btn-primary" @click="applySelectedVouchers">
-                          Áp dụng ({{ selectedVouchers.length }})
                         </button>
                       </div>
                     </div>
@@ -798,6 +778,12 @@ const appliedVouchers = ref([])
 const initialSessionSnapshot = ref(null)
 
 const handleShowPaymentConfirmation = async () => {
+  // Kiểm tra địa chỉ trước tiên
+  if (!selectedAddress.value) {
+    showToast('warning', 'Vui lòng chọn địa chỉ giao hàng trước khi thanh toán!')
+    return
+  }
+  
   // Kiểm tra giới hạn 100 triệu trước khi validate
   const totalAmount = session.value?.totalAmount || 0
   const limitAmount = 100000000 // 100 triệu
@@ -1257,12 +1243,65 @@ const validateSession = async () => {
   } catch (err) {
     console.error('Validation error:', err)
     const errorMessage = err.response?.data?.message || err.message
+    
+    // Hiển thị popup alert thay vì inline validation errors
+    let errorContent = ''
     if (errorMessage && errorMessage.includes('❌')) {
       const errors = errorMessage.replace('❌ Có lỗi khi kiểm tra đơn hàng: ', '').split('; ')
-      validationErrors.value = errors.filter(e => e.trim())
+      const filteredErrors = errors.filter(e => e.trim())
+      if (filteredErrors.length > 0) {
+        errorContent = `
+          <div class="text-start">
+            <div class="alert alert-danger border-0 mb-3">
+              <h6 class="alert-heading mb-2">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Có vấn đề cần kiểm tra
+              </h6>
+              <ul class="mb-0">
+                ${filteredErrors.map(error => `<li>${error}</li>`).join('')}
+              </ul>
+            </div>
+            <div class="text-center">
+              <p class="mb-0 text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                Vui lòng kiểm tra và sửa các vấn đề trên trước khi tiếp tục
+              </p>
+            </div>
+          </div>
+        `
+      }
     } else {
-      validationErrors.value = [errorMessage || 'Có lỗi khi kiểm tra đơn hàng']
+      errorContent = `
+        <div class="text-center">
+          <div class="alert alert-danger border-0 mb-3">
+            <h6 class="alert-heading mb-2">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              Lỗi kiểm tra đơn hàng
+            </h6>
+            <p class="mb-0">${errorMessage || 'Có lỗi khi kiểm tra đơn hàng'}</p>
+          </div>
+        </div>
+      `
     }
+    
+    if (errorContent) {
+      await Swal.fire({
+        title: '⚠️ Thông báo lỗi',
+        html: errorContent,
+        icon: 'warning',
+        iconColor: '#f39c12',
+        confirmButtonText: '🔄 Tôi đã hiểu',
+        confirmButtonColor: '#007bff',
+        allowOutsideClick: false,
+        customClass: {
+          popup: 'swal-wide',
+          confirmButton: 'btn btn-primary px-4 py-2 fw-bold'
+        }
+      })
+    }
+    
+    // Vẫn set validation errors để các function khác có thể check
+    validationErrors.value = [errorMessage || 'Có lỗi khi kiểm tra đơn hàng']
   }
 }
 
@@ -1300,6 +1339,10 @@ const confirmAndPay = async () => {
 const processPayment = async () => {
   if (!agreed.value) {
     showToast('warning', 'Vui lòng đồng ý với điều khoản và điều kiện!')
+    return
+  }
+  if (!selectedAddress.value) {
+    showToast('warning', 'Vui lòng chọn địa chỉ giao hàng trước khi thanh toán!')
     return
   }
   if (!session.value || !session.value.isActive) {

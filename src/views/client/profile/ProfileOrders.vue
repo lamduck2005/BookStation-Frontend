@@ -58,7 +58,7 @@
                 <img :src="item.bookImageUrl || '/src/assets/img/duck.png'" :alt="item.bookName" />
               </div>
               <div class="item-info">
-                <h6 class="item-name">{{ item.bookName }}</h6>
+                <h6 class="item-name fw-bold fs-5 clickable" @click="goToProduct(item.bookId)">{{ item.bookName }}</h6>
                 <p class="item-quantity">Số lượng: {{ item.quantity }}</p>
                 <p class="item-price">{{ formatCurrency(item.totalPrice) }}</p>
                 
@@ -205,6 +205,7 @@
                       </span>
                     </p>
                     <p><strong>Loại đơn hàng:</strong> {{ formatOrderType(selectedOrderForDetail.orderType) }}</p>
+                    <p><strong>Phương thức thanh toán:</strong> {{ selectedOrderForDetail.paymentMethod === 'COD' ? 'Thanh toán khi nhận hàng (COD)' : 'Thanh toán VNPay' }}</p>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -213,6 +214,8 @@
                     <p><strong>Người nhận:</strong> {{ selectedOrderForDetail.recipientName }}</p>
                     <p><strong>Số điện thoại:</strong> {{ selectedOrderForDetail.phoneNumber }}</p>
                     <p><strong>Địa chỉ:</strong> {{ selectedOrderForDetail.addressDetail }}</p>
+                    <p v-if="selectedOrderForDetail.notes"><strong>Ghi chú:</strong> {{ selectedOrderForDetail.notes }}</p>
+                    <p v-if="selectedOrderForDetail.cancelReason"><strong>Lý do hủy:</strong> {{ selectedOrderForDetail.cancelReason }}</p>
                   </div>
                 </div>
               </div>
@@ -239,7 +242,7 @@
                                  :alt="item.bookName" 
                                  class="refund-item-image me-2" />
                             <div>
-                              <div class="fw-bold">{{ item.bookName }}</div>
+                              <div class="fw-bold clickable" @click="goToProduct(item.bookId)">{{ item.bookName }}</div>
                               <small class="text-muted">{{ item.bookCode }}</small>
                               <div v-if="item.isFlashSale" class="flash-sale-badge mt-1">
                                 <i class="bi bi-lightning-fill"></i>
@@ -315,6 +318,17 @@
                     <span><strong>Tổng thanh toán:</strong></span>
                     <span><strong>{{ formatCurrency(selectedOrderForDetail.totalAmount) }}</strong></span>
                   </div>
+                </div>
+              </div>
+
+              <!-- Additional Information -->
+              <div v-if="selectedOrderForDetail.updatedAt || selectedOrderForDetail.refundDate" class="mb-4">
+                <h6>Thông tin bổ sung</h6>
+                <div class="info-section">
+                  <p v-if="selectedOrderForDetail.updatedAt"><strong>Cập nhật lần cuối:</strong> {{ formatDate(selectedOrderForDetail.updatedAt) }}</p>
+                  <p v-if="selectedOrderForDetail.refundDate"><strong>Ngày hoàn trả:</strong> {{ formatDate(selectedOrderForDetail.refundDate) }}</p>
+
+                  <p v-if="selectedOrderForDetail.refundReasonDisplay"><strong>Lý do hoàn trả:</strong> {{ selectedOrderForDetail.refundReasonDisplay }}</p>
                 </div>
               </div>
             </div>
@@ -654,6 +668,8 @@ export default {
       return types[type] || type
     }
 
+
+
     const canCancelOrder = (status) => {
       return orderService.canCancelOrder(status)
     }
@@ -751,6 +767,10 @@ export default {
       } finally {
         buyingAgainOrderId.value = null
       }
+    }
+
+    const goToProduct = (bookId) => {
+      router.push(`/product/${bookId}`)
     }
 
     const viewOrderDetail = async (order) => {
@@ -1196,6 +1216,7 @@ export default {
       canRefundOrderWithTime,
       cancelOrderConfirm,
       buyAgain,
+      goToProduct,
       viewOrderDetail,
       openRefundModal,
       updateReasonDisplay,
@@ -1360,6 +1381,18 @@ export default {
   font-weight: 500;
   margin-bottom: 4px;
   color: #333;
+}
+
+.clickable {
+  color: #cf0000;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  text-decoration-line: underline;
+}
+
+.clickable:hover {
+  color: #007bff;
+  text-decoration: underline;
 }
 
 .item-quantity,

@@ -36,8 +36,7 @@
     </div>
   </div>
 
-  <!-- Location Stats -->
-  <LocationStats />
+  
     <!-- 3. Top Books & Top Users Tables -->
     <div class="top-tables-row">
       <TopBooksTable />

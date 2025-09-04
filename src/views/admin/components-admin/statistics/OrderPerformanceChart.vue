@@ -183,7 +183,20 @@
                     <i class="bi bi-currency-dollar"></i>
                   </div>
                   <h3 class="card-title mb-1">{{ Math.round(summaryStats.netRevenueSum).toLocaleString('vi-VN') }}</h3>
-                  <p class="card-subtitle mb-0">Tổng doanh thu thuần </p>
+                  <p class="card-subtitle mb-0" style="position:relative;display:inline-block;">
+                    Tổng doanh thu thuần
+                    <span style="cursor:pointer;display:inline-block;" tabindex="0"
+                      @click="showNetRevenueNote = !showNetRevenueNote"
+                      @blur="showNetRevenueNote = false"
+                      @keydown.enter="showNetRevenueNote = !showNetRevenueNote"
+                    >
+                      <i class="bi bi-question-circle-fill text-light ms-1" style="font-size:1rem;"></i>
+                    </span>
+                    <div v-if="showNetRevenueNote" class="net-revenue-tooltip-note" @mousedown.prevent style="position:absolute;left:50%;transform:translateX(-50%);z-index:1000;background:white;color:#333;padding:12px 16px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);font-size:13px;min-width:220px;max-width:320px;top:110%;">
+                      <b>Doanh thu thuần</b> là tổng doanh thu sau khi đã trừ đi các khoản giảm trừ như hoàn trả, chiết khấu, giảm giá,...<br>
+                      <span style="color:#888;font-size:12px;">(doanh thu thuần = Tổng doanh thu - hoàn trả - giảm giá -...)</span>
+                    </div>
+                  </p>
                 </div>
               </div>
             </div>
@@ -244,6 +257,8 @@
 
 <script setup>
 import { ref, onMounted, nextTick, computed, watch, onUnmounted } from 'vue';
+// State for net revenue note tooltip
+const showNetRevenueNote = ref(false);
 import { getOrderStatsSummary, formatCurrency } from '@/services/admin/orderStatistics';
 import OrderStatisticsPopup from '@/components/common/OrderStatisticsPopup.vue';
 import ApexCharts from 'apexcharts';

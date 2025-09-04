@@ -123,7 +123,6 @@ import { showToast } from "@/utils/swalHelper";
 const activeTab = ref("available");
 const voucherTabs = [
   { key: "available", label: "Voucher của tôi" },
-  { key: "partner", label: "Voucher đối tác" },
 ];
 const voucherChannel = new BroadcastChannel("voucher-status");
 

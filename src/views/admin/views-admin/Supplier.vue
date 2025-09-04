@@ -611,6 +611,20 @@ const handleSubmit = async () => {
     return;
   }
 
+  // Xác nhận trước khi thực hiện
+  const actionText = isEditMode.value ? 'cập nhật' : 'thêm mới';
+  const result = await showQuickConfirm(
+    `Xác nhận ${actionText} nhà cung cấp`,
+    `Bạn có chắc chắn muốn ${actionText} nhà cung cấp "${formData.value.supplierName}"?`,
+    'info',
+    isEditMode.value ? 'Cập nhật' : 'Thêm mới',
+    'Hủy'
+  );
+  
+  if (!result.isConfirmed) {
+    return;
+  }
+
   try {
     const submitData = {
       ...formData.value,

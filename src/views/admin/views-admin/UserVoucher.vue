@@ -335,7 +335,7 @@ async function loadUsers() {
   } catch (error) {
     users.value = [];
     totalElements.value = 0;
-    showToast("error", "Không thể tải danh sách người dùng");
+    // showToast("error", "Không thể tải danh sách người dùng");
   } finally {
     loading.value = false;
   }
