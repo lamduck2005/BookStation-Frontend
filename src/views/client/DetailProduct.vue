@@ -142,7 +142,14 @@
             <span class="quantity-label">Số lượng:</span>
             <div class="quantity-controls">
               <button class="quantity-btn" @click="decreaseQuantity">−</button>
-              <input type="number" v-model="quantity" min="1" class="quantity-input" />
+              <input 
+                type="number" 
+                v-model="quantity" 
+                min="1" 
+                step="1"
+                @input="handleQuantityInput"
+                class="quantity-input" 
+              />
               <button class="quantity-btn" @click="increaseQuantity">+</button>
             </div>
           </div>
@@ -522,6 +529,24 @@ export default {
       if (this.quantity > 1) {
         this.quantity--
       }
+    },
+    
+    handleQuantityInput(event) {
+      // Chỉ cho phép số nguyên dương
+      let value = parseInt(event.target.value)
+      
+      // Nếu không phải số hoặc < 1, set về 1
+      if (isNaN(value) || value < 1) {
+        value = 1
+      }
+      
+      // Nếu vượt quá stock, set về stock quantity
+      if (this.book && value > this.book.stockQuantity) {
+        value = this.book.stockQuantity
+      }
+      
+      this.quantity = value
+      event.target.value = value // Cập nhật giá trị hiển thị
     }
   }
 }

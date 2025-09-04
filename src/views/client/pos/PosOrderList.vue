@@ -50,7 +50,7 @@
               </span>
               <div class="price-display">
                 <span class="current-price">{{ formatCurrency(item.unitPrice) }}</span>
-                <span v-if="item.isFlashSale" class="original-price">
+                <span v-if="item.isFlashSale && (item.originalPrice || item.normalPrice)" class="original-price">
                   {{ formatCurrency(item.originalPrice || item.normalPrice) }}
                 </span>
               </div>

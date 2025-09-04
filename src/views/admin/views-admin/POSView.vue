@@ -69,9 +69,8 @@ const loadingMessage = ref("");
 
 // Computed
 const subtotal = computed(() => {
-  if (orderCalculation.value?.subtotal) {
-    return orderCalculation.value.subtotal;
-  }
+  // Luôn sử dụng giá từ orderItems để đảm bảo nhất quán với PosOrderList
+  // Bỏ qua orderCalculation.subtotal vì nó có thể trả về giá gốc thay vì giá flash sale
   return orderItems.value.reduce((sum, item) => {
     return sum + item.quantity * item.unitPrice;
   }, 0);
@@ -87,9 +86,8 @@ const totalVoucherDiscount = computed(() => {
 });
 
 const finalTotal = computed(() => {
-  if (orderCalculation.value?.totalAmount) {
-    return orderCalculation.value.totalAmount;
-  }
+  // Luôn tính toán từ subtotal và voucher discount để đảm bảo nhất quán
+  // Bỏ qua orderCalculation.totalAmount vì nó có thể dựa trên giá gốc
   return Math.max(0, subtotal.value - totalVoucherDiscount.value);
 });
 
@@ -114,6 +112,7 @@ function handleAddProduct(book) {
       bookCode: book.bookCode,
       unitPrice,
       normalPrice: Number(book.normalPrice) || 0,
+      originalPrice: Number(book.normalPrice) || 0, // Thêm originalPrice để tính savings
       flashSalePrice:
         book.flashSalePrice != null ? Number(book.flashSalePrice) : null,
       isFlashSale: !!book.isFlashSale,
@@ -480,8 +479,10 @@ const buildOrderData = () => {
   const orderDetails = orderItems.value.map((item) => ({
     bookId: item.bookId,
     quantity: item.quantity,
-    unitPrice: item.unitPrice,
+    unitPrice: item.unitPrice, // Sử dụng giá flash sale đã được set
     flashSaleItemId: item.flashSaleItemId,
+    isFlashSale: item.isFlashSale, // Thêm thông tin flash sale
+    normalPrice: item.normalPrice, // Thêm giá gốc để backend có thể xử lý
   }));
 
   const voucherIds = appliedVouchers.value.map((v) => v.id);
@@ -502,8 +503,8 @@ const buildOrderData = () => {
     staffId: getUserId(),
     orderDetails: orderDetails,
     voucherIds: voucherIds,
-    subtotal: subtotal.value,
-    totalAmount: finalTotal.value,
+    subtotal: subtotal.value, // Sử dụng giá flash sale
+    totalAmount: finalTotal.value, // Sử dụng giá flash sale
   };
 };
 
