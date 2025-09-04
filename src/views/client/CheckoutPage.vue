@@ -32,7 +32,7 @@
               <div class="spinner-border spinner-border-sm text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
               </div>
-              <span class="ms-2 small">Đang tải địa chỉ...</span>
+              <span class="ms-2 small">Đang tải địa chỉ....</span>
             </div>
 
             <!-- Có địa chỉ -->
