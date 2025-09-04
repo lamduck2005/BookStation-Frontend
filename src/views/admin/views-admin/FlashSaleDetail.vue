@@ -831,7 +831,10 @@ const validateForm = () => {
     validate.flashSaleItem.bookId(f.bookId),
     validate.flashSaleItem.discountPercentage(f.discountPercentage),
     // validate.flashSaleItem.discountPrice(f.discountPrice),
-    validate.flashSaleItem.stockQuantity(f.stockQuantity),
+    // Sửa validation stockQuantity: cho phép >= 0 khi edit, > 0 khi thêm mới
+    isEditMode.value 
+      ? (f.stockQuantity >= 0 ? null : "Số lượng sản phẩm khuyến mãi phải >= 0")
+      : validate.flashSaleItem.stockQuantity(f.stockQuantity),
     validate.flashSaleItem.maxPurchasePerUser(f.maxPurchasePerUser),
     // BỎ validate.flashSaleItem.status(f.status)
   ];

@@ -2974,6 +2974,7 @@ const openAddAddressModal = async () => {
   
   // Use Bootstrap Modal
   const modalElement = document.getElementById('addAddressModal');
+  const modal = Modal.getOrCreateInstance(modalElement);
   modal.show();
 };
 
