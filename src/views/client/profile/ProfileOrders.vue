@@ -220,6 +220,16 @@
                 </div>
               </div>
 
+              <!-- Order Progress Tracker -->
+              <div class="mb-4">
+                <h6>Trạng thái đơn hàng</h6>
+                <OrderProgressTracker 
+                  :currentStatus="selectedOrderForDetail.orderStatus"
+                  :orderDate="selectedOrderForDetail.updatedAt || selectedOrderForDetail.createdAt"
+                  :orderType="selectedOrderForDetail.orderType"
+                />
+              </div>
+
               <!-- Order Items -->
               <div class="mb-4">
                 <h6>Sản phẩm đã đặt</h6>
@@ -517,9 +527,13 @@ import { showQuickConfirm } from '@/utils/swalHelper.js'
 import Swal from 'sweetalert2'
 import { Modal } from 'bootstrap'
 import { getUserId } from '@/utils/utils.js'
+import OrderProgressTracker from '@/components/common/OrderProgressTracker.vue'
 
 export default {
   name: 'ProfileOrders',
+  components: {
+    OrderProgressTracker
+  },
   setup() {
     const router = useRouter()
     

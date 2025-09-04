@@ -89,11 +89,7 @@
               </div>
             </div>
             
-            <div class="rating-section">
-              
-              <!-- <span class="review-count">({{ book.reviewCount || 0 }} đánh giá)</span> -->
-              <span class="sold-count">Đã bán {{ book.soldCount || 0 }}</span>
-            </div>
+           
           </div>
           
           <!-- Flash Sale Section -->

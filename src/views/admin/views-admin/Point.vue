@@ -72,7 +72,7 @@
                 </div>
                 <div class="text-end">
                   <div class="stat-value">{{ formatNumber(statsData?.pointsEarnedThisMonth) }}</div>
-                  <div class="stat-label">Điểm kiếm tháng này</div>
+                  <div class="stat-label">Tổng  điểm kiếm tháng này của người dùng</div>
                 </div>
               </div>
               <div class="stat-footer">
@@ -94,7 +94,7 @@
                 </div>
                 <div class="text-end">
                   <div class="stat-value">{{ formatNumber(statsData?.pointsSpentThisMonth) }}</div>
-                  <div class="stat-label">Điểm tiêu tháng này</div>
+                  <div class="stat-label">Tổng điểm tiêu tháng này của người dùng</div>
                 </div>
               </div>
               <div class="stat-footer">
@@ -106,27 +106,7 @@
           </div>
         </div>
 
-        <!-- Points Balance Card -->
-        <div class="col-xl-2 col-lg-4 col-md-6 col-sm-6">
-          <div class="card stats-card balance-points-card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <div class="icon-wrapper balance-points-icon">
-                  <i class="bi bi-wallet2"></i>
-                </div>
-                <div class="text-end">
-                  <div class="stat-value">{{ formatNumber(getPointsBalance()) }}</div>
-                  <div class="stat-label">Cân bằng tháng này</div>
-                </div>
-              </div>
-              <div class="stat-footer">
-                <small :class="getBalanceClass()">
-                  {{ getBalanceText() }}
-                </small>
-              </div>
-            </div>
-          </div>
-        </div>
+         
       </div>
     </div>
 
