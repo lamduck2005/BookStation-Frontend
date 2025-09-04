@@ -207,6 +207,21 @@
         </div>
 
         <div class="popup-content">
+          <!-- Limit warnings -->
+          <div v-if="isTotalOverLimit || isPaidOverLimit" class="limit-warning">
+            <div class="warning-title">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              Cảnh báo
+            </div>
+            <ul class="warning-list">
+              <li v-if="isTotalOverLimit">
+                Tổng thanh toán vượt mức tối đa {{ formatCurrency(MAX_AMOUNT_LIMIT) }}
+              </li>
+              <li v-if="isPaidOverLimit">
+                Số tiền khách đưa vượt mức tối đa {{ formatCurrency(MAX_AMOUNT_LIMIT) }}
+              </li>
+            </ul>
+          </div>
           <div class="confirmation-message">
             <p>
               Vui lòng kiểm tra lại thông tin đơn hàng trước khi thanh toán:
@@ -341,7 +356,7 @@
             <i class="bi bi-x-circle"></i>
             Hủy
           </button>
-          <button class="proceed-btn" @click="proceedPayment">
+          <button class="proceed-btn" @click="proceedPayment" :disabled="isLimitExceeded">
             <i class="bi bi-check-circle"></i>
             Xác nhận thanh toán
           </button>
@@ -401,6 +416,13 @@ let voucherSearchTimeout = null;
 // QR data
 const qrImage = ref(null);
 const isGeneratingQr = ref(false);
+// Limits
+const MAX_AMOUNT_LIMIT = 100000000; // 100 triệu
+const isTotalOverLimit = computed(() => Number(props.totalAmount) > MAX_AMOUNT_LIMIT);
+const isPaidOverLimit = computed(() =>
+  paymentMethod.value === "CASH" && Number(customerPaid.value) > MAX_AMOUNT_LIMIT
+);
+const isLimitExceeded = computed(() => isTotalOverLimit.value || isPaidOverLimit.value);
 
 // Computed
 const totalVoucherDiscount = computed(() => {
@@ -422,6 +444,9 @@ const canConfirmPayment = computed(() => {
           hasUserId: !!props.selectedCustomer.userId,
         }
       : null,
+    paymentMethod: paymentMethod.value,
+    paid: Number(customerPaid.value) || 0,
+    total: Number(props.totalAmount) || 0,
   });
 
   // 1. Kiểm tra sản phẩm
@@ -439,26 +464,14 @@ const canConfirmPayment = computed(() => {
     return false;
   }
 
-  const customer = props.selectedCustomer;
-
-  // 4. Kiểm tra loại khách hàng
-  if (customer.isAnonymous === true) {
-    return true;
+  // 4. Điều kiện theo phương thức thanh toán
+  if (paymentMethod.value === "CASH") {
+    const paid = Number(customerPaid.value) || 0;
+    const total = Number(props.totalAmount) || 0;
+    return paid >= total;
   }
 
-  if (
-    customer.isGuest === true &&
-    customer.customerName &&
-    customer.customerPhone
-  ) {
-    return true;
-  }
-
-  if (customer.userId && !customer.isGuest && !customer.isAnonymous) {
-    return true;
-  }
-
-  return false;
+  return true;
 });
 
 // Methods
@@ -480,7 +493,7 @@ const calculateSubtotal = () => {
 const calculateChange = () => {
   const paid = Number(customerPaid.value) || 0;
   const total = Number(props.totalAmount) || 0;
-  changeAmount.value = Math.max(0, paid - total);
+  changeAmount.value = paid - total;
 
   console.log("🧮 Change calculation:", {
     paid,
@@ -676,20 +689,12 @@ const removeVoucher = (voucherId) => {
 
 // Payment methods
 const showConfirmationPopup = () => {
-  // Đảm bảo tiền khách đưa ít nhất bằng tổng tiền
-  if (
-    paymentMethod.value === "CASH" &&
-    customerPaid.value < props.totalAmount
-  ) {
-    customerPaid.value = props.totalAmount;
-    calculateChange();
-  }
-
   if (!canConfirmPayment.value) {
     console.log("❌ Cannot show popup - validation failed");
     return;
   }
 
+  // Nếu vượt ngưỡng, vẫn mở popup để hiển thị cảnh báo nhưng vô hiệu hóa nút xác nhận
   showConfirmPopup.value = true;
 };
 
@@ -740,6 +745,13 @@ const proceedPayment = () => {
       paymentMethod.value === "CASH" ? Number(changeAmount.value) : 0,
     wantInvoice: wantInvoice.value, // Add invoice info to payment data
   };
+
+  if (isLimitExceeded.value) {
+    alert(
+      `Không thể thanh toán vì vượt mức tối đa ${formatCurrency(MAX_AMOUNT_LIMIT)}`
+    );
+    return;
+  }
 
   console.log("Payment data being emitted:", paymentData);
 
@@ -1225,6 +1237,31 @@ onUnmounted(() => {
   padding: 24px;
 }
 
+/* Limit warning styles */
+.limit-warning {
+  background: #fef2f2;
+  border: 2px solid #fecaca;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.warning-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #b91c1c;
+  margin-bottom: 8px;
+}
+
+.warning-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #dc2626;
+  font-size: 14px;
+}
+
 .confirmation-message {
   text-align: center;
   margin-bottom: 20px;
@@ -1455,6 +1492,15 @@ onUnmounted(() => {
 .proceed-btn:hover {
   background: linear-gradient(135deg, #009688 0%, #00796b 100%);
   transform: translateY(-1px);
+}
+
+.proceed-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(25%);
+  transform: none;
+  box-shadow: none;
+  pointer-events: none;
 }
 
 .qr-code-section {

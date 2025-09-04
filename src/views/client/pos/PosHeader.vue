@@ -25,8 +25,8 @@
           @mousedown.prevent="addBookToOrder(book)"
         >
           <img
-            v-if="book.coverImageUrl"
-            :src="book.coverImageUrl"
+            v-if="book.coverImageUrl || book.imageUrl"
+            :src="book.coverImageUrl || book.imageUrl"
             class="product-thumb"
             alt="book cover"
           />

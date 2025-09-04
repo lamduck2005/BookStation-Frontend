@@ -186,7 +186,7 @@ const handleGenerateSummary = async (skipCache = false) => {
         } finally {
             isLoading.value = false;
         }
-    }, 5000);
+    }, 3000);
 };
 
 const handleRegenerateSummary = () => {

@@ -110,6 +110,7 @@ function handleAddProduct(book) {
     orderItems.value.push({
       bookId: id,
       title: book.title,
+      name: book.name || book.title,
       bookCode: book.bookCode,
       unitPrice,
       normalPrice: Number(book.normalPrice) || 0,
@@ -117,7 +118,7 @@ function handleAddProduct(book) {
         book.flashSalePrice != null ? Number(book.flashSalePrice) : null,
       isFlashSale: !!book.isFlashSale,
       stockQuantity: book.stockQuantity,
-      coverImageUrl: book.coverImageUrl,
+      coverImageUrl: book.imageUrl || book.coverImageUrl,
       quantity: 1,
     });
   }

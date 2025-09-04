@@ -502,7 +502,7 @@ export default {
         
         if (response.status === 200) {
           // Hiển thị thông báo thành công
-          showToast('success', response.data.message || 'Thêm sản phẩm vào giỏ hàng thành công!', 'top-end', true, 1000)
+          showToast('success', response.data.message || 'Thêm sản phẩm vào giỏ hàng thành công!', 'top-end', true, 3000)
           
           // Nếu có flash sale, hiển thị số tiền tiết kiệm
               if (response.data.data?.savedAmount > 0) {

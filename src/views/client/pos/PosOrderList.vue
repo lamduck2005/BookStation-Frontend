@@ -42,7 +42,7 @@
           </div>
           
           <div class="item-details">
-            <div class="item-name">{{ item.title || item.name }}</div>
+            <div class="item-name">{{ item.name || "Tên sách không xác định"   }}</div>
             <div class="item-code">{{ item.bookCode }}</div>
             <div class="item-price-info">
               <span v-if="item.isFlashSale" class="flash-sale-badge">

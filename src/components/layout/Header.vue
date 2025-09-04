@@ -536,6 +536,10 @@ const goToProduct = (productId) => {
 
 const handleGetCartItemsCount = async () => {
   const response = await getCartItemsCount(userInfo.value.id);
+  if(!response.data.data) {
+    cartItemsCount.value = 0;
+    return;
+  }
   cartItemsCount.value = response.data.data;
 };
 
