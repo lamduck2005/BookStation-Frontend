@@ -118,7 +118,7 @@
                 <div class="card-header">
                   <h2 class="mb-0">
                     <i class="bi bi-gift me-3 text-primary"></i>
-                    Chính sách mã giảm giá (voucher)
+                    Chính sách khuyến mại cho khách hàng
                   </h2>
                 </div>
                 <div class="card-body">
@@ -149,6 +149,22 @@
                           </ul>
                         </div>
                       </div>
+                    </div>
+
+                    <h4 class="text-primary mb-3 mt-4">
+                      <i class="bi bi-gear me-2"></i>Hệ thống bậc hạng và điểm thưởng
+                    </h4>
+                    <div class="alert alert-info">
+                      <ul class="policy-list mb-0">
+                        <li>Hệ thống bậc hạng bao gồm 3 hạng: <strong> Bạc, Vàng, Kim cương</strong></li>
+                        <li>Điểm thưởng được tính dựa trên tổng số tiền đã chi tiêu</li>
+                        <li>Hệ số quy đổi điểm là <strong>1000đ = 1 điểm</strong></li>
+                        <li>Mức chi tiêu cần để lên hạng <strong class="text-success">Bạc</strong> là <strong>1.000.000đ</strong></li>
+                        <li>Mức chi tiêu cần để lên hạng <strong class="text-warning">Vàng</strong> là <strong>5.000.000đ</strong></li>
+                        <li>Mức chi tiêu cần để lên hạng <strong class="text-primary">Kim cương</strong> là <strong>10.000.000đ</strong></li>
+                        <li>Điểm thưởng có thể dùng để tham gia các hoạt động minigame</li>
+                        <li>Bậc hạng sẽ là căn cứ cho việc áp dụng các chính sách khuyến mại (mã giảm giá, quà tặng đặc biệt, ...)</li>
+                      </ul>
                     </div>
 
                     <h4 class="text-primary mb-3 mt-4">
