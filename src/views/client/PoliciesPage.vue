@@ -77,7 +77,7 @@
                       <div class="col-md-6">
                         <h5 class="text-success"><i class="bi bi-check-circle me-2"></i> Được chấp nhận</h5>
                         <ul class="policy-list">
-                          <li>Sách còn nguyên seal, chưa bóc bao bì</li>
+                          <!-- <li>Sách còn nguyên seal, chưa bóc bao bì</li> -->
                           <li>Không có vết bẩn, rách hoặc cong góc</li>
                           <li>Còn đầy đủ hóa đơn và phụ kiện kèm theo</li>
                           <li>Nhãn chống hàng giả vẫn còn nguyên</li>
@@ -263,7 +263,7 @@
                         <li><strong>Thông tin cá nhân:</strong> Họ tên, email, số điện thoại, địa chỉ</li>
                         <li><strong>Thông tin giao dịch:</strong> Lịch sử mua hàng, phương thức thanh toán</li>
                         <!-- <li><strong>Thông tin kỹ thuật:</strong> IP, trình duyệt, thiết bị truy cập</li> -->
-                        <li><strong>Thông tin hành vi:</strong> Sản phẩm yêu thích, thời gian truy cập</li>
+                        <!-- <li><strong>Thông tin hành vi:</strong> Sản phẩm yêu thích, thời gian truy cập</li> -->
                         <li class="mt-2 text-danger">
                           <i class="bi bi-envelope-x-fill me-2"></i>
                           <strong>Lưu ý:</strong> Email đăng ký tài khoản <u>không thể thay đổi</u> sau khi tạo tài khoản.

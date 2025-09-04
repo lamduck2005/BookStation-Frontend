@@ -58,30 +58,7 @@
         </div>
         
         <!-- BookStation Policies -->
-        <div class="bookstation-policies">
-          <h5 class="policy-title">Chính sách ưu đãi của BookStation</h5>
-          
-          <div class="policy-item">
-            <i class="fa fa-truck text-danger"></i>
-            <div class="policy-content">
-              <strong>Thời gian giao hàng:</strong> Giao nhanh và uy tín
-            </div>
-          </div>
-          
-          <div class="policy-item">
-            <i class="fa fa-undo text-danger"></i>
-            <div class="policy-content">
-              <strong>Chính sách đổi trả:</strong> Đổi trả miễn phí toàn quốc
-            </div>
-          </div>
-          
-          <div class="policy-item">
-            <i class="fa fa-users text-danger"></i>
-            <div class="policy-content">
-              <strong>Chính sách khách sỉ:</strong> Ưu đãi khi mua số lượng lớn
-            </div>
-          </div>
-        </div>
+        
       </div>
       
       <!-- Right Panel - Scrollable -->
@@ -92,22 +69,19 @@
             <h1 class="product-title">{{ book.bookName }}</h1>
             
             <div class="product-meta">
-              <div class="meta-row">
+              <div class="meta-row" v-if="book.supplierName">
                 <span class="meta-label">Nhà cung cấp:</span>
-                <span class="meta-value text-primary">{{ book.supplierName || 'Chưa cập nhật' }}</span>
+                <span class="meta-value text-primary">{{ book.supplierName }}</span>
               </div>
-              <div class="meta-row">
+              <div class="meta-row" v-if="book.authors && book.authors.length > 0">
                 <span class="meta-label">Tác giả:</span>
                 <span class="meta-value">
-                  <span v-if="book.authors && book.authors.length > 0">
-                    {{ book.authors.map(author => author.authorName).join(', ') }}
-                  </span>
-                  <span v-else>Chưa cập nhật</span>
+                  {{ book.authors.map(author => author.authorName).join(', ') }}
                 </span>
               </div>
-              <div class="meta-row">
+              <div class="meta-row" v-if="book.publisherName">
                 <span class="meta-label">Nhà xuất bản:</span>
-                <span class="meta-value">{{ book.publisherName || 'Chưa cập nhật' }}</span>
+                <span class="meta-value">{{ book.publisherName }}</span>
               </div>
               <div class="meta-row">
                 <span class="meta-label">Hình thức bìa:</span>
@@ -116,13 +90,9 @@
             </div>
             
             <div class="rating-section">
-              <div class="star-rating">
-                <template v-for="i in 5" :key="i">
-                  <i class="fa fa-star" :class="i <= (book.averageRating || 0) ? 'text-warning' : 'text-muted'"></i>
-                </template>
-              </div>
-              <span class="review-count">({{ book.reviewCount || 0 }} đánh giá)</span>
-              <span class="sold-count">| Đã bán {{ book.soldCount || 0 }}</span>
+              
+              <!-- <span class="review-count">({{ book.reviewCount || 0 }} đánh giá)</span> -->
+              <span class="sold-count">Đã bán {{ book.soldCount || 0 }}</span>
             </div>
           </div>
           
@@ -181,44 +151,45 @@
           <div class="details-section">
             <h4 class="section-title">Thông tin chi tiết</h4>
             <div class="details-table">
-              <div class="detail-row">
-                <span class="detail-label">Mã hàng</span>
-                <span class="detail-value">{{ book.isbn || 'Chưa cập nhật' }}</span>
+              <div class="detail-row" v-if="book.bookCode">
+                <span class="detail-label">Mã sách</span>
+                <span class="detail-value">{{ book.bookCode }}</span>
               </div>
-              <div class="detail-row">
+              <div class="detail-row" v-if="book.isbn && book.isbn.trim() !== ''">
+                <span class="detail-label">ISBN</span>
+                <span class="detail-value">{{ book.isbn }}</span>
+              </div>
+              <div class="detail-row" v-if="book.supplierName">
                 <span class="detail-label">Tên Nhà Cung Cấp</span>
-                <span class="detail-value text-primary">{{ book.supplierName || 'Chưa cập nhật' }}</span>
+                <span class="detail-value text-primary">{{ book.supplierName }}</span>
               </div>
-              <div class="detail-row">
+              <div class="detail-row" v-if="book.authors && book.authors.length > 0">
                 <span class="detail-label">Tác giả</span>
                 <span class="detail-value">
-                  <span v-if="book.authors && book.authors.length > 0">
-                    {{ book.authors.map(author => author.authorName).join(', ') }}
-                  </span>
-                  <span v-else>Chưa cập nhật</span>
+                  {{ book.authors.map(author => author.authorName).join(', ') }}
                 </span>
               </div>
-              <div class="detail-row">
+              <div class="detail-row" v-if="book.translator && book.translator.trim() !== ''">
                 <span class="detail-label">Người Dịch</span>
-                <span class="detail-value">{{ book.translator || 'Chưa cập nhật' }}</span>
+                <span class="detail-value">{{ book.translator }}</span>
               </div>
-              <div class="detail-row">
+              <div class="detail-row" v-if="book.publisherName">
                 <span class="detail-label">NXB</span>
-                <span class="detail-value">{{ book.publisherName || 'Chưa cập nhật' }}</span>
+                <span class="detail-value">{{ book.publisherName }}</span>
               </div>
-              <div class="detail-row">
+              <div class="detail-row" v-if="book.publishedYear">
                 <span class="detail-label">Năm XB</span>
-                <span class="detail-value">{{ book.publishedYear || 'Chưa cập nhật' }}</span>
+                <span class="detail-value">{{ book.publishedYear }}</span>
               </div>
-              <div class="detail-row">
+              <div class="detail-row" v-if="book.language && book.language.trim() !== ''">
                 <span class="detail-label">Ngôn Ngữ</span>
-                <span class="detail-value">{{ book.language || 'Tiếng Việt' }}</span>
+                <span class="detail-value">{{ book.language }}</span>
               </div>
               <div class="detail-row" v-if="book.weight">
                 <span class="detail-label">Trọng lượng (gr)</span>
                 <span class="detail-value">{{ book.weight }}</span>
               </div>
-              <div class="detail-row" v-if="book.dimensions">
+              <div class="detail-row" v-if="book.dimensions && book.dimensions.trim() !== ''">
                 <span class="detail-label">Kích Thước Bao Bì</span>
                 <span class="detail-value">{{ book.dimensions }}</span>
               </div>
@@ -226,14 +197,10 @@
                 <span class="detail-label">Số trang</span>
                 <span class="detail-value">{{ book.pageCount }}</span>
               </div>
-              <div class="detail-row">
+              <div class="detail-row" v-if="book.format && book.format.trim() !== ''">
                 <span class="detail-label">Hình thức</span>
-                <span class="detail-value">{{ book.format || 'Bìa Mềm' }}</span>
+                <span class="detail-value">{{ book.format }}</span>
               </div>
-              <!-- <div class="detail-row">
-                <span class="detail-label">Sản phẩm bán chạy nhất</span>
-                <span class="detail-value text-primary">Top 100 sản phẩm Kỹ năng sống bán chạy của tháng</span>
-              </div> -->
             </div>
           </div>
           
