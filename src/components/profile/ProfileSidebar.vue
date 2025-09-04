@@ -186,20 +186,15 @@ const rankClass = computed(() => {
 const nextRankMessage = computed(() => {
   const point = user.value?.total_point ?? 0;
   const currentRank = userRank.value.rank.rankName;
-
-  if (currentRank === "KIM CƯƠNG") return ""; // Đã max rank
-
-  if (point < 1000) {
-    return `Cần thêm ${1000 - point} point để lên hạng BẠC`;
-  } else if (point < 30000) {
-    return `Cần thêm ${30000 - point} point để lên hạng VÀNG`;
-  } else if (point < 150000) {
-    return `Cần thêm ${150000 - point} point để lên hạng KIM CƯƠNG`;
-  }else if (point => 150000) {
-    return `Bạn đã đạt được thành tự người chinh phục đỉnh cao`;
+  const totalSpent = user.value?.total_spent ?? 0;
+  // Hàm format tiền tệ kiểu 100.000.000
+  function formatMoneyVND(amount) {
+    if (typeof amount !== "number") amount = Number(amount) || 0;
+    return amount.toLocaleString("vi-VN");
   }
 
-  return "";
+  return "Số tiền đã thanh toán tích luỹ " + formatMoneyVND(totalSpent) + "đ";
+  
 });
 </script>
 
