@@ -87,7 +87,8 @@
           <!-- Thông báo hết hàng -->
           <div v-if="isOutOfStock()" class="out-of-stock-badge mb-2">
             <i class="bi bi-exclamation-triangle-fill me-1"></i>
-            <span>HẾT HÀNG</span>
+            <span v-if="product.isInFlashSale">HẾT FLASH SALE</span>
+            <span v-else>HẾT HÀNG</span>
           </div>
 
           <!-- Thanh tiến trình khi còn hàng -->
@@ -244,17 +245,13 @@ const getSalesProgress = () => {
 
 const isOutOfStock = () => {
   if (props.product.isInFlashSale) {
+    // Chỉ check flashSaleStockQuantity, không trừ flashSaleSoldCount
     const flashSaleStock = getFlashSaleStockQuantity();
-    const flashSaleSold = props.product.flashSaleSoldCount || 0;
-    return flashSaleStock - flashSaleSold <= 0;
+    return flashSaleStock <= 0;
   } else {
+    // Chỉ check stockQuantity hiện tại, không trừ soldCount
     const stock = props.product.stockQuantity || 0;
-    const sold =
-      props.product.soldCount ||
-      props.product.soldQuantity ||
-      props.product.sold ||
-      0;
-    return stock - sold <= 0;
+    return stock <= 0;
   }
 };
 

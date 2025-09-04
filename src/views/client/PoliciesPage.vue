@@ -461,7 +461,7 @@ const policies = ref([
     icon: 'bi bi-arrow-repeat'
   },
   {
-    title: 'Chính Sách Voucher', 
+    title: 'Chính Sách Khuyến Mại', 
     icon: 'bi bi-gift'
   },
   {

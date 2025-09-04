@@ -27,7 +27,7 @@
                                 type="button" 
                                 @click="switchTab('daily')"
                             >
-                                Xu Hướng Theo Ngày
+                                Xu Hướng
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">

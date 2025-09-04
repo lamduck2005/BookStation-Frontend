@@ -76,9 +76,8 @@ const props = defineProps({
 
 // Computed values
 const subtotal = computed(() => {
-  if (props.calculation?.subtotal) {
-    return props.calculation.subtotal;
-  }
+  // Luôn sử dụng giá từ orderItems để đảm bảo nhất quán với PosOrderList
+  // Bỏ qua props.calculation.subtotal vì nó có thể trả về giá gốc thay vì giá flash sale
   return props.orderItems.reduce((sum, item) => {
     return sum + (item.quantity * item.unitPrice);
   }, 0);
@@ -94,16 +93,16 @@ const totalVoucherDiscount = computed(() => {
 });
 
 const finalTotal = computed(() => {
-  if (props.calculation?.totalAmount) {
-    return props.calculation.totalAmount;
-  }
+  // Luôn tính toán từ subtotal và voucher discount để đảm bảo nhất quán
+  // Bỏ qua props.calculation.totalAmount vì nó có thể dựa trên giá gốc
   return Math.max(0, subtotal.value - totalVoucherDiscount.value);
 });
 
 const totalFlashSaleSavings = computed(() => {
   return props.orderItems.reduce((sum, item) => {
-    if (item.isFlashSale && item.originalPrice) {
-      const savings = (item.originalPrice - item.unitPrice) * item.quantity;
+    if (item.isFlashSale && (item.originalPrice || item.normalPrice)) {
+      const originalPrice = item.originalPrice || item.normalPrice;
+      const savings = (originalPrice - item.unitPrice) * item.quantity;
       return sum + savings;
     }
     return sum;
