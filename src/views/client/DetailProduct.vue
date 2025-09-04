@@ -115,15 +115,7 @@
               </div>
             </div>
             
-            <div class="rating-section">
-              <div class="star-rating">
-                <template v-for="i in 5" :key="i">
-                  <i class="fa fa-star" :class="i <= (book.averageRating || 0) ? 'text-warning' : 'text-muted'"></i>
-                </template>
-              </div>
-              <span class="review-count">({{ book.reviewCount || 0 }} đánh giá)</span>
-              <span class="sold-count">| Đã bán {{ book.soldCount || 0 }}</span>
-            </div>
+           
           </div>
           
           <!-- Flash Sale Section -->

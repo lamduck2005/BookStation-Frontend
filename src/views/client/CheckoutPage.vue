@@ -1444,8 +1444,6 @@ const processPayment = async () => {
     if (err.response?.status === 400) {
       if (errorMessage.includes('hết hàng')) {
         showToast('error', 'Một số sản phẩm đã hết hàng. Vui lòng cập nhật lại giỏ hàng.')
-      } else if (errorMessage.includes('flash sale') || errorMessage.includes('Flash sale')) {
-        showToast('error', 'Flash sale đã kết thúc. Giá sản phẩm có thể đã thay đổi. Vui lòng tải lại trang để cập nhật.')
       } else if (errorMessage.includes('voucher') || errorMessage.includes('Voucher')) {
         showToast('error', 'Voucher có vấn đề. ' + errorMessage)
       } else if (errorMessage.includes('hết hạn')) {
