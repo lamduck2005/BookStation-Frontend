@@ -523,6 +523,54 @@ watch(paymentMethod, (newMethod) => {
   }
 });
 
+// Hàm tạo QR với thông tin tài khoản thực tế
+const generateQrCode = async () => {
+  isGeneratingQr.value = true;
+  try {
+    const params = {
+      amount: props.totalAmount.toString(),
+      addInfo: orderNotes.value.trim() || "Thanh toan don hang BookStation",
+      accountNumber: "1028549215",
+      accountName: "DOAN THE PHONG",
+      bankCode: "970418",
+    };
+
+    console.log("🔄 QR params:", params);
+
+    const qrResponse = await generateQr(params);
+
+    console.log("✅ QR response received:", qrResponse);
+    console.log("📊 QR response type:", typeof qrResponse);
+
+    // qrResponse bây giờ là object có cấu trúc: { data: "url_string", message: "...", status: 200 }
+    if (qrResponse && qrResponse.data) {
+      const qrUrl = qrResponse.data;
+
+      console.log("📊 QR URL type:", typeof qrUrl);
+      console.log("📊 QR URL:", qrUrl);
+
+      if (
+        qrUrl &&
+        typeof qrUrl === "string" &&
+        qrUrl.startsWith("https://img.vietqr.io/")
+      ) {
+        qrImage.value = qrUrl; // Lưu URL trực tiếp
+        console.log("✅ QR image URL set successfully");
+      } else {
+        console.error("❌ Invalid QR URL format:", qrUrl);
+        alert("URL QR không đúng định dạng");
+      }
+    } else {
+      console.error("❌ No data in QR response:", qrResponse);
+      alert("Lỗi: Không nhận được URL QR");
+    }
+  } catch (error) {
+    console.error("❌ QR generation error:", error);
+    alert("Lỗi khi tạo mã QR thanh toán: " + error.message);
+  } finally {
+    isGeneratingQr.value = false;
+  }
+};
 // Watcher cho appliedVouchers từ props
 watch(
   () => props.appliedVouchers,
