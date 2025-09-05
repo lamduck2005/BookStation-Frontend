@@ -4,6 +4,7 @@
       <PosHeader @add-product="handleAddProduct" />
       <PosOrderList
         :order-items="orderItems"
+        :calculation="orderCalculation"
         @update-quantity="handleUpdateQuantity"
         @remove-item="handleRemoveItem"
         @clear-order="handleClearOrder"
@@ -27,6 +28,7 @@
         :total-amount="finalTotal"
         :order-items="orderItems"
         :selected-customer="selectedCustomer"
+        :calculation="orderCalculation"
         @voucher-applied="handleVoucherApplied"
         @voucher-removed="handleVoucherRemoved"
         @payment-confirmed="handlePaymentConfirmed"
@@ -69,8 +71,11 @@ const loadingMessage = ref("");
 
 // Computed
 const subtotal = computed(() => {
-  // Luôn sử dụng giá từ orderItems để đảm bảo nhất quán với PosOrderList
-  // Bỏ qua orderCalculation.subtotal vì nó có thể trả về giá gốc thay vì giá flash sale
+  // Ưu tiên sử dụng subtotal từ API calculation nếu có
+  if (orderCalculation.value?.subtotal !== undefined && orderCalculation.value?.subtotal !== null) {
+    return orderCalculation.value.subtotal;
+  }
+  // Fallback: tính từ orderItems
   return orderItems.value.reduce((sum, item) => {
     return sum + item.quantity * item.unitPrice;
   }, 0);
@@ -86,21 +91,25 @@ const totalVoucherDiscount = computed(() => {
 });
 
 const finalTotal = computed(() => {
-  // Luôn tính toán từ subtotal và voucher discount để đảm bảo nhất quán
-  // Bỏ qua orderCalculation.totalAmount vì nó có thể dựa trên giá gốc
-  return Math.max(0, subtotal.value - totalVoucherDiscount.value);
+  // Ưu tiên sử dụng totalAmount từ API calculation nếu có
+  if (orderCalculation.value?.totalAmount !== undefined && orderCalculation.value?.totalAmount !== null) {
+    console.log("🔥 Using totalAmount from API:", orderCalculation.value.totalAmount);
+    return orderCalculation.value.totalAmount;
+  }
+  // Fallback: tính toán từ subtotal và voucher discount
+  const fallbackTotal = Math.max(0, subtotal.value - totalVoucherDiscount.value);
+  console.log("🔥 Using fallback calculation:", fallbackTotal);
+  return fallbackTotal;
 });
 
 // Methods
 function handleAddProduct(book) {
   const id = book.id || book.bookId;
   const existing = orderItems.value.find((i) => i.bookId === id);
-  const unitPrice =
-    book.unitPrice != null
-      ? Number(book.unitPrice)
-      : book.isFlashSale && book.flashSalePrice != null
-      ? Number(book.flashSalePrice)
-      : Number(book.normalPrice) || 0;
+  
+  // ĐỐI VỚI COUNTER SALES: Luôn sử dụng originalPrice/normalPrice
+  // vì API calculate sẽ tự động áp dụng flash sale discount
+  const unitPrice = Number(book.normalPrice) || 0;
 
   if (existing) {
     existing.quantity += 1;
@@ -110,9 +119,9 @@ function handleAddProduct(book) {
       title: book.title,
       name: book.name || book.title,
       bookCode: book.bookCode,
-      unitPrice,
+      unitPrice, // Sử dụng originalPrice
       normalPrice: Number(book.normalPrice) || 0,
-      originalPrice: Number(book.normalPrice) || 0, // Thêm originalPrice để tính savings
+      originalPrice: Number(book.normalPrice) || 0,
       flashSalePrice:
         book.flashSalePrice != null ? Number(book.flashSalePrice) : null,
       isFlashSale: !!book.isFlashSale,
@@ -122,7 +131,7 @@ function handleAddProduct(book) {
     });
   }
 
-  console.log("Product added, orderItems:", orderItems.value);
+  console.log("Product added with originalPrice, orderItems:", orderItems.value);
 
   // Auto calculate if we have customer
   if (selectedCustomer.value) {
@@ -193,6 +202,10 @@ const calculateOrder = async () => {
 
     if (response.status === 200) {
       orderCalculation.value = response.data;
+      console.log("🔥 Order calculation response:", response.data);
+      console.log("🔥 Response totalAmount:", response.data.totalAmount);
+      console.log("🔥 Response subtotal:", response.data.subtotal);
+      console.log("🔥 Response discountAmount:", response.data.discountAmount);
 
       // Update applied vouchers with calculated discounts
       if (response.data.appliedVouchers) {

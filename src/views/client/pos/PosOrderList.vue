@@ -85,7 +85,7 @@
             </div>
             
             <div class="item-total">
-              {{ formatCurrency(item.quantity * item.unitPrice) }}
+              {{ formatCurrency(getItemTotal(item, index)) }}
             </div>
             
             <button class="remove-btn" @click="removeItem(index)">
@@ -106,6 +106,10 @@ const props = defineProps({
   orderItems: {
     type: Array,
     default: () => []
+  },
+  calculation: {
+    type: Object,
+    default: () => null
   }
 });
 
@@ -119,6 +123,43 @@ const formatCurrency = (amount) => {
     style: 'currency',
     currency: 'VND'
   }).format(amount);
+};
+
+// Hàm để lấy thông tin item từ API calculation hoặc fallback
+const getDisplayItems = () => {
+  // Ưu tiên sử dụng items từ API calculation
+  if (props.calculation?.items && props.calculation.items.length > 0) {
+    console.log("🔥 PosOrderList using items from API:", props.calculation.items);
+    // Merge data từ API với orderItems để có đầy đủ thông tin UI
+    return props.orderItems.map(frontendItem => {
+      const apiItem = props.calculation.items.find(item => item.bookId === frontendItem.bookId);
+      if (apiItem) {
+        return {
+          ...frontendItem,
+          unitPrice: apiItem.unitPrice,
+          totalPrice: apiItem.totalPrice,
+          quantity: apiItem.quantity,
+          flashSale: apiItem.flashSale,
+          savedAmount: apiItem.savedAmount
+        };
+      }
+      return frontendItem;
+    });
+  }
+  // Fallback: sử dụng orderItems
+  console.log("🔥 PosOrderList using fallback orderItems:", props.orderItems);
+  return props.orderItems;
+};
+
+// Hàm để lấy tổng tiền của một item
+const getItemTotal = (item, index) => {
+  const displayItems = getDisplayItems();
+  const displayItem = displayItems[index];
+  
+  if (displayItem?.totalPrice !== undefined) {
+    return displayItem.totalPrice;
+  }
+  return item.quantity * item.unitPrice;
 };
 
 const increaseQuantity = (index) => {

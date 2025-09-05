@@ -233,35 +233,35 @@
             <h5 class="summary-title">Chi tiết đơn hàng:</h5>
             <div class="items-list">
               <div
-                v-for="item in orderItems"
+                v-for="item in getDisplayItems()"
                 :key="item.bookId"
                 class="item-row"
               >
                 <div class="item-info">
-                  <div class="item-name">{{ item.title || item.name }}</div>
+                  <div class="item-name">{{ item.bookName || item.title || item.name }}</div>
                   <div class="item-details">
                     <div class="item-code">{{ item.bookCode }}</div>
                     <div class="item-price-detail">
                       {{ item.quantity }} × {{ formatCurrency(item.unitPrice) }}
                     </div>
-                    <div v-if="item.isFlashSale" class="flash-sale-badge">
+                    <div v-if="item.flashSale || item.isFlashSale" class="flash-sale-badge">
                       <i class="bi bi-lightning-fill"></i> Flash Sale
                     </div>
                   </div>
                 </div>
                 <div class="item-total">
-                  {{ formatCurrency(item.quantity * item.unitPrice) }}
+                  {{ formatCurrency(item.totalPrice || (item.quantity * item.unitPrice)) }}
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Applied Vouchers -->
-          <div v-if="appliedVouchers.length > 0" class="vouchers-summary">
+          <div v-if="getDisplayVouchers().length > 0" class="vouchers-summary">
             <h5 class="summary-title">Voucher áp dụng:</h5>
             <div
               class="voucher-item"
-              v-for="voucher in appliedVouchers"
+              v-for="voucher in getDisplayVouchers()"
               :key="voucher.id"
             >
               <span class="voucher-name">{{ voucher.name }}</span>
@@ -275,7 +275,7 @@
           <div class="payment-summary-popup">
             <div class="summary-row">
               <span>Tổng tiền hàng:</span>
-              <span>{{ formatCurrency(calculateSubtotal()) }}</span>
+              <span>{{ formatCurrency(getSubtotal()) }}</span>
             </div>
             <div
               v-if="totalVoucherDiscount > 0"
@@ -286,7 +286,7 @@
             </div>
             <div class="summary-row total-row">
               <span>Tổng thanh toán:</span>
-              <span>{{ formatCurrency(totalAmount) }}</span>
+              <span>{{ formatCurrency(actualTotalAmount) }}</span>
             </div>
           </div>
 
@@ -349,6 +349,18 @@
             <h5 class="summary-title">Ghi chú:</h5>
             <p class="notes-text">{{ orderNotes }}</p>
           </div>
+
+          <!-- Flash Sale Warning -->
+          <div class="flash-sale-warning">
+            <div class="warning-header">
+              <i class="bi bi-info-circle-fill"></i>
+              <span class="warning-title">Lưu ý về Flash Sale</span>
+            </div>
+            <p class="warning-text">
+              Giảm giá Flash Sale không áp dụng cho khách vãng lai. 
+              Sản phẩm sẽ được tính theo giá gốc.
+            </p>
+          </div>
         </div>
 
         <div class="popup-footer">
@@ -389,6 +401,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  calculation: {
+    type: Object,
+    default: () => null,
+  },
 });
 
 // Emit events
@@ -418,7 +434,7 @@ const qrImage = ref(null);
 const isGeneratingQr = ref(false);
 // Limits
 const MAX_AMOUNT_LIMIT = 100000000; // 100 triệu
-const isTotalOverLimit = computed(() => Number(props.totalAmount) > MAX_AMOUNT_LIMIT);
+const isTotalOverLimit = computed(() => Number(actualTotalAmount.value) > MAX_AMOUNT_LIMIT);
 const isPaidOverLimit = computed(() =>
   paymentMethod.value === "CASH" && Number(customerPaid.value) > MAX_AMOUNT_LIMIT
 );
@@ -426,10 +442,48 @@ const isLimitExceeded = computed(() => isTotalOverLimit.value || isPaidOverLimit
 
 // Computed
 const totalVoucherDiscount = computed(() => {
-  return appliedVouchers.value.reduce(
+  // Ưu tiên sử dụng discountAmount từ API calculation
+  if (props.calculation?.discountAmount !== undefined && props.calculation?.discountAmount !== null) {
+    console.log("🔥 PosPayment using discountAmount from API:", props.calculation.discountAmount);
+    return props.calculation.discountAmount;
+  }
+  // Fallback: tính từ appliedVouchers
+  const fallbackDiscount = appliedVouchers.value.reduce(
     (total, voucher) => total + voucher.discountAmount,
     0
   );
+  console.log("🔥 PosPayment using fallback discount:", fallbackDiscount);
+  return fallbackDiscount;
+});
+
+// Computed để lấy total amount thực sự từ API calculation
+const actualTotalAmount = computed(() => {
+  console.log("🔥 actualTotalAmount calculation check:");
+  console.log("  - props.calculation:", props.calculation);
+  console.log("  - props.calculation?.totalAmount:", props.calculation?.totalAmount);
+  console.log("  - props.totalAmount:", props.totalAmount);
+  
+  // Ưu tiên sử dụng totalAmount từ API calculation
+  if (props.calculation?.totalAmount !== undefined && props.calculation?.totalAmount !== null) {
+    console.log("🔥 PosPayment actualTotalAmount from API:", props.calculation.totalAmount);
+    return props.calculation.totalAmount;
+  }
+  // Fallback: sử dụng props.totalAmount
+  console.log("🔥 PosPayment actualTotalAmount fallback:", props.totalAmount);
+  return props.totalAmount;
+});
+
+// Computed để kiểm tra có flash sale items và khách vãng lai
+const hasFlashSaleWarning = computed(() => {
+  // Kiểm tra có sản phẩm flash sale không
+  const hasFlashSaleItems = getDisplayItems().some(item => item.flashSale || item.isFlashSale);
+  
+  // Kiểm tra khách vãng lai (không có userId hoặc isAnonymous/isGuest)
+  const isWalkInCustomer = !props.selectedCustomer?.userId || 
+                          props.selectedCustomer?.isAnonymous || 
+                          props.selectedCustomer?.isGuest;
+  
+  return hasFlashSaleItems && isWalkInCustomer;
 });
 
 // CHỈ GIỮ LẠI 1 HÀM canConfirmPayment
@@ -446,7 +500,7 @@ const canConfirmPayment = computed(() => {
       : null,
     paymentMethod: paymentMethod.value,
     paid: Number(customerPaid.value) || 0,
-    total: Number(props.totalAmount) || 0,
+    total: Number(actualTotalAmount.value) || 0,
   });
 
   // 1. Kiểm tra sản phẩm
@@ -455,7 +509,7 @@ const canConfirmPayment = computed(() => {
   }
 
   // 2. Kiểm tra tổng tiền
-  if (!props.totalAmount || props.totalAmount <= 0) {
+  if (!actualTotalAmount.value || actualTotalAmount.value <= 0) {
     return false;
   }
 
@@ -490,12 +544,49 @@ const calculateSubtotal = () => {
   );
 };
 
+// Hàm mới để lấy subtotal từ API calculation hoặc fallback
+const getSubtotal = () => {
+  // Ưu tiên sử dụng subtotal từ API calculation
+  if (props.calculation?.subtotal !== undefined && props.calculation?.subtotal !== null) {
+    console.log("🔥 PosPayment using subtotal from API:", props.calculation.subtotal);
+    return props.calculation.subtotal;
+  }
+  // Fallback: tính từ orderItems
+  const fallbackSubtotal = calculateSubtotal();
+  console.log("🔥 PosPayment using fallback subtotal:", fallbackSubtotal);
+  return fallbackSubtotal;
+};
+
+// Hàm mới để lấy items từ API calculation hoặc fallback
+const getDisplayItems = () => {
+  // Ưu tiên sử dụng items từ API calculation
+  if (props.calculation?.items && props.calculation.items.length > 0) {
+    console.log("🔥 PosPayment using items from API:", props.calculation.items);
+    return props.calculation.items;
+  }
+  // Fallback: sử dụng orderItems
+  console.log("🔥 PosPayment using fallback orderItems:", props.orderItems);
+  return props.orderItems;
+};
+
+// Hàm mới để lấy vouchers từ API calculation hoặc fallback
+const getDisplayVouchers = () => {
+  // Ưu tiên sử dụng appliedVouchers từ API calculation
+  if (props.calculation?.appliedVouchers && props.calculation.appliedVouchers.length > 0) {
+    console.log("🔥 PosPayment using vouchers from API:", props.calculation.appliedVouchers);
+    return props.calculation.appliedVouchers;
+  }
+  // Fallback: sử dụng appliedVouchers prop
+  console.log("🔥 PosPayment using fallback vouchers:", props.appliedVouchers);
+  return props.appliedVouchers;
+};
+
 const calculateChange = () => {
   const paid = Number(customerPaid.value) || 0;
-  const total = Number(props.totalAmount) || 0;
+  const total = Number(actualTotalAmount.value) || 0;
   changeAmount.value = paid - total;
 
-  console.log("🧮 Change calculation:", {
+  console.log("🧮 Change calculation with actualTotalAmount:", {
     paid,
     total,
     change: changeAmount.value,
@@ -504,13 +595,14 @@ const calculateChange = () => {
 
 // Watchers - CHỈ GIỮ LẠI 1 WATCHER CHO MỖI THUỘC TÍNH
 watch(
-  () => props.totalAmount,
+  actualTotalAmount,
   (newTotal) => {
+    console.log("🔄 actualTotalAmount changed:", newTotal);
     // CHỈ TỰ ĐỘNG FILL KHI CÓ TỔNG TIỀN VÀ CHƯA CÓ GIÁ TRỊ
     if (newTotal > 0 && customerPaid.value === 0) {
       customerPaid.value = newTotal;
       calculateChange();
-      console.log("🔄 Auto-filled customer paid:", newTotal);
+      console.log("🔄 Auto-filled customer paid from actualTotalAmount:", newTotal);
     }
     // NẾU TỔNG TIỀN = 0 THÌ RESET VỀ 0
     else if (newTotal === 0) {
@@ -518,19 +610,23 @@ watch(
       changeAmount.value = 0;
       console.log("🔄 Reset customer paid to 0");
     }
+    // LUÔN CẬP NHẬT NẾU PAYMENT METHOD LÀ CASH VÀ GIÁ TRỊ ĐÃ THAY ĐỔI
+    else if (paymentMethod.value === "CASH" && newTotal > 0 && customerPaid.value !== newTotal) {
+      customerPaid.value = newTotal;
+      calculateChange();
+      console.log("🔄 Updated customer paid to match actualTotalAmount:", newTotal);
+    }
   },
   { immediate: true }
 );
 
 // CHỈ GIỮ LẠI 1 WATCHER CHO paymentMethod
 watch(paymentMethod, (newMethod) => {
-  if (
-    newMethod === "CASH" &&
-    props.totalAmount > 0 &&
-    customerPaid.value === 0
-  ) {
-    customerPaid.value = props.totalAmount;
+  console.log("🔄 Payment method changed to:", newMethod);
+  if (newMethod === "CASH" && actualTotalAmount.value > 0) {
+    customerPaid.value = actualTotalAmount.value;
     calculateChange();
+    console.log("🔄 Auto-filled customer paid on payment method change:", actualTotalAmount.value);
   } else if (newMethod === "BANK_TRANSFER") {
     generateQrCode();
   }
@@ -541,14 +637,14 @@ const generateQrCode = async () => {
   isGeneratingQr.value = true;
   try {
     const params = {
-      amount: props.totalAmount.toString(),
+      amount: actualTotalAmount.value.toString(),
       addInfo: orderNotes.value.trim() || "Thanh toan don hang BookStation",
       accountNumber: "1028549215",
       accountName: "DOAN THE PHONG",
       bankCode: "970418",
     };
 
-    console.log("🔄 QR params:", params);
+    console.log("🔄 QR params with actualTotalAmount:", params);
 
     const qrResponse = await generateQr(params);
 
@@ -647,7 +743,7 @@ const applyVoucher = (voucher) => {
     return;
   }
 
-  if (voucher.minOrderValue && props.totalAmount < voucher.minOrderValue) {
+  if (voucher.minOrderValue && actualTotalAmount.value < voucher.minOrderValue) {
     alert(
       `Đơn hàng tối thiểu ${formatCurrency(
         voucher.minOrderValue
@@ -658,7 +754,7 @@ const applyVoucher = (voucher) => {
 
   let discountAmount = 0;
   if (voucher.discountType === "PERCENTAGE") {
-    discountAmount = (props.totalAmount * voucher.discountPercentage) / 100;
+    discountAmount = (actualTotalAmount.value * voucher.discountPercentage) / 100;
     if (voucher.maxDiscountValue) {
       discountAmount = Math.min(discountAmount, voucher.maxDiscountValue);
     }
@@ -721,7 +817,7 @@ const proceedPayment = () => {
   // Kiểm tra tiền mặt trước khi xác nhận
   if (paymentMethod.value === "CASH") {
     const paid = Number(customerPaid.value) || 0;
-    const total = Number(props.totalAmount) || 0;
+    const total = Number(actualTotalAmount.value) || 0;
 
     if (paid < total) {
       alert(
@@ -740,7 +836,7 @@ const proceedPayment = () => {
     customerPaid:
       paymentMethod.value === "CASH"
         ? Number(customerPaid.value)
-        : props.totalAmount,
+        : actualTotalAmount.value,
     changeAmount:
       paymentMethod.value === "CASH" ? Number(changeAmount.value) : 0,
     wantInvoice: wantInvoice.value, // Add invoice info to payment data
@@ -794,11 +890,11 @@ onMounted(() => {
     }
   });
 
-  // Tự động điền tiền khách đưa ngay khi mount
-  if (props.totalAmount > 0) {
-    customerPaid.value = props.totalAmount;
+  // Tự động điền tiền khách đưa ngay khi mount - nhưng sẽ được override bởi watcher actualTotalAmount
+  if (actualTotalAmount.value > 0) {
+    customerPaid.value = actualTotalAmount.value;
     calculateChange();
-    console.log("🚀 Initial auto-fill customer paid:", props.totalAmount);
+    console.log("🚀 Initial auto-fill customer paid with actualTotalAmount:", actualTotalAmount.value);
   }
 });
 
@@ -1445,6 +1541,40 @@ onUnmounted(() => {
   padding: 12px;
   font-size: 13px;
   color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Flash Sale Warning */
+.flash-sale-warning {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 16px;
+}
+
+.warning-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.warning-header i {
+  color: #f59e0b;
+  font-size: 16px;
+}
+
+.warning-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.warning-text {
+  font-size: 13px;
+  color: #92400e;
   margin: 0;
   line-height: 1.4;
 }

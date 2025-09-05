@@ -49,7 +49,7 @@
       <!-- Flash sale savings -->
       <div v-if="totalFlashSaleSavings > 0" class="savings-info">
         <i class="bi bi-lightning-fill"></i>
-        Tiết kiệm từ Flash Sale: {{ formatCurrency(totalFlashSaleSavings) }}
+        Tiết kiệm từ Flash Sale nếu khách có tài khoản: {{ formatCurrency(totalFlashSaleSavings) }}
       </div>
     </div>
   </div>
@@ -76,8 +76,11 @@ const props = defineProps({
 
 // Computed values
 const subtotal = computed(() => {
-  // Luôn sử dụng giá từ orderItems để đảm bảo nhất quán với PosOrderList
-  // Bỏ qua props.calculation.subtotal vì nó có thể trả về giá gốc thay vì giá flash sale
+  // Ưu tiên sử dụng subtotal từ API calculation nếu có
+  if (props.calculation?.subtotal) {
+    return props.calculation.subtotal;
+  }
+  // Fallback: tính từ orderItems
   return props.orderItems.reduce((sum, item) => {
     return sum + (item.quantity * item.unitPrice);
   }, 0);
@@ -93,9 +96,16 @@ const totalVoucherDiscount = computed(() => {
 });
 
 const finalTotal = computed(() => {
-  // Luôn tính toán từ subtotal và voucher discount để đảm bảo nhất quán
-  // Bỏ qua props.calculation.totalAmount vì nó có thể dựa trên giá gốc
-  return Math.max(0, subtotal.value - totalVoucherDiscount.value);
+  // Ưu tiên sử dụng totalAmount từ API calculation nếu có
+  if (props.calculation?.totalAmount !== undefined && props.calculation?.totalAmount !== null) {
+    console.log("🔥 PosOrderSummary using totalAmount from API:", props.calculation.totalAmount);
+    return props.calculation.totalAmount;
+  }
+  // Fallback: tính toán từ subtotal và voucher discount
+  const fallbackTotal = Math.max(0, subtotal.value - totalVoucherDiscount.value);
+  console.log("🔥 PosOrderSummary using fallback calculation:", fallbackTotal);
+  console.log("🔥 PosOrderSummary calculation prop:", props.calculation);
+  return fallbackTotal;
 });
 
 const totalFlashSaleSavings = computed(() => {
