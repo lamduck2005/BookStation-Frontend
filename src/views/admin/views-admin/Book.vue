@@ -688,6 +688,9 @@
                     :showTooltip="showPriceTooltip && newBook.price"
                     style="top:-32px; left:0;"
                   />
+                  <div class="form-text text-muted">
+                    <small>Giá bán phải > 0 và ≤ 50,000,000 VNĐ</small>
+                  </div>
                 </div>
                 <div class="col-md-4">
                   <label for="stockQuantity" class="form-label enhanced-label">
@@ -734,9 +737,13 @@
                       @input="onDiscountValueChange"
                       placeholder="0"
                       min="0"
+                      :max="newBook.price * 0.3"
                       step="1000"
                     />
                     <span class="input-group-text">VNĐ</span>
+                  </div>
+                  <div class="form-text text-muted">
+                    <small>Tối đa 30% giá bán ({{ formatCurrency(newBook.price * 0.3 || 0) }})</small>
                   </div>
                 </div>
                 <div class="col-md-3" v-if="discountType === 'percent'">
@@ -752,10 +759,13 @@
                       @input="onDiscountPercentChange"
                       placeholder="0"
                       min="0"
-                      max="100"
+                      max="30"
                       step="1"
                     />
                     <span class="input-group-text">%</span>
+                  </div>
+                  <div class="form-text text-muted">
+                    <small>Tối đa 30%</small>
                   </div>
                 </div>
                 <div class="col-md-3" v-if="discountType">
@@ -920,7 +930,12 @@
                     v-model="newBook.weight"
                     placeholder="VD: 400"
                     min="0"
+                    max="10000"
+                    step="1"
                   />
+                  <div class="form-text text-muted">
+                    <small>Trọng lượng phải > 0 và ≤ 10000 gram</small>
+                  </div>
                 </div>
                 <div class="col-md-4">
                   <label for="language" class="form-label enhanced-label">Ngôn ngữ</label>
@@ -943,7 +958,12 @@
                     v-model="newBook.pageCount"
                     placeholder="VD: 320"
                     min="0"
+                    max="10000"
+                    step="1"
                   />
+                  <div class="form-text text-muted">
+                    <small>Số trang phải ≥ 0 và ≤ 10000 trang</small>
+                  </div>
                 </div>
                 <div class="col-md-4">
                   <label for="isbn" class="form-label enhanced-label">ISBN</label>
@@ -1449,7 +1469,19 @@ const handleSubmitBook = async () => {
     Swal.fire({
       icon: 'warning',
       title: 'Cảnh báo!',
-      text: 'Vui lòng nhập giá hợp lệ',
+      text: 'Vui lòng nhập giá hợp lệ (lớn hơn 0)',
+      timer: 2000,
+      timerProgressBar: true
+    });
+    return;
+  }
+
+  // 🔥 VALIDATION CHO GIÁ BÁN - KHÔNG VƯỢT QUÁ 50 TRIỆU
+  if (newBook.value.price > 50000000) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Cảnh báo!',
+      text: 'Giá bán không được vượt quá 50,000,000 VNĐ',
       timer: 2000,
       timerProgressBar: true
     });
@@ -1478,6 +1510,110 @@ const handleSubmitBook = async () => {
     });
     return;
   }
+
+  //  VALIDATION CHO TRỌNG LƯỢNG
+  if (newBook.value.weight !== '' && newBook.value.weight !== null && newBook.value.weight !== undefined) {
+    const weight = parseFloat(newBook.value.weight);
+    if (isNaN(weight) || weight <= 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cảnh báo!',
+        text: 'Trọng lượng phải là số hợp lệ và lớn hơn 0',
+        timer: 2000,
+        timerProgressBar: true
+      });
+      return;
+    }
+    if (weight > 10000) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cảnh báo!',
+        text: 'Trọng lượng không được vượt quá 10000 gram',
+        timer: 2000,
+        timerProgressBar: true
+      });
+      return;
+    }
+  }
+
+  //  VALIDATION CHO SỐ TRANG
+  if (newBook.value.pageCount !== '' && newBook.value.pageCount !== null && newBook.value.pageCount !== undefined) {
+    const pageCount = parseInt(newBook.value.pageCount);
+    if (isNaN(pageCount) || pageCount < 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cảnh báo!',
+        text: 'Số trang phải là số nguyên không âm',
+        timer: 2000,
+        timerProgressBar: true
+      });
+      return;
+    }
+    if (pageCount > 10000) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cảnh báo!',
+        text: 'Số trang không được vượt quá 10000 trang',
+        timer: 2000,
+        timerProgressBar: true
+      });
+      return;
+    }
+  }
+
+  // 🔥 VALIDATION CHO GIẢM GIÁ THEO SỐ TIỀN
+  if (discountType.value === 'amount' && newBook.value.discountValue !== '' && newBook.value.discountValue !== null && newBook.value.discountValue !== undefined) {
+    const discountValue = parseFloat(newBook.value.discountValue);
+    if (isNaN(discountValue) || discountValue <= 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cảnh báo!',
+        text: 'Số tiền giảm giá phải là số hợp lệ và lớn hơn 0',
+        timer: 2000,
+        timerProgressBar: true
+      });
+      return;
+    }
+    
+    const maxDiscountAmount = newBook.value.price * 0.3; // 30% giá bán
+    if (discountValue > maxDiscountAmount) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cảnh báo!',
+        text: `Số tiền giảm giá không được vượt quá 30% giá bán (${formatCurrency(maxDiscountAmount)})`,
+        timer: 3000,
+        timerProgressBar: true
+      });
+      return;
+    }
+  }
+
+  // 🔥 VALIDATION CHO GIẢM GIÁ THEO PHẦN TRĂM
+  if (discountType.value === 'percent' && newBook.value.discountPercent !== '' && newBook.value.discountPercent !== null && newBook.value.discountPercent !== undefined) {
+    const discountPercent = parseFloat(newBook.value.discountPercent);
+    if (isNaN(discountPercent) || discountPercent <= 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cảnh báo!',
+        text: 'Phần trăm giảm giá phải là số hợp lệ và lớn hơn 0',
+        timer: 2000,
+        timerProgressBar: true
+      });
+      return;
+    }
+    
+    if (discountPercent > 30) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cảnh báo!',
+        text: 'Phần trăm giảm giá không được vượt quá 30%',
+        timer: 2000,
+        timerProgressBar: true
+      });
+      return;
+    }
+  }
+
   // Bỏ validation ảnh, ảnh không bắt buộc
   try {
     let imagesArr = newBook.value.bookImages || [];
