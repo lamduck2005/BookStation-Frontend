@@ -175,7 +175,7 @@
                           </button>
                           <span class="tooltip-bubble">Xem chi tiết</span>
                         </span>
-                        <span class="tooltip-wrapper">
+                        <span v-if="user.isRetail != 1" class="tooltip-wrapper">
                           <EditButton
                             :user="user"
                             @click="openEditModal(user)"
