@@ -56,7 +56,7 @@ export const getTopSpenders = async (limit = 5) => {
   return res.data.data;
 };
 export const getTotalDeliveredOrders = async () => {
-  const res = await apiClient.get("/dashboard/stat");
+  const res = await apiClient.get("/dashboard/stats/total-orders");
   return res.data.data;
 };
 export const getTotalUsers = async () => {
