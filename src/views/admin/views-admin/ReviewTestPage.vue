@@ -55,7 +55,10 @@
 
     <!-- Main Test Component -->
     <div class="test-component-container">
-      <ReviewTester @review-analyzed="onReviewAnalyzed" />
+      <div class="no-component-message">
+        <h4>⚠️ ReviewTester Component không khả dụng</h4>
+        <p>Component này đã bị xóa do không còn sử dụng AI.</p>
+      </div>
     </div>
 
     <!-- Test History -->
@@ -127,13 +130,8 @@
 </template>
 
 <script>
-import ReviewTester from '@/components/admin/ReviewTester.vue'
-
 export default {
   name: 'ReviewTestPage',
-  components: {
-    ReviewTester
-  },
   data() {
     return {
       testHistory: [],
@@ -148,32 +146,6 @@ export default {
     this.loadHistory();
   },
   methods: {
-    onReviewAnalyzed(analysisData) {
-      // Add to history
-      const testEntry = {
-        timestamp: new Date(),
-        rating: analysisData.rating,
-        text: analysisData.text,
-        isPositive: analysisData.analysis.isPositive,
-        sentiment: analysisData.analysis.sentiment,
-        confidence: analysisData.analysis.confidence,
-        accepted: analysisData.validation.isValid,
-        reason: analysisData.analysis.reason
-      };
-      
-      this.testHistory.unshift(testEntry);
-      
-      // Update stats
-      this.stats.totalTests++;
-      if (analysisData.analysis.isPositive) {
-        this.stats.positiveTests++;
-      } else {
-        this.stats.negativeTests++;
-      }
-      
-      // Save to localStorage
-      this.saveHistory();
-    },
     
     formatTime(timestamp) {
       return new Date(timestamp).toLocaleTimeString('vi-VN');
@@ -313,6 +285,25 @@ export default {
 /* Test Component Container */
 .test-component-container {
   margin-bottom: 30px;
+}
+
+.no-component-message {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  border: 2px dashed #dee2e6;
+}
+
+.no-component-message h4 {
+  color: #dc3545;
+  margin-bottom: 15px;
+}
+
+.no-component-message p {
+  color: #666;
+  font-size: 16px;
 }
 
 /* Test History */

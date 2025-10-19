@@ -5,7 +5,7 @@
       <div class="card-header bg-light border-0 py-3">
         <div class="d-flex justify-content-between align-items-center">
           <h5 class="mb-0 text-secondary">
-            <i class="bi bi-funnel me-2"></i>
+            <i class="fa fa-filter me-2"></i>
             Bộ lọc tìm kiếm
           </h5>
           <button
@@ -450,7 +450,7 @@ import {
   addAuthor,
   updateAuthor,
 } from "../../../services/admin/author";
-import "bootstrap-icons/font/bootstrap-icons.css";
+// Bootstrap icons loaded from CDN in index.html
 import { showToast, showAlert, showQuickConfirm } from "@/utils/swalHelper";
 import EditButton from "@/components/common/EditButton.vue";
 import Pagination from "@/components/common/Pagination.vue";

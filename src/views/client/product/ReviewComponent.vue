@@ -150,7 +150,6 @@ import { showToast } from '@/utils/swalHelper'
 import { getUserId } from '@/utils/utils'
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import { analyzeSentiment } from '@/services/ai/sentimentAnalysis'
 
 const route = useRoute()
 const bookId = ref()
@@ -169,8 +168,7 @@ const formReviewObject = ref({
   userId: 0,
   rating: 0,
   comment: '',
-  reviewStatus: '',
-  isPositive: null // AI sentiment analysis result
+  reviewStatus: ''
 })
 
 
@@ -320,30 +318,11 @@ const submitReview = async () => {
   if (!createReviewButtonStatus.value) return
   
   try {
-    // Hiển thị loading state
-    showToast('info', 'Đang phân tích đánh giá với AI...')
     
-    // Phân tích sentiment với AI
-    console.log('🤖 Analyzing sentiment for review:', {
-      rating: formReviewObject.value.rating,
-      comment: formReviewObject.value.comment
-    })
-    
-    let sentimentResult = null
-    try {
-      sentimentResult = await analyzeSentiment(formReviewObject.value.comment, formReviewObject.value.rating)
-      formReviewObject.value.isPositive = sentimentResult.isPositive
-      
-      console.log('✅ AI Analysis completed:', {
-        isPositive: sentimentResult.isPositive,
-        sentiment: sentimentResult.sentiment,
-        confidence: sentimentResult.confidence,
-        reason: sentimentResult.reason
-      })
-    } catch (aiError) {
-      console.warn('⚠️ AI Analysis failed, using fallback:', aiError)
-      // Fallback: nếu AI lỗi, dựa vào rating đơn giản
-      formReviewObject.value.isPositive = formReviewObject.value.rating >= 4
+
+    if (!formReviewObject.value.comment || formReviewObject.value.comment.trim().length < 10) {
+      showToast('warning', 'Nội dung đánh giá phải có ít nhất 10 ký tự')
+      return
     }
 
     formReviewObject.value.bookId = bookId.value
@@ -351,14 +330,14 @@ const submitReview = async () => {
 
     if (!isEditingReview.value) {
       formReviewObject.value.reviewStatus = 'APPROVED'
-      console.log('📤 Creating review with AI sentiment:', formReviewObject.value)
+      console.log('📤 Creating review:', formReviewObject.value)
       await createReview(bookId.value, formReviewObject.value)
-      showToast('success', `Đã tạo đánh giá thành công! AI đánh giá: ${sentimentResult?.isPositive ? 'Tích cực' : 'Tiêu cực'}`)
+      showToast('success', 'Đã tạo đánh giá thành công!')
     } else {
       formReviewObject.value.reviewStatus = 'EDITED'
-      console.log('📝 Updating review with AI sentiment:', formReviewObject.value)
+      console.log('📝 Updating review:', formReviewObject.value)
       await updateReview(bookId.value, editingReview.value.id, formReviewObject.value)
-      showToast('success', `Đã cập nhật đánh giá thành công! AI đánh giá: ${sentimentResult?.isPositive ? 'Tích cực' : 'Tiêu cực'}`)
+      showToast('success', 'Đã cập nhật đánh giá thành công!')
     }
     
     // reload list & permission

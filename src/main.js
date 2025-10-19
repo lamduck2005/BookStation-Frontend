@@ -1,6 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap";
-import "bootstrap-icons/font/bootstrap-icons.css";
+// Bootstrap icons loaded from CDN in index.html
 import "@fortawesome/fontawesome-free/css/all.css";
 import "@/assets/css/admin-table-responsive.css";
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';

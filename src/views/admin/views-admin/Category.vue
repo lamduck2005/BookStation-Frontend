@@ -478,7 +478,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from "vue";
-import "bootstrap-icons/font/bootstrap-icons.css";
+// Bootstrap icons loaded from CDN in index.html
 import { showToast, showQuickConfirm } from "@/utils/swalHelper.js";
 import { validate } from "@/utils/validation.js";
 import { toDate, toTime } from "@/utils/utils.js";

@@ -30,4 +30,4 @@ const handleInvalidAuth = (message, statusCode) => {
 }
 
 // Luôn chạy validation mỗi 5 giây
-window.authValidationInterval = setInterval(validateToken, 10000)
+// window.authValidationInterval = setInterval(validateToken, 10000)

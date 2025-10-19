@@ -28,14 +28,8 @@ const forgotPasswordForm = ref({
 const showLoginPassword = ref(false)
 const showRegisterPassword = ref(false)
 
-// Hàm login nhanh admin
-const quickAdminLogin = async () => {
-    console.log('Quick admin login button clicked');
-    loginForm.value.email = 'admin@bookstation.com';
-    loginForm.value.password = 'admin123';
-    // Gọi luôn hàm login, không cần submit form
-    await handleLogin({ preventDefault: () => {} });
-}
+// Hàm login nhanh admin - ĐÃ XÓA vì lý do bảo mật
+// KHÔNG được hard-code mật khẩu trong production
 
 const stars = [
     { tailLength: '15em', topOffset: '0vh', duration: '9s', delay: '0s' },
@@ -269,7 +263,7 @@ const handleForgotPassword = async (e) => {
                         <div class="login-form">
                             <div class="title">Đăng nhập</div>
                             <!-- Nút vào nhanh admin -->
-                            <!-- <QuickAdminLogin @quick-login="quickAdminLogin" /> -->
+                    
                             <form @submit="handleLogin">
                                 <div class="input-boxes">
                                     <div class="input-box">

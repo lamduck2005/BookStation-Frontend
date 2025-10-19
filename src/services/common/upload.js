@@ -1,7 +1,7 @@
 import axios from '@/utils/axios';
 
 // Backend API URL
-const BACKEND_API_URL = 'http://localhost:8080';
+const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:8080';
 
 // ============= GENERIC UPLOAD FUNCTIONS =============
 
